@@ -1,0 +1,23 @@
+{
+  "name": "@testforge/vue-test-core",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.js --format esm,cjs --clean --dts",
+    "dev": "tsup src/index.js --format esm,cjs --watch --dts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.js",
+      "import": "./src/index.js"
+    }
+  },
+  "license": "MIT",
+  "author": "Roman Levchenko",
+  "peerDependencies": {
+    "@vue/test-utils": "^2.0.0"
+  }
+}

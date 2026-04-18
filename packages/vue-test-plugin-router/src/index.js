@@ -1,0 +1,1 @@
+import { routerPlugin } from './routerPlugin'

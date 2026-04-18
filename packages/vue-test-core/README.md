@@ -1,0 +1,372 @@
+## ⚙️ Configuration (Mount Options)
+
+The framework is fully compatible with [Vue Test Utils (VTU)](https://test-utils.vuejs.org) and supports all standard mounting options. However, it extends their processing logic to make settings reuse more convenient and predictable.
+
+### Priority and Merge Types
+
+Settings are merged from three sources (in ascending order of priority):
+1. **`defaultMountOptions`** — defined when creating the factory.
+2. **`mountOptions`** — passed in a specific test.
+3. **`props` / `slots`** — separate arguments of the factory function (highest priority).
+
+#### 1. Flat VTU Options (Shallow Merge)
+Options such as `props`, `data`, `attrs`, `attachTo`, `slots`, and `useShallow` are merged using **shallow merge**.
+* **`useShallow` (Boolean)** — controls which mounting method from [Vue Test Utils](https://test-utils.vuejs.org) is used.
+  * **Default:** `true` (uses `shallowMount`).
+  * **Behavior:** If set to `false`, the component will be mounted using `mount` (full rendering of child components).
+  * **Priority:** As with other flat options, the value from `mountOptions` overrides the value from `defaultMountOptions`.
+* If you pass `props` both as a separate factory argument **and** inside `mountOptions`, the value from the separate argument **overrides** the value from the options object.
+* Test-level settings always completely replace same-named settings from `defaultMountOptions`.
+
+#### 🚫 `skipManagedPlugins` Option
+
+In the second argument (`mountOptions`), you can pass the `skipManagedPlugins` flag.
+
+- **Type:** `Boolean`
+- **Default:** `false`
+- **What it does:** completely disables the built-in managed plugins registry for the current test
+
+#### When is it useful?
+
+Use this option when you need to **take full manual control** over plugin creation and registration, for example:
+
+- when the default behavior of `createPiniaPlugin`, `createI18nPlugin` or `createRouterPlugin` conflicts with your test requirements
+- when you want to use pre-created / mocked / stubbed plugin instances
+- when plugins need to be registered in a custom order or with non-standard configuration
+
+#### Usage example
+
+```javascript
+const wrapper = factory({}, {
+  skipManagedPlugins: true,
+  global: {
+    plugins: [
+      customPiniaInstance,     // manually created instance
+      // other plugins as needed
+    ]
+  }
+});
+```
+
+#### 2. `global` Section (Deep Merge)
+The `global` object (`stubs`, `mocks`, `provide`, `plugins`, etc.) is processed with **deep merge**.
+* This allows “layering” mocks and stubs. If a `Button` stub is defined in the base config and an `Icon` stub is added in the test, **both** stubs will be available in the final component.
+* **Exception:** If you want to completely ignore base settings, use the `skipDefaultOptions` flag in `extraOptions`.
+
+#### 3. `plugins` Section (Managed Plugins)
+The `plugins` section inside `mountOptions` is intended **only** for **managed plugins** (`pinia`, `i18n`, `router`).
+* **Merge type:** Shallow. The plugin object from the test completely **replaces** the same plugin object from the base config.  
+  This ensures clean state (e.g. Pinia’s `initialState` does not get mixed with base data).
+
+---
+
+### 🧪 `extraOptions` (4th Argument)
+
+This object controls framework-specific behavior and provides tools for fine-grained configuration:
+
+* **`skipDefaultOptions` (Boolean)** — if `true`, the framework completely ignores `defaultMountOptions` from the factory.
+* **Plugin-specific overrides (Plugin Overlays)** — plugin keys in `extraOptions` (e.g. `pinia`, `i18n`) have the **highest priority**.
+  * **Priority:** `extraOptions` is applied **on top of** the already merged configuration from `defaultMountOptions` + `mountOptions`.
+  * **Behavior (Shallow Overlay):** Unlike `mountOptions.plugins` which fully replaces the plugin object from the base, `extraOptions` allows you to **modify or add specific fields** without overwriting the rest of the settings.
+  * *Example:* If the base config has `initialState` for Pinia and you only want to enable `stubActions` in the test, passing `{ pinia: { stubActions: true } }` in `extraOptions` will preserve the base state while updating the stub flag.
+* **`__meta.instance`** — allows passing a pre-created plugin instance (see “Using Pre-created Instances” section).
+* **Props/Slots control**: `skipDefaultProps` and `skipDefaultSlots` let you ignore base values for these arguments.
+---
+
+## 🧩 Settings Merging Logic (Merging Strategy)
+
+The framework architecture separates data into two types: **Dependency Collections** and **State Configurations**. This ensures test predictability and protects against "data pollution" coming from base settings.
+
+### 1. Deep Merge — for `global`
+**Applies to:** `stubs`, `mocks`, `provide`, `directives`.
+
+Objects in the `global` section are treated as **toolsets / utility collections**.
+
+* **Behavior:** If `BASE_MOUNT_OPTIONS` defines `mock: { $t }`, and your test adds `mock: { $route }`, the final component will have **both** mocks available.
+* **Purpose:** Allows you to gradually extend the test environment without duplicating base stubs in every single file.
+
+### 2. Shallow Merge — for `plugins`
+**Applies to:** `pinia` (including `initialState`), `i18n` (including `messages`), `router`.
+
+Plugin settings are treated as **complete, standalone configurations**.
+
+* **Behavior:** The plugin object coming from the test (or from `extraOptions`) **completely replaces** the same-named object from the base settings.
+* **Purpose:**
+  * **Data cleanliness:** If the base config has `customersList` with 10 items, and your test passes `initialState: { customersList: [] }`, you expect an **empty** list. Deep merging would concatenate arrays and create a mess.
+  * **i18n control:** Makes it easy to "reset" a translation branch or replace the locale entirely, without accidentally mixing in unwanted default keys.
+
+---
+
+### 🛠 How to change just one plugin setting without replacing everything?
+
+If you don’t want to replace the entire plugin config, but only modify one option (e.g. change only `locale` in i18n while keeping the base `messages`), use **`extraOptions`** (the 4th argument of the factory).
+
+`extraOptions` is applied **on top of** the base plugin config:
+
+```javascript
+// В BASE_MOUNT_OPTIONS: pinia: { stubActions: true, initialState: { a: 1 } }
+
+const wrapper = factory({}, {}, {}, {
+    pinia: { 
+        initialState: { b: 2 } // Replaces initialState entirely, but preserves stubActions
+    }
+})
+```
+
+---
+
+## 🛠 Configuring Managed Plugins
+
+The framework provides enhanced support for key Vue plugins, automatically injecting base settings and simplifying state management.
+
+### List of Supported Plugins
+At the moment, the `plugins` object supports the following keys:
+
+* **`pinia`** — store management, support for `initialState` and automatic creation of spies.
+* **`i18n`** — localization, management of translation dictionaries and current locale.
+* **`router`** — routing, automatic history mode setup (Memory / Web) and basic route configuration.
+
+---
+
+### Configuration Levels
+
+You can configure plugins at three different levels (in ascending order of priority):
+
+#### 1. Globally in the factory (`BASE_MOUNT_OPTIONS`)
+Sets settings that will be shared across all tests in the file.
+
+```javascript
+const factory = testComponentFactory(Component, props, {
+    plugins: {
+        pinia: { stubActions: true },
+        i18n: { locale: 'en' }
+    }
+});
+```
+
+#### 2. Per-test in (`mountOptions`)
+Completely replaces the plugin configuration for the current test only.
+
+```javascript
+const wrapper = factory({}, {
+    plugins: {
+        pinia: { initialState: { user: { id: 1 } } }
+    }
+});
+```
+
+#### 3. Fine-grained changes via `extraOptions` (4th argument)
+Allows you to modify only specific parameters without overwriting the rest of the base configuration.
+
+```javascript
+const wrapper = factory({}, {}, {}, {
+    i18n: { locale: 'uk' } // This will only change the language while preserving the messages from the database
+});
+```
+
+### ⚠️ Limitations of the `plugins` section
+
+The `plugins` object is intended **only** for the managed plugins listed above. The framework performs strict validation of these settings:
+
+*   Only configuration objects or `false` (to disable the plugin) are allowed.
+*   Passing third-party plugins (e.g. `Vuetify`, `Vfm`, etc.) into this object will cause an error.
+
+---
+
+### 🔄 Using Pre-created Instances (`__meta.instance`)
+
+Sometimes in tests you need to use an **already existing** plugin instance (for example, a Pinia instance with pre-filled data or a fully configured Router), instead of creating it from scratch via configuration options.
+
+For this purpose, the `extraOptions` object provides a protected key called `__meta`:
+
+```javascript
+const mySharedPinia = createTestingPinia({ ... });
+
+const wrapper = factory(props, {}, {}, {
+    pinia: {
+        __meta: {
+            instance: mySharedPinia // Inject the ready-made instance
+        },
+        // Any other options specified here will be **ignored**, 
+        // because priority is given to the provided instance.
+    }
+});
+```
+
+**Why is this better than `global.plugins`?**
+
+The framework will automatically skip creating the default plugin instance, preventing a conflict between two copies of the same plugin.
+
+This mechanism ensures that the `instance` field never conflicts with the internal options of the plugins themselves.
+
+---
+
+### 🔌 Connecting Third-Party Plugins
+
+If you need to connect a plugin that is **not** managed by the framework (for example, `vue-final-modal`, `vuetify`, etc.), use the standard Vue Test Utils mechanism via the `global.plugins` section:
+
+```javascript
+const wrapper = factory({}, {
+    global: {
+        plugins: [createVfm()]
+    }
+})
+```
+
+#### Key Differences in Usage:
+
+* **`plugins` (Object)** — used **only** for **framework-managed** plugins (`pinia`, `i18n`, `router`).  
+  The framework automatically applies defaults, merges settings from `extraOptions`, and prepares the initial state.
+
+* **`global.plugins` (Array)** — used for **any third-party** plugins "as is".  
+  This is the standard Vue Test Utils field that accepts an array of already created plugin instances.
+
+### 🧩 Accessing Plugin Instances
+
+Sometimes you need more than just configuring plugins — you may require direct access to the actual `pinia`, `i18n`, or `router` instances for advanced testing or manual manipulation.
+
+There are two ways to obtain these instances:
+
+#### 1. Using the `expose` callback
+
+You can pass an `expose` function in any plugin’s configuration. It will be called immediately after the instance is created, but before the component is mounted.
+
+```javascript
+let piniaInstance;
+
+const wrapper = factory({}, {
+  plugins: {
+    pinia: {
+      expose: (instance) => { piniaInstance = instance }
+    }
+  }
+});
+
+// Now you can use piniaInstance in your tests
+expect(piniaInstance.state.value).toBeDefined();
+```
+
+#### 2. Using the `captureInstance` helper (Recommended)
+
+For cleaner and more convenient code, use the built-in `captureInstance` helper. It eliminates the need to manually declare variables and callback functions.
+
+```javascript
+import { captureInstance } from '@/tests/helpers';
+
+const piniaCapture = captureInstance();
+
+const wrapper = factory({}, {
+    plugins: {
+        pinia: { ...piniaCapture }
+    }
+});
+
+// The instance is automatically stored in the `.instance` property
+expect(piniaCapture.instance).toBeDefined();
+```
+
+#### ⚠️ Important Note on Isolation
+
+Plugin instances are **unique for each call to `factory()`**.
+
+Since every call to the factory creates a completely new environment (its own Pinia, its own i18n, etc.), an instance captured in a previous test has no relation to the new `wrapper`.
+
+**Avoid reusing capture variables across tests.**
+
+Always create a fresh `captureInstance()` for each test, or reset the variable inside `beforeEach` or within the `it` block itself.
+
+```javascript
+it('should work with new instance', () => {
+  const piniaCapture = captureInstance(); // Create locally for this test
+
+  factory({}, {
+    plugins: {
+      pinia: { ...piniaCapture }
+    }
+  });
+
+  expect(piniaCapture.instance).toBeDefined();
+});
+```
+
+> [!NOTE]
+> The instance becomes available in the capture object (the `expose` callback is invoked) **right before** `shallowMount` or `mount` is called.
+
+## 🎛️ Presets
+
+Presets allow you to group plugin settings and module manifests for quick switching between different environment configurations (e.g. `lightweight`, `full-features`, or `i18n-only`).
+
+### Preset Structure
+
+Each preset consists of two key parts:
+1. **manifest**: A list of available plugins and their default state (`enabled: true/false`).
+2. **defaults**: Base settings for each plugin.
+
+```javascript
+const myPresets = {
+  apiOnly: {
+    manifest: [
+      { module: piniaPlugin, enabled: true },
+      { module: i18nPlugin, enabled: false },
+    ],
+    defaults: {
+      pinia: { initialState: { user: null } }
+    }
+  }
+}
+```
+
+### Framework Initialization
+
+Pass the presets object when creating the test framework:
+
+```javascript
+const { testComponentFactory } = createTestFramework({
+  presets: myPresets
+})
+```
+
+### Usage in Tests
+
+You can switch presets or override their settings directly in `testComponentFactory`:
+
+1. **Selecting a Preset**
+
+   Use `extraOptions` (the fourth argument) to specify the preset name:
+
+   ```javascript
+   // Uses the configuration from the 'apiOnly' preset
+   const wrapper = factory({}, {}, {}, { preset: 'apiOnly' });
+   ```
+
+2. **Overriding Settings (Merge)**
+
+   Settings from `mountOptions.plugins` are automatically merged with the `defaults` of the active preset:
+
+   ```javascript
+   const wrapper = factory(
+     {},
+     {
+       plugins: {
+         pinia: { initialState: { user: { id: 1 } } }
+       }
+     },
+     {},
+     { preset: 'apiOnly' }
+   );
+   ```
+
+3. **Manually Disabling a Plugin**
+
+   Even if a plugin is enabled in the preset, you can force-disable it for a specific test:
+
+   ```javascript
+   const wrapper = factory({}, { plugins: { pinia: false } });
+   ```
+
+### Validation
+
+The framework strictly validates presets:
+
+- Keys in `defaults` must correspond to plugins listed in the `manifest`.
+- Plugin options must be either an **Object** or **Boolean (false)**. `null`, strings, or numbers will trigger a validation error.

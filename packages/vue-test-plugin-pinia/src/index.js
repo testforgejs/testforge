@@ -1,0 +1,1 @@
+export { piniaPlugin } from './piniaPlugin'

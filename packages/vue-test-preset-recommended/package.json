@@ -1,0 +1,18 @@
+{
+  "name": "@testforge/vue-test-preset-recommended",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.js --format esm,cjs --clean --dts",
+    "dev": "tsup src/index.js --format esm,cjs --watch --dts"
+  },
+  "author": "Roman Levchenko",
+  "dependencies": {
+    "@testforge/vue-test-plugin-i18n": "workspace:*",
+    "@testforge/vue-test-plugin-pinia": "workspace:*",
+    "@testforge/vue-test-plugin-router": "workspace:*"
+  }
+}

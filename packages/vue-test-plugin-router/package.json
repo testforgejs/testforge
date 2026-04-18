@@ -1,0 +1,19 @@
+{
+  "name": "@testforge/vue-test-plugin-router",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.js --format esm,cjs --clean --dts",
+    "dev": "tsup src/index.js --format esm,cjs --watch --dts"
+  },
+  "author": "Roman Levchenko",
+  "peerDependencies": {
+    "vue-router": "^5.0.0"
+  },
+  "dependencies": {
+    "@testforge/vue-test-core": "workspace:*"
+  }
+}
