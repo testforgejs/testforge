@@ -1,4 +1,4 @@
-import { mergeResult } from './mergeResult'
+import { mergeResult } from "./mergeResult.js";
 
 /**
  * Safely merges configuration for a specific plugin into the pipeline context.
@@ -19,12 +19,12 @@ import { mergeResult } from './mergeResult'
  * mergePlugin(ctx, 'pinia', { someState: 123 })
  */
 export function mergePlugin(ctx, name, config) {
-    return mergeResult(ctx, {
-        plugins: {
-            [name]: {
-                ...(ctx.result.plugins[name] || {}),
-                ...config,
-            },
-        },
-    })
+  return mergeResult(ctx, {
+    plugins: {
+      [name]: {
+        ...(ctx.result.plugins[name] || {}),
+        ...config,
+      },
+    },
+  });
 }

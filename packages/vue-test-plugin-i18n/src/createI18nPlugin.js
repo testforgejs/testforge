@@ -1,5 +1,5 @@
-import { createPluginInstance } from '@testforge/vue-test-core'
-import { createI18n } from 'vue-i18n'
+import { createPluginInstance } from "@testforge/vue-test-core";
+import { createI18n } from "vue-i18n";
 
 /**
  * Factory for creating a Vue I18n plugin instance.
@@ -9,5 +9,5 @@ import { createI18n } from 'vue-i18n'
  * @returns {import('vue-i18n').I18n}
  */
 export function createI18nPlugin(options) {
-    return createPluginInstance(createI18n, options)
+  return createPluginInstance(createI18n, options);
 }

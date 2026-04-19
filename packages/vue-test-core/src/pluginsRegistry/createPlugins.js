@@ -1,4 +1,4 @@
-import { createPluginRegistry } from './createPluginRegistry'
+import { createPluginRegistry } from "./createPluginRegistry.js";
 
 /**
  * Creates Vue plugins used for mounting components in tests.
@@ -31,36 +31,36 @@ import { createPluginRegistry } from './createPluginRegistry'
  * @returns {any[]}
  */
 export function createPlugins(options = {}, ctx) {
-    const plugins = []
+  const plugins = [];
 
-    const { preset = {} } = ctx
-    /** @type {PluginRegistry<PluginDefinition>} */
-    const registry = createPluginRegistry(preset?.manifest)
+  const { preset = {} } = ctx;
+  /** @type {PluginRegistry<PluginDefinition>} */
+  const registry = createPluginRegistry(preset?.manifest);
 
-    // Iterate through the factories—that is defense
-    // Anything not found in pluginFactories will be ignored.
-    for (const [name, definition] of registry.entries()) {
-        let pluginOptions = options[name]
+  // Iterate through the factories—that is defense
+  // Anything not found in pluginFactories will be ignored.
+  for (const [name, definition] of registry.entries()) {
+    let pluginOptions = options[name];
 
-        if (
-            pluginOptions !== false &&
-            pluginOptions &&
-            typeof pluginOptions === 'object'
-        ) {
-            // --- beforeCreate ---
-            if (definition.beforeCreate) {
-                pluginOptions = definition.beforeCreate(ctx, pluginOptions)
-            }
-            // --- create ---
-            const pluginInstance = definition.create(pluginOptions)
-            // --- afterCreate ---
-            if (definition.afterCreate) {
-                definition.afterCreate(pluginInstance, ctx)
-            }
+    if (
+      pluginOptions !== false &&
+      pluginOptions &&
+      typeof pluginOptions === "object"
+    ) {
+      // --- beforeCreate ---
+      if (definition.beforeCreate) {
+        pluginOptions = definition.beforeCreate(ctx, pluginOptions);
+      }
+      // --- create ---
+      const pluginInstance = definition.create(pluginOptions);
+      // --- afterCreate ---
+      if (definition.afterCreate) {
+        definition.afterCreate(pluginInstance, ctx);
+      }
 
-            plugins.push(pluginInstance)
-        }
+      plugins.push(pluginInstance);
     }
+  }
 
-    return plugins
+  return plugins;
 }

@@ -30,14 +30,14 @@
  * }}
  */
 export function captureInstance() {
-    let instance
+  let instance;
 
-    return {
-        expose(ins) {
-            instance = ins
-        },
-        get instance() {
-            return instance
-        },
-    }
+  return {
+    expose(ins) {
+      instance = ins;
+    },
+    get instance() {
+      return instance;
+    },
+  };
 }

@@ -1,4 +1,4 @@
-import { mergeResult } from '../helpers/mergeResult'
+import { mergeResult } from "../helpers/mergeResult.js";
 
 /**
  * Applies plugin preset before other plugin middlewares.
@@ -6,11 +6,11 @@ import { mergeResult } from '../helpers/mergeResult'
  * @type {PipelineMiddleware}
  */
 export const withPreset = (ctx) => {
-    const { preset = {} } = ctx
+  const { preset = {} } = ctx;
 
-    if (!preset?.defaults) return ctx
+  if (!preset?.defaults) return ctx;
 
-    return mergeResult(ctx, {
-        pluginPresets: { ...preset.defaults },
-    })
-}
+  return mergeResult(ctx, {
+    pluginPresets: { ...preset.defaults },
+  });
+};

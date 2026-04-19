@@ -1,13 +1,13 @@
-import { mergeResult } from '../helpers/mergeResult'
+import { mergeResult } from "../helpers/mergeResult.js";
 
 /**
  * Initializes the state of the plugins based on the manifest of supported plugins.
  * @type {PipelineMiddleware}
  */
 export const withPluginsManifest = (ctx) => {
-    const { supportedPlugins } = ctx
+  const { supportedPlugins } = ctx;
 
-    return mergeResult(ctx, {
-        plugins: supportedPlugins,
-    })
-}
+  return mergeResult(ctx, {
+    plugins: supportedPlugins,
+  });
+};

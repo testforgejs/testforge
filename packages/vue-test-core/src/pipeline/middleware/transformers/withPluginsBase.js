@@ -1,4 +1,4 @@
-import { mergeResult } from '../helpers/mergeResult'
+import { mergeResult } from "../helpers/mergeResult.js";
 
 /**
  * Initializes the base plugin object in the result.
@@ -7,14 +7,14 @@ import { mergeResult } from '../helpers/mergeResult'
  * @type {PipelineMiddleware}
  */
 export const withPluginsBase = (ctx) => {
-    const { defaultMountOptions, mountOptions, extraOptions } = ctx
+  const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
-    return mergeResult(ctx, {
-        plugins: {
-            ...(extraOptions.skipDefaultOptions
-                ? {}
-                : defaultMountOptions.plugins || {}),
-            ...(mountOptions.plugins || {}),
-        },
-    })
-}
+  return mergeResult(ctx, {
+    plugins: {
+      ...(extraOptions.skipDefaultOptions
+        ? {}
+        : defaultMountOptions.plugins || {}),
+      ...(mountOptions.plugins || {}),
+    },
+  });
+};

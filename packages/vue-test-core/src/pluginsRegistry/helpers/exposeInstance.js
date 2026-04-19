@@ -9,7 +9,7 @@
  * @param {{ expose?: function(instance:any): void }} options
  */
 export function exposeInstance(instance, options) {
-    if (typeof options?.expose === 'function') {
-        options.expose(instance)
-    }
+  if (typeof options?.expose === "function") {
+    options.expose(instance);
+  }
 }

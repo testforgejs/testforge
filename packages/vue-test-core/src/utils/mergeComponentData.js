@@ -17,29 +17,29 @@
  * @returns {Object} A merged data object.
  */
 export function mergeComponentData({
-    // Level 1 (Test Suite)
-    defaultMountData = {},
-    defaultData = {},
-    // Level 2 (Specific Test)
-    mountData = {},
-    directData = {},
-    // Control flags
-    skipDefault = false,
-    skipOptions = false,
+  // Level 1 (Test Suite)
+  defaultMountData = {},
+  defaultData = {},
+  // Level 2 (Specific Test)
+  mountData = {},
+  directData = {},
+  // Control flags
+  skipDefault = false,
+  skipOptions = false,
 }) {
-    // If skipDefault is enabled, completely ignore the test suite level
-    const level1 = skipDefault
-        ? {}
-        : {
-              ...(!skipOptions ? defaultMountData : {}),
-              ...defaultData,
-          }
+  // If skipDefault is enabled, completely ignore the test suite level
+  const level1 = skipDefault
+    ? {}
+    : {
+        ...(!skipOptions ? defaultMountData : {}),
+        ...defaultData,
+      };
 
-    // The test level is always active and takes precedence
-    const level2 = {
-        ...mountData,
-        ...directData,
-    }
+  // The test level is always active and takes precedence
+  const level2 = {
+    ...mountData,
+    ...directData,
+  };
 
-    return { ...level1, ...level2 }
+  return { ...level1, ...level2 };
 }

@@ -1,5 +1,5 @@
-import { getActivePreset } from '../utils/getActivePreset'
-import { buildSupportedPlugins } from '../utils/buildSupportedPlugins'
+import { getActivePreset } from "../utils/getActivePreset.js";
+import { buildSupportedPlugins } from "../utils/buildSupportedPlugins.js";
 
 /**
  * Creates initial mount context for pipeline processing.
@@ -8,26 +8,26 @@ import { buildSupportedPlugins } from '../utils/buildSupportedPlugins'
  * @returns {MountContext}
  */
 export function createMountContext({
-    defaultMountOptions = {},
-    mountOptions = {},
-    extraOptions = {},
-    presets,
+  defaultMountOptions = {},
+  mountOptions = {},
+  extraOptions = {},
+  presets,
 }) {
-    const activePreset = getActivePreset(extraOptions, presets)
-    const supportedPlugins = buildSupportedPlugins(activePreset)
+  const activePreset = getActivePreset(extraOptions, presets);
+  const supportedPlugins = buildSupportedPlugins(activePreset);
 
-    return {
-        defaultMountOptions,
-        mountOptions,
-        extraOptions,
-        supportedPlugins,
-        preset: activePreset,
+  return {
+    defaultMountOptions,
+    mountOptions,
+    extraOptions,
+    supportedPlugins,
+    preset: activePreset,
 
-        result: {
-            mountOptions: {},
-            global: {},
-            pluginPresets: {},
-            plugins: {},
-        },
-    }
+    result: {
+      mountOptions: {},
+      global: {},
+      pluginPresets: {},
+      plugins: {},
+    },
+  };
 }

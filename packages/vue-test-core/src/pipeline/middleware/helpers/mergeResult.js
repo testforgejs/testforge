@@ -20,25 +20,25 @@
  * })
  */
 export function mergeResult(ctx, patch) {
-    ctx.result.mountOptions = {
-        ...ctx.result.mountOptions,
-        ...(patch.mountOptions || {}),
-    }
+  ctx.result.mountOptions = {
+    ...ctx.result.mountOptions,
+    ...(patch.mountOptions || {}),
+  };
 
-    ctx.result.plugins = {
-        ...ctx.result.plugins,
-        ...(patch.plugins || {}),
-    }
+  ctx.result.plugins = {
+    ...ctx.result.plugins,
+    ...(patch.plugins || {}),
+  };
 
-    ctx.result.pluginPresets = {
-        ...ctx.result.pluginPresets,
-        ...(patch.pluginPresets || {}),
-    }
+  ctx.result.pluginPresets = {
+    ...ctx.result.pluginPresets,
+    ...(patch.pluginPresets || {}),
+  };
 
-    ctx.result.global = {
-        ...ctx.result.global,
-        ...(patch.global || {}),
-    }
+  ctx.result.global = {
+    ...ctx.result.global,
+    ...(patch.global || {}),
+  };
 
-    return ctx
+  return ctx;
 }

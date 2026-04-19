@@ -6,22 +6,22 @@
  * @returns {Object|boolean} The configuration object, or `false` if the plugin is disabled
  */
 export function getPluginConfig(ctx, name) {
-    const { extraOptions } = ctx
-    const { plugins } = ctx.result
+  const { extraOptions } = ctx;
+  const { plugins } = ctx.result;
 
-    const isEnabled =
-        extraOptions[name] ||
-        (plugins[name] !== false && plugins[name] !== undefined)
+  const isEnabled =
+    extraOptions[name] ||
+    (plugins[name] !== false && plugins[name] !== undefined);
 
-    if (!isEnabled) {
-        return false
-    }
+  if (!isEnabled) {
+    return false;
+  }
 
-    const current = plugins[name] || {}
-    const extra = extraOptions[name] || {}
+  const current = plugins[name] || {};
+  const extra = extraOptions[name] || {};
 
-    return {
-        ...current,
-        ...extra,
-    }
+  return {
+    ...current,
+    ...extra,
+  };
 }

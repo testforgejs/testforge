@@ -1,4 +1,4 @@
-import { validatePreset } from './validatePreset'
+import { validatePreset } from "./validatePreset.js";
 
 /**
  * Retrieves the active preset based on the call parameters and the available set of presets.
@@ -17,20 +17,20 @@ import { validatePreset } from './validatePreset'
  * @returns {PresetDefinition|undefined} The preset definition object, or undefined if ‘default’ is not found.
  */
 export function getActivePreset(extraOptions, presets = {}) {
-    const requestedPresetName = extraOptions?.preset?.trim()
-    const activeName = requestedPresetName || 'default'
-    const preset = presets[activeName]
+  const requestedPresetName = extraOptions?.preset?.trim();
+  const activeName = requestedPresetName || "default";
+  const preset = presets[activeName];
 
-    // If a user requests a preset that doesn't exist, an error will be thrown
-    if (requestedPresetName && !preset) {
-        throw new Error(
-            `[withPreset] Requested preset "${requestedPresetName}" not found in available presets.`
-        )
-    }
+  // If a user requests a preset that doesn't exist, an error will be thrown
+  if (requestedPresetName && !preset) {
+    throw new Error(
+      `[withPreset] Requested preset "${requestedPresetName}" not found in available presets.`,
+    );
+  }
 
-    if (preset) {
-        validatePreset(activeName, preset)
-    }
+  if (preset) {
+    validatePreset(activeName, preset);
+  }
 
-    return preset
+  return preset;
 }

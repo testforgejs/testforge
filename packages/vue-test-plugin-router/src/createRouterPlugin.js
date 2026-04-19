@@ -1,5 +1,5 @@
-import { createPluginInstance } from '@testforge/vue-test-core'
-import { createRouter } from 'vue-router'
+import { createPluginInstance } from "@testforge/vue-test-core";
+import { createRouter } from "vue-router";
 
 /**
  * Factory for creating a Vue Router plugin instance.
@@ -9,5 +9,5 @@ import { createRouter } from 'vue-router'
  * @returns {import('vue-router').Router}
  */
 export function createRouterPlugin(options) {
-    return createPluginInstance(createRouter, options)
+  return createPluginInstance(createRouter, options);
 }

@@ -10,14 +10,14 @@
  * @returns {MountContext} Updated context (same reference)
  */
 export function mergePluginPresets(ctx, name) {
-    const { result } = ctx
+  const { result } = ctx;
 
-    if (result.plugins[name] !== false) {
-        result.plugins[name] = {
-            ...(result.pluginPresets[name] || {}),
-            ...(result.plugins[name] || {}),
-        }
-    }
+  if (result.plugins[name] !== false) {
+    result.plugins[name] = {
+      ...(result.pluginPresets[name] || {}),
+      ...(result.plugins[name] || {}),
+    };
+  }
 
-    return ctx
+  return ctx;
 }

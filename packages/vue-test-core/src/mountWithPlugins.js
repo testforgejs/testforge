@@ -1,5 +1,5 @@
-import { mount, shallowMount } from '@vue/test-utils'
-import { createPlugins } from './pluginsRegistry/createPlugins'
+import { mount, shallowMount } from "@vue/test-utils";
+import { createPlugins } from "./pluginsRegistry/createPlugins.js";
 
 /**
  * Mounts a component with required plugins
@@ -9,33 +9,33 @@ import { createPlugins } from './pluginsRegistry/createPlugins'
  * @returns {import('@vue/test-utils').VueWrapper}
  */
 export function mountWithPlugins(component, ctx, overrides = {}) {
-    const { result } = ctx
+  const { result } = ctx;
 
-    const mergedOptions = {
-        ...result.mountOptions,
-        ...overrides,
-        plugins: result.plugins,
-        global: result.global,
-    }
+  const mergedOptions = {
+    ...result.mountOptions,
+    ...overrides,
+    plugins: result.plugins,
+    global: result.global,
+  };
 
-    const {
-        useShallow = true,
-        plugins = {},
-        skipManagedPlugins = false,
-        ...restOptions
-    } = mergedOptions
+  const {
+    useShallow = true,
+    plugins = {},
+    skipManagedPlugins = false,
+    ...restOptions
+  } = mergedOptions;
 
-    const globalPlugins = skipManagedPlugins ? [] : createPlugins(plugins, ctx)
-    const mountFunction = useShallow ? shallowMount : mount
+  const globalPlugins = skipManagedPlugins ? [] : createPlugins(plugins, ctx);
+  const mountFunction = useShallow ? shallowMount : mount;
 
-    const finalGlobal = restOptions.global || {}
+  const finalGlobal = restOptions.global || {};
 
-    if (globalPlugins.length > 0) {
-        finalGlobal.plugins = [...(finalGlobal.plugins || []), ...globalPlugins]
-    }
+  if (globalPlugins.length > 0) {
+    finalGlobal.plugins = [...(finalGlobal.plugins || []), ...globalPlugins];
+  }
 
-    return mountFunction(component, {
-        ...restOptions,
-        global: finalGlobal,
-    })
+  return mountFunction(component, {
+    ...restOptions,
+    global: finalGlobal,
+  });
 }

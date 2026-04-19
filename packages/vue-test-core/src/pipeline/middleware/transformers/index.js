@@ -1,6 +1,6 @@
-export { withBaseMountOptions } from './withBaseMountOptions'
-export { withGlobal } from './withGlobal'
-export { withPluginsBase } from './withPluginsBase'
-export { withPluginsManifest } from './withPluginsManifest'
-export { withPluginsMerge } from './withPluginsMerge'
-export { withPreset } from './withPreset'
+export { withBaseMountOptions } from "./withBaseMountOptions.js";
+export { withGlobal } from "./withGlobal.js";
+export { withPluginsBase } from "./withPluginsBase.js";
+export { withPluginsManifest } from "./withPluginsManifest.js";
+export { withPluginsMerge } from "./withPluginsMerge.js";
+export { withPreset } from "./withPreset.js";
