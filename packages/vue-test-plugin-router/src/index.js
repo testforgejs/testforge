@@ -1,1 +1,1 @@
-import { routerPlugin } from './routerPlugin'
+export { routerPlugin } from "./routerPlugin.js";
