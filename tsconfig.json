@@ -3,14 +3,18 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "./dist",
     "allowJs": true,
     "checkJs": false,
+    "strict": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "ignoreDeprecations": "6.0",
-    "skipLibCheck": true
+    "paths": {
+      "@testforge/*": ["./packages/*/src"]
+    }
   },
-  "include": ["packages/*/src"]
+  "include": ["packages/*/src"],
+  "exclude": ["node_modules", "**/dist"]
 }
