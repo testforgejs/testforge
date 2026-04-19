@@ -1,1 +1,1 @@
-export { i18nPlugin } from './i18nPlugin'
+export { i18nPlugin } from "./i18nPlugin.js";

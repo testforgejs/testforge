@@ -24,5 +24,5 @@ module.exports = {
     //"^@vue/devtools-kit$": "<rootDir>/__mocks__/empty.js",
   },
 
-  testMatch: ["**/*.test.js"],
+  testMatch: ["**/*.jest.test.js"],
 };

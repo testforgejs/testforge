@@ -5,15 +5,16 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "scripts": {
     "build": "tsup src/index.js --format esm,cjs --clean --dts",
     "dev": "tsup src/index.js --format esm,cjs --watch --dts"
-  },
-  "exports": {
-    ".": {
-      "types": "./src/index.js",
-      "import": "./src/index.js"
-    }
   },
   "license": "MIT",
   "author": "Roman Levchenko",

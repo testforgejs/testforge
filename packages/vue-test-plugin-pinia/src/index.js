@@ -1,1 +1,1 @@
-export { piniaPlugin } from './piniaPlugin'
+export { piniaPlugin } from "./piniaPlugin.js";
