@@ -13,8 +13,8 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.js --format esm,cjs --clean --dts --external @testforge/vue-test-core --external pinia --external @pinia/testing",
-    "dev": "tsup src/index.js --format esm,cjs --watch --dts"
+    "build": "tsup",
+    "dev": "tsup --watch"
   },
   "author": "Roman Levchenko",
   "peerDependencies": {
