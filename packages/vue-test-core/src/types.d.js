@@ -23,10 +23,10 @@
  */
 
 /**
- * @typedef {Object} PiniaPluginOptions
- * @property {Object} [initialState] - Initial state of the Pinia store.
+ * @typedef {object} PiniaPluginOptions
+ * @property {object} [initialState] - Initial state of the Pinia store.
  * @property {boolean} [stubActions=false] - Whether to stub store actions.
- * @property {Function} [createSpy] - Custom spy function (e.g., jest.fn).
+ * @property {function} [createSpy] - Custom spy function (e.g., jest.fn).
  *
  * Called after Pinia is created and activated.
  * Can be used to access and override stores.
@@ -36,15 +36,15 @@
  */
 
 /**
- * @typedef {Object} I18nPluginOptions
+ * @typedef {object} I18nPluginOptions
  * @property {string} [locale] - Current locale.
- * @property {Object} [messages] - Translation messages.
+ * @property {object} [messages] - Translation messages.
  * @property {boolean} [legacy=false] - Whether to use legacy mode.
  * @property {ExposePluginInstance} [expose] - Callback to capture plugin instance.
  */
 
 /**
- * @typedef {Object} RouterPluginOptions
+ * @typedef {object} RouterPluginOptions
  * @property {import('vue-router').RouteRecordRaw[]} [routes]
  * @property {string} [initialRoute]
  * @property {ExposePluginInstance} [expose] - Callback to capture plugin instance.
@@ -58,7 +58,7 @@
  * @template TOptions
  * @template TInstance
  *
- * @typedef {Object} PluginDefinition
+ * @typedef {object} PluginDefinition
  * @property {function(options: TOptions): TOptions} [beforeCreate]
  * Optional hook to transform plugin options before creation.
  *
@@ -72,7 +72,7 @@
 /**
  * A plugin module that encapsulates its name and factory.
  *
- * @typedef {Object} PluginModule
+ * @typedef {object} PluginModule
  * @property {function(): PluginName} getName
  * @property {function(): PluginDefinition<any, any>} getDefinition
  */
@@ -81,7 +81,7 @@
  * Plugin Registry.
  *
  * @template {PluginDefinition<any, any>} T
- * @typedef {Object} PluginRegistry
+ * @typedef {object} PluginRegistry
  * @property {function(PluginModule): void} register
  * @property {function(PluginName): T|undefined} get
  * @property {function(PluginName): boolean} has
@@ -94,7 +94,7 @@
  * Key — the plugin name (for example, ‘pinia’, ‘i18n’).
  * Value — the default configuration object or `false` to disable it.
  *
- * @typedef {Record<PluginName, Object|boolean>} SupportedPluginsMap
+ * @typedef {Record<PluginName, object|boolean>} SupportedPluginsMap
  */
 
 // === 4. Pipeline Context ===
@@ -102,32 +102,32 @@
 /**
  * Initial data for creating mount context.
  *
- * @typedef {Object} CreateMountContextParams
- * @property {Object} [defaultMountOptions] - Base mount options (factory defaults)
- * @property {Object} [mountOptions] - User-provided mount options
- * @property {Object} [extraOptions] - Additional options (e.g. pinia, i18n, router config)
- * @property {Object} [presets] - Presets
+ * @typedef {object} CreateMountContextParams
+ * @property {object} [defaultMountOptions] - Base mount options (factory defaults)
+ * @property {object} [mountOptions] - User-provided mount options
+ * @property {object} [extraOptions] - Additional options (e.g. pinia, i18n, router config)
+ * @property {object} [presets] - Presets
  */
 
 /**
  * Result state accumulated during pipeline execution.
  *
- * @typedef {Object} MountContextResult
- * @property {Object} mountOptions - Flat mount options
- * @property {Object} global - Vue Test Utils global config
- * @property {Object.<string, any>} pluginPresets - Plugin preset configuration
- * @property {Object.<string, any>} plugins - Plugin configuration
+ * @typedef {object} MountContextResult
+ * @property {object} mountOptions - Flat mount options
+ * @property {object} global - Vue Test Utils global config
+ * @property {PresetDefinition} pluginPresets - Plugin preset configuration
+ * @property {{ [key: string]: any }} plugins - Plugin configuration
  */
 
 /**
  * Full mount context passed through pipeline.
  *
- * @typedef {Object} MountContext
- * @property {Object} defaultMountOptions
- * @property {Object} mountOptions
- * @property {Object} extraOptions
+ * @typedef {object} MountContext
+ * @property {object} defaultMountOptions
+ * @property {object} mountOptions
+ * @property {object} extraOptions
  * @property {SupportedPluginsMap} supportedPlugins
- * @property {Object} preset
+ * @property {object} preset
  * @property {MountContextResult} result
  */
 
@@ -138,17 +138,24 @@
  * @returns {void | MountContext}
  */
 
+/**
+ * Pipeline instance for executing middleware sequence.
+ *
+ * @typedef {object} Pipeline
+ * @property {function(MountContext): (void | MountContext)} run - Executes the pipeline with given context.
+ */
+
 // === 5. Component Factory Options ===
 
 /**
  * A basic interface for the options of any plugin.
- * @typedef {Object|boolean} BasePluginOption
+ * @typedef {object|boolean} BasePluginOption
  */
 
 /**
  * Strictly typed options for well-known plugins.
  *
- * @typedef {Object} KnownPluginOptions
+ * @typedef {object} KnownPluginOptions
  * @property {PiniaPluginOptions | boolean} [pinia]
  * @property {I18nPluginOptions | boolean} [i18n]
  * @property {RouterPluginOptions | boolean} [router]
@@ -156,44 +163,44 @@
 
 /**
  * Options for creating plugins in test utils.
- * @typedef {KnownPluginOptions & Object.<string, BasePluginOption>} PluginOptions
+ * @typedef {KnownPluginOptions & { [key: string]: BasePluginOption }} PluginOptions
  */
 
 /**
  * Options passed to the component factory in tests.
- * @typedef {Object} ComponentFactoryOptions
+ * @typedef {object} ComponentFactoryOptions
  * @property {boolean} [useShallow]
  * @property {PluginOptions} [plugins]
  * @property {boolean} [skipManagedPlugins]
- * @property {Object} [props]
- * @property {Object} [attrs]
- * @property {Object} [slots]
- * @property {Object} [global]
+ * @property {object} [props]
+ * @property {object} [attrs]
+ * @property {object} [slots]
+ * @property {object} [global]
  */
 
 /**
  * @template T
  * @callback ComponentFactory
- * @param {Object} [props] - Component props
+ * @param {object} [props] - Component props
  * @param {ComponentFactoryOptions} [mountOptions] - Mounting options
- * @param {Object} [slots] - Slots
- * @param {Object} [extraOptions] - Additional flags (skipDefaultProps, etc.)
+ * @param {object} [slots] - Slots
+ * @param {object} [extraOptions] - Additional flags (skipDefaultProps, etc.)
  * @returns {import('@vue/test-utils').VueWrapper<InstanceType<T>>}
  */
 
 /**
- * @typedef {Object} PluginManifestEntry
+ * @typedef {object} PluginManifestEntry
  * @property {PluginModule} module - Plugin module instance (piniaPlugin, i18nPlugin, etc.)
  * @property {boolean} enabled - The default plugin activation flag in this preset
  */
 
 /**
- * @typedef {Object} PresetDefinition
+ * @typedef {object} PresetDefinition
  * @property {PluginManifestEntry[]} manifest - List of available plugins and their status
- * @property {Object.<string, Object|boolean>} defaults - Default options for each plugin based on its name,
+ * @property {{ [key: string]: object|boolean }} defaults - Default options for each plugin based on its name,
  *   or “false” to disable it
  */
 
 /**
- * @typedef {Object.<string, PresetDefinition>} TestFrameworkPresets
+ * @typedef {{ [key: string]: PresetDefinition }} TestFrameworkPresets
  */

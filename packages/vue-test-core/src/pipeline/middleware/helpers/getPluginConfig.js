@@ -1,9 +1,9 @@
 /**
  * Extracts and merges the plugin configuration, taking all priority levels into account.
  *
- * @param {Object} ctx - Pipeline Context
+ * @param {object} ctx - Pipeline Context
  * @param {string} name - Plugin name (pinia, i18n, router)
- * @returns {Object|boolean} The configuration object, or `false` if the plugin is disabled
+ * @returns {object|boolean} The configuration object, or `false` if the plugin is disabled
  */
 export function getPluginConfig(ctx, name) {
   const { extraOptions } = ctx;

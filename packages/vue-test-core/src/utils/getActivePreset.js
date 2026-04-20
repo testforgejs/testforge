@@ -8,7 +8,7 @@ import { validatePreset } from "./validatePreset.js";
  * 2. If no name is specified, it attempts to return the preset named ‘default’.
  * 3. If the preset found exists, it is passed through `validatePreset`.
  *
- * @param {Object} [extraOptions] - Additional options for the factory call.
+ * @param {object} [extraOptions] - Additional options for the factory call.
  * @param {string} [extraOptions.preset] - The name of the requested preset.
  * @param {TestFrameworkPresets} [presets={}] - List of available presets (Map: name -> definition).
  *

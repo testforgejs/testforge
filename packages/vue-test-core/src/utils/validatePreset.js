@@ -2,7 +2,7 @@
  * Validates the preset structure, manifest entries, and default options.
  *
  * @param {string} name - Preset name for error reporting
- * @param {Object} preset - The preset object to validate
+ * @param {object} preset - The preset object to validate
  * @throws {Error} If the preset structure is invalid or inconsistent
  */
 export function validatePreset(name, preset) {

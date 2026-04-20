@@ -7,14 +7,14 @@
  * 3. mountData (from the mountOptions of a specific test)
  * 4. directData (direct argument of the factory call)
  *
- * @param {Object} params - Merge parameters.
- * @param {Object} [params.defaultMountData={}] - Data from the factory's base options (Level 1).
- * @param {Object} [params.defaultData={}] - Data from the factory's base arguments (Level 1).
- * @param {Object} [params.mountData={}] - Data from specific test options (Level 2).
- * @param {Object} [params.directData={}] -  Direct data from the specific test (Level 2).
+ * @param {object} params - Merge parameters.
+ * @param {object} [params.defaultMountData={}] - Data from the factory's base options (Level 1).
+ * @param {object} [params.defaultData={}] - Data from the factory's base arguments (Level 1).
+ * @param {object} [params.mountData={}] - Data from specific test options (Level 2).
+ * @param {object} [params.directData={}] -  Direct data from the specific test (Level 2).
  * @param {boolean} [params.skipDefault=false] - If true, completely ignores Level 1 (the test suite base).
  * @param {boolean} [params.skipOptions=false] - If true, ignores only defaultMountData.
- * @returns {Object} A merged data object.
+ * @returns {object} A merged data object.
  */
 export function mergeComponentData({
   // Level 1 (Test Suite)

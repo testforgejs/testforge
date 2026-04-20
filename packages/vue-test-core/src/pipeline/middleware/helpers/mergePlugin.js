@@ -11,7 +11,7 @@ import { mergeResult } from "./mergeResult.js";
  *
  * @param {MountContext} ctx - Current pipeline context
  * @param {PluginName} name - Name of the plugin to update
- * @param {Object} config - Configuration object to merge for this plugin
+ * @param {object} config - Configuration object to merge for this plugin
  *
  * @returns {MountContext} Updated context (same reference)
  *

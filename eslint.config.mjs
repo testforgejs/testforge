@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import globals from "globals";
+import jsdoc from "eslint-plugin-jsdoc";
 import prettierConfig from "eslint-config-prettier";
 import prettierPlugin from "eslint-plugin-prettier";
 import tsEslint from "typescript-eslint";
@@ -40,9 +41,59 @@ export default tsEslint.config(
       },
     },
     plugins: {
+      jsdoc: jsdoc,
       prettier: prettierPlugin,
     },
     rules: {
+      "jsdoc/check-access": "warn",
+      "jsdoc/check-alignment": "warn",
+      "jsdoc/check-param-names": "warn",
+      "jsdoc/check-property-names": "warn",
+      "jsdoc/check-types": "warn",
+      "jsdoc/no-undefined-types": [
+        "warn",
+        {
+          definedTypes: [
+            // 1. Basic types
+            "PluginName",
+            "ExposePluginInstance",
+
+            // 2. Plugin Options
+            "MockStoresFn",
+            "PiniaPluginOptions",
+            "I18nPluginOptions",
+            "RouterPluginOptions",
+
+            // 3. Registry & Modules
+            "PluginDefinition",
+            "PluginModule",
+            "PluginRegistry",
+            "SupportedPluginsMap",
+
+            // 4. Pipeline Context
+            "CreateMountContextParams",
+            "MountContextResult",
+            "MountContext",
+            "PipelineMiddleware",
+            "Pipeline",
+
+            // 5. Component Factory & Presets
+            "BasePluginOption",
+            "KnownPluginOptions",
+            "PluginOptions",
+            "ComponentFactoryOptions",
+            "ComponentFactory",
+            "PluginManifestEntry",
+            "PresetDefinition",
+            "TestFrameworkPresets",
+          ],
+        },
+      ],
+      "jsdoc/require-param": "warn",
+      "jsdoc/require-param-type": "warn",
+      "jsdoc/require-returns": "warn",
+      "jsdoc/require-returns-type": "warn",
+
       "prettier/prettier": "error",
 
       "no-unused-vars": "off",

@@ -10,9 +10,9 @@ export function createTestFramework({ presets = {} } = {}) {
      * Creates a test wrapper for a component with passed props and mount options.
      *
      * @param {import('vue').Component} component - Vue Component for testing.
-     * @param {Object} [defaultProps={}] - Default props for the component.
+     * @param {object} [defaultProps={}] - Default props for the component.
      * @param {ComponentFactoryOptions} [defaultMountOptions={}] - Default mounting options (global, plugins, etc.).
-     * @param {Object} [defaultSlots={}] - Default slots to pass into component.
+     * @param {object} [defaultSlots={}] - Default slots to pass into component.
      * @returns {ComponentFactory}
      * Returns a function that mounts the component with merged props and mount options.
      */

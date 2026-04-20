@@ -10,6 +10,10 @@ function isObject(item) {
 /**
  * Deep merge: objects are merged, arrays are combined (without duplicates),
  * primitives are replaced.
+ *
+ * @param {any} target - The target object or array to merge into.
+ * @param {any} source - The source object or array to merge from.
+ * @returns {any} The merged result.
  */
 export function deepMerge(target, source) {
   if (!isObject(target) || !isObject(source)) {

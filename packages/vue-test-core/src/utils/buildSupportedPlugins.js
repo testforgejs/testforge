@@ -1,5 +1,5 @@
 /**
- * @param {Object} preset
+ * @param {PresetDefinition} preset
  * @returns {SupportedPluginsMap}
  */
 export function buildSupportedPlugins(preset) {

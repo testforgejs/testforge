@@ -27,6 +27,7 @@
     "babel-jest": "^30.3.0",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.5.0",
     "jest": "^30.3.0",
