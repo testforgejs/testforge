@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:jest": "jest",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "Roman Levchenko",
@@ -19,6 +20,8 @@
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.2",
     "@changesets/cli": "^2.31.0",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^10.0.1",
     "@pinia/testing": "^1.0.3",
     "@types/jest": "^30.0.0",
@@ -30,8 +33,10 @@
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.5.0",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
+    "lint-staged": "^16.4.0",
     "pinia": "^3.0.4",
     "prettier": "^3.8.3",
     "tsup": "^8.5.1",
@@ -44,5 +49,8 @@
   },
   "dependencies": {
     "happy-dom": "^20.9.0"
+  },
+  "lint-staged": {
+    "*.{js,mjs,ts}": "eslint --fix"
   }
 }
