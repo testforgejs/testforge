@@ -8,6 +8,7 @@ export default defineConfig({
   external: [
     "vue",
     "pinia",
+    "vue-i18n",
     "vue-router",
     "@vue/test-utils",
     "@pinia/testing",
