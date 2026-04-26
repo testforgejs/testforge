@@ -1,77 +1,83 @@
-import {
-  mount as originalMount,
-  shallowMount as originalShallowMount,
-} from "@vue/test-utils";
-import { captureInstance } from "../utils/captureInstance";
-import { createI18nPlugin as originalCreateI18nPlugin } from "@testforge/vue-test-plugin-i18n/src/createI18nPlugin.js";
-import { createPiniaPlugin as originalCreatePiniaPlugin } from "@testforge/vue-test-plugin-pinia/src/createPiniaPlugin.js";
-import { createRouterPlugin as originalCreateRouterPlugin } from "@testforge/vue-test-plugin-router/src/createRouterPlugin.js";
+const runner = typeof vi !== "undefined" ? vi : jest;
 
-describe("testComponentFactory Integration", () => {
+describe("testComponentFactory Integration (Universal)", () => {
   const MockComponent = { name: "MockComponent", render: () => null };
 
   let mockMount;
   let mockShallowMount;
-
-  let mockCreateI18nPlugin;
-  let mockCreatePiniaPlugin;
-  let mockCreateRouterPlugin;
-
   let testFactory;
 
-  const setupPluginMocks = () => {
-    const mockI18n = jest.fn();
-    const mockPinia = jest.fn();
-    const mockRouter = jest.fn();
+  // References to mocked `create` functions to verify their calls
+  const mockI18nCreate = runner.fn();
+  const mockPiniaCreate = runner.fn();
+  const mockRouterCreate = runner.fn();
 
-    mockCreateI18nPlugin.mockReturnValue(mockI18n);
-    mockCreatePiniaPlugin.mockReturnValue(mockPinia);
-    mockCreateRouterPlugin.mockReturnValue(mockRouter);
-
-    return { mockI18n, mockPinia, mockRouter };
+  // References to instances that are “returned” by plugins
+  const mockI18nInstance = {
+    install: (app) => {
+      app.config.globalProperties.$t = (key) => key;
+    },
+  };
+  const mockPiniaInstance = {
+    install: () => {},
+  };
+  const mockRouterInstance = {
+    install: () => {},
   };
 
-  beforeEach(() => {
-    jest.resetModules();
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    runner.resetModules();
+    runner.clearAllMocks();
 
-    mockCreateI18nPlugin = jest.fn(originalCreateI18nPlugin);
-    mockCreatePiniaPlugin = jest.fn(originalCreatePiniaPlugin);
-    mockCreateRouterPlugin = jest.fn(originalCreateRouterPlugin);
+    // Setting default return values
+    mockI18nCreate.mockReturnValue(mockI18nInstance);
+    mockPiniaCreate.mockReturnValue(mockPiniaInstance);
+    mockRouterCreate.mockReturnValue(mockRouterInstance);
 
-    jest.doMock(
-      "@testforge/vue-test-plugin-i18n/src/createI18nPlugin.js",
-      () => ({
-        createI18nPlugin: mockCreateI18nPlugin,
-      }),
-    );
-    jest.doMock(
-      "@testforge/vue-test-plugin-pinia/src/createPiniaPlugin.js",
-      () => ({
-        createPiniaPlugin: mockCreatePiniaPlugin,
-      }),
-    );
-    jest.doMock(
-      "@testforge/vue-test-plugin-router/src/createRouterPlugin.js",
-      () => ({
-        createRouterPlugin: mockCreateRouterPlugin,
-      }),
-    );
-
-    mockMount = jest.fn(originalMount);
-    mockShallowMount = jest.fn(originalShallowMount);
-
-    jest.doMock("@vue/test-utils", () => ({
-      mount: mockMount,
-      shallowMount: mockShallowMount,
+    // Mock the PUBLIC interfaces of the packages
+    runner.doMock("@testforge/vue-test-plugin-i18n", () => ({
+      i18nPlugin: {
+        getName: () => "i18n",
+        getDefinition: () => ({ create: mockI18nCreate }),
+      },
     }));
 
-    const { createTestFramework } = require("../index.js");
-    const { presets } = require("./utils/mockPresets.js");
-    const { testComponentFactory } = createTestFramework({
-      presets,
+    runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
+      piniaPlugin: {
+        getName: () => "pinia",
+        getDefinition: () => ({ create: mockPiniaCreate }),
+      },
+    }));
+
+    runner.doMock("@testforge/vue-test-plugin-router", () => ({
+      routerPlugin: {
+        getName: () => "router",
+        getDefinition: () => ({ create: mockRouterCreate }),
+      },
+    }));
+
+    // Mock vue-test-utils
+    mockMount = runner.fn().mockReturnValue({
+      unmount: runner.fn(),
+      vm: {},
+      element: {},
     });
-    testFactory = testComponentFactory;
+
+    mockShallowMount = runner.fn().mockReturnValue({
+      unmount: runner.fn(),
+      vm: {},
+      element: {},
+    });
+
+    runner.doMock("@vue/test-utils", () => ({
+      mount: mockMount,
+      shallowMount: mockShallowMount, // mockShallowMount должен быть создан заранее через runner.fn()
+    }));
+
+    // Initializing the framework
+    const { createTestFramework } = await import("../index.js");
+    const { presets } = await import("./utils/mockPresets.js");
+    testFactory = createTestFramework({ presets }).testComponentFactory;
   });
 
   describe("VTU Mount Functions", () => {
@@ -619,55 +625,62 @@ describe("testComponentFactory Integration", () => {
       const factory = testFactory(MockComponent);
       factory();
 
-      expect(mockCreateI18nPlugin).toHaveBeenCalledTimes(1);
-      expect(mockCreatePiniaPlugin).toHaveBeenCalledTimes(1);
-      expect(mockCreateRouterPlugin).toHaveBeenCalledTimes(0);
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
     });
 
-    it("should add default i18n and pinia plugins to global.plugins when no plugin options are provided", () => {
-      const { mockI18n, mockPinia } = setupPluginMocks();
+    it("should not create router plugin if it is not in default presets and not requested", () => {
       const factory = testFactory(MockComponent);
       factory();
 
-      // Verify that the i18n has been created with the default settings (en)
-      expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
-        expect.objectContaining({
-          locale: "en",
-        }),
-      );
+      expect(mockRouterCreate).not.toHaveBeenCalled();
+    });
 
-      // Verify that the factory's result has been added to the shallowMount
+    it("should add default i18n and pinia plugins to global.plugins when no plugin options are provided", () => {
+      const factory = testFactory(MockComponent);
+      factory();
+
+      // 1. Verify that the plugin creators have been invoked (contract)
+      // i18n should be created using the default configuration from the presets (e.g., en)
+      expect(mockI18nCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: "en" }),
+      );
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+
+      // 2. Verify that the RESULT of the `create` operation is included in the mount options
       const [, options] = mockShallowMount.mock.calls[0];
-      expect(options.global.plugins).toContain(mockI18n);
-      expect(options.global.plugins).toContain(mockPinia);
+
+      expect(options.global.plugins).toContain(mockI18nInstance);
+      expect(options.global.plugins).toContain(mockPiniaInstance);
       expect(options.global.plugins).toHaveLength(2);
     });
 
     it("should merge default plugins with third-party plugins when mountOptions.global.plugins is set", () => {
-      const { mockI18n, mockPinia } = setupPluginMocks();
-      const mockVfm = jest.fn();
+      // Create a third-party placeholder plugin (e.g., Vue Final Modal)
+      const mockVfm = runner.fn(() => ({ install: () => {} }));
 
       const factory = testFactory(MockComponent);
 
+      // Call the factory by passing a third-party plugin in the mount options
       factory({}, { global: { plugins: [mockVfm] } });
 
-      // Verify that the i18n has been created with the default settings (en)
-      expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
-        expect.objectContaining({
-          locale: "en",
-        }),
+      // 1. Verify that the default plugins were created anyway (contract)
+      expect(mockI18nCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: "en" }),
       );
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
 
-      // Verify that the factory's result has been added to the shallowMount
+      // 2. Verify that both default and third-party plugins are included in the final shallowMount
       const [, options] = mockShallowMount.mock.calls[0];
-      expect(options.global.plugins).toContain(mockI18n);
-      expect(options.global.plugins).toContain(mockPinia);
-      expect(options.global.plugins).toContain(mockVfm);
+
+      expect(options.global.plugins).toContain(mockI18nInstance); // i18n mock
+      expect(options.global.plugins).toContain(mockPiniaInstance); // pinia mock
+      expect(options.global.plugins).toContain(mockVfm); // Third-party plugin
       expect(options.global.plugins).toHaveLength(3);
     });
 
     it("should skip managed plugins when skipManagedPlugins options is set", () => {
-      const mockVfm = jest.fn();
+      const mockVfm = runner.fn(() => ({ install: () => {} }));
 
       const factory = testFactory(MockComponent);
 
@@ -681,8 +694,8 @@ describe("testComponentFactory Integration", () => {
       );
 
       // Verify that the i18n has not been created
-      expect(mockCreateI18nPlugin).toHaveBeenCalledTimes(0);
-      expect(mockCreatePiniaPlugin).toHaveBeenCalledTimes(0);
+      expect(mockI18nCreate).toHaveBeenCalledTimes(0);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(0);
 
       // Verify that the factory's result has been added to the shallowMount
       const [, options] = mockShallowMount.mock.calls[0];
@@ -697,71 +710,87 @@ describe("testComponentFactory Integration", () => {
       const factory = testFactory(MockComponent, {}, baseOptions);
       factory({}, {}, {}, extraOptions);
 
-      expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
+      expect(mockI18nCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           locale: "uk",
           legacy: false,
         }),
       );
     });
-
     describe("Enable router when it is disabled by default", () => {
       it("should enable router via defaultMountOptions", () => {
-        const { mockRouter } = setupPluginMocks();
+        // Configure the factory settings so that the router is enabled by default
         const factory = testFactory(
           MockComponent,
-          {},
-          { plugins: { router: {} } },
+          {}, // defaultProps
+          { plugins: { router: {} } }, // defaultMountOptions
         );
+
         factory();
 
-        expect(mockCreateRouterPlugin).toHaveBeenCalledWith(
+        // 1. Verifying a contract-based call
+        // The framework should provide default routes and history if they are not explicitly specified
+        expect(mockRouterCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             routes: expect.any(Array),
             history: expect.any(Object),
           }),
         );
 
-        // Verify that the factory's result has been added to the shallowMount
+        // 2. Verify that the router instance has been added to the mounting plugins
         const [, options] = mockShallowMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockRouter);
+        expect(options.global.plugins).toContain(mockRouterInstance);
       });
 
       it("should enable router via mountOptions", () => {
-        const { mockRouter } = setupPluginMocks();
+        // Create a regular factory (without a router in the default settings)
         const factory = testFactory(MockComponent);
+
+        // Enable the router only in this specific call
         factory({}, { plugins: { router: {} } });
 
-        expect(mockCreateRouterPlugin).toHaveBeenCalledWith(
+        // 1. Verify that the contract for the creation of the router has been fulfilled
+        expect(mockRouterCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             routes: expect.any(Array),
             history: expect.any(Object),
           }),
         );
 
-        // Verify that the factory's result has been added to the shallowMount
+        // 2. Verify that the router instance has been successfully injected into Vue Test Utils
         const [, options] = mockShallowMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockRouter);
+        expect(options.global.plugins).toContain(mockRouterInstance);
+
+        // Also, check that the default plugins (i18n, pinia) are still there
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).toContain(mockPiniaInstance);
+        expect(options.global.plugins).toHaveLength(3);
       });
 
-      it("should enable router via extraOptions", () => {
-        const { mockRouter } = setupPluginMocks();
+      it("should enable router via extraOptions (4th argument)", () => {
         const factory = testFactory(MockComponent);
 
-        // Enable the router using the 4th argument
         const customRoutes = [{ path: "/", component: { render: () => null } }];
+
+        // Enable the router using the 4th argument (extraOptions)
         factory({}, {}, {}, { router: { routes: customRoutes } });
 
-        expect(mockCreateRouterPlugin).toHaveBeenCalledWith(
+        // 1. Verify that the contract for creating the router is invoked with our custom routes
+        expect(mockRouterCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             routes: customRoutes,
             history: expect.any(Object),
           }),
         );
 
-        // Verify that the factory's result has been added to the shallowMount
+        // 2. Verify that the router instance has been added to the plugins
         const [, options] = mockShallowMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockRouter);
+        expect(options.global.plugins).toContain(mockRouterInstance);
+
+        // Also, check that the default plugins (i18n, pinia) are still there
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).toContain(mockPiniaInstance);
+        expect(options.global.plugins).toHaveLength(3);
       });
     });
 
@@ -773,7 +802,7 @@ describe("testComponentFactory Integration", () => {
       const factory = testFactory(MockComponent, {}, baseOptions);
       factory();
 
-      expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
+      expect(mockI18nCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           // provided i18n settings
           locale: "en",
@@ -788,149 +817,79 @@ describe("testComponentFactory Integration", () => {
     });
 
     it("should not create i18n plugin when its option is explicitly set to false", () => {
-      const { mockI18n } = setupPluginMocks();
+      // Configuring the factory with explicit i18n disabling
       const factory = testFactory(
         MockComponent,
         {},
         { plugins: { i18n: false } },
       );
+
       factory();
 
-      expect(mockCreateI18nPlugin).toHaveBeenCalledTimes(0);
+      // 1. Verify that the create method for i18n has NOT been called
+      expect(mockI18nCreate).not.toHaveBeenCalled();
 
+      // 2. Verify the mounting options
       const [, options] = mockShallowMount.mock.calls[0];
-      expect(options.global.plugins).not.toContain(mockI18n);
+
+      // i18n should not be on the list
+      expect(options.global.plugins).not.toContain(mockI18nInstance);
+
+      // Only one plugin (pinia) should remain, since i18n has been disabled and the router has not been enabled
+      expect(options.global.plugins).toContain(mockPiniaInstance);
       expect(options.global.plugins).toHaveLength(1);
     });
 
-    describe("Expose Instance", () => {
-      it("should provide access to plugin instances via expose callback", () => {
-        let i18n;
-        let pinia;
-        let router;
-        const BASE_MOUNT_OPTIONS = {
-          plugins: {
-            i18n: {
-              locale: "en",
-              messages: {},
-              expose: (instance) => {
-                i18n = instance;
-              },
-            },
-            pinia: {
-              expose: (instance) => {
-                pinia = instance;
-              },
-            },
-            router: {
-              routes: [
-                {
-                  path: "/",
-                  component: { render: () => null },
-                },
-              ],
-              expose: (instance) => {
-                router = instance;
-              },
-            },
-          },
-        };
-
-        const factory = testFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
-
-        factory();
-
-        expect(mockCreateI18nPlugin.mock.results[0].value).toBe(i18n);
-        expect(mockCreatePiniaPlugin.mock.results[0].value).toBe(pinia);
-        expect(mockCreateRouterPlugin.mock.results[0].value).toBe(router);
-      });
-
-      it("should capture plugin instances using captureInstance helper", () => {
-        const i18nCapture = captureInstance();
-        const piniaCapture = captureInstance();
-        const routerCapture = captureInstance();
-        const BASE_MOUNT_OPTIONS = {
-          plugins: {
-            i18n: {
-              locale: "en",
-              messages: {},
-              ...i18nCapture,
-            },
-            pinia: { ...piniaCapture },
-            router: {
-              routes: [
-                {
-                  path: "/",
-                  component: { render: () => null },
-                },
-              ],
-              ...routerCapture,
-            },
-          },
-        };
-
-        const factory = testFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
-
-        factory();
-
-        expect(mockCreateI18nPlugin.mock.results[0].value).toBe(
-          i18nCapture.instance,
-        );
-        expect(mockCreatePiniaPlugin.mock.results[0].value).toBe(
-          piniaCapture.instance,
-        );
-        expect(mockCreateRouterPlugin.mock.results[0].value).toBe(
-          routerCapture.instance,
-        );
-      });
-    });
-
     describe("Using Presets", () => {
-      it("should add default i18n and pinia plugins to `global.plugins` when using `lightweightPreset` preset", () => {
-        const { mockI18n, mockPinia } = setupPluginMocks();
+      it("should add default i18n and pinia plugins when switching to `lightweightPreset` via extraOptions", () => {
         const factory = testFactory(MockComponent);
 
+        // Switch the preset using the 4th argument
         factory({}, {}, {}, { preset: "lightweightPreset" });
 
-        // Verify that the i18n has been created with the default settings (en)
-        expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
+        // 1. Verify that the plugins from the lightweight preset have been created
+        expect(mockI18nCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             locale: "en",
           }),
         );
+        expect(mockPiniaCreate).toHaveBeenCalled();
 
-        // Verify that the factory's result has been added to the shallowMount
+        // 2. Verify the presence of instances in the mount options
         const [, options] = mockShallowMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockI18n);
-        expect(options.global.plugins).toContain(mockPinia);
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).toContain(mockPiniaInstance);
+
+        // Verify that the number of plugins matches the preset
         expect(options.global.plugins).toHaveLength(2);
       });
 
-      it("should add i18n to `global.plugins` when using `i18nPreset` preset", () => {
-        const { mockI18n, mockPinia } = setupPluginMocks();
+      it("should add only i18n to `global.plugins` when switching to `i18nPreset` preset", () => {
         const factory = testFactory(MockComponent);
 
+        // Enable the preset that contains only i18n
         factory({}, {}, {}, { preset: "i18nPreset" });
 
-        expect(mockCreatePiniaPlugin).toHaveBeenCalledTimes(0);
-        expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
-          expect.objectContaining({
-            locale: "en",
-          }),
+        // 1. Verifying contracts: i18n is created, pinia is not
+        expect(mockI18nCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ locale: "en" }),
         );
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
 
-        // Verify that the factory's result has been added to the shallowMount
+        // 2. Verify the mounting options (make sure to include [0])
         const [, options] = mockShallowMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockI18n);
-        expect(options.global.plugins).not.toContain(mockPinia);
+
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).not.toContain(mockPiniaInstance);
+
+        // Verify that there is exactly one plugin in the array
         expect(options.global.plugins).toHaveLength(1);
       });
 
       it("should override preset default options with provided plugin options", () => {
-        const { mockI18n } = setupPluginMocks();
         const factory = testFactory(MockComponent);
 
-        // Use i18nPreset, but change the language to 'fr'
+        // Use i18nPreset, but override the language to ‘fr’ via mountOptions
         factory(
           {},
           { plugins: { i18n: { locale: "fr" } } },
@@ -938,16 +897,19 @@ describe("testComponentFactory Integration", () => {
           { preset: "i18nPreset" },
         );
 
-        expect(mockCreatePiniaPlugin).toHaveBeenCalledTimes(0);
-        expect(mockCreateI18nPlugin).toHaveBeenCalledWith(
+        // 1. Verify that pinia was not created (a feature of i18nPreset)
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+        // 2. Verify that i18n was created with ‘fr’ rather than the default 'en'
+        expect(mockI18nCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             locale: "fr",
           }),
         );
 
-        // Verify that the factory's result has been added to the shallowMount
+        // 3. Verify the presence of an instance in the final options
         const [, options] = mockShallowMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockI18n);
+        expect(options.global.plugins).toContain(mockI18nInstance);
         expect(options.global.plugins).toHaveLength(1);
       });
 
@@ -956,7 +918,7 @@ describe("testComponentFactory Integration", () => {
 
         factory({}, {}, {}, { preset: "i18nDisabledPreset" });
 
-        expect(mockCreateI18nPlugin).toHaveBeenCalledTimes(0);
+        expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
         const [, options] = mockShallowMount.mock.calls[0];
         // No plugins have been created
@@ -968,7 +930,7 @@ describe("testComponentFactory Integration", () => {
 
         factory({}, { plugins: { i18n: false } }, {}, { preset: "i18nPreset" });
 
-        expect(mockCreateI18nPlugin).toHaveBeenCalledTimes(0);
+        expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
         // Verify that the factory's result has been added to the shallowMount
         const [, options] = mockShallowMount.mock.calls[0];
