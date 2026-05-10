@@ -1,4 +1,4 @@
-import { deepMerge } from "../../../utils/deepMerge.js";
+import { mergeConfigs } from "../../../utils/mergeConfigs.js";
 import { mergeResult } from "../../state/mergeResult.js";
 
 /**
@@ -8,7 +8,7 @@ export const withGlobal = (ctx) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   return mergeResult(ctx, {
-    global: deepMerge(
+    global: mergeConfigs(
       extraOptions.skipDefaultOptions ? {} : defaultMountOptions.global || {},
       mountOptions.global || {},
     ),

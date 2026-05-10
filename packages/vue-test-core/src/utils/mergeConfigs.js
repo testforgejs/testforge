@@ -8,14 +8,22 @@ function isObject(item) {
 }
 
 /**
- * Deep merge: objects are merged, arrays are combined (without duplicates),
- * primitives are replaced.
+ * IMPORTANT CONTRACT:
+ *
+ * This function performs selective recursive merge WITHOUT deep cloning.
+ *
+ * - Objects are merged only when both sides contain the same key.
+ * - Objects that are not involved in merge keep their original references.
+ * - Source objects are reused when target lacks the key.
+ * - Primitives are replaced.
+ *
+ * This behavior is intentional and relied upon by the pipeline.
  *
  * @param {any} target - The target object or array to merge into.
  * @param {any} source - The source object or array to merge from.
  * @returns {any} The merged result.
  */
-export function deepMerge(target, source) {
+export function mergeConfigs(target, source) {
   if (!isObject(target) || !isObject(source)) {
     return Array.isArray(target) && Array.isArray(source)
       ? [...new Set([...target, ...source])]
@@ -31,7 +39,7 @@ export function deepMerge(target, source) {
     if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
       output[key] = [...new Set([...targetValue, ...sourceValue])];
     } else if (isObject(targetValue) && isObject(sourceValue)) {
-      output[key] = deepMerge(targetValue, sourceValue);
+      output[key] = mergeConfigs(targetValue, sourceValue);
     } else {
       output[key] = sourceValue;
     }

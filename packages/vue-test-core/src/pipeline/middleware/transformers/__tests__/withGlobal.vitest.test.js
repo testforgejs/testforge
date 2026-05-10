@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../../utils/deepMerge.js", () => ({
-  deepMerge: vi.fn(),
+vi.mock("../../../../utils/mergeConfigs.js", () => ({
+  mergeConfigs: vi.fn(),
 }));
 
 vi.mock("../../../state/mergeResult.js", () => ({
   mergeResult: vi.fn(),
 }));
 
-import { deepMerge } from "../../../../utils/deepMerge.js";
+import { mergeConfigs } from "../../../../utils/mergeConfigs.js";
 import { mergeResult } from "../../../state/mergeResult.js";
 import { withGlobal } from "../withGlobal.js";
 
@@ -24,12 +24,12 @@ describe("withGlobal middleware", () => {
       extraOptions: { skipDefaultOptions: false },
     };
 
-    deepMerge.mockReturnValue({ merged: true });
+    mergeConfigs.mockReturnValue({ merged: true });
     mergeResult.mockReturnValue(ctx);
 
     withGlobal(ctx);
 
-    expect(deepMerge).toHaveBeenCalledWith({ a: 1 }, { b: 2 });
+    expect(mergeConfigs).toHaveBeenCalledWith({ a: 1 }, { b: 2 });
 
     expect(mergeResult).toHaveBeenCalledWith(ctx, {
       global: { merged: true },
@@ -43,12 +43,12 @@ describe("withGlobal middleware", () => {
       extraOptions: { skipDefaultOptions: true },
     };
 
-    deepMerge.mockReturnValue({ merged: true });
+    mergeConfigs.mockReturnValue({ merged: true });
     mergeResult.mockReturnValue(ctx);
 
     withGlobal(ctx);
 
-    expect(deepMerge).toHaveBeenCalledWith({}, { b: 2 });
+    expect(mergeConfigs).toHaveBeenCalledWith({}, { b: 2 });
   });
 
   it("should handle missing global fields safely", () => {
@@ -58,12 +58,12 @@ describe("withGlobal middleware", () => {
       extraOptions: { skipDefaultOptions: false },
     };
 
-    deepMerge.mockReturnValue({});
+    mergeConfigs.mockReturnValue({});
     mergeResult.mockReturnValue(ctx);
 
     withGlobal(ctx);
 
-    expect(deepMerge).toHaveBeenCalledWith({}, {});
+    expect(mergeConfigs).toHaveBeenCalledWith({}, {});
   });
 
   it("should return result of mergeResult", () => {
@@ -75,7 +75,7 @@ describe("withGlobal middleware", () => {
 
     const mergedCtx = { merged: true };
 
-    deepMerge.mockReturnValue({});
+    mergeConfigs.mockReturnValue({});
     mergeResult.mockReturnValue(mergedCtx);
 
     const result = withGlobal(ctx);
