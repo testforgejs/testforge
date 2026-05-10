@@ -1,5 +1,5 @@
 import { deepMerge } from "../../../utils/deepMerge.js";
-import { mergeResult } from "../helpers/mergeResult.js";
+import { mergeResult } from "../../state/mergeResult.js";
 
 /**
  * @type {PipelineMiddleware}

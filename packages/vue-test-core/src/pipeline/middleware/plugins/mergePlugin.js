@@ -1,4 +1,4 @@
-import { mergeResult } from "./mergeResult.js";
+import { mergeResult } from "../../state/mergeResult.js";
 
 /**
  * Safely merges configuration for a specific plugin into the pipeline context.

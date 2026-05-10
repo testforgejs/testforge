@@ -1,4 +1,4 @@
-import { mergeResult } from "../helpers/mergeResult.js";
+import { mergeResult } from "../../state/mergeResult.js";
 
 /**
  * Processes only flat configuration settings (excluding global and plugins)

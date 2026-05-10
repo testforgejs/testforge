@@ -10,8 +10,8 @@ import {
   withGlobal,
   withPluginsBase,
 } from "./middleware/transformers";
-import { createPluginsMiddlewares } from "./middleware/helpers/createPluginsMiddlewares";
-import { createPluginsMergeMiddlewares } from "./middleware/helpers/createPluginsMergeMiddlewares";
+import { createPluginsMiddlewares } from "./middleware/plugins/createPluginsMiddlewares.js";
+import { createPluginsMergeMiddlewares } from "./middleware/plugins/createPluginsMergeMiddlewares.js";
 
 /**
  * @param {MountContext} ctx

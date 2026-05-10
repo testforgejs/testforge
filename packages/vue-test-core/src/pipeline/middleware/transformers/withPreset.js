@@ -1,4 +1,4 @@
-import { mergeResult } from "../helpers/mergeResult.js";
+import { mergeResult } from "../../state/mergeResult.js";
 
 /**
  * Applies plugin preset before other plugin middlewares.
