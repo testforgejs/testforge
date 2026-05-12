@@ -19,7 +19,7 @@
  *   plugins: { i18n: { locale: 'en' } }
  * })
  */
-export function mergeResult(ctx, patch) {
+export function patchResultState(ctx, patch) {
   ctx.result.mountOptions = {
     ...ctx.result.mountOptions,
     ...(patch.mountOptions || {}),

@@ -1,5 +1,5 @@
 import { mergeConfigs } from "../../../utils/mergeConfigs.js";
-import { mergeResult } from "../../state/mergeResult.js";
+import { patchResultState } from "../../state/patchResultState.js";
 
 /**
  * @type {PipelineMiddleware}
@@ -7,7 +7,7 @@ import { mergeResult } from "../../state/mergeResult.js";
 export const withGlobal = (ctx) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
-  return mergeResult(ctx, {
+  return patchResultState(ctx, {
     global: mergeConfigs(
       extraOptions.skipDefaultOptions ? {} : defaultMountOptions.global || {},
       mountOptions.global || {},

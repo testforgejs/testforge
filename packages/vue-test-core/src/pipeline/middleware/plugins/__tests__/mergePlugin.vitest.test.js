@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../state/mergeResult.js", () => ({
-  mergeResult: vi.fn(),
+vi.mock("../../../state/patchResultState.js", () => ({
+  patchResultState: vi.fn(),
 }));
 
-import { mergeResult } from "../../../state/mergeResult.js";
+import { patchResultState } from "../../../state/patchResultState.js";
 import { mergePlugin } from "../mergePlugin.js";
 
 describe("mergePlugin", () => {
@@ -24,11 +24,11 @@ describe("mergePlugin", () => {
     const config = { b: 2 };
     const mergedCtx = { merged: true };
 
-    mergeResult.mockReturnValue(mergedCtx);
+    patchResultState.mockReturnValue(mergedCtx);
 
     const result = mergePlugin(ctx, "pinia", config);
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       plugins: {
         pinia: {
           a: 1,
@@ -47,11 +47,11 @@ describe("mergePlugin", () => {
       },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     mergePlugin(ctx, "pinia", { a: 1 });
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       plugins: {
         pinia: { a: 1 },
       },
@@ -68,11 +68,11 @@ describe("mergePlugin", () => {
       },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     mergePlugin(ctx, "pinia", { b: 2 });
 
-    const [, payload] = mergeResult.mock.calls[0];
+    const [, payload] = patchResultState.mock.calls[0];
 
     expect(payload.plugins.pinia).not.toBe(existing);
   });
@@ -81,7 +81,7 @@ describe("mergePlugin", () => {
     const ctx = { result: { plugins: {} } };
     const mergedCtx = { ok: true };
 
-    mergeResult.mockReturnValue(mergedCtx);
+    patchResultState.mockReturnValue(mergedCtx);
 
     const result = mergePlugin(ctx, "pinia", {});
 

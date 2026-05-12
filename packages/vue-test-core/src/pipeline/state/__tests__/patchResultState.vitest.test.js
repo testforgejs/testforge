@@ -1,4 +1,4 @@
-import { mergeResult } from "../mergeResult";
+import { patchResultState } from "../patchResultState.js";
 
 const createCtx = () => ({
   result: {
@@ -9,10 +9,10 @@ const createCtx = () => ({
   },
 });
 
-describe("mergeResult", () => {
+describe("patchResultState", () => {
   test("should return the same ctx reference", () => {
     const ctx = createCtx();
-    const returned = mergeResult(ctx, {});
+    const returned = patchResultState(ctx, {});
 
     expect(returned).toBe(ctx);
   });
@@ -21,7 +21,7 @@ describe("mergeResult", () => {
     const ctx = createCtx();
     const snapshot = JSON.parse(JSON.stringify(ctx.result));
 
-    mergeResult(ctx, {});
+    patchResultState(ctx, {});
 
     expect(ctx.result).toEqual(snapshot);
   });
@@ -29,7 +29,7 @@ describe("mergeResult", () => {
   test("should merge mountOptions correctly", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       mountOptions: { b: 2 },
     });
 
@@ -39,7 +39,7 @@ describe("mergeResult", () => {
   test("should merge plugins correctly", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       plugins: { p2: false },
     });
 
@@ -49,7 +49,7 @@ describe("mergeResult", () => {
   test("should merge pluginPresets correctly", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       pluginPresets: { presetB: false },
     });
 
@@ -62,7 +62,7 @@ describe("mergeResult", () => {
   test("should merge global correctly", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       global: { g2: 2 },
     });
 
@@ -72,7 +72,7 @@ describe("mergeResult", () => {
   test("should not affect other sections when patching one section", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       plugins: { p2: true },
     });
 
@@ -84,7 +84,7 @@ describe("mergeResult", () => {
   test("should ignore unknown fields in patch", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       unknown: { x: 1 },
     });
 
@@ -104,7 +104,7 @@ describe("mergeResult", () => {
 
     const snapshot = JSON.parse(JSON.stringify(patch));
 
-    mergeResult(ctx, patch);
+    patchResultState(ctx, patch);
 
     expect(patch).toEqual(snapshot);
   });
@@ -112,7 +112,7 @@ describe("mergeResult", () => {
   test("should preserve already initialized result sections", () => {
     const ctx = createCtx();
 
-    mergeResult(ctx, {
+    patchResultState(ctx, {
       plugins: {},
     });
 

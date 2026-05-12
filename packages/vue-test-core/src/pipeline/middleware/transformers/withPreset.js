@@ -1,4 +1,4 @@
-import { mergeResult } from "../../state/mergeResult.js";
+import { patchResultState } from "../../state/patchResultState.js";
 
 /**
  * Applies plugin preset before other plugin middlewares.
@@ -10,7 +10,7 @@ export const withPreset = (ctx) => {
 
   if (!preset?.defaults) return ctx;
 
-  return mergeResult(ctx, {
+  return patchResultState(ctx, {
     pluginPresets: { ...preset.defaults },
   });
 };

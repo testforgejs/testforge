@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../state/mergeResult.js", () => ({
-  mergeResult: vi.fn(),
+vi.mock("../../../state/patchResultState.js", () => ({
+  patchResultState: vi.fn(),
 }));
 
-import { mergeResult } from "../../../state/mergeResult.js";
+import { patchResultState } from "../../../state/patchResultState.js";
 import { withPluginsBase } from "../withPluginsBase.js";
 
 describe("withPluginsBase middleware", () => {
@@ -32,11 +32,11 @@ describe("withPluginsBase middleware", () => {
     };
 
     const mergedCtx = { merged: true };
-    mergeResult.mockReturnValue(mergedCtx);
+    patchResultState.mockReturnValue(mergedCtx);
 
     const result = withPluginsBase(ctx);
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       plugins: {
         pinia: { enabled: true },
         i18n: { enabled: false },
@@ -53,11 +53,11 @@ describe("withPluginsBase middleware", () => {
       extraOptions: { skipDefaultOptions: true },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withPluginsBase(ctx);
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       plugins: {
         i18n: { enabled: false },
       },
@@ -71,11 +71,11 @@ describe("withPluginsBase middleware", () => {
       extraOptions: { skipDefaultOptions: false },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withPluginsBase(ctx);
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       plugins: {},
     });
   });
@@ -87,11 +87,11 @@ describe("withPluginsBase middleware", () => {
       extraOptions: { skipDefaultOptions: false },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withPluginsBase(ctx);
 
-    const [, payload] = mergeResult.mock.calls[0];
+    const [, payload] = patchResultState.mock.calls[0];
 
     expect(payload.plugins).not.toBe(defaultMountOptions.plugins);
     expect(payload.plugins).not.toBe(mountOptions.plugins);

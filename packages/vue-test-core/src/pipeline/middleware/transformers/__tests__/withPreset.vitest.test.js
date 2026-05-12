@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../state/mergeResult.js", () => ({
-  mergeResult: vi.fn(),
+vi.mock("../../../state/patchResultState.js", () => ({
+  patchResultState: vi.fn(),
 }));
 
-import { mergeResult } from "../../../state/mergeResult.js";
+import { patchResultState } from "../../../state/patchResultState.js";
 import { withPreset } from "../withPreset.js";
 
 describe("withPreset middleware", () => {
@@ -21,7 +21,7 @@ describe("withPreset middleware", () => {
     const result = withPreset(ctx);
 
     expect(result).toBe(ctx);
-    expect(mergeResult).not.toHaveBeenCalled();
+    expect(patchResultState).not.toHaveBeenCalled();
   });
 
   it("should call mergeResult with pluginPresets when preset.defaults exists", () => {
@@ -35,12 +35,12 @@ describe("withPreset middleware", () => {
     };
 
     const mergedCtx = { merged: true };
-    mergeResult.mockReturnValue(mergedCtx);
+    patchResultState.mockReturnValue(mergedCtx);
 
     const result = withPreset(ctx);
 
-    expect(mergeResult).toHaveBeenCalledTimes(1);
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledTimes(1);
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       pluginPresets: {
         pinia: true,
         i18n: false,
@@ -56,7 +56,7 @@ describe("withPreset middleware", () => {
     const result = withPreset(ctx);
 
     expect(result).toBe(ctx);
-    expect(mergeResult).not.toHaveBeenCalled();
+    expect(patchResultState).not.toHaveBeenCalled();
   });
 
   it("should not mutate preset.defaults object", () => {
@@ -65,7 +65,7 @@ describe("withPreset middleware", () => {
       preset: { defaults },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withPreset(ctx);
 

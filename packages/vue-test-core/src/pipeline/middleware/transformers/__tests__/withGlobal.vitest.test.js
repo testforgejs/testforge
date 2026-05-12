@@ -4,12 +4,12 @@ vi.mock("../../../../utils/mergeConfigs.js", () => ({
   mergeConfigs: vi.fn(),
 }));
 
-vi.mock("../../../state/mergeResult.js", () => ({
-  mergeResult: vi.fn(),
+vi.mock("../../../state/patchResultState.js", () => ({
+  patchResultState: vi.fn(),
 }));
 
 import { mergeConfigs } from "../../../../utils/mergeConfigs.js";
-import { mergeResult } from "../../../state/mergeResult.js";
+import { patchResultState } from "../../../state/patchResultState.js";
 import { withGlobal } from "../withGlobal.js";
 
 describe("withGlobal middleware", () => {
@@ -25,13 +25,13 @@ describe("withGlobal middleware", () => {
     };
 
     mergeConfigs.mockReturnValue({ merged: true });
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withGlobal(ctx);
 
     expect(mergeConfigs).toHaveBeenCalledWith({ a: 1 }, { b: 2 });
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       global: { merged: true },
     });
   });
@@ -44,7 +44,7 @@ describe("withGlobal middleware", () => {
     };
 
     mergeConfigs.mockReturnValue({ merged: true });
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withGlobal(ctx);
 
@@ -59,7 +59,7 @@ describe("withGlobal middleware", () => {
     };
 
     mergeConfigs.mockReturnValue({});
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withGlobal(ctx);
 
@@ -76,7 +76,7 @@ describe("withGlobal middleware", () => {
     const mergedCtx = { merged: true };
 
     mergeConfigs.mockReturnValue({});
-    mergeResult.mockReturnValue(mergedCtx);
+    patchResultState.mockReturnValue(mergedCtx);
 
     const result = withGlobal(ctx);
 

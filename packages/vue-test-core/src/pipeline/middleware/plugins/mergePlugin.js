@@ -1,4 +1,4 @@
-import { mergeResult } from "../../state/mergeResult.js";
+import { patchResultState } from "../../state/patchResultState.js";
 
 /**
  * Safely merges configuration for a specific plugin into the pipeline context.
@@ -19,7 +19,7 @@ import { mergeResult } from "../../state/mergeResult.js";
  * mergePlugin(ctx, 'pinia', { someState: 123 })
  */
 export function mergePlugin(ctx, name, config) {
-  return mergeResult(ctx, {
+  return patchResultState(ctx, {
     plugins: {
       [name]: {
         ...(ctx.result.plugins[name] || {}),

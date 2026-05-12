@@ -1,4 +1,4 @@
-import { mergeResult } from "../../state/mergeResult.js";
+import { patchResultState } from "../../state/patchResultState.js";
 
 /**
  * Initializes the base plugin object in the result.
@@ -9,7 +9,7 @@ import { mergeResult } from "../../state/mergeResult.js";
 export const withPluginsBase = (ctx) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
-  return mergeResult(ctx, {
+  return patchResultState(ctx, {
     plugins: {
       ...(extraOptions.skipDefaultOptions
         ? {}

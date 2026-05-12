@@ -1,4 +1,4 @@
-import { mergeResult } from "../../state/mergeResult.js";
+import { patchResultState } from "../../state/patchResultState.js";
 
 /**
  * Initializes the state of the plugins based on the manifest of supported plugins.
@@ -7,7 +7,7 @@ import { mergeResult } from "../../state/mergeResult.js";
 export const withPluginsManifest = (ctx) => {
   const { supportedPlugins } = ctx;
 
-  return mergeResult(ctx, {
+  return patchResultState(ctx, {
     plugins: supportedPlugins,
   });
 };

@@ -1,4 +1,4 @@
-import { mergeResult } from "../../state/mergeResult.js";
+import { patchResultState } from "../../state/patchResultState.js";
 
 /**
  * Processes only flat configuration settings (excluding global and plugins)
@@ -13,7 +13,7 @@ export const withBaseMountOptions = (ctx) => {
   const { global: _mg, plugins: _mp, ...restOverrides } = mountOptions;
 
   // Merge only the “remnants” (flat fields)
-  return mergeResult(ctx, {
+  return patchResultState(ctx, {
     mountOptions: extraOptions.skipDefaultOptions
       ? { ...restOverrides }
       : { ...restDefaults, ...restOverrides },

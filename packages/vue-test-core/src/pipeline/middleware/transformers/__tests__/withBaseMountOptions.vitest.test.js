@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../state/mergeResult.js", () => ({
-  mergeResult: vi.fn(),
+vi.mock("../../../state/patchResultState.js", () => ({
+  patchResultState: vi.fn(),
 }));
 
-import { mergeResult } from "../../../state/mergeResult.js";
+import { patchResultState } from "../../../state/patchResultState.js";
 import { withBaseMountOptions } from "../withBaseMountOptions.js";
 
 describe("withBaseMountOptions middleware", () => {
@@ -34,11 +34,11 @@ describe("withBaseMountOptions middleware", () => {
     };
 
     const mergedCtx = { merged: true };
-    mergeResult.mockReturnValue(mergedCtx);
+    patchResultState.mockReturnValue(mergedCtx);
 
     const result = withBaseMountOptions(ctx);
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       mountOptions: {
         shallow: true, // override
         attachTo: "#app", // from defaults
@@ -56,11 +56,11 @@ describe("withBaseMountOptions middleware", () => {
       extraOptions: { skipDefaultOptions: true },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withBaseMountOptions(ctx);
 
-    expect(mergeResult).toHaveBeenCalledWith(ctx, {
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
       mountOptions: {
         shallow: true,
         attrs: { id: "test" },
@@ -75,11 +75,11 @@ describe("withBaseMountOptions middleware", () => {
       extraOptions: { skipDefaultOptions: false },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withBaseMountOptions(ctx);
 
-    const [, payload] = mergeResult.mock.calls[0];
+    const [, payload] = patchResultState.mock.calls[0];
 
     expect(payload.mountOptions.global).toBeUndefined();
     expect(payload.mountOptions.plugins).toBeUndefined();
@@ -95,7 +95,7 @@ describe("withBaseMountOptions middleware", () => {
       extraOptions: { skipDefaultOptions: false },
     };
 
-    mergeResult.mockReturnValue(ctx);
+    patchResultState.mockReturnValue(ctx);
 
     withBaseMountOptions(ctx);
 
