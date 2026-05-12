@@ -1,5 +1,5 @@
 import { getPluginConfig } from "./getPluginConfig.js";
-import { mergePlugin } from "./mergePlugin.js";
+import { patchPluginState } from "./patchPluginState.js";
 
 /**
  * Creates middleware for a plugin that supports defaults and instances.
@@ -23,6 +23,6 @@ export function createPluginMiddleware(name) {
     // Delete __meta from the config so it doesn't end up in the actual plugin factory
     delete config.__meta;
 
-    return mergePlugin(ctx, name, config);
+    return patchPluginState(ctx, name, config);
   };
 }

@@ -18,7 +18,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  * @example
  * mergePlugin(ctx, 'pinia', { someState: 123 })
  */
-export function mergePlugin(ctx, name, config) {
+export function patchPluginState(ctx, name, config) {
   return patchResultState(ctx, {
     plugins: {
       [name]: {

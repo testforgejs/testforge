@@ -4,12 +4,12 @@ vi.mock("../getPluginConfig.js", () => ({
   getPluginConfig: vi.fn(),
 }));
 
-vi.mock("../mergePlugin.js", () => ({
-  mergePlugin: vi.fn(),
+vi.mock("../patchPluginState.js", () => ({
+  patchPluginState: vi.fn(),
 }));
 
 import { getPluginConfig } from "../getPluginConfig.js";
-import { mergePlugin } from "../mergePlugin.js";
+import { patchPluginState } from "../patchPluginState.js";
 import { createPluginMiddleware } from "../createPluginMiddleware.js";
 
 describe("createPluginMiddleware", () => {
@@ -27,7 +27,7 @@ describe("createPluginMiddleware", () => {
     const result = middleware(ctx);
 
     expect(result).toBe(ctx);
-    expect(mergePlugin).not.toHaveBeenCalled();
+    expect(patchPluginState).not.toHaveBeenCalled();
   });
 
   it("should call mergePlugin with config when enabled", () => {
@@ -35,11 +35,11 @@ describe("createPluginMiddleware", () => {
     const config = { a: 1 };
 
     getPluginConfig.mockReturnValue(config);
-    mergePlugin.mockReturnValue({ merged: true });
+    patchPluginState.mockReturnValue({ merged: true });
 
     const result = middleware(ctx);
 
-    expect(mergePlugin).toHaveBeenCalledWith(ctx, name, config);
+    expect(patchPluginState).toHaveBeenCalledWith(ctx, name, config);
     expect(result).toEqual({ merged: true });
   });
 
@@ -56,7 +56,7 @@ describe("createPluginMiddleware", () => {
     };
 
     getPluginConfig.mockReturnValue(config);
-    mergePlugin.mockReturnValue(ctx);
+    patchPluginState.mockReturnValue(ctx);
 
     middleware(ctx);
 
@@ -72,7 +72,7 @@ describe("createPluginMiddleware", () => {
     const ctx = { extraOptions: {} };
 
     getPluginConfig.mockReturnValue(config);
-    mergePlugin.mockReturnValue(ctx);
+    patchPluginState.mockReturnValue(ctx);
 
     middleware(ctx);
 
