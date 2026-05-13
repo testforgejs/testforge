@@ -4,12 +4,12 @@ vi.mock("../../utils/getActivePreset.js", () => ({
   getActivePreset: vi.fn(),
 }));
 
-vi.mock("../../utils/buildSupportedPlugins.js", () => ({
-  buildSupportedPlugins: vi.fn(),
+vi.mock("../../utils/createSupportedPluginsState.js", () => ({
+  createSupportedPluginsState: vi.fn(),
 }));
 
 import { getActivePreset } from "../../utils/getActivePreset.js";
-import { buildSupportedPlugins } from "../../utils/buildSupportedPlugins.js";
+import { createSupportedPluginsState } from "../../utils/createSupportedPluginsState.js";
 import { createMountContext } from "../createMountContext.js";
 
 describe("createMountContext", () => {
@@ -19,7 +19,7 @@ describe("createMountContext", () => {
 
   it("should create base context structure", () => {
     getActivePreset.mockReturnValue("defaultPreset");
-    buildSupportedPlugins.mockReturnValue({ pinia: true });
+    createSupportedPluginsState.mockReturnValue({ pinia: true });
 
     const ctx = createMountContext({
       defaultMountOptions: { a: 1 },
@@ -35,7 +35,7 @@ describe("createMountContext", () => {
 
   it("should call getActivePreset with correct arguments", () => {
     getActivePreset.mockReturnValue("presetA");
-    buildSupportedPlugins.mockReturnValue({});
+    createSupportedPluginsState.mockReturnValue({});
 
     createMountContext({
       extraOptions: { preset: "presetA" },
@@ -50,7 +50,7 @@ describe("createMountContext", () => {
 
   it("should set preset and supportedPlugins correctly", () => {
     getActivePreset.mockReturnValue("presetA");
-    buildSupportedPlugins.mockReturnValue({ pinia: true });
+    createSupportedPluginsState.mockReturnValue({ pinia: true });
 
     const ctx = createMountContext({
       extraOptions: {},
@@ -63,19 +63,19 @@ describe("createMountContext", () => {
 
   it("should call buildSupportedPlugins with active preset", () => {
     getActivePreset.mockReturnValue("presetX");
-    buildSupportedPlugins.mockReturnValue({});
+    createSupportedPluginsState.mockReturnValue({});
 
     createMountContext({
       presets: {},
       extraOptions: {},
     });
 
-    expect(buildSupportedPlugins).toHaveBeenCalledWith("presetX");
+    expect(createSupportedPluginsState).toHaveBeenCalledWith("presetX");
   });
 
   it("should initialize result with correct structure", () => {
     getActivePreset.mockReturnValue("p");
-    buildSupportedPlugins.mockReturnValue({});
+    createSupportedPluginsState.mockReturnValue({});
 
     const ctx = createMountContext({
       presets: {},
@@ -91,7 +91,7 @@ describe("createMountContext", () => {
 
   it("should work with default parameters", () => {
     getActivePreset.mockReturnValue(undefined);
-    buildSupportedPlugins.mockReturnValue({});
+    createSupportedPluginsState.mockReturnValue({});
 
     const ctx = createMountContext({ presets: {} });
 

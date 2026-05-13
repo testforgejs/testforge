@@ -1,5 +1,5 @@
 import { getActivePreset } from "../utils/getActivePreset.js";
-import { buildSupportedPlugins } from "../utils/buildSupportedPlugins.js";
+import { createSupportedPluginsState } from "../utils/createSupportedPluginsState.js";
 
 /**
  * Creates initial mount context for pipeline processing.
@@ -14,7 +14,7 @@ export function createMountContext({
   presets,
 }) {
   const activePreset = getActivePreset(extraOptions, presets);
-  const supportedPlugins = buildSupportedPlugins(activePreset);
+  const supportedPlugins = createSupportedPluginsState(activePreset);
 
   return {
     defaultMountOptions,
