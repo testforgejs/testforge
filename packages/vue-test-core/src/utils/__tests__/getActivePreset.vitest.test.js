@@ -1,11 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { getActivePreset } from "../getActivePreset.js";
+import * as validateModule from "../validatePreset.js";
+vi.spyOn(validateModule, "validatePreset").mockImplementation(() => {});
 
 describe("getActivePreset", () => {
   const mockPresets = {
     default: { name: "default-preset", manifest: [] },
     custom: { name: "custom-preset", manifest: [] },
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe("when a valid preset is requested", () => {
     it("should return the requested preset by name from extraOptions", () => {
@@ -53,13 +59,41 @@ describe("getActivePreset", () => {
     });
   });
 
+  describe("preset validation contract", () => {
+    it("should call validatePreset with requested preset", () => {
+      getActivePreset({ preset: "custom" }, mockPresets);
+
+      expect(validateModule.validatePreset).toHaveBeenCalledWith(
+        "custom",
+        mockPresets.custom,
+      );
+    });
+
+    it("should call validatePreset for default preset", () => {
+      getActivePreset({}, mockPresets);
+
+      expect(validateModule.validatePreset).toHaveBeenCalledWith(
+        "default",
+        mockPresets.default,
+      );
+    });
+
+    it("should NOT call validatePreset if preset is not found", () => {
+      const emptyPresets = {};
+
+      getActivePreset({}, emptyPresets);
+
+      expect(validateModule.validatePreset).not.toHaveBeenCalled();
+    });
+  });
+
   describe("error handling and edge cases", () => {
     it("should throw an error when the requested preset does not exist", () => {
       const extraOptions = { preset: "non-existent" };
 
       expect(() => {
         getActivePreset(extraOptions, mockPresets);
-      }).toThrow('[withPreset] Requested preset "non-existent" not found');
+      }).toThrow(/Requested preset "non-existent" not found/);
     });
 
     it("should not crash and return default when preset property is explicitly undefined", () => {

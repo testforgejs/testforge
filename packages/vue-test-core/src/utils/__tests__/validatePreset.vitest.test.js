@@ -35,6 +35,31 @@ describe("validatePreset", () => {
         validatePreset("minimal", presetWithoutDefaults),
       ).not.toThrow();
     });
+
+    it("should allow defaults value to be false", () => {
+      const preset = {
+        manifest: [{ module: mockPinia, enabled: true }],
+        defaults: {
+          pinia: false,
+        },
+      };
+
+      expect(() => validatePreset("false-default", preset)).not.toThrow();
+    });
+
+    it("should allow an empty manifest", () => {
+      const preset = { manifest: [] };
+      expect(() => validatePreset("empty", preset)).not.toThrow();
+    });
+
+    it("should allow empty defaults object", () => {
+      const preset = {
+        manifest: [{ module: mockPinia, enabled: true }],
+        defaults: {},
+      };
+
+      expect(() => validatePreset("empty-defaults", preset)).not.toThrow();
+    });
   });
 
   describe("manifest validation", () => {
@@ -117,6 +142,27 @@ describe("validatePreset", () => {
       expect(() => validatePreset("null-value", badValue)).toThrow(
         /Expected Object or false, but received object/,
       );
+    });
+  });
+
+  describe("immutability", () => {
+    it("should not mutate the preset object", () => {
+      const moduleRef = mockPinia;
+      const manifestEntryRef = { module: moduleRef, enabled: true };
+      const defaultsRef = { pinia: { a: 1 } };
+
+      const preset = {
+        manifest: [manifestEntryRef],
+        defaults: defaultsRef,
+      };
+
+      validatePreset("immutability", preset);
+
+      // links should remain the same
+      expect(preset.manifest[0]).toBe(manifestEntryRef);
+      expect(preset.manifest[0].module).toBe(moduleRef);
+      expect(preset.defaults).toBe(defaultsRef);
+      expect(preset.defaults.pinia.a).toBe(1);
     });
   });
 });
