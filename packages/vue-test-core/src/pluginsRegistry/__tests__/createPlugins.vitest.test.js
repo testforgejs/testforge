@@ -2,9 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { createPlugins } from "../createPlugins.js";
 
 describe("createPlugins", () => {
-  // A helper for creating a Mock plugin with hooks
   const createMockPlugin = (name, instance = { id: `inst-${name}` }) => {
-    // Create the definition ONCE
     const definition = {
       beforeCreate: vi.fn((ctx, opts) => ({ ...opts, modified: true })),
       create: vi.fn(() => instance),
@@ -13,91 +11,177 @@ describe("createPlugins", () => {
 
     return {
       getName: () => name,
-      // Always return the same object
       getDefinition: () => definition,
     };
   };
 
-  it("should create plugins based on manifest and options", () => {
-    const mockPinia = createMockPlugin("pinia");
-    const ctx = {
-      preset: {
-        manifest: [{ module: mockPinia, enabled: true }],
-      },
-    };
-    const options = { pinia: { some: "opt" } };
+  // ---------------------------------------------------------------------------
+  // Manifest ↔ Options filtering
+  // ---------------------------------------------------------------------------
+  describe("manifest and options filtering", () => {
+    it("should create plugins only when present in both manifest and options", () => {
+      const mockPinia = createMockPlugin("pinia");
+      const ctx = {
+        preset: { manifest: [{ module: mockPinia, enabled: true }] },
+      };
 
-    const result = createPlugins(options, ctx);
+      const result = createPlugins({ pinia: {} }, ctx);
 
-    const definition = mockPinia.getDefinition();
-
-    // Checking hook calls
-    expect(definition.beforeCreate).toHaveBeenCalledWith(ctx, options.pinia);
-    expect(definition.create).toHaveBeenCalledWith({
-      some: "opt",
-      modified: true,
+      expect(result).toHaveLength(1);
     });
-    expect(definition.afterCreate).toHaveBeenCalledWith(result[0], ctx);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({ id: "inst-pinia" });
+    it("should skip plugins when they are set to false in options", () => {
+      const mockI18n = createMockPlugin("i18n");
+      const ctx = {
+        preset: { manifest: [{ module: mockI18n, enabled: true }] },
+      };
+
+      const result = createPlugins({ i18n: false }, ctx);
+
+      expect(result).toHaveLength(0);
+      expect(mockI18n.getDefinition().create).not.toHaveBeenCalled();
+    });
+
+    it("should ignore options when plugins are not present in the manifest", () => {
+      const mockPinia = createMockPlugin("pinia");
+      const ctx = {
+        preset: { manifest: [{ module: mockPinia, enabled: true }] },
+      };
+
+      const result = createPlugins({ pinia: {}, router: {} }, ctx);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("should skip plugin when options are missing for that plugin", () => {
+      const mockPinia = createMockPlugin("pinia");
+      const ctx = {
+        preset: { manifest: [{ module: mockPinia, enabled: true }] },
+      };
+
+      const result = createPlugins({}, ctx);
+
+      expect(result).toHaveLength(0);
+    });
   });
 
-  it("should skip plugins that are set to false in options", () => {
-    const mockI18n = createMockPlugin("i18n");
-    const ctx = {
-      preset: {
-        manifest: [{ module: mockI18n, enabled: true }],
-      },
-    };
-    const options = { i18n: false }; // Clearly turned off by the user
+  // ---------------------------------------------------------------------------
+  // Plugin lifecycle (beforeCreate → create → afterCreate)
+  // ---------------------------------------------------------------------------
+  describe("plugin lifecycle hooks", () => {
+    it("should run beforeCreate, create and afterCreate in correct order", () => {
+      const mockPinia = createMockPlugin("pinia");
+      const ctx = {
+        preset: { manifest: [{ module: mockPinia, enabled: true }] },
+      };
 
-    const result = createPlugins(options, ctx);
+      const options = { pinia: { some: "opt" } };
+      const result = createPlugins(options, ctx);
 
-    expect(result).toHaveLength(0);
-    expect(mockI18n.getDefinition().create).not.toHaveBeenCalled();
+      const def = mockPinia.getDefinition();
+
+      expect(def.beforeCreate).toHaveBeenCalledWith(ctx, options.pinia);
+      expect(def.create).toHaveBeenCalledWith({
+        some: "opt",
+        modified: true,
+      });
+      expect(def.afterCreate).toHaveBeenCalledWith(result[0], ctx);
+    });
+
+    it("should pass original options to create when beforeCreate is missing", () => {
+      const definition = { create: vi.fn(() => ({})) };
+      const plugin = {
+        getName: () => "noBefore",
+        getDefinition: () => definition,
+      };
+
+      const ctx = {
+        preset: { manifest: [{ module: plugin, enabled: true }] },
+      };
+
+      createPlugins({ noBefore: { x: 1 } }, ctx);
+
+      expect(definition.create).toHaveBeenCalledWith({ x: 1 });
+    });
+
+    it("should work correctly when optional hooks are missing", () => {
+      const simplePlugin = {
+        getName: () => "simple",
+        getDefinition: () => ({
+          create: () => ({ isSimple: true }),
+        }),
+      };
+
+      const ctx = {
+        preset: { manifest: [{ module: simplePlugin, enabled: true }] },
+      };
+
+      const result = createPlugins({ simple: {} }, ctx);
+
+      expect(result[0]).toEqual({ isSimple: true });
+    });
   });
 
-  it("should ignore options for plugins not present in the manifest", () => {
-    const mockPinia = createMockPlugin("pinia");
-    const ctx = {
-      preset: {
-        manifest: [{ module: mockPinia, enabled: true }],
-      },
-    };
-    // Passing options for a ‘router’ that is not in the manifest
-    const options = { pinia: {}, router: {} };
+  // ---------------------------------------------------------------------------
+  // Pipeline contracts
+  // ---------------------------------------------------------------------------
+  describe("pipeline contracts", () => {
+    it("should not mutate original options object", () => {
+      const mock = createMockPlugin("pinia");
+      const ctx = {
+        preset: { manifest: [{ module: mock, enabled: true }] },
+      };
 
-    const result = createPlugins(options, ctx);
+      const options = { pinia: { a: 1 } };
+      const snapshot = structuredClone(options);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("inst-pinia");
-  });
+      createPlugins(options, ctx);
 
-  it("should work correctly if optional hooks (before/after) are missing", () => {
-    const simplePlugin = {
-      getName: () => "simple",
-      getDefinition: () => ({
-        create: () => ({ isSimple: true }),
-      }),
-    };
-    const ctx = {
-      preset: { manifest: [{ module: simplePlugin, enabled: true }] },
-    };
+      expect(options).toEqual(snapshot);
+    });
 
-    const result = createPlugins({ simple: {} }, ctx);
+    it("should create plugins in manifest order", () => {
+      const calls = [];
 
-    expect(result[0]).toEqual({ isSimple: true });
-  });
+      const make = (name) => ({
+        getName: () => name,
+        getDefinition: () => ({
+          create: () => {
+            calls.push(name);
+            return {};
+          },
+        }),
+      });
 
-  it("should skip plugin if options are missing (undefined) for that plugin", () => {
-    const mockPinia = createMockPlugin("pinia");
-    const ctx = {
-      preset: { manifest: [{ module: mockPinia, enabled: true }] },
-    };
+      const ctx = {
+        preset: {
+          manifest: [
+            { module: make("A"), enabled: true },
+            { module: make("B"), enabled: true },
+          ],
+        },
+      };
 
-    const result = createPlugins({}, ctx); // Options not passed
+      createPlugins({ A: {}, B: {} }, ctx);
 
-    expect(result).toHaveLength(0);
+      expect(calls).toEqual(["A", "B"]);
+    });
+
+    it("should fail fast when plugin create throws", () => {
+      const badPlugin = {
+        getName: () => "bad",
+        getDefinition: () => ({
+          create: () => {
+            throw new Error("boom");
+          },
+        }),
+      };
+
+      const ctx = {
+        preset: { manifest: [{ module: badPlugin, enabled: true }] },
+      };
+
+      expect(() => createPlugins({ bad: {} }, ctx)).toThrow("boom");
+    });
   });
 });
