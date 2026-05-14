@@ -15,20 +15,24 @@ export function mountWithPlugins(component, ctx, overrides = {}) {
     ...result.mountOptions,
     ...overrides,
     plugins: result.plugins,
-    global: result.global,
   };
 
   const {
     useShallow = true,
     plugins = {},
     skipManagedPlugins = false,
+    global: overrideGlobal,
     ...restOptions
   } = mergedOptions;
 
-  const globalPlugins = skipManagedPlugins ? [] : createPlugins(plugins, ctx);
   const mountFunction = useShallow ? shallowMount : mount;
+  const globalPlugins = skipManagedPlugins ? [] : createPlugins(plugins, ctx);
 
-  const finalGlobal = restOptions.global || {};
+  // IMPORTANT: Safe merge
+  const finalGlobal = {
+    ...result.global,
+    ...overrideGlobal,
+  };
 
   if (globalPlugins.length > 0) {
     finalGlobal.plugins = [...(finalGlobal.plugins || []), ...globalPlugins];
