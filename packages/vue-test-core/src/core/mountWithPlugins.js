@@ -1,5 +1,5 @@
 import { mount, shallowMount } from "@vue/test-utils";
-import { createPlugins } from "./pluginsRegistry/createPlugins.js";
+import { createPlugins } from "../pluginsRegistry/createPlugins.js";
 
 /**
  * Mounts a component with required plugins
