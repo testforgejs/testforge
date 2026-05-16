@@ -2,7 +2,6 @@ import js from "@eslint/js";
 import globals from "globals";
 import jsdoc from "eslint-plugin-jsdoc";
 import prettierConfig from "eslint-config-prettier";
-import prettierPlugin from "eslint-plugin-prettier";
 import tsEslint from "typescript-eslint";
 
 export default tsEslint.config(
@@ -42,7 +41,6 @@ export default tsEslint.config(
     },
     plugins: {
       jsdoc: jsdoc,
-      prettier: prettierPlugin,
     },
     rules: {
       "jsdoc/check-access": "warn",
@@ -93,8 +91,6 @@ export default tsEslint.config(
       "jsdoc/require-param-type": "warn",
       "jsdoc/require-returns": "warn",
       "jsdoc/require-returns-type": "warn",
-
-      "prettier/prettier": "error",
 
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
