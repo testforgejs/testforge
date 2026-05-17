@@ -1,18 +1,14 @@
+import type { MountContext, CreateMountContextParams } from "../types";
+
 import { getActivePreset } from "../utils/getActivePreset.js";
 import { createSupportedPluginsState } from "../utils/createSupportedPluginsState.js";
 
-/**
- * Creates initial mount context for pipeline processing.
- *
- * @param {CreateMountContextParams} params
- * @returns {MountContext}
- */
-export function createMountContext({
-  defaultMountOptions = {},
-  mountOptions = {},
-  extraOptions = {},
-  presets,
-}) {
+/*
+Creates initial mount context for pipeline processing.
+*/
+export function createMountContext(params: CreateMountContextParams): MountContext {
+  const { defaultMountOptions = {}, mountOptions = {}, extraOptions = {}, presets = {} } = params;
+
   const activePreset = getActivePreset(extraOptions, presets);
   const supportedPlugins = createSupportedPluginsState(activePreset);
 

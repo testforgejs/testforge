@@ -1,14 +1,15 @@
+import type { MountContext, MountWithPluginsOptions } from "../types";
+import type { Component } from "vue";
+import type { VueWrapper } from "@vue/test-utils";
+
 import { mount, shallowMount } from "@vue/test-utils";
 import { createPlugins } from "../pluginsRegistry/createPlugins.js";
 
-/**
- * Mounts a component with required plugins
- * @param {object} component - Vue Component
- * @param {MountContext} ctx - Mount context
- * @param {object} overrides - Override mounting options
- * @returns {import('@vue/test-utils').VueWrapper}
- */
-export function mountWithPlugins(component, ctx, overrides = {}) {
+export function mountWithPlugins(
+  component: Component,
+  ctx: MountContext,
+  overrides: MountWithPluginsOptions = {},
+): VueWrapper {
   const { result } = ctx;
 
   const mergedOptions = {

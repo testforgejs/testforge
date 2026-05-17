@@ -1,28 +1,36 @@
+import type {
+  SlotsMap,
+  Dictionary,
+  CreateTestFrameworkOptions,
+  ComponentFactory,
+  ComponentFactoryOptions,
+  ComponentFactoryExtraOptions,
+  TestFramework,
+} from "../types";
+import type { Component } from "vue";
+
 import { mergeComponentData } from "../utils/mergeComponentData.js";
 import { createMountContext } from "../pipeline/createMountContext.js";
 import { createPipeline } from "../pipeline/createPipeline.js";
 import { createMountPipeline } from "../pipeline/createMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
 
-export function createTestFramework({ presets = {} } = {}) {
+export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
+  const { presets = {} } = options;
+
   return {
-    /**
-     * Creates a test wrapper for a component with passed props and mount options.
-     *
-     * @param {import('vue').Component} component - Vue Component for testing.
-     * @param {object} [defaultProps={}] - Default props for the component.
-     * @param {ComponentFactoryOptions} [defaultMountOptions={}] - Default mounting options (global, plugins, etc.).
-     * @param {object} [defaultSlots={}] - Default slots to pass into component.
-     * @returns {ComponentFactory}
-     * Returns a function that mounts the component with merged props and mount options.
-     */
     testComponentFactory(
-      component,
-      defaultProps = {},
-      defaultMountOptions = {},
-      defaultSlots = {},
-    ) {
-      return (props = {}, mountOptions = {}, slots = {}, extraOptions = {}) => {
+      component: Component,
+      defaultProps: Dictionary = {},
+      defaultMountOptions: ComponentFactoryOptions = {},
+      defaultSlots: SlotsMap = {},
+    ): ComponentFactory {
+      return (
+        props: Dictionary = {},
+        mountOptions: ComponentFactoryOptions = {},
+        slots: SlotsMap = {},
+        extraOptions: ComponentFactoryExtraOptions = {},
+      ) => {
         const {
           skipDefaultProps = false,
           skipDefaultSlots = false,
@@ -38,7 +46,7 @@ export function createTestFramework({ presets = {} } = {}) {
           skipDefault: skipDefaultProps,
           skipOptions: skipDefaultOptions,
         });
-        const finalSlots = mergeComponentData({
+        const finalSlots: SlotsMap = mergeComponentData({
           defaultMountData: defaultMountOptions.slots,
           defaultData: defaultSlots,
           mountData: mountOptions.slots,
