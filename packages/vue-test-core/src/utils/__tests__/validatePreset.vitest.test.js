@@ -31,9 +31,7 @@ describe("validatePreset", () => {
       const presetWithoutDefaults = {
         manifest: [{ module: mockPinia, enabled: true }],
       };
-      expect(() =>
-        validatePreset("minimal", presetWithoutDefaults),
-      ).not.toThrow();
+      expect(() => validatePreset("minimal", presetWithoutDefaults)).not.toThrow();
     });
 
     it("should allow defaults value to be false", () => {
@@ -64,16 +62,12 @@ describe("validatePreset", () => {
 
   describe("manifest validation", () => {
     it("should throw if preset is null or undefined", () => {
-      expect(() => validatePreset("null-test", null)).toThrow(
-        /is null or undefined/,
-      );
+      expect(() => validatePreset("null-test", null)).toThrow(/is null or undefined/);
     });
 
     it("should throw if manifest is not an array", () => {
       const invalid = { manifest: "not-an-array" };
-      expect(() => validatePreset("bad-manifest", invalid)).toThrow(
-        /must have a "manifest" array/,
-      );
+      expect(() => validatePreset("bad-manifest", invalid)).toThrow(/must have a "manifest" array/);
     });
 
     it("should throw if a module in manifest is invalid", () => {
@@ -92,9 +86,7 @@ describe("validatePreset", () => {
           { module: mockPinia, enabled: false },
         ],
       };
-      expect(() => validatePreset("dupe-test", duplicate)).toThrow(
-        /Duplicate plugin "pinia"/,
-      );
+      expect(() => validatePreset("dupe-test", duplicate)).toThrow(/Duplicate plugin "pinia"/);
     });
 
     it("should throw if enabled flag is not a boolean", () => {

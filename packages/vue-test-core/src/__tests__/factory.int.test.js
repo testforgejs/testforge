@@ -156,11 +156,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     describe("Test Suite Level", () => {
       it("should prioritize direct defaultProps over defaultMountOptions.props when keys conflict", () => {
         // The defaultProps vs. defaultMountOptions.props argument
-        const factory = testFactory(
-          MockComponent,
-          { id: 1 },
-          { props: { id: 2 } },
-        );
+        const factory = testFactory(MockComponent, { id: 1 }, { props: { id: 2 } });
 
         factory();
 
@@ -174,11 +170,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       it("should shallow-merge direct props with mountOptions.props when no conflicts", () => {
         // The defaultProps vs. defaultMountOptions.props argument
-        const factory = testFactory(
-          MockComponent,
-          { id: 1 },
-          { props: { newProps: 2 } },
-        );
+        const factory = testFactory(MockComponent, { id: 1 }, { props: { newProps: 2 } });
 
         factory();
 
@@ -191,11 +183,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should use only mountOptions.props when direct props are not provided", () => {
-        const factory = testFactory(
-          MockComponent,
-          {},
-          { props: { newProps: 2 } },
-        );
+        const factory = testFactory(MockComponent, {}, { props: { newProps: 2 } });
 
         factory();
 
@@ -255,11 +243,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should fall back to defaultProps when defaultMountOptions.props is empty", () => {
-          const factory = testFactory(
-            MockComponent,
-            { base: "default-props" },
-            {},
-          );
+          const factory = testFactory(MockComponent, { base: "default-props" }, {});
 
           factory({}, {});
 
@@ -335,11 +319,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         const factory = testFactory(MockComponent);
 
         // Direct slots vs. mountOptions.slots argument
-        factory(
-          {},
-          { slots: { default: "options slot" } },
-          { default: "direct slot" },
-        );
+        factory({}, { slots: { default: "options slot" } }, { default: "direct slot" });
 
         expect(mockShallowMount).toHaveBeenCalledWith(
           MockComponent,
@@ -353,11 +333,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         const factory = testFactory(MockComponent);
 
         // The slots vs. mountOptions.slots argument
-        factory(
-          {},
-          { slots: { footer: "footer slot" } },
-          { header: "header slot" },
-        );
+        factory({}, { slots: { footer: "footer slot" } }, { header: "header slot" });
 
         expect(mockShallowMount).toHaveBeenCalledWith(
           MockComponent,
@@ -421,11 +397,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should use only defaultMountOptions.slots when direct defaultSlots are not provided", () => {
-        const factory = testFactory(
-          MockComponent,
-          {},
-          { slots: { default: "options slot" } },
-        );
+        const factory = testFactory(MockComponent, {}, { slots: { default: "options slot" } });
 
         factory();
 
@@ -486,12 +458,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should fall back to defaultSlots when defaultMountOptions.slots is empty", () => {
-          const factory = testFactory(
-            MockComponent,
-            {},
-            {},
-            { base: "default-slots" },
-          );
+          const factory = testFactory(MockComponent, {}, {}, { base: "default-slots" });
 
           factory();
 
@@ -642,9 +609,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       // 1. Verify that the plugin creators have been invoked (contract)
       // i18n should be created using the default configuration from the presets (e.g., en)
-      expect(mockI18nCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ locale: "en" }),
-      );
+      expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "en" }));
       expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
 
       // 2. Verify that the RESULT of the `create` operation is included in the mount options
@@ -665,9 +630,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       factory({}, { global: { plugins: [mockVfm] } });
 
       // 1. Verify that the default plugins were created anyway (contract)
-      expect(mockI18nCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ locale: "en" }),
-      );
+      expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "en" }));
       expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
 
       // 2. Verify that both default and third-party plugins are included in the final shallowMount
@@ -818,11 +781,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     it("should not create i18n plugin when its option is explicitly set to false", () => {
       // Configuring the factory with explicit i18n disabling
-      const factory = testFactory(
-        MockComponent,
-        {},
-        { plugins: { i18n: false } },
-      );
+      const factory = testFactory(MockComponent, {}, { plugins: { i18n: false } });
 
       factory();
 
@@ -871,9 +830,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         factory({}, {}, {}, { preset: "i18nPreset" });
 
         // 1. Verifying contracts: i18n is created, pinia is not
-        expect(mockI18nCreate).toHaveBeenCalledWith(
-          expect.objectContaining({ locale: "en" }),
-        );
+        expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "en" }));
         expect(mockPiniaCreate).not.toHaveBeenCalled();
 
         // 2. Verify the mounting options (make sure to include [0])
@@ -890,12 +847,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         const factory = testFactory(MockComponent);
 
         // Use i18nPreset, but override the language to ‘fr’ via mountOptions
-        factory(
-          {},
-          { plugins: { i18n: { locale: "fr" } } },
-          {},
-          { preset: "i18nPreset" },
-        );
+        factory({}, { plugins: { i18n: { locale: "fr" } } }, {}, { preset: "i18nPreset" });
 
         // 1. Verify that pinia was not created (a feature of i18nPreset)
         expect(mockPiniaCreate).not.toHaveBeenCalled();
@@ -949,12 +901,7 @@ describe("testComponentFactory Integration (Universal)", () => {
           it(`should throw an error when "${type}" is passed to plugin options`, () => {
             const factory = testFactory(MockComponent);
             expect(() => {
-              factory(
-                {},
-                { plugins: { i18n: value } },
-                {},
-                { preset: "i18nPreset" },
-              );
+              factory({}, { plugins: { i18n: value } }, {}, { preset: "i18nPreset" });
             }).toThrow(
               new RegExp(
                 `Expected Object or Boolean \\(false\\), but received ${type
@@ -968,12 +915,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         it("should NOT throw an error when `false` is passed", () => {
           const factory = testFactory(MockComponent);
           expect(() => {
-            factory(
-              {},
-              { plugins: { i18n: false } },
-              {},
-              { preset: "i18nPreset" },
-            );
+            factory({}, { plugins: { i18n: false } }, {}, { preset: "i18nPreset" });
           }).not.toThrow();
         });
       });

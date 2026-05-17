@@ -16,15 +16,12 @@ export const assertPluginOptions = (ctx) => {
   const validate = (val, name, source) => {
     // 1. Check whether the plugin is permitted by manifest
     if (source !== "extraOptions" && !ALLOWED_PLUGINS.includes(name)) {
-      throw new Error(
-        `[TestFramework] Unknown plugin "${name}" detected in ${source}.`,
-      );
+      throw new Error(`[TestFramework] Unknown plugin "${name}" detected in ${source}.`);
     }
 
     // 2. Type validation: Only {} or false are allowed.
     // null, arrays, and primitives (except false) are not allowed.
-    const isObject =
-      val !== null && typeof val === "object" && !Array.isArray(val);
+    const isObject = val !== null && typeof val === "object" && !Array.isArray(val);
     const isValid = val === undefined || val === false || isObject;
 
     if (!isValid) {

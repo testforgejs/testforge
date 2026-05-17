@@ -8,12 +8,7 @@ import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforge/vue-test-plugin-router";
 
 describe("Mount Pipeline Integration", () => {
-  const run = (
-    presets,
-    defaultMountOptions = {},
-    mountOptions = {},
-    extraOptions = {},
-  ) => {
+  const run = (presets, defaultMountOptions = {}, mountOptions = {}, extraOptions = {}) => {
     const ctx = createMountContext({
       defaultMountOptions,
       mountOptions,
@@ -143,9 +138,7 @@ describe("Mount Pipeline Integration", () => {
       it("should throw an error when a number is passed to extraOptions", () => {
         const extra = { i18n: 123 };
 
-        expect(() => run(presets, {}, {}, extra)).toThrow(
-          /received number \(123\)/,
-        );
+        expect(() => run(presets, {}, {}, extra)).toThrow(/received number \(123\)/);
       });
     });
 
@@ -267,9 +260,7 @@ describe("Mount Pipeline Integration", () => {
     it("should throw an error when an unknown plugin is passed to defaultMountOptions.plugins", () => {
       const defaults = { plugins: { vfm: {} } };
 
-      expect(() => run(presets, defaults)).toThrow(
-        /Unknown plugin "vfm" detected in plugins/,
-      );
+      expect(() => run(presets, defaults)).toThrow(/Unknown plugin "vfm" detected in plugins/);
     });
 
     it("should throw an error when an unknown plugin is passed to mountOptions.plugins", () => {
@@ -298,9 +289,7 @@ describe("Mount Pipeline Integration", () => {
     it("should still validate types for allowed plugins even if they are correctly named", () => {
       const overrides = { plugins: { pinia: "invalid_string" } };
 
-      expect(() => run(presets, {}, overrides)).toThrow(
-        /Expected Object or Boolean/,
-      );
+      expect(() => run(presets, {}, overrides)).toThrow(/Expected Object or Boolean/);
     });
   });
 
@@ -597,9 +586,7 @@ describe("Mount Pipeline Integration", () => {
       const result = run(defaultPresets);
 
       expect(result.plugins.i18n).toEqual(defaultPresets.default.defaults.i18n);
-      expect(result.plugins.pinia).toEqual(
-        defaultPresets.default.defaults.pinia,
-      );
+      expect(result.plugins.pinia).toEqual(defaultPresets.default.defaults.pinia);
     });
 
     it("should use options from default preset when plugin config is an empty object", () => {
@@ -611,9 +598,7 @@ describe("Mount Pipeline Integration", () => {
       const result = run(defaultPresets, {}, mountOptions);
 
       // It should be pulled up from the preset
-      expect(result.plugins.router).toEqual(
-        defaultPresets.default.defaults.router,
-      );
+      expect(result.plugins.router).toEqual(defaultPresets.default.defaults.router);
     });
 
     it("should fill missing keys from preset when user provides partial config", () => {
@@ -669,13 +654,9 @@ describe("Mount Pipeline Integration", () => {
       const result = run(defaultPresets);
 
       // All keys from the ‘default’ preset's manifest must be present
-      const expectedKeys = defaultPresets.default.manifest.map((mod) =>
-        mod.module.getName(),
-      );
+      const expectedKeys = defaultPresets.default.manifest.map((mod) => mod.module.getName());
 
-      expect(Object.keys(result.plugins)).toEqual(
-        expect.arrayContaining(expectedKeys),
-      );
+      expect(Object.keys(result.plugins)).toEqual(expect.arrayContaining(expectedKeys));
       expect(Object.keys(result.plugins)).toHaveLength(expectedKeys.length);
     });
 
@@ -684,9 +665,7 @@ describe("Mount Pipeline Integration", () => {
       const result = run(defaultPresets, {}, {}, extraOptions);
 
       // In the ‘custom’ preset, only i18n
-      const expectedKeys = defaultPresets.custom.manifest.map((mod) =>
-        mod.module.getName(),
-      );
+      const expectedKeys = defaultPresets.custom.manifest.map((mod) => mod.module.getName());
 
       expect(Object.keys(result.plugins)).toEqual(expectedKeys);
       expect(result.plugins).toHaveProperty("i18n");

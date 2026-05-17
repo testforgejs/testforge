@@ -42,10 +42,7 @@ describe("createMountContext", () => {
       presets: { presetA: {} },
     });
 
-    expect(getActivePreset).toHaveBeenCalledWith(
-      { preset: "presetA" },
-      { presetA: {} },
-    );
+    expect(getActivePreset).toHaveBeenCalledWith({ preset: "presetA" }, { presetA: {} });
   });
 
   it("should set preset and supportedPlugins correctly", () => {

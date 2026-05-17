@@ -19,9 +19,7 @@ describe("patchPluginState", () => {
   });
 
   it("should call patchResultState with correctly merged plugin config", () => {
-    const spy = vi
-      .spyOn(stateModule, "patchResultState")
-      .mockImplementation((ctx) => ctx);
+    const spy = vi.spyOn(stateModule, "patchResultState").mockImplementation((ctx) => ctx);
 
     patchPluginState(ctx, "pinia", { newOption: 123 });
 
@@ -40,9 +38,7 @@ describe("patchPluginState", () => {
       result: { plugins: {} },
     };
 
-    const spy = vi
-      .spyOn(stateModule, "patchResultState")
-      .mockImplementation((ctx) => ctx);
+    const spy = vi.spyOn(stateModule, "patchResultState").mockImplementation((ctx) => ctx);
 
     patchPluginState(localCtx, "router", { history: true });
 
@@ -54,9 +50,7 @@ describe("patchPluginState", () => {
   });
 
   it("should give priority to config over existing plugin state", () => {
-    const spy = vi
-      .spyOn(stateModule, "patchResultState")
-      .mockImplementation((ctx) => ctx);
+    const spy = vi.spyOn(stateModule, "patchResultState").mockImplementation((ctx) => ctx);
 
     patchPluginState(ctx, "i18n", { locale: "fr" });
 
@@ -68,9 +62,7 @@ describe("patchPluginState", () => {
   });
 
   it("should not affect other plugins", () => {
-    const spy = vi
-      .spyOn(stateModule, "patchResultState")
-      .mockImplementation((ctx) => ctx);
+    const spy = vi.spyOn(stateModule, "patchResultState").mockImplementation((ctx) => ctx);
 
     patchPluginState(ctx, "pinia", { a: 1 });
 

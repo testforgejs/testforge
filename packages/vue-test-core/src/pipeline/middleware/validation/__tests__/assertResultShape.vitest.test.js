@@ -15,9 +15,7 @@ describe("assertResultShape middleware", () => {
   });
 
   it("throws when result is missing", () => {
-    expect(() => assertResultShape({})).toThrow(
-      "[pipeline] result must be an object",
-    );
+    expect(() => assertResultShape({})).toThrow("[pipeline] result must be an object");
   });
 
   it("should throw when result.mountOptions is invalid", () => {
@@ -43,9 +41,7 @@ describe("assertResultShape middleware", () => {
       },
     };
 
-    expect(() => assertResultShape(ctx)).toThrow(
-      "[pipeline] result.global must be an object",
-    );
+    expect(() => assertResultShape(ctx)).toThrow("[pipeline] result.global must be an object");
   });
 
   it("should throw when result.plugins is invalid", () => {
@@ -57,8 +53,6 @@ describe("assertResultShape middleware", () => {
       },
     };
 
-    expect(() => assertResultShape(ctx)).toThrow(
-      "[pipeline] result.plugins must be an object",
-    );
+    expect(() => assertResultShape(ctx)).toThrow("[pipeline] result.plugins must be an object");
   });
 });

@@ -63,8 +63,6 @@ describe("createMountPipeline", () => {
 
     expect(createPluginsMiddlewares).toHaveBeenCalledWith(ctx.supportedPlugins);
 
-    expect(createPluginsMergeMiddlewares).toHaveBeenCalledWith(
-      ctx.supportedPlugins,
-    );
+    expect(createPluginsMergeMiddlewares).toHaveBeenCalledWith(ctx.supportedPlugins);
   });
 });

@@ -11,9 +11,7 @@ export function validatePreset(name, preset) {
   }
 
   if (!Array.isArray(preset.manifest)) {
-    throw new Error(
-      `[Validator] Preset "${name}" must have a "manifest" array.`,
-    );
+    throw new Error(`[Validator] Preset "${name}" must have a "manifest" array.`);
   }
 
   const manifestPluginNames = new Set();
@@ -23,9 +21,7 @@ export function validatePreset(name, preset) {
     const { module, enabled } = entry;
 
     if (!module || typeof module.getName !== "function") {
-      throw new Error(
-        `[Validator] Invalid module at manifest[${index}] in preset "${name}".`,
-      );
+      throw new Error(`[Validator] Invalid module at manifest[${index}] in preset "${name}".`);
     }
 
     const pluginName = module.getName();
@@ -57,8 +53,7 @@ export function validatePreset(name, preset) {
       }
 
       const value = preset.defaults[key];
-      const isObject =
-        value !== null && typeof value === "object" && !Array.isArray(value);
+      const isObject = value !== null && typeof value === "object" && !Array.isArray(value);
 
       if (value !== false && !isObject) {
         throw new Error(

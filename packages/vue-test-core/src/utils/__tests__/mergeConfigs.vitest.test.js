@@ -103,11 +103,7 @@ describe("mergeConfigs", () => {
       const base = { plugins: ["plugin-1", "plugin-2"] };
       const override = { plugins: ["plugin-2", "plugin-3"] };
 
-      expect(mergeConfigs(base, override).plugins).toEqual([
-        "plugin-1",
-        "plugin-2",
-        "plugin-3",
-      ]);
+      expect(mergeConfigs(base, override).plugins).toEqual(["plugin-1", "plugin-2", "plugin-3"]);
     });
 
     it("should merge arrays at root level", () => {

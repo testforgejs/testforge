@@ -64,15 +64,9 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
     }
 
     // Customizing spy behavior using custom code
-    mocks.i18nCreate.mockImplementation(
-      actualI18n.i18nPlugin.getDefinition().create,
-    );
-    mocks.piniaCreate.mockImplementation(
-      actualPinia.piniaPlugin.getDefinition().create,
-    );
-    mocks.routerCreate.mockImplementation(
-      actualRouter.routerPlugin.getDefinition().create,
-    );
+    mocks.i18nCreate.mockImplementation(actualI18n.i18nPlugin.getDefinition().create);
+    mocks.piniaCreate.mockImplementation(actualPinia.piniaPlugin.getDefinition().create);
+    mocks.routerCreate.mockImplementation(actualRouter.routerPlugin.getDefinition().create);
     mocks.shallowMount.mockReturnValue({
       unmount: runner.fn(),
       vm: {},
@@ -168,12 +162,8 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
       // 2. Verify the connection using mock spies (verify the return value of the `create` call)
       // In Jest/Vitest, the results of the calls are stored in `mock.results`
       expect(mocks.i18nCreate.mock.results[0].value).toBe(i18nCapture.instance);
-      expect(mocks.piniaCreate.mock.results[0].value).toBe(
-        piniaCapture.instance,
-      );
-      expect(mocks.routerCreate.mock.results[0].value).toBe(
-        routerCapture.instance,
-      );
+      expect(mocks.piniaCreate.mock.results[0].value).toBe(piniaCapture.instance);
+      expect(mocks.routerCreate.mock.results[0].value).toBe(routerCapture.instance);
 
       // 3. Additional guarantee: instances must be actual plugin objects
       expect(i18nCapture.instance.mode).toBe("composition");

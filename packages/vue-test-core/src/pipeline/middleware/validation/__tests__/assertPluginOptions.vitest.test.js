@@ -37,30 +37,25 @@ describe("assertPluginOptions middleware", () => {
       },
     };
 
-    expect(() => assertPluginOptions(ctx)).toThrow(
-      'Unknown plugin "unknown" detected in plugins',
-    );
+    expect(() => assertPluginOptions(ctx)).toThrow('Unknown plugin "unknown" detected in plugins');
   });
 
   const invalidValues = [null, [], true, 123, "str"];
 
-  it.each(invalidValues)(
-    "should throw for invalid plugin value %p in result.plugins",
-    (val) => {
-      const ctx = {
-        ...baseCtx,
-        result: {
-          plugins: {
-            pinia: val,
-          },
+  it.each(invalidValues)("should throw for invalid plugin value %p in result.plugins", (val) => {
+    const ctx = {
+      ...baseCtx,
+      result: {
+        plugins: {
+          pinia: val,
         },
-      };
+      },
+    };
 
-      expect(() => assertPluginOptions(ctx)).toThrow(
-        'Invalid configuration for plugin "pinia" in plugins',
-      );
-    },
-  );
+    expect(() => assertPluginOptions(ctx)).toThrow(
+      'Invalid configuration for plugin "pinia" in plugins',
+    );
+  });
 
   it("should validate plugin options from extraOptions when key matches plugin", () => {
     const ctx = {

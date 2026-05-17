@@ -9,9 +9,7 @@ export function getPluginConfig(ctx, name) {
   const { extraOptions } = ctx;
   const { plugins } = ctx.result;
 
-  const isEnabled =
-    extraOptions[name] ||
-    (plugins[name] !== false && plugins[name] !== undefined);
+  const isEnabled = extraOptions[name] || (plugins[name] !== false && plugins[name] !== undefined);
 
   if (!isEnabled) {
     return false;

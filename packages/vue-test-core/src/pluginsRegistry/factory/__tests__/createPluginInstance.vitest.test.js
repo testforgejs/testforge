@@ -78,9 +78,7 @@ describe("createPluginInstance", () => {
       const instance = { a: 1 };
       const factory = vi.fn(() => instance);
 
-      expect(() =>
-        createPluginInstance(factory, { expose: 123 }),
-      ).not.toThrow();
+      expect(() => createPluginInstance(factory, { expose: 123 })).not.toThrow();
     });
   });
 

@@ -25,9 +25,7 @@ describe("getActivePreset", () => {
   describe("when no preset is specified (fallback to default)", () => {
     it("should return the default preset when extraOptions is null or undefined", () => {
       expect(getActivePreset(null, mockPresets)).toEqual(mockPresets.default);
-      expect(getActivePreset(undefined, mockPresets)).toEqual(
-        mockPresets.default,
-      );
+      expect(getActivePreset(undefined, mockPresets)).toEqual(mockPresets.default);
     });
 
     it("should return the default preset when no preset key is present in extraOptions", () => {
@@ -63,19 +61,13 @@ describe("getActivePreset", () => {
     it("should call validatePreset with requested preset", () => {
       getActivePreset({ preset: "custom" }, mockPresets);
 
-      expect(validateModule.validatePreset).toHaveBeenCalledWith(
-        "custom",
-        mockPresets.custom,
-      );
+      expect(validateModule.validatePreset).toHaveBeenCalledWith("custom", mockPresets.custom);
     });
 
     it("should call validatePreset for default preset", () => {
       getActivePreset({}, mockPresets);
 
-      expect(validateModule.validatePreset).toHaveBeenCalledWith(
-        "default",
-        mockPresets.default,
-      );
+      expect(validateModule.validatePreset).toHaveBeenCalledWith("default", mockPresets.default);
     });
 
     it("should NOT call validatePreset if preset is not found", () => {
@@ -100,9 +92,7 @@ describe("getActivePreset", () => {
       const extraOptions = { preset: undefined };
 
       expect(() => getActivePreset(extraOptions, mockPresets)).not.toThrow();
-      expect(getActivePreset(extraOptions, mockPresets)).toEqual(
-        mockPresets.default,
-      );
+      expect(getActivePreset(extraOptions, mockPresets)).toEqual(mockPresets.default);
     });
   });
 });

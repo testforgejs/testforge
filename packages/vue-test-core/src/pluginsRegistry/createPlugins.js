@@ -42,11 +42,7 @@ export function createPlugins(options = {}, ctx) {
   for (const [name, definition] of registry.entries()) {
     let pluginOptions = options[name];
 
-    if (
-      pluginOptions !== false &&
-      pluginOptions &&
-      typeof pluginOptions === "object"
-    ) {
+    if (pluginOptions !== false && pluginOptions && typeof pluginOptions === "object") {
       // --- beforeCreate ---
       if (definition.beforeCreate) {
         pluginOptions = definition.beforeCreate(ctx, pluginOptions);

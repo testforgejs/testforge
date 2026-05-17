@@ -12,10 +12,7 @@ describe("createPluginRegistry", () => {
       const modA = createMockPluginModule("A", { a: 1 });
       const modB = createMockPluginModule("B", { b: 2 });
 
-      const registry = createPluginRegistry([
-        { module: modA },
-        { module: modB },
-      ]);
+      const registry = createPluginRegistry([{ module: modA }, { module: modB }]);
 
       expect(registry.has("A")).toBe(true);
       expect(registry.has("B")).toBe(true);
@@ -26,11 +23,7 @@ describe("createPluginRegistry", () => {
     it("should ignore entries without module", () => {
       const mod = createMockPluginModule("Valid");
 
-      const registry = createPluginRegistry([
-        { module: undefined },
-        {},
-        { module: mod },
-      ]);
+      const registry = createPluginRegistry([{ module: undefined }, {}, { module: mod }]);
 
       expect(registry.getNames()).toEqual(["Valid"]);
     });
@@ -40,11 +33,7 @@ describe("createPluginRegistry", () => {
       const mod2 = createMockPluginModule("duplicate", { version: 2 });
       const mod3 = createMockPluginModule("unique", { version: 3 });
 
-      const registry = createPluginRegistry([
-        { module: mod1 },
-        { module: mod2 },
-        { module: mod3 },
-      ]);
+      const registry = createPluginRegistry([{ module: mod1 }, { module: mod2 }, { module: mod3 }]);
 
       expect(registry.get("duplicate")).toEqual({ version: 2 });
       expect(registry.getNames()).toEqual(["duplicate", "unique"]); // порядок вставки
@@ -66,10 +55,7 @@ describe("createPluginRegistry", () => {
       const modA = createMockPluginModule("A", { a: 1 });
       const modB = createMockPluginModule("B", { b: 2 });
 
-      const registry = createPluginRegistry([
-        { module: modA },
-        { module: modB },
-      ]);
+      const registry = createPluginRegistry([{ module: modA }, { module: modB }]);
 
       expect(registry.getNames()).toEqual(["A", "B"]);
 

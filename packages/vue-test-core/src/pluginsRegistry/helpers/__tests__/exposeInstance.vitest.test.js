@@ -20,9 +20,7 @@ describe("exposeInstance", () => {
     });
 
     it("should do nothing when expose is not a function", () => {
-      expect(() =>
-        exposeInstance({}, { expose: "not-a-function" }),
-      ).not.toThrow();
+      expect(() => exposeInstance({}, { expose: "not-a-function" })).not.toThrow();
     });
 
     it("should do nothing when expose is null", () => {

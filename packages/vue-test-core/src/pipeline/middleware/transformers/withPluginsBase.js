@@ -11,9 +11,7 @@ export const withPluginsBase = (ctx) => {
 
   return patchResultState(ctx, {
     plugins: {
-      ...(extraOptions.skipDefaultOptions
-        ? {}
-        : defaultMountOptions.plugins || {}),
+      ...(extraOptions.skipDefaultOptions ? {} : defaultMountOptions.plugins || {}),
       ...(mountOptions.plugins || {}),
     },
   });

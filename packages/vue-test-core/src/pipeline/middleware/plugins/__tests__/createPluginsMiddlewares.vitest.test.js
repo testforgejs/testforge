@@ -39,9 +39,7 @@ describe("createPluginsMiddlewares", () => {
   });
 
   it("preserves the order of Object.keys iteration", () => {
-    createPluginMiddleware
-      .mockReturnValueOnce("first")
-      .mockReturnValueOnce("second");
+    createPluginMiddleware.mockReturnValueOnce("first").mockReturnValueOnce("second");
 
     const supportedPlugins = {
       a: {},
