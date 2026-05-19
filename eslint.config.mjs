@@ -20,6 +20,8 @@ export default tsEslint.config(
   js.configs.recommended,
   ...tsEslint.configs.recommended,
 
+  //jsdoc.configs["flat/recommended-typescript"],
+
   {
     files: ["**/*.{js,mjs,ts}"],
     languageOptions: {
@@ -48,45 +50,6 @@ export default tsEslint.config(
       "jsdoc/check-param-names": "warn",
       "jsdoc/check-property-names": "warn",
       "jsdoc/check-types": "warn",
-      "jsdoc/no-undefined-types": [
-        "warn",
-        {
-          definedTypes: [
-            // 1. Basic types
-            "PluginName",
-            "ExposePluginInstance",
-
-            // 2. Plugin Options
-            "MockStoresFn",
-            "PiniaPluginOptions",
-            "I18nPluginOptions",
-            "RouterPluginOptions",
-
-            // 3. Registry & Modules
-            "PluginDefinition",
-            "PluginModule",
-            "PluginRegistry",
-            "SupportedPluginsMap",
-
-            // 4. Pipeline Context
-            "CreateMountContextParams",
-            "MountContextResult",
-            "MountContext",
-            "PipelineMiddleware",
-            "Pipeline",
-
-            // 5. Component Factory & Presets
-            "BasePluginOption",
-            "KnownPluginOptions",
-            "PluginOptions",
-            "ComponentFactoryOptions",
-            "ComponentFactory",
-            "PluginManifestEntry",
-            "PresetDefinition",
-            "TestFrameworkPresets",
-          ],
-        },
-      ],
       "jsdoc/require-param": "warn",
       "jsdoc/require-param-type": "warn",
       "jsdoc/require-returns": "warn",
@@ -103,6 +66,17 @@ export default tsEslint.config(
       "@typescript-eslint/ban-ts-comment": "warn",
 
       "no-console": "off",
+    },
+  },
+
+  {
+    files: ["**/*.ts"],
+    rules: {
+      // Disable type annotations in JSDoc—TS knows them itself
+      "jsdoc/require-param-type": "off",
+      "jsdoc/require-returns-type": "off",
+      // Disable type checking for unknown types—TS will throw a compilation error if the type does not exist
+      "jsdoc/no-undefined-types": "off",
     },
   },
 
