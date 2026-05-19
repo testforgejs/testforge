@@ -15,7 +15,9 @@ describe("assertResultShape middleware", () => {
   });
 
   it("throws when result is missing", () => {
-    expect(() => assertResultShape({})).toThrow("[pipeline] result must be an object");
+    expect(() => assertResultShape({})).toThrow(
+      '[TestFramework] Critical error: "result" must be an Object. Received undefined (undefined)',
+    );
   });
 
   it("should throw when result.mountOptions is invalid", () => {
@@ -28,7 +30,7 @@ describe("assertResultShape middleware", () => {
     };
 
     expect(() => assertResultShape(ctx)).toThrow(
-      "[pipeline] result.mountOptions must be an object",
+      '[TestFramework] Critical error: "result.mountOptions" must be an Object. Received object (null)',
     );
   });
 
@@ -41,7 +43,9 @@ describe("assertResultShape middleware", () => {
       },
     };
 
-    expect(() => assertResultShape(ctx)).toThrow("[pipeline] result.global must be an object");
+    expect(() => assertResultShape(ctx)).toThrow(
+      '[TestFramework] Critical error: "result.global" must be an Object. Received undefined (undefined)',
+    );
   });
 
   it("should throw when result.plugins is invalid", () => {
@@ -53,6 +57,8 @@ describe("assertResultShape middleware", () => {
       },
     };
 
-    expect(() => assertResultShape(ctx)).toThrow("[pipeline] result.plugins must be an object");
+    expect(() => assertResultShape(ctx)).toThrow(
+      '[TestFramework] Critical error: "result.plugins" must be an Object. Received number (123)',
+    );
   });
 });
