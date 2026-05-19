@@ -8,6 +8,8 @@
     "dev": "pnpm --filter \"./packages/**\" --parallel run dev",
     "test": "vitest run",
     "test:jest": "jest",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run test && npm run test:jest && npm run typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky"
