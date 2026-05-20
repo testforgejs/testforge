@@ -1,4 +1,4 @@
-import type { PluginMeta } from "../../../../types";
+import type { PluginMeta } from "../../../types";
 
 /*
  * Type guard that checks whether a value is a valid plugin overlay object.

@@ -1,6 +1,6 @@
 import type { PipelineMiddleware, MountContext, ResultReadyContext } from "../../../types";
 
-import { assertIsObject } from "./typeGuards/assertIsObject.js";
+import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
 /*
  * Validates ctx.result structure.

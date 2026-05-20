@@ -1,6 +1,6 @@
 import type { PipelineMiddleware, MountContext, PluginOptionsReadyContext } from "../../../types";
 
-import { assertPluginValue } from "./typeGuards/assertPluginValue";
+import { assertPluginValue } from "../typeGuards/assertPluginValue.js";
 
 /*
  * Validates plugin configurations in result.plugins and extraOptions.

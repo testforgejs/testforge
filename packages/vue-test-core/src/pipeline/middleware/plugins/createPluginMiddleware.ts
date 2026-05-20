@@ -7,7 +7,7 @@ import type {
 
 import { getPluginConfig } from "./getPluginConfig.js";
 import { patchPluginState } from "./patchPluginState.js";
-import { isPluginOverlayObject } from "../validation/typeGuards/isPluginOverlayObject.js";
+import { isPluginOverlayObject } from "../typeGuards/isPluginOverlayObject.js";
 
 /**
  * Creates middleware for a plugin that supports defaults and instances.

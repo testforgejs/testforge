@@ -1,6 +1,6 @@
 import type { MountContext, PluginName, PluginConfigWithMeta } from "../../../types";
 
-import { isPluginOverlayObject } from "../validation/typeGuards/isPluginOverlayObject.js";
+import { isPluginOverlayObject } from "../typeGuards/isPluginOverlayObject.js";
 
 /*
  * Extracts and merges the plugin configuration, taking all priority levels into account.

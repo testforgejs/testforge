@@ -1,6 +1,6 @@
 import type { PipelineMiddleware, MountContext } from "../../../types";
 
-import { assertIsObject } from "./typeGuards/assertIsObject.js";
+import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
 /*
  * Ensures that the input configuration parameters are of the correct type.
