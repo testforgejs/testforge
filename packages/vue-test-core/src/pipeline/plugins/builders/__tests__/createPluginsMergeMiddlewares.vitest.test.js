@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock before import
-vi.mock("../createPluginMergeMiddleware.js", () => ({
+vi.mock("../../../plugins/adapters/createPluginMergeMiddleware.js", () => ({
   createPluginMergeMiddleware: vi.fn((name) => `mw:${name}`),
 }));
 
-import { createPluginMergeMiddleware } from "../createPluginMergeMiddleware.js";
+import { createPluginMergeMiddleware } from "../../adapters/createPluginMergeMiddleware.js";
 import { createPluginsMergeMiddlewares } from "../createPluginsMergeMiddlewares.js";
 
 describe("createPluginsMergeMiddlewares", () => {

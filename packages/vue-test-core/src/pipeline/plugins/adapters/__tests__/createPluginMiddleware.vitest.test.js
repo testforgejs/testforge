@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../getPluginConfig.js", () => ({
+vi.mock("../../logic/getPluginConfig.js", () => ({
   getPluginConfig: vi.fn(),
 }));
 
-vi.mock("../patchPluginState.js", () => ({
+vi.mock("../../logic/patchPluginState.js", () => ({
   patchPluginState: vi.fn(),
 }));
 
-import { getPluginConfig } from "../getPluginConfig.js";
-import { patchPluginState } from "../patchPluginState.js";
+import { getPluginConfig } from "../../logic/getPluginConfig.js";
+import { patchPluginState } from "../../logic/patchPluginState.js";
 import { createPluginMiddleware } from "../createPluginMiddleware.js";
 
 describe("createPluginMiddleware", () => {

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPluginsMiddlewares } from "../createPluginsMiddlewares";
-import { createPluginMiddleware } from "../createPluginMiddleware";
+import { createPluginsMiddlewares } from "../createPluginsMiddlewares.js";
+import { createPluginMiddleware } from "../../adapters/createPluginMiddleware.js";
 
-vi.mock("../createPluginMiddleware");
+vi.mock("../../../plugins/adapters/createPluginMiddleware.js");
 
 describe("createPluginsMiddlewares", () => {
   beforeEach(() => {

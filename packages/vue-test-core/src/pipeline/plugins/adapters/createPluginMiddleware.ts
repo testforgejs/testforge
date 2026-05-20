@@ -2,12 +2,12 @@ import type {
   PipelineMiddleware,
   MountContext,
   PluginName,
-  PluginConfigObject,
+  RuntimePluginConfig,
 } from "../../../types";
 
-import { getPluginConfig } from "./getPluginConfig.js";
-import { patchPluginState } from "./patchPluginState.js";
-import { isPluginOverlayObject } from "../typeGuards/isPluginOverlayObject.js";
+import { getPluginConfig } from "../logic/getPluginConfig.js";
+import { patchPluginState } from "../logic/patchPluginState.js";
+import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 
 /**
  * Creates middleware for a plugin that supports defaults and instances.
@@ -27,12 +27,12 @@ export function createPluginMiddleware(name: PluginName): PipelineMiddleware {
       const meta = overlay.__meta;
 
       if (meta?.instance) {
-        (config as any).__sharedInstance = meta.instance;
+        config.__sharedInstance = meta.instance;
       }
     }
 
     delete config.__meta;
 
-    return patchPluginState(ctx, name, config as PluginConfigObject);
+    return patchPluginState(ctx, name, config as RuntimePluginConfig);
   };
 }

@@ -12,8 +12,8 @@ import {
   withGlobal,
   withPluginsBase,
 } from "./middleware/transformers";
-import { createPluginsMiddlewares } from "./middleware/plugins/createPluginsMiddlewares.js";
-import { createPluginsMergeMiddlewares } from "./middleware/plugins/createPluginsMergeMiddlewares.js";
+import { createPluginsMiddlewares } from "./plugins/builders/createPluginsMiddlewares.js";
+import { createPluginsMergeMiddlewares } from "./plugins/builders/createPluginsMergeMiddlewares.js";
 
 /*
 Creates array of middleware for processing mount context.

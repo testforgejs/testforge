@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../middleware/plugins/createPluginsMiddlewares.js", () => ({
+vi.mock("../plugins/builders/createPluginsMiddlewares.js", () => ({
   createPluginsMiddlewares: vi.fn(() => ["plugin-mw-1", "plugin-mw-2"]),
 }));
 
-vi.mock("../middleware/plugins/createPluginsMergeMiddlewares.js", () => ({
+vi.mock("../plugins/builders/createPluginsMergeMiddlewares.js", () => ({
   createPluginsMergeMiddlewares: vi.fn(() => ["merge-mw-1"]),
 }));
 
@@ -22,8 +22,8 @@ import {
   withPluginsBase,
 } from "../middleware/transformers";
 
-import { createPluginsMiddlewares } from "../middleware/plugins/createPluginsMiddlewares.js";
-import { createPluginsMergeMiddlewares } from "../middleware/plugins/createPluginsMergeMiddlewares.js";
+import { createPluginsMiddlewares } from "../plugins/builders/createPluginsMiddlewares.js";
+import { createPluginsMergeMiddlewares } from "../plugins/builders/createPluginsMergeMiddlewares.js";
 import { createMountPipeline } from "../createMountPipeline.js";
 
 describe("createMountPipeline", () => {

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Important: mock before importing the module under test
-vi.mock("../mergePluginPresets.js", () => ({
+vi.mock("../../logic/mergePluginPresets.js", () => ({
   mergePluginPresets: vi.fn((ctx) => ctx),
 }));
 
-import { mergePluginPresets } from "../mergePluginPresets.js";
+import { mergePluginPresets } from "../../logic/mergePluginPresets.js";
 import { createPluginMergeMiddleware } from "../createPluginMergeMiddleware.js";
 
 describe("createPluginMergeMiddleware", () => {

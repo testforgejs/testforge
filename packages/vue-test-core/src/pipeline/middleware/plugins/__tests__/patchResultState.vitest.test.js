@@ -5,7 +5,7 @@ vi.mock("../../../state/patchResultState.js", () => ({
 }));
 
 import { patchResultState } from "../../../state/patchResultState.js";
-import { patchPluginState } from "../patchPluginState.js";
+import { patchPluginState } from "../../../plugins/logic/patchPluginState.js";
 
 describe("patchResultState", () => {
   beforeEach(() => {
