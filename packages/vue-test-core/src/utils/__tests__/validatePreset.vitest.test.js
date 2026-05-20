@@ -20,7 +20,7 @@ describe("validatePreset", () => {
         ],
         defaults: {
           pinia: { store: {} },
-          i18n: false,
+          i18n: {},
         },
       };
 
@@ -34,7 +34,7 @@ describe("validatePreset", () => {
       expect(() => validatePreset("minimal", presetWithoutDefaults)).not.toThrow();
     });
 
-    it("should allow defaults value to be false", () => {
+    it("should not allow defaults value to be false", () => {
       const preset = {
         manifest: [{ module: mockPinia, enabled: true }],
         defaults: {
@@ -42,7 +42,9 @@ describe("validatePreset", () => {
         },
       };
 
-      expect(() => validatePreset("false-default", preset)).not.toThrow();
+      expect(() => validatePreset("false-default", preset)).toThrow(
+        "Expected Object, but received boolean",
+      );
     });
 
     it("should allow an empty manifest", () => {
@@ -120,7 +122,7 @@ describe("validatePreset", () => {
         },
       };
       expect(() => validatePreset("bad-value", badValue)).toThrow(
-        /Expected Object or false, but received number/,
+        /Expected Object, but received number/,
       );
     });
 
@@ -132,7 +134,7 @@ describe("validatePreset", () => {
         },
       };
       expect(() => validatePreset("null-value", badValue)).toThrow(
-        /Expected Object or false, but received object/,
+        /Expected Object, but received object/,
       );
     });
   });

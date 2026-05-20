@@ -1,11 +1,15 @@
-/**
- * Validates the preset structure, manifest entries, and default options.
+import type { PresetDefinition, PluginName, PluginManifestEntry } from "../types";
+
+/*
+ * Validates preset integrity and plugin configuration consistency.
  *
- * @param {string} name - Preset name for error reporting
- * @param {object} preset - The preset object to validate
- * @throws {Error} If the preset structure is invalid or inconsistent
+ * Validation rules:
+ * - manifest must contain unique plugin entries
+ * - every plugin entry must define a valid module and enabled flag
+ * - preset defaults may only target plugins declared in the manifest
+ * - plugin defaults must be plain configuration objects
  */
-export function validatePreset(name, preset) {
+export function validatePreset(name: PluginName, preset: PresetDefinition): void {
   if (!preset) {
     throw new Error(`[Validator] Preset "${name}" is null or undefined.`);
   }
@@ -14,10 +18,10 @@ export function validatePreset(name, preset) {
     throw new Error(`[Validator] Preset "${name}" must have a "manifest" array.`);
   }
 
-  const manifestPluginNames = new Set();
+  const manifestPluginNames = new Set<PluginName>();
 
-  // 1. Manifest validation
-  preset.manifest.forEach((entry, index) => {
+  // Validate manifest structure and uniqueness
+  preset.manifest.forEach((entry: PluginManifestEntry, index: number) => {
     const { module, enabled } = entry;
 
     if (!module || typeof module.getName !== "function") {
@@ -40,7 +44,7 @@ export function validatePreset(name, preset) {
     manifestPluginNames.add(pluginName);
   });
 
-  // 2. Validation of defaults (manifest compliance)
+  // Validate plugin defaults against manifest declarations
   if (preset.defaults) {
     const defaultKeys = Object.keys(preset.defaults);
 
@@ -55,10 +59,10 @@ export function validatePreset(name, preset) {
       const value = preset.defaults[key];
       const isObject = value !== null && typeof value === "object" && !Array.isArray(value);
 
-      if (value !== false && !isObject) {
+      if (!isObject) {
         throw new Error(
           `[Validator] Invalid default configuration for plugin "${key}" in preset "${name}". ` +
-            `Expected Object or false, but received ${typeof value}.`,
+            `Expected Object, but received ${typeof value}.`,
         );
       }
     });
