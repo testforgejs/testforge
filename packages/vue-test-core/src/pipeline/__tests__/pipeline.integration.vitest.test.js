@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { createMountContext } from "../createMountContext.js";
 import { createPipeline } from "../createPipeline.js";
 import { createMountPipeline } from "../createMountPipeline.js";
-import { presets } from "../../__tests__/utils/mockPresets.js";
+import { presets } from "../../__tests__/utils/presets/mockPresets.js";
 import { piniaPlugin } from "@testforge/vue-test-plugin-pinia";
 import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforge/vue-test-plugin-router";

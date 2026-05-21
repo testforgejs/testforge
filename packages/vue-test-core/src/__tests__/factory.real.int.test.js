@@ -74,7 +74,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
     });
 
     const { createTestFramework } = await import("../index");
-    const { presets } = await import("./utils/mockPresets.js");
+    const { presets } = await import("./utils/presets/mockPresets.js");
     testFactory = createTestFramework({ presets }).testComponentFactory;
   });
 

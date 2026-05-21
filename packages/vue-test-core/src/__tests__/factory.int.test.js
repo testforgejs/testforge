@@ -76,7 +76,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     // Initializing the framework
     const { createTestFramework } = await import("../index");
-    const { presets } = await import("./utils/mockPresets.js");
+    const { presets } = await import("./utils/presets/mockPresets.js");
     testFactory = createTestFramework({ presets }).testComponentFactory;
   });
 
