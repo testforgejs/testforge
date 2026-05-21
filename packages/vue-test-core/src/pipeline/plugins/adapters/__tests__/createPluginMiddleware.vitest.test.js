@@ -43,6 +43,31 @@ describe("createPluginMiddleware", () => {
     expect(result).toEqual({ merged: true });
   });
 
+  it("should not mutate original config", () => {
+    const instance = {};
+    const config = {
+      a: 1,
+      __meta: { instance: true },
+    };
+
+    getPluginConfig.mockReturnValue(config);
+
+    const ctx = {
+      extraOptions: {
+        [name]: {
+          __meta: { instance },
+        },
+      },
+    };
+
+    middleware(ctx);
+
+    expect(config).toEqual({
+      a: 1,
+      __meta: { instance: true },
+    });
+  });
+
   it("should inject __sharedInstance from meta.instance", () => {
     const instance = {};
     const config = { a: 1 };
@@ -60,13 +85,16 @@ describe("createPluginMiddleware", () => {
 
     middleware(ctx);
 
-    expect(config.__sharedInstance).toBe(instance);
+    expect(patchPluginState).toHaveBeenCalledWith(ctx, name, {
+      a: 1,
+      __sharedInstance: instance,
+    });
   });
 
   it("should remove __meta from config before mergePlugin", () => {
     const config = {
       a: 1,
-      __meta: { something: true },
+      __meta: { instance: true },
     };
 
     const ctx = { extraOptions: {} };
@@ -76,6 +104,8 @@ describe("createPluginMiddleware", () => {
 
     middleware(ctx);
 
-    expect(config.__meta).toBeUndefined();
+    expect(patchPluginState).toHaveBeenCalledWith(ctx, name, {
+      a: 1,
+    });
   });
 });

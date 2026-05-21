@@ -1,4 +1,4 @@
-import type { MountContext, PluginName, PluginConfigWithMeta } from "../../../types";
+import type { MountContext, PluginName, ResolvedPluginConfig } from "../../../types";
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 
@@ -9,7 +9,7 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
  * - Plugin is disabled ONLY if explicitly set to `false`
  * - Otherwise, returns a merged configuration object
  */
-export function getPluginConfig(ctx: MountContext, name: PluginName): PluginConfigWithMeta | false {
+export function getPluginConfig(ctx: MountContext, name: PluginName): ResolvedPluginConfig | false {
   const base = ctx.result.plugins[name];
   const overlay = ctx.extraOptions[name];
 
