@@ -15,10 +15,28 @@ import { createPipeline } from "../pipeline/createPipeline.js";
 import { createMountPipeline } from "../pipeline/createMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
 
+/*
+ * Creates the main TestFramework instance.
+ *
+ * The framework coordinates:
+ * - plugin presets
+ * - mount configuration resolution
+ * - pipeline execution
+ * - plugin-aware mounting
+ */
 export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
   const { presets = {} } = options;
 
   return {
+    /*
+     * Creates a reusable component mounting factory.
+     *
+     * The resulting factory supports:
+     * - default props and slots
+     * - plugin-aware mount configuration
+     * - preset-based plugin resolution
+     * - runtime mount pipeline processing
+     */
     testComponentFactory(
       component: Component,
       defaultProps: Dictionary = {},
@@ -37,7 +55,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
           skipDefaultOptions = false,
         } = extraOptions;
 
-        // Merging props and slots (basic)
+        // Resolve final props
         const finalProps = mergeComponentData({
           defaultMountData: defaultMountOptions.props,
           defaultData: defaultProps,
@@ -46,6 +64,8 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
           skipDefault: skipDefaultProps,
           skipOptions: skipDefaultOptions,
         });
+
+        // Resolve final slots
         const finalSlots: SlotsMap = mergeComponentData({
           defaultMountData: defaultMountOptions.slots,
           defaultData: defaultSlots,
@@ -55,6 +75,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
           skipOptions: skipDefaultOptions,
         });
 
+        // Create the initial pipeline context
         const ctx = createMountContext({
           defaultMountOptions,
           mountOptions,
@@ -62,9 +83,11 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
           presets,
         });
 
+        // Build and execute the mount pipeline
         const pipeline = createPipeline(createMountPipeline(ctx));
         pipeline.run(ctx);
 
+        // Mount the component with resolved plugin configuration
         return mountWithPlugins(component, ctx, {
           props: finalProps,
           slots: finalSlots,

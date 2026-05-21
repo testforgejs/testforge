@@ -1,14 +1,14 @@
 import type { MergeComponentDataParams } from "../types";
 
 /*
-Merges data (props or slots) according to a 4-level hierarchy.
-
-Order of layers (from lowest to highest):
-1. defaultMountData (from BASE_MOUNT_OPTIONS)
-2. defaultData (argument BASE_PROPS / BASE_SLOTS of the factory)
-3. mountData (from the mountOptions of a specific test)
-4. directData (direct argument of the factory call)
-*/
+ * Merges data (props or slots) according to a 4-level hierarchy.
+ *
+ * Order of layers (from lowest to highest):
+ * 1. defaultMountData (from BASE_MOUNT_OPTIONS)
+ * 2. defaultData (argument BASE_PROPS / BASE_SLOTS of the factory)
+ * 3. mountData (from the mountOptions of a specific test)
+ * 4. directData (direct argument of the factory call)
+ */
 export function mergeComponentData<V = unknown>({
   defaultMountData = {},
   defaultData = {},

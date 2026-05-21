@@ -3,7 +3,10 @@ import type { PipelineMiddleware, MountContext } from "../../../types";
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
 /*
- * Ensures that the input configuration parameters are of the correct type.
+ * Validates the runtime shape of the incoming mount configuration.
+ *
+ * Ensures that all top-level pipeline configuration objects exist
+ * and are valid plain objects before pipeline processing begins.
  */
 export const assertConfigurationShape: PipelineMiddleware = <T extends MountContext>(ctx: T) => {
   assertIsObject(ctx.defaultMountOptions, "defaultMountOptions");

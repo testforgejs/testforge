@@ -3,16 +3,17 @@ import type {
   TestFrameworkPresets,
   PresetDefinition,
 } from "../types";
+
 import { validatePreset } from "./validatePreset.js";
 
 /*
-Retrieves the active preset based on the call parameters and available presets.
-
-Selection logic:
-1. If `extraOptions.preset` is specified → try to find it, otherwise throw.
-2. If not specified → try to use preset named "default".
-3. If preset exists → it is validated via `validatePreset`.
-*/
+ * Retrieves the active preset based on the call parameters and available presets.
+ *
+ * Selection logic:
+ * 1. If `extraOptions.preset` is specified → try to find it, otherwise throw.
+ * 2. If not specified → try to use preset named "default".
+ * 3. If preset exists → it is validated via `validatePreset`.
+ */
 export function getActivePreset(
   extraOptions?: ComponentFactoryExtraOptions,
   presets: TestFrameworkPresets = {},

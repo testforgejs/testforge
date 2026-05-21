@@ -3,6 +3,17 @@ import type { PipelineMiddleware, MountContext } from "../../../types";
 import { mergeConfigs } from "../../../utils/mergeConfigs.js";
 import { patchResultState } from "../../state/patchResultState.js";
 
+/*
+ * Builds the final VTU `global` mounting configuration.
+ *
+ * Merge priority:
+ * - factory defaults (`defaultMountOptions.global`)
+ * - per-test mount options (`mountOptions.global`)
+ *
+ * Factory defaults can be skipped via `extraOptions.skipDefaultOptions`.
+ *
+ * The resolved global config is written into `ctx.result.global`.
+ */
 export const withGlobal: PipelineMiddleware = <T extends MountContext>(ctx: T) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 

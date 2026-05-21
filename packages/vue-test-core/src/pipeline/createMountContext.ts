@@ -4,8 +4,14 @@ import { getActivePreset } from "../utils/getActivePreset.js";
 import { createSupportedPluginsState } from "../utils/createSupportedPluginsState.js";
 
 /*
-Creates initial mount context for pipeline processing.
-*/
+ * Creates the initial pipeline context for component mounting.
+ *
+ * Responsibilities:
+ * - resolve the active preset
+ * - initialize supported plugin state
+ * - prepare empty runtime result containers
+ * - normalize incoming mount parameters
+ */
 export function createMountContext(params: CreateMountContextParams): MountContext {
   const { defaultMountOptions = {}, mountOptions = {}, extraOptions = {}, presets = {} } = params;
 

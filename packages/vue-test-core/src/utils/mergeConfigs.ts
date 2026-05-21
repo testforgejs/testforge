@@ -6,15 +6,15 @@ function isPlainObject(item: unknown): item is PlainObject {
 }
 
 /*
-IMPORTANT CONTRACT:
-
-Selective recursive merge WITHOUT deep cloning.
-
-- Objects merge only on intersecting keys
-- Non-intersecting objects keep original references
-- Arrays are union-merged with unique values
-- Primitives are replaced
-*/
+ * IMPORTANT CONTRACT:
+ *
+ * Selective recursive merge WITHOUT deep cloning.
+ *
+ * - Objects merge only on intersecting keys
+ * - Non-intersecting objects keep original references
+ * - Arrays are union-merged with unique values
+ * - Primitives are replaced
+ */
 export function mergeConfigs<T extends PlainObject>(target: T, source: T): T {
   if (!isPlainObject(target) || !isPlainObject(source)) {
     return (

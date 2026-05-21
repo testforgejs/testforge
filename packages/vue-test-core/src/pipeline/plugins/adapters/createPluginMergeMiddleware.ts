@@ -1,6 +1,6 @@
 import type { PipelineMiddleware, MountContext, PluginName } from "../../../types";
 
-import { mergePluginPresets } from "../logic/mergePluginPresets";
+import { mergePluginPresets } from "../logic/mergePluginPresets.js";
 
 /*
  * Creates a middleware that merges plugin presets into ctx.result.plugins[name].

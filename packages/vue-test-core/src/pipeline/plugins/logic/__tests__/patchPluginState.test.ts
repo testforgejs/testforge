@@ -7,7 +7,7 @@ vi.mock("../../../state/patchResultState.js", () => ({
 
 import { patchResultState } from "../../../state/patchResultState.js";
 import { patchPluginState } from "../patchPluginState.js";
-import { createTestMountContext } from "../../../../__tests__/utils/context/createTestMountContext.js";
+import { createTestMountContext } from "../../../../../tests/utils/createTestMountContext.js";
 
 const mockPatchResultState = patchResultState as MockedFunction<typeof patchResultState>;
 
@@ -133,7 +133,8 @@ describe("patchPluginState", () => {
 
       const [, payload] = mockPatchResultState.mock.calls[0];
 
-      expect(payload.plugins?.pinia).not.toBe(existing);
+      expect(payload.plugins).toBeDefined();
+      expect(payload.plugins!.pinia).not.toBe(existing);
     });
   });
 

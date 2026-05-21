@@ -12,7 +12,7 @@ describe("validatePreset", () => {
   const mockI18n = createMockModule("i18n");
 
   describe("valid presets", () => {
-    it("should pass if the preset structure is correct", () => {
+    it("should pass when the preset structure is correct", () => {
       const validPreset = {
         manifest: [
           { module: mockPinia, enabled: true },
@@ -27,7 +27,7 @@ describe("validatePreset", () => {
       expect(() => validatePreset("default", validPreset)).not.toThrow();
     });
 
-    it("should pass even if defaults are missing (optional field)", () => {
+    it("should pass even when defaults are missing (optional field)", () => {
       const presetWithoutDefaults = {
         manifest: [{ module: mockPinia, enabled: true }],
       };
@@ -63,16 +63,16 @@ describe("validatePreset", () => {
   });
 
   describe("manifest validation", () => {
-    it("should throw if preset is null or undefined", () => {
+    it("should throw when preset is null or undefined", () => {
       expect(() => validatePreset("null-test", null)).toThrow(/is null or undefined/);
     });
 
-    it("should throw if manifest is not an array", () => {
+    it("should throw when manifest is not an array", () => {
       const invalid = { manifest: "not-an-array" };
       expect(() => validatePreset("bad-manifest", invalid)).toThrow(/must have a "manifest" array/);
     });
 
-    it("should throw if a module in manifest is invalid", () => {
+    it("should throw when a module in manifest is invalid", () => {
       const invalid = {
         manifest: [{ module: {}, enabled: true }], // An empty object instead of a module
       };
@@ -81,7 +81,7 @@ describe("validatePreset", () => {
       );
     });
 
-    it("should throw if duplicate plugin names exist in manifest", () => {
+    it("should throw when duplicate plugin names exist in manifest", () => {
       const duplicate = {
         manifest: [
           { module: mockPinia, enabled: true },
@@ -91,7 +91,7 @@ describe("validatePreset", () => {
       expect(() => validatePreset("dupe-test", duplicate)).toThrow(/Duplicate plugin "pinia"/);
     });
 
-    it("should throw if enabled flag is not a boolean", () => {
+    it("should throw when enabled flag is not a boolean", () => {
       const invalid = {
         manifest: [{ module: mockPinia, enabled: "yes" }],
       };
@@ -99,10 +99,26 @@ describe("validatePreset", () => {
         /must have a boolean "enabled" flag/,
       );
     });
+
+    it("should throw when plugin config is false", () => {
+      const invalid = {
+        manifest: [
+          { module: mockPinia, enabled: true },
+          { module: mockI18n, enabled: false },
+        ],
+        defaults: {
+          pinia: { store: {} },
+          i18n: false,
+        },
+      };
+      expect(() => validatePreset("bad-plugin-false", invalid)).toThrow(
+        /Expected Object, but received boolean/,
+      );
+    });
   });
 
   describe("defaults consistency validation", () => {
-    it("should throw if defaults contains a key not present in manifest", () => {
+    it("should throw when defaults contains a key not present in manifest", () => {
       const inconsistent = {
         manifest: [{ module: mockPinia, enabled: true }],
         defaults: {
@@ -114,7 +130,7 @@ describe("validatePreset", () => {
       );
     });
 
-    it("should throw if a default value is not an object or false", () => {
+    it("should throw when a default value is not an object or false", () => {
       const badValue = {
         manifest: [{ module: mockPinia, enabled: true }],
         defaults: {
@@ -126,7 +142,7 @@ describe("validatePreset", () => {
       );
     });
 
-    it("should throw if a default value is null", () => {
+    it("should throw when a default value is null", () => {
       const badValue = {
         manifest: [{ module: mockPinia, enabled: true }],
         defaults: {

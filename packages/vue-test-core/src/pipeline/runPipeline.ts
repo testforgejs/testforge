@@ -1,8 +1,10 @@
 import type { PipelineMiddleware, PipeResult } from "../types";
 
 /*
- * Runs pipeline middlewares sequentially.
- * Each middleware can return a new context or falsy value to keep the previous one.
+ * Runs middleware sequentially using the current context value.
+ *
+ * Each middleware receives the accumulated context from the previous stage
+ * and may return an updated context object.
  */
 export function runPipeline<In, Ms extends readonly PipelineMiddleware<any, any>[]>(
   ctx: In,

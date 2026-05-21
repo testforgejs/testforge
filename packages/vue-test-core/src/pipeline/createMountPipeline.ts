@@ -16,9 +16,17 @@ import { createPluginsMiddlewares } from "./plugins/builders/createPluginsMiddle
 import { createPluginsMergeMiddlewares } from "./plugins/builders/createPluginsMergeMiddlewares.js";
 
 /*
-Creates array of middleware for processing mount context.
-Defines the full pipeline for preparing mount options and plugins.
-*/
+ * Creates the mount processing pipeline.
+ *
+ * Pipeline stages:
+ * - validate input context
+ * - initialize preset and plugin state
+ * - resolve mount configuration
+ * - resolve plugin runtime configuration
+ * - validate the final runtime result
+ *
+ * Middleware order is significant.
+ */
 export function createMountPipeline(ctx: MountContext): PipelineMiddleware[] {
   return [
     assertConfigurationShape,

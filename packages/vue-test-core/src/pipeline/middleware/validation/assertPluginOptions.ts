@@ -3,8 +3,18 @@ import type { PipelineMiddleware, MountContext, PluginOptionsReadyContext } from
 import { assertPluginValue } from "../typeGuards/assertPluginValue.js";
 
 /*
- * Validates plugin configurations in result.plugins and extraOptions.
- * Strengthens ctx types for plugins after validation.
+ * Validates plugin configuration layers used by the pipeline.
+ *
+ * Ensures that:
+ * - only supported plugins are present
+ * - plugin values have valid runtime shape
+ *
+ * Validates:
+ * - resolved plugin state (`ctx.result.plugins`)
+ * - plugin overlays from `extraOptions`
+ *
+ * After successful validation, plugin-related context types
+ * can be treated as narrowed and runtime-safe.
  */
 export const assertPluginOptions: PipelineMiddleware<MountContext, PluginOptionsReadyContext> = (
   ctx,

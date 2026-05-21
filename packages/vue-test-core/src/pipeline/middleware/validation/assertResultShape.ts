@@ -3,7 +3,13 @@ import type { PipelineMiddleware, MountContext, ResultReadyContext } from "../..
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
 /*
- * Validates ctx.result structure.
+ * Validates the runtime structure of `ctx.result`.
+ *
+ * Ensures that all result containers required by subsequent middleware
+ * exist and are valid objects before state mutation begins.
+ *
+ * After successful validation, the pipeline can safely treat
+ * `ctx.result` as fully initialized.
  */
 export const assertResultShape: PipelineMiddleware<MountContext, ResultReadyContext> = (ctx) => {
   const { result } = ctx;

@@ -2,13 +2,16 @@ import type { PipelineMiddleware, MountContext, PluginName } from "../../../type
 
 import { getPluginConfig } from "../logic/getPluginConfig.js";
 import { patchPluginState } from "../logic/patchPluginState.js";
-import { resolveRuntimePluginConfig } from "../logic/resolveRuntimePluginConfig";
+import { resolveRuntimePluginConfig } from "../logic/resolveRuntimePluginConfig.js";
 
-/**
- * Creates middleware for a plugin that supports defaults and instances.
+/*
+ * Creates middleware that resolves and applies runtime plugin configuration.
  *
- * @param {string} name - Plugin name (pinia, i18n, router)
- * @returns {PipelineMiddleware}
+ * Responsibilities:
+ * - resolve the effective plugin config across configuration layers
+ * - inject runtime-only fields (e.g. shared instances)
+ * - normalize the config into runtime-safe shape
+ * - write the resolved config into `ctx.result.plugins`
  */
 export function createPluginMiddleware(name: PluginName): PipelineMiddleware {
   return <T extends MountContext>(ctx: T): T => {

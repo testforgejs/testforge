@@ -1,8 +1,11 @@
 import type { PluginManifestEntry, PluginRegistry, PluginDefinition, PluginName } from "../types";
 
 /*
-Creates a plugin registry from a manifest array.
-*/
+ * Creates a runtime registry for resolving plugin definitions by name.
+ *
+ * Converts plugin manifest entries into an indexed lookup structure
+ * used during pipeline and plugin initialization.
+ */
 export function createPluginRegistry(manifest: PluginManifestEntry[] = []): PluginRegistry {
   const map = new Map<PluginName, PluginDefinition<any, any>>();
 
