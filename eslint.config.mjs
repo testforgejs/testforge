@@ -106,5 +106,13 @@ export default tsEslint.config(
     },
   },
 
+  {
+    files: ["**/*.type-spec.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
+
   prettierConfig,
 );
