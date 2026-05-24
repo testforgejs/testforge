@@ -1,4 +1,4 @@
-import type { Component, Plugin } from "vue";
+import type { Component } from "vue";
 import type { VueWrapper, MountingOptions } from "@vue/test-utils";
 import type { Pinia } from "pinia";
 import type { RouteRecordRaw } from "vue-router";
@@ -62,15 +62,15 @@ export type ExposePluginInstance = (instance: any) => void;
 
 // === 3. Plugin Registry System ===
 
-export interface PluginDefinition<TOptions = unknown, TInstance extends Plugin = Plugin> {
+export interface PluginDefinition<TInstance = unknown, TOptions = unknown> {
   beforeCreate?: (ctx: MountContext, options: TOptions) => TOptions;
   create: (options: TOptions) => TInstance;
   afterCreate?: (instance: TInstance, ctx: MountContext) => void;
 }
 
-export interface PluginModule<TOptions = unknown, TInstance extends Plugin = Plugin> {
+export interface PluginModule<TInstance = unknown, TOptions = unknown> {
   getName(): PluginName;
-  getDefinition(): PluginDefinition<TOptions, TInstance>;
+  getDefinition(): PluginDefinition<TInstance, TOptions>;
 }
 
 export interface PluginRegistry {
@@ -81,8 +81,8 @@ export interface PluginRegistry {
   getNames(): PluginName[];
 }
 
-export interface PluginManifestEntry<TOptions = unknown, TInstance extends Plugin = Plugin> {
-  module: PluginModule<TOptions, TInstance>;
+export interface PluginManifestEntry<TInstance = unknown, TOptions = unknown> {
+  module: PluginModule<TInstance, TOptions>;
   enabled: boolean;
 }
 

@@ -6,7 +6,7 @@ import type { PluginModule, I18nPluginOptions } from "@testforge/vue-test-core";
 /*
  * Vue I18n plugin module definition.
  */
-export const i18nPlugin: PluginModule<I18nPluginOptions, I18n> = {
+export const i18nPlugin: PluginModule<I18n, I18nPluginOptions> = {
   getName: () => "i18n",
 
   getDefinition: () => ({
