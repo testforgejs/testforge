@@ -96,12 +96,12 @@ export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
   options: TOptions,
 ) => TInstance;
 
-export interface PluginFactoryOptions<T> {
+export interface PluginRuntimeMeta<T> {
   __sharedInstance?: T;
   expose?: (instance: T) => void;
-  // The remaining plugin options remain open
-  [key: string]: unknown;
 }
+
+export type PluginFactoryOptions<T, TOptions = object> = TOptions & PluginRuntimeMeta<T>;
 
 export interface InstanceCapture<T> {
   expose(instance: T): void;
