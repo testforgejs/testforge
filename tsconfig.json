@@ -11,6 +11,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "paths": {
       "@testforge/*": ["./packages/*/src"]
     }

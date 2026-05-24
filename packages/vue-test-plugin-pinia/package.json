@@ -20,5 +20,8 @@
   "peerDependencies": {
     "pinia": "^3.0.0",
     "@pinia/testing": "^1.0.0"
+  },
+  "dependencies": {
+    "@testforge/vue-test-core": "workspace:*"
   }
 }
