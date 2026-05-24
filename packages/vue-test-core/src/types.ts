@@ -1,7 +1,7 @@
 import type { Component } from "vue";
 import type { VueWrapper, MountingOptions } from "@vue/test-utils";
 import type { Pinia } from "pinia";
-import type { RouteRecordRaw } from "vue-router";
+import type { RouterOptions } from "vue-router";
 
 // === 1. Core Plugin Model ===
 
@@ -48,8 +48,7 @@ export interface I18nPluginOptions {
   expose?: ExposePluginInstance;
 }
 
-export interface RouterPluginOptions {
-  routes?: RouteRecordRaw[];
+export interface RouterPluginOptions extends RouterOptions {
   initialRoute?: string;
   expose?: ExposePluginInstance;
 }

@@ -1,9 +1,0 @@
-import { createRouterPlugin } from "./createRouterPlugin.js";
-
-/** @type {import('@testforge/vue-test-core').PluginModule} */
-export const routerPlugin = {
-  getName: () => "router",
-  getDefinition: () => ({
-    create: createRouterPlugin,
-  }),
-};
