@@ -1,7 +1,8 @@
 import { createRouterPlugin } from "./createRouterPlugin.js";
 
 import type { Router } from "vue-router";
-import type { PluginModule, RouterPluginOptions } from "@testforge/vue-test-core";
+import type { RouterPluginOptions } from "./types";
+import type { PluginModule } from "@testforge/vue-test-core";
 
 /*
  * Vue Router plugin module definition.

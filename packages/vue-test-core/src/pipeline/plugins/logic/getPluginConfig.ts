@@ -11,7 +11,9 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
  */
 export function getPluginConfig(ctx: MountContext, name: PluginName): ResolvedPluginConfig | false {
   const base = ctx.result.plugins[name];
-  const overlay = ctx.extraOptions[name];
+
+  const extraOptions = ctx.extraOptions as Record<string, any>;
+  const overlay = extraOptions[name];
 
   const isEnabled =
     overlay !== undefined ? overlay !== false : base !== false && base !== undefined;

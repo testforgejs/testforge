@@ -1,7 +1,8 @@
 import { createPiniaPlugin } from "./createPiniaPlugin.js";
 
 import type { Pinia } from "pinia";
-import type { PluginModule, PiniaPluginOptions } from "@testforge/vue-test-core";
+import type { PiniaPluginOptions } from "./types";
+import type { PluginModule } from "@testforge/vue-test-core";
 
 export const piniaPlugin: PluginModule<Pinia, PiniaPluginOptions> = {
   getName: () => "pinia",

@@ -1,16 +1,3 @@
-import type {
-  ComponentFactory,
-  ComponentFactoryOptions,
-  PluginOptions,
-  PiniaPluginOptions,
-  I18nPluginOptions,
-  RouterPluginOptions,
-  RuntimePluginOptions,
-  PluginModule,
-  PresetDefinition,
-  TestFrameworkPresets,
-} from "./types";
-
 // Re-exporting functions from an existing structure
 export { createTestFramework } from "./core/createTestFramework.js";
 export { createPluginInstance } from "./pluginsRegistry/factory/createPluginInstance.js";
@@ -22,14 +9,13 @@ export type {
   ComponentFactory,
   ComponentFactoryOptions,
   PluginOptions,
-  PiniaPluginOptions,
-  I18nPluginOptions,
-  RouterPluginOptions,
+  PluginOptionsMap,
+  PluginControlOptions,
   RuntimePluginOptions,
   PluginModule,
   PresetDefinition,
   TestFrameworkPresets,
-};
+} from "./types";
 
 // For backward compatibility
 export const Types = {} as const;

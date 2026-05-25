@@ -1,9 +1,5 @@
 import type { Component } from "vue";
 import type { VueWrapper, MountingOptions } from "@vue/test-utils";
-import type { Pinia } from "pinia";
-import type { TestingOptions } from "@pinia/testing";
-import type { I18nOptions } from "vue-i18n";
-import type { RouterOptions } from "vue-router";
 
 // === 1. Core Plugin Model ===
 
@@ -14,7 +10,7 @@ export interface PluginMeta {
   instance?: unknown;
 }
 
-export type PluginConfig = Record<string, unknown>;
+export type PluginConfig = Record<string, any>;
 
 export type PluginOption = PluginConfig | false;
 
@@ -29,28 +25,6 @@ export type RuntimePluginConfig = PluginConfig & {
 };
 
 // === 2. Built-in Plugin Options ===
-
-export interface PiniaPluginOptions extends TestingOptions {
-  /** Callback to mutate stores after creation. */
-  mockStores?: MockStoresFn;
-
-  /** Callback to capture plugin instance. */
-  expose?: ExposePluginInstance;
-}
-
-export type I18nPluginOptions = I18nOptions & {
-  expose?: ExposePluginInstance;
-};
-
-export interface RouterPluginOptions extends RouterOptions {
-  expose?: ExposePluginInstance;
-}
-
-/** Pinia store mocking callback. */
-export type MockStoresFn = (pinia: Pinia) => void;
-
-/** Allows tests to capture the instance created by a plugin. */
-export type ExposePluginInstance = (instance: any) => void;
 
 // === 3. Plugin Registry System ===
 
@@ -106,13 +80,28 @@ export interface ExposeOption<T> {
 
 // === 5. Public Plugin Configuration API ===
 
-export interface KnownPluginOptions {
-  pinia?: PiniaPluginOptions | false;
-  i18n?: I18nPluginOptions | false;
-  router?: RouterPluginOptions | false;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface PluginOptionsMap {}
+
+export interface PluginControlOptions<TInstance> {
+  expose?: (instance: TInstance) => void;
 }
 
-export type PluginOptions = Record<PluginName, PluginOption> & KnownPluginOptions;
+export type PluginOptionsInput = {
+  [K in keyof PluginOptionsMap]?: PluginOptionsMap[K] | false;
+};
+
+export type PluginOverride<T = unknown> =
+  | (T extends Record<string, any>
+      ? Partial<T> & { __meta?: PluginMeta }
+      : T & { __meta?: PluginMeta })
+  | false;
+
+export type PluginOverridesInput = {
+  [K in keyof PluginOptionsMap]?: PluginOverride<PluginOptionsMap[K]>;
+};
+
+export type PluginOptions = Record<PluginName, PluginOption>;
 
 export type PluginConfigDefaults = Record<PluginName, PluginConfig>;
 
@@ -139,7 +128,7 @@ export type ComponentFactoryExtraOptions = {
    * Skip BASE_MOUNT_OPTIONS during merge.
    */
   skipDefaultOptions?: boolean;
-} & PluginConfigOverrides;
+} & PluginOverridesInput;
 
 // === 6. Preset System ===
 
@@ -226,7 +215,7 @@ export interface ComponentFactoryOptions<Props = any, Data = any> extends Mounti
   useShallow?: boolean;
 
   /** Managed plugin configuration */
-  plugins?: PluginOptions;
+  plugins?: PluginOptionsInput; //PluginOptions;
 
   /** Disable managed plugins from presets */
   skipManagedPlugins?: boolean;

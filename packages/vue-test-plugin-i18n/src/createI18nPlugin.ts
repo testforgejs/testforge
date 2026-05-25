@@ -2,7 +2,8 @@ import { createPluginInstance } from "@testforge/vue-test-core";
 import { createI18n } from "vue-i18n";
 
 import type { I18n } from "vue-i18n";
-import type { I18nPluginOptions, RuntimePluginOptions } from "@testforge/vue-test-core";
+import type { I18nPluginOptions } from "./types";
+import type { RuntimePluginOptions } from "@testforge/vue-test-core";
 
 /*
  * Creates a Vue I18n plugin instance.

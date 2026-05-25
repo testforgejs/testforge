@@ -19,7 +19,8 @@ export function createPluginMiddleware(name: PluginName): PipelineMiddleware {
 
     if (!config) return ctx;
 
-    const runtimeConfig = resolveRuntimePluginConfig(config, ctx.extraOptions[name]);
+    const extraOptions = ctx.extraOptions as Record<string, any>;
+    const runtimeConfig = resolveRuntimePluginConfig(config, extraOptions[name]);
 
     return patchPluginState(ctx, name, runtimeConfig);
   };
