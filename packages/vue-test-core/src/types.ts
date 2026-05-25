@@ -1,6 +1,8 @@
 import type { Component } from "vue";
 import type { VueWrapper, MountingOptions } from "@vue/test-utils";
 import type { Pinia } from "pinia";
+import type { TestingOptions } from "@pinia/testing";
+import type { I18nOptions } from "vue-i18n";
 import type { RouterOptions } from "vue-router";
 
 // === 1. Core Plugin Model ===
@@ -28,28 +30,19 @@ export type RuntimePluginConfig = PluginConfig & {
 
 // === 2. Built-in Plugin Options ===
 
-export interface PiniaPluginOptions {
-  /** Initial state of the Pinia store. */
-  initialState?: object;
-  /** Whether to stub store actions. */
-  stubActions?: boolean;
-  /** Custom spy function (e.g., jest.fn). */
-  createSpy?: (fn: any) => any;
-  /** Callback to mutate stores. */
+export interface PiniaPluginOptions extends TestingOptions {
+  /** Callback to mutate stores after creation. */
   mockStores?: MockStoresFn;
+
   /** Callback to capture plugin instance. */
   expose?: ExposePluginInstance;
 }
 
-export interface I18nPluginOptions {
-  locale?: string;
-  messages?: object;
-  legacy?: boolean;
+export type I18nPluginOptions = I18nOptions & {
   expose?: ExposePluginInstance;
-}
+};
 
 export interface RouterPluginOptions extends RouterOptions {
-  initialRoute?: string;
   expose?: ExposePluginInstance;
 }
 
