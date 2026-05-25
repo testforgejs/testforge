@@ -52,7 +52,9 @@ export interface PluginManifestEntry<TInstance = unknown, TOptions = unknown> {
   enabled: boolean;
 }
 
-export type SupportedPluginState = PluginConfig | false;
+export type EnabledPluginMarker = Record<never, never>;
+
+export type SupportedPluginState = EnabledPluginMarker | false;
 
 export type SupportedPluginsMap = Record<PluginName, SupportedPluginState>;
 
