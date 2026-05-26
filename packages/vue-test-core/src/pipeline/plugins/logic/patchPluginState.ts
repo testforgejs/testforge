@@ -1,4 +1,4 @@
-import type { MountContext, PluginName, RuntimePluginConfig } from "../../../types";
+import type { MountContext, PluginName, RuntimePluginState } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
@@ -22,11 +22,11 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
 export function patchPluginState<T extends MountContext>(
   ctx: T,
   name: PluginName,
-  config: RuntimePluginConfig,
+  config: RuntimePluginState,
 ): T {
   const current = ctx.result.plugins[name];
 
-  const currentObj: RuntimePluginConfig = isPluginOverlayObject(current) ? current : {};
+  const currentObj: RuntimePluginState = isPluginOverlayObject(current) ? current : {};
 
   return patchResultState(ctx, {
     plugins: {

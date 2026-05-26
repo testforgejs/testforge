@@ -10,23 +10,7 @@ export interface PluginMeta {
   instance?: unknown;
 }
 
-export type PluginConfig = Record<string, any>;
-
-export type PluginOption = PluginConfig | false;
-
-export type ResolvedPluginConfig = PluginConfig & {
-  __meta?: PluginMeta;
-};
-
-export type PluginOverlay = ResolvedPluginConfig | false;
-
-export type RuntimePluginConfig = PluginConfig & {
-  __sharedInstance?: unknown;
-};
-
-// === 2. Built-in Plugin Options ===
-
-// === 3. Plugin Registry System ===
+// === 2. Plugin Registry System ===
 
 export interface PluginDefinition<TInstance = unknown, TOptions = unknown> {
   beforeCreate?: (ctx: MountContext, options: TOptions) => TOptions;
@@ -58,11 +42,29 @@ export type SupportedPluginState = EnabledPluginMarker | false;
 
 export type SupportedPluginsMap = Record<PluginName, SupportedPluginState>;
 
-// === 4. Plugin Runtime ===
-
 export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
   options: TOptions,
 ) => TInstance;
+
+// === 3. Plugin Runtime ===
+
+export type RuntimePluginConfig = Record<string, any>;
+
+export type RuntimePluginOption = RuntimePluginConfig | false;
+
+export type ResolvedPluginOptions = Record<PluginName, RuntimePluginOption>;
+
+export type PluginConfigDefaults = Record<PluginName, RuntimePluginConfig>;
+
+export type ResolvedPluginConfig = RuntimePluginConfig & {
+  __meta?: PluginMeta;
+};
+
+export type PluginOverlay = ResolvedPluginConfig | false;
+
+export type RuntimePluginState = RuntimePluginConfig & {
+  __sharedInstance?: unknown;
+};
 
 export interface PluginRuntimeMeta<T> {
   __sharedInstance?: T;
@@ -80,18 +82,18 @@ export interface ExposeOption<T> {
   expose?: (instance: T) => void;
 }
 
-// === 5. Public Plugin Configuration API ===
+// === 4. Public Plugin Configuration API ===
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginOptionsMap {}
 
-export interface PluginControlOptions<TInstance> {
-  expose?: (instance: TInstance) => void;
-}
-
 export type PluginOptionsInput = {
   [K in keyof PluginOptionsMap]?: PluginOptionsMap[K] | false;
 };
+
+export interface PluginControlOptions<TInstance> {
+  expose?: (instance: TInstance) => void;
+}
 
 export type PluginOverride<T = unknown> =
   | (T extends Record<string, any>
@@ -103,11 +105,19 @@ export type PluginOverridesInput = {
   [K in keyof PluginOptionsMap]?: PluginOverride<PluginOptionsMap[K]>;
 };
 
-export type PluginOptions = Record<PluginName, PluginOption>;
+export interface ComponentFactoryOptions<Props = any, Data = any> extends MountingOptions<
+  Props,
+  Data
+> {
+  /** Use shallowMount() instead of mount() */
+  useShallow?: boolean;
 
-export type PluginConfigDefaults = Record<PluginName, PluginConfig>;
+  /** Managed plugin configuration */
+  plugins?: PluginOptionsInput;
 
-export type PluginConfigOverrides = Partial<Record<PluginName, PluginOverlay>>;
+  /** Disable managed plugins from presets */
+  skipManagedPlugins?: boolean;
+}
 
 export type ComponentFactoryExtraOptions = {
   /**
@@ -132,7 +142,7 @@ export type ComponentFactoryExtraOptions = {
   skipDefaultOptions?: boolean;
 } & PluginOverridesInput;
 
-// === 6. Preset System ===
+// === 5. Preset System ===
 
 export interface PresetDefinition {
   manifest: PluginManifestEntry[];
@@ -141,7 +151,7 @@ export interface PresetDefinition {
 
 export type TestFrameworkPresets = Record<string, PresetDefinition>;
 
-// === 7. Pipeline Types ===
+// === 6. Pipeline Types ===
 
 export interface CreateMountContextParams {
   defaultMountOptions?: ComponentFactoryOptions;
@@ -165,7 +175,7 @@ export interface MountContextResult {
   mountOptions: MountOptionsState;
   global: NonNullable<MountingOptions<any>["global"]>;
   pluginPresets: PluginConfigDefaults;
-  plugins: PluginOptions;
+  plugins: ResolvedPluginOptions;
 }
 
 export type MountResultPatch = {
@@ -184,12 +194,16 @@ export interface ResultReadyContext extends MountContext {
   };
 }
 
+type ExtraOptionServiceFields = Omit<ComponentFactoryExtraOptions, keyof PluginOptionsMap>;
+
+type RuntimePluginOverrides = Partial<ResolvedPluginOptions>;
+
 export interface PluginOptionsReadyContext extends MountContext {
   result: MountContext["result"] & {
-    plugins: PluginOptions;
+    plugins: ResolvedPluginOptions;
   };
 
-  extraOptions: MountContext["extraOptions"] & Partial<PluginOptions>;
+  extraOptions: ExtraOptionServiceFields & RuntimePluginOverrides;
 }
 
 export type PipelineMiddleware<In = MountContext, Out = In> = (ctx: In) => Out;
@@ -207,21 +221,7 @@ export type PipeResult<
     : Out
   : In;
 
-// === 8. Component Factory ===
-
-export interface ComponentFactoryOptions<Props = any, Data = any> extends MountingOptions<
-  Props,
-  Data
-> {
-  /** Use shallowMount() instead of mount() */
-  useShallow?: boolean;
-
-  /** Managed plugin configuration */
-  plugins?: PluginOptionsInput; //PluginOptions;
-
-  /** Disable managed plugins from presets */
-  skipManagedPlugins?: boolean;
-}
+// === 7. Component Factory ===
 
 /** Main component factory returned by testComponentFactory */
 export type ComponentFactory<T extends abstract new (...args: any) => any = any> = (
@@ -245,7 +245,7 @@ export interface TestFramework {
   ): ComponentFactory<T>;
 }
 
-// === 9. Utility Types ===
+// === 8. Utility Types ===
 
 export type PlainObject = Record<string, unknown>;
 

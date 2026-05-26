@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
 
-import { resolveRuntimePluginConfig } from "../resolveRuntimePluginConfig.js";
+import { resolveRuntimePluginState } from "../resolveRuntimePluginState.js";
 
-describe("resolveRuntimePluginConfig", () => {
+describe("resolveRuntimePluginState", () => {
   describe("runtime config creation", () => {
     it("should return a shallow copy of config", () => {
       const config = {
         a: 1,
       };
 
-      const result = resolveRuntimePluginConfig(config);
+      const result = resolveRuntimePluginState(config);
 
       expect(result).toEqual({
         a: 1,
@@ -24,7 +24,7 @@ describe("resolveRuntimePluginConfig", () => {
         legacy: false,
       };
 
-      const result = resolveRuntimePluginConfig(config);
+      const result = resolveRuntimePluginState(config);
 
       expect(result).toEqual({
         locale: "en",
@@ -47,25 +47,25 @@ describe("resolveRuntimePluginConfig", () => {
         },
       };
 
-      const result = resolveRuntimePluginConfig(config, overlay);
+      const result = resolveRuntimePluginState(config, overlay);
 
       expect(result.__sharedInstance).toBe(instance);
     });
 
     it("should not inject __sharedInstance when overlay is undefined", () => {
-      const result = resolveRuntimePluginConfig({ a: 1 });
+      const result = resolveRuntimePluginState({ a: 1 });
 
       expect(result.__sharedInstance).toBeUndefined();
     });
 
     it("should not inject __sharedInstance when overlay is false", () => {
-      const result = resolveRuntimePluginConfig({ a: 1 }, false);
+      const result = resolveRuntimePluginState({ a: 1 }, false);
 
       expect(result.__sharedInstance).toBeUndefined();
     });
 
     it("should not inject __sharedInstance when meta.instance is missing", () => {
-      const result = resolveRuntimePluginConfig(
+      const result = resolveRuntimePluginState(
         { a: 1 },
         {
           __meta: {},
@@ -78,7 +78,7 @@ describe("resolveRuntimePluginConfig", () => {
 
   describe("__meta cleanup", () => {
     it("should remove __meta from runtime config", () => {
-      const result = resolveRuntimePluginConfig({
+      const result = resolveRuntimePluginState({
         a: 1,
         __meta: {
           instance: true,
@@ -96,7 +96,7 @@ describe("resolveRuntimePluginConfig", () => {
         },
       };
 
-      resolveRuntimePluginConfig(config);
+      resolveRuntimePluginState(config);
 
       expect(config).toEqual({
         a: 1,

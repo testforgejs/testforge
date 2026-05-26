@@ -1,4 +1,4 @@
-import type { ResolvedPluginConfig, PluginOverlay, RuntimePluginConfig } from "../../../types";
+import type { ResolvedPluginConfig, PluginOverlay, RuntimePluginState } from "../../../types";
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 
@@ -31,11 +31,11 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
  *   __sharedInstance: i18nInstance
  * }
  */
-export function resolveRuntimePluginConfig(
+export function resolveRuntimePluginState(
   config: ResolvedPluginConfig,
   overlay?: PluginOverlay,
-): RuntimePluginConfig {
-  const runtimeConfig: RuntimePluginConfig = {
+): RuntimePluginState {
+  const runtimeConfig: RuntimePluginState = {
     ...config,
   };
 
