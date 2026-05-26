@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTestFramework } from "../createTestFramework.js";
 
 import { mergeComponentData } from "../../utils/mergeComponentData.js";
-import { createMountContext } from "../../pipeline/createMountContext.js";
+import { createPipelineContext } from "../../pipeline/createPipelineContext.js";
 import { createPipeline } from "../../pipeline/createPipeline.js";
 import { createMountPipeline } from "../../pipeline/createMountPipeline.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
@@ -11,8 +11,8 @@ vi.mock("../../utils/mergeComponentData.js", () => ({
   mergeComponentData: vi.fn((x) => x),
 }));
 
-vi.mock("../../pipeline/createMountContext.js", () => ({
-  createMountContext: vi.fn(() => ({ ctx: true })),
+vi.mock("../../pipeline/createPipelineContext.js", () => ({
+  createPipelineContext: vi.fn(() => ({ ctx: true })),
 }));
 
 vi.mock("../../pipeline/createPipeline.js", () => ({
@@ -107,7 +107,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
       factory({}, {}, {}, { extra: true });
 
-      expect(createMountContext).toHaveBeenCalledWith({
+      expect(createPipelineContext).toHaveBeenCalledWith({
         defaultMountOptions: {},
         mountOptions: {},
         extraOptions: { extra: true },

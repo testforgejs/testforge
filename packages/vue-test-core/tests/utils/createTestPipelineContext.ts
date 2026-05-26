@@ -1,7 +1,9 @@
-import type { MountContext } from "../../src/types";
+import type { PipelineContext } from "../../src/types";
 import type { DeepPartial } from "./DeepPartial";
 
-export function createTestMountContext(overrides: DeepPartial<MountContext> = {}): MountContext {
+export function createTestPipelineContext(
+  overrides: DeepPartial<PipelineContext> = {},
+): PipelineContext {
   return {
     defaultMountOptions: {},
     mountOptions: {},
@@ -22,5 +24,5 @@ export function createTestMountContext(overrides: DeepPartial<MountContext> = {}
         ...(overrides.result?.plugins ?? {}),
       },
     },
-  } as MountContext;
+  } as PipelineContext;
 }

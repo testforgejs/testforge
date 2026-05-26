@@ -10,7 +10,7 @@ import type {
 import type { Component } from "vue";
 
 import { mergeComponentData } from "../utils/mergeComponentData.js";
-import { createMountContext } from "../pipeline/createMountContext.js";
+import { createPipelineContext } from "../pipeline/createPipelineContext.js";
 import { createPipeline } from "../pipeline/createPipeline.js";
 import { createMountPipeline } from "../pipeline/createMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
@@ -76,7 +76,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         });
 
         // Create the initial pipeline context
-        const ctx = createMountContext({
+        const ctx = createPipelineContext({
           defaultMountOptions,
           mountOptions,
           extraOptions,

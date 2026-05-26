@@ -1,4 +1,8 @@
-import type { PipelineMiddleware, MountContext, PluginOptionsReadyContext } from "../../../types";
+import type {
+  PipelineMiddleware,
+  PipelineContext,
+  PluginOptionsReadyContext,
+} from "../../../types";
 
 import { assertPluginValue } from "../typeGuards/assertPluginValue.js";
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
@@ -17,7 +21,7 @@ import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
  * After successful validation, plugin-related context types
  * can be treated as narrowed and runtime-safe.
  */
-export const assertPluginOptions: PipelineMiddleware<MountContext, PluginOptionsReadyContext> = (
+export const assertPluginOptions: PipelineMiddleware<PipelineContext, PluginOptionsReadyContext> = (
   ctx,
 ) => {
   const { supportedPlugins, extraOptions } = ctx;

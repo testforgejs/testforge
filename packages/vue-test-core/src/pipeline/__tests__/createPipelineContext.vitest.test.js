@@ -10,9 +10,9 @@ vi.mock("../../utils/createSupportedPluginsState.js", () => ({
 
 import { getActivePreset } from "../../utils/getActivePreset.js";
 import { createSupportedPluginsState } from "../../utils/createSupportedPluginsState.js";
-import { createMountContext } from "../createMountContext.js";
+import { createPipelineContext } from "../createPipelineContext.js";
 
-describe("createMountContext", () => {
+describe("createPipelineContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -21,7 +21,7 @@ describe("createMountContext", () => {
     getActivePreset.mockReturnValue("defaultPreset");
     createSupportedPluginsState.mockReturnValue({ pinia: true });
 
-    const ctx = createMountContext({
+    const ctx = createPipelineContext({
       defaultMountOptions: { a: 1 },
       mountOptions: { b: 2 },
       extraOptions: { c: 3 },
@@ -37,7 +37,7 @@ describe("createMountContext", () => {
     getActivePreset.mockReturnValue("presetA");
     createSupportedPluginsState.mockReturnValue({});
 
-    createMountContext({
+    createPipelineContext({
       extraOptions: { preset: "presetA" },
       presets: { presetA: {} },
     });
@@ -49,7 +49,7 @@ describe("createMountContext", () => {
     getActivePreset.mockReturnValue("presetA");
     createSupportedPluginsState.mockReturnValue({ pinia: true });
 
-    const ctx = createMountContext({
+    const ctx = createPipelineContext({
       extraOptions: {},
       presets: {},
     });
@@ -62,7 +62,7 @@ describe("createMountContext", () => {
     getActivePreset.mockReturnValue("presetX");
     createSupportedPluginsState.mockReturnValue({});
 
-    createMountContext({
+    createPipelineContext({
       presets: {},
       extraOptions: {},
     });
@@ -74,7 +74,7 @@ describe("createMountContext", () => {
     getActivePreset.mockReturnValue("p");
     createSupportedPluginsState.mockReturnValue({});
 
-    const ctx = createMountContext({
+    const ctx = createPipelineContext({
       presets: {},
     });
 
@@ -90,7 +90,7 @@ describe("createMountContext", () => {
     getActivePreset.mockReturnValue(undefined);
     createSupportedPluginsState.mockReturnValue({});
 
-    const ctx = createMountContext({ presets: {} });
+    const ctx = createPipelineContext({ presets: {} });
 
     expect(ctx.defaultMountOptions).toEqual({});
     expect(ctx.mountOptions).toEqual({});

@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 import { mergeRecord } from "../../state/mergeRecord.js";
@@ -18,7 +18,7 @@ import { mergeRecord } from "../../state/mergeRecord.js";
  *
  * The resolved options are written into `ctx.result.mountOptions`.
  */
-export const withBaseMountOptions: PipelineMiddleware = <T extends MountContext>(ctx: T) => {
+export const withBaseMountOptions: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   // Extract what should NOT be processed at this stage

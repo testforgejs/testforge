@@ -1,4 +1,4 @@
-import type { MountContext, PluginName, ResolvedPluginConfig } from "../../../types";
+import type { PipelineContext, PluginName, ResolvedPluginConfig } from "../../../types";
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
@@ -10,7 +10,10 @@ import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
  * - Plugin is disabled ONLY if explicitly set to `false`
  * - Otherwise, returns a merged configuration object
  */
-export function getPluginConfig(ctx: MountContext, name: PluginName): ResolvedPluginConfig | false {
+export function getPluginConfig(
+  ctx: PipelineContext,
+  name: PluginName,
+): ResolvedPluginConfig | false {
   const base = ctx.result.plugins[name];
 
   const extraOptions = resolveExtraOptions(ctx.extraOptions);

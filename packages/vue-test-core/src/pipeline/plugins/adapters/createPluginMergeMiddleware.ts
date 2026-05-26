@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext, PluginName } from "../../../types";
+import type { PipelineMiddleware, PipelineContext, PluginName } from "../../../types";
 
 import { mergePluginPresets } from "../logic/mergePluginPresets.js";
 
@@ -14,7 +14,7 @@ import { mergePluginPresets } from "../logic/mergePluginPresets.js";
  * - Does not interact with extraOptions
  */
 export function createPluginMergeMiddleware(name: PluginName): PipelineMiddleware {
-  return <T extends MountContext>(ctx: T): T => {
+  return <T extends PipelineContext>(ctx: T): T => {
     return mergePluginPresets(ctx, name);
   };
 }

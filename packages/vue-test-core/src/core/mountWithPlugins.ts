@@ -1,4 +1,4 @@
-import type { MountContext, MountWithPluginsOptions } from "../types";
+import type { PipelineContext, MountWithPluginsOptions } from "../types";
 import type { Component } from "vue";
 import type { VueWrapper } from "@vue/test-utils";
 
@@ -16,7 +16,7 @@ import { createPlugins } from "../pluginsRegistry/createPlugins.js";
  */
 export function mountWithPlugins(
   component: Component,
-  ctx: MountContext,
+  ctx: PipelineContext,
   overrides: MountWithPluginsOptions = {},
 ): VueWrapper {
   const { result } = ctx;

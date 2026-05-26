@@ -1,4 +1,4 @@
-import type { MountContext, PluginName } from "../../../types";
+import type { PipelineContext, PluginName } from "../../../types";
 
 /*
  * Merges plugin presets with the current plugin configuration.
@@ -10,7 +10,7 @@ import type { MountContext, PluginName } from "../../../types";
  *
  * This function mutates `ctx.result.plugins[name]`.
  */
-export function mergePluginPresets<T extends MountContext>(ctx: T, name: PluginName): T {
+export function mergePluginPresets<T extends PipelineContext>(ctx: T, name: PluginName): T {
   const { result } = ctx;
 
   const current = result.plugins[name];

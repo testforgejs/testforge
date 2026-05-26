@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext } from "../../../types";
 
 import { mergeConfigs } from "../../../utils/mergeConfigs.js";
 import { patchResultState } from "../../state/patchResultState.js";
@@ -14,7 +14,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  *
  * The resolved global config is written into `ctx.result.global`.
  */
-export const withGlobal: PipelineMiddleware = <T extends MountContext>(ctx: T) => {
+export const withGlobal: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   return patchResultState(ctx, {

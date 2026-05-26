@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 
@@ -10,7 +10,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  *
  * The resolved preset config is written into `ctx.result.pluginPresets`.
  */
-export const withPreset: PipelineMiddleware = <T extends MountContext>(ctx: T) => {
+export const withPreset: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
   const { preset } = ctx;
 
   if (!preset?.defaults) return ctx;

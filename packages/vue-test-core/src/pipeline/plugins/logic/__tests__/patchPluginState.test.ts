@@ -7,7 +7,7 @@ vi.mock("../../../state/patchResultState.js", () => ({
 
 import { patchResultState } from "../../../state/patchResultState.js";
 import { patchPluginState } from "../patchPluginState.js";
-import { createTestMountContext } from "../../../../../tests/utils/createTestMountContext.js";
+import { createTestPipelineContext } from "../../../../../tests/utils/createTestPipelineContext.js";
 
 const mockPatchResultState = patchResultState as MockedFunction<typeof patchResultState>;
 
@@ -18,7 +18,7 @@ describe("patchPluginState", () => {
 
   describe("plugin config merge", () => {
     it("should merge new plugin config on top of existing one", () => {
-      const ctx = createTestMountContext({
+      const ctx = createTestPipelineContext({
         result: {
           plugins: {
             pinia: {
@@ -29,7 +29,7 @@ describe("patchPluginState", () => {
       });
 
       const config = { b: 2 };
-      const mergedCtx = createTestMountContext({ mountOptions: { props: { merged: true } } });
+      const mergedCtx = createTestPipelineContext({ mountOptions: { props: { merged: true } } });
 
       mockPatchResultState.mockReturnValue(mergedCtx);
 
@@ -48,7 +48,7 @@ describe("patchPluginState", () => {
     });
 
     it("should give priority to new config over existing plugin state", () => {
-      const ctx = createTestMountContext({
+      const ctx = createTestPipelineContext({
         result: {
           plugins: {
             i18n: {
@@ -76,7 +76,7 @@ describe("patchPluginState", () => {
     });
 
     it("should create plugin entry if it does not exist", () => {
-      const ctx = createTestMountContext({
+      const ctx = createTestPipelineContext({
         result: {
           plugins: {},
         },
@@ -96,7 +96,7 @@ describe("patchPluginState", () => {
 
   describe("merge isolation", () => {
     it("should not affect other plugins", () => {
-      const ctx = createTestMountContext({
+      const ctx = createTestPipelineContext({
         result: {
           plugins: {
             pinia: {
@@ -119,7 +119,7 @@ describe("patchPluginState", () => {
     it("should create a new object for plugin config", () => {
       const existing = { initialState: { a: 1 } };
 
-      const ctx = createTestMountContext({
+      const ctx = createTestPipelineContext({
         result: {
           plugins: {
             pinia: existing,
@@ -140,13 +140,13 @@ describe("patchPluginState", () => {
 
   describe("return value", () => {
     it("should return the result of patchResultState", () => {
-      const ctx = createTestMountContext({
+      const ctx = createTestPipelineContext({
         result: {
           plugins: {},
         },
       });
 
-      const mergedCtx = createTestMountContext({
+      const mergedCtx = createTestPipelineContext({
         result: { mountOptions: { props: { ok: true } } },
       });
 

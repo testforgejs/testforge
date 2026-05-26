@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext, ResultReadyContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext, ResultReadyContext } from "../../../types";
 
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
@@ -11,7 +11,7 @@ import { assertIsObject } from "../typeGuards/assertIsObject.js";
  * After successful validation, the pipeline can safely treat
  * `ctx.result` as fully initialized.
  */
-export const assertResultShape: PipelineMiddleware<MountContext, ResultReadyContext> = (ctx) => {
+export const assertResultShape: PipelineMiddleware<PipelineContext, ResultReadyContext> = (ctx) => {
   const { result } = ctx;
 
   assertIsObject(result, "result");

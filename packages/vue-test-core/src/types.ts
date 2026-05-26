@@ -13,9 +13,9 @@ export interface PluginMeta {
 // === 2. Plugin Registry System ===
 
 export interface PluginDefinition<TInstance = unknown, TOptions = unknown> {
-  beforeCreate?: (ctx: MountContext, options: TOptions) => TOptions;
+  beforeCreate?: (ctx: PipelineContext, options: TOptions) => TOptions;
   create: (options: TOptions) => TInstance;
-  afterCreate?: (instance: TInstance, ctx: MountContext) => void;
+  afterCreate?: (instance: TInstance, ctx: PipelineContext) => void;
 }
 
 export interface PluginModule<TInstance = unknown, TOptions = unknown> {
@@ -159,58 +159,58 @@ export type TestFrameworkPresets = Record<string, PresetDefinition>;
 
 // === 6. Pipeline Types ===
 
-export interface CreateMountContextParams {
+export interface CreatePipelineContextParams {
   defaultMountOptions?: ComponentFactoryOptions;
   mountOptions?: ComponentFactoryOptions;
   extraOptions?: ComponentFactoryExtraOptions;
   presets?: TestFrameworkPresets;
 }
 
-export interface MountContext {
+export interface PipelineContext {
   defaultMountOptions: ComponentFactoryOptions;
   mountOptions: ComponentFactoryOptions;
   extraOptions: ComponentFactoryExtraOptions;
   supportedPlugins: SupportedPluginsMap;
   preset: PresetDefinition | undefined;
-  result: MountContextResult;
+  result: PipelineContextResult;
 }
 
 type MountOptionsState = Partial<MountingOptions<any>>;
 
-export interface MountContextResult {
+export interface PipelineContextResult {
   mountOptions: MountOptionsState;
   global: NonNullable<MountingOptions<any>["global"]>;
   pluginPresets: PluginConfigDefaults;
   plugins: ResolvedPluginOptions;
 }
 
-export type MountResultPatch = {
-  mountOptions?: Partial<MountContextResult["mountOptions"]>;
-  plugins?: Partial<MountContextResult["plugins"]>;
-  pluginPresets?: Partial<MountContextResult["pluginPresets"]>;
-  global?: Partial<MountContextResult["global"]>;
+export type PipelineResultPatch = {
+  mountOptions?: Partial<PipelineContextResult["mountOptions"]>;
+  plugins?: Partial<PipelineContextResult["plugins"]>;
+  pluginPresets?: Partial<PipelineContextResult["pluginPresets"]>;
+  global?: Partial<PipelineContextResult["global"]>;
 };
 
-export interface ResultReadyContext extends MountContext {
+export interface ResultReadyContext extends PipelineContext {
   result: {
-    mountOptions: MountContextResult["mountOptions"];
-    global: MountContextResult["global"];
-    plugins: MountContextResult["plugins"];
-    pluginPresets: MountContextResult["pluginPresets"];
+    mountOptions: PipelineContextResult["mountOptions"];
+    global: PipelineContextResult["global"];
+    plugins: PipelineContextResult["plugins"];
+    pluginPresets: PipelineContextResult["pluginPresets"];
   };
 }
 
-export interface PluginOptionsReadyContext extends MountContext {
-  result: MountContext["result"] & {
+export interface PluginOptionsReadyContext extends PipelineContext {
+  result: PipelineContext["result"] & {
     plugins: ResolvedPluginOptions;
   };
 
   extraOptions: RuntimeExtraOptions;
 }
 
-export type PipelineMiddleware<In = MountContext, Out = In> = (ctx: In) => Out;
+export type PipelineMiddleware<In = PipelineContext, Out = In> = (ctx: In) => Out;
 
-export interface Pipeline<In = MountContext, Out = In> {
+export interface Pipeline<In = PipelineContext, Out = In> {
   run: (ctx: In) => Out;
 }
 

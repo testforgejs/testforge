@@ -1,4 +1,4 @@
-import type { MountContext, MountResultPatch } from "../../types";
+import type { PipelineContext, PipelineResultPatch } from "../../types";
 
 import { mergeRecord } from "./mergeRecord.js";
 
@@ -18,7 +18,7 @@ import { mergeRecord } from "./mergeRecord.js";
  *   plugins: { i18n: { locale: 'en' } }
  * })
  */
-export function patchResultState<T extends MountContext>(ctx: T, patch: MountResultPatch): T {
+export function patchResultState<T extends PipelineContext>(ctx: T, patch: PipelineResultPatch): T {
   if (patch.mountOptions) {
     ctx.result.mountOptions = mergeRecord(ctx.result.mountOptions, patch.mountOptions);
   }

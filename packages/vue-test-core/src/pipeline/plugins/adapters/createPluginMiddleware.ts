@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext, PluginName } from "../../../types";
+import type { PipelineMiddleware, PipelineContext, PluginName } from "../../../types";
 
 import { getPluginConfig } from "../logic/getPluginConfig.js";
 import { patchPluginState } from "../logic/patchPluginState.js";
@@ -15,7 +15,7 @@ import { resolveExtraOptions } from "../logic/resolveExtraOptions";
  * - write the resolved config into `ctx.result.plugins`
  */
 export function createPluginMiddleware(name: PluginName): PipelineMiddleware {
-  return <T extends MountContext>(ctx: T): T => {
+  return <T extends PipelineContext>(ctx: T): T => {
     const config = getPluginConfig(ctx, name);
 
     if (!config) return ctx;

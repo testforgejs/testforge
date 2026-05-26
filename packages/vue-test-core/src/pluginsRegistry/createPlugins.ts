@@ -1,4 +1,4 @@
-import type { ResolvedPluginOptions, MountContext } from "../types";
+import type { ResolvedPluginOptions, PipelineContext } from "../types";
 import type { Plugin } from "vue";
 
 import { createPluginRegistry } from "./createPluginRegistry.js";
@@ -27,7 +27,7 @@ import { createPluginRegistry } from "./createPluginRegistry.js";
  * - trigger router navigation
  * - inspect Pinia state
  */
-export function createPlugins(options: ResolvedPluginOptions = {}, ctx: MountContext): Plugin[] {
+export function createPlugins(options: ResolvedPluginOptions = {}, ctx: PipelineContext): Plugin[] {
   const plugins: Plugin[] = [];
 
   const { preset } = ctx;

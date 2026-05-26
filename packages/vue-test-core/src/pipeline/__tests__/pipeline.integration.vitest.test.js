@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createMountContext } from "../createMountContext.js";
+import { createPipelineContext } from "../createPipelineContext.js";
 import { createPipeline } from "../createPipeline.js";
 import { createMountPipeline } from "../createMountPipeline.js";
 import { presets } from "../../__tests__/utils/presets/mockPresets.js";
@@ -9,7 +9,7 @@ import { routerPlugin } from "@testforge/vue-test-plugin-router";
 
 describe("Mount Pipeline Integration", () => {
   const run = (presets, defaultMountOptions = {}, mountOptions = {}, extraOptions = {}) => {
-    const ctx = createMountContext({
+    const ctx = createPipelineContext({
       defaultMountOptions,
       mountOptions,
       extraOptions,

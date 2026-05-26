@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, MountContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 
@@ -14,7 +14,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  * The resolved plugin config is written into `ctx.result.plugins`
  * and later processed by plugin-specific middleware layers.
  */
-export const withPluginsBase: PipelineMiddleware = <T extends MountContext>(ctx: T) => {
+export const withPluginsBase: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   return patchResultState(ctx, {

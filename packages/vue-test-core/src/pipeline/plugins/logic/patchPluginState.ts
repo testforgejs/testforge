@@ -1,4 +1,4 @@
-import type { MountContext, PluginName, RuntimePluginState } from "../../../types";
+import type { PipelineContext, PluginName, RuntimePluginState } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
@@ -19,7 +19,7 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
  * @example
  * patchPluginState(ctx, 'pinia', { someState: 123 })
  */
-export function patchPluginState<T extends MountContext>(
+export function patchPluginState<T extends PipelineContext>(
   ctx: T,
   name: PluginName,
   config: RuntimePluginState,

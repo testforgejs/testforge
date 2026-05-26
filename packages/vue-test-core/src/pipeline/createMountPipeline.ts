@@ -1,4 +1,4 @@
-import type { MountContext, PipelineMiddleware } from "../types";
+import type { PipelineContext, PipelineMiddleware } from "../types";
 
 import {
   assertConfigurationShape,
@@ -27,7 +27,7 @@ import { createPluginsMergeMiddlewares } from "./plugins/builders/createPluginsM
  *
  * Middleware order is significant.
  */
-export function createMountPipeline(ctx: MountContext): PipelineMiddleware[] {
+export function createMountPipeline(ctx: PipelineContext): PipelineMiddleware[] {
   return [
     assertConfigurationShape,
     assertResultShape,
