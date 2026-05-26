@@ -82,6 +82,12 @@ export interface ExposeOption<T> {
   expose?: (instance: T) => void;
 }
 
+type ExtraOptionServiceFields = Omit<ComponentFactoryExtraOptions, keyof PluginOptionsMap>;
+
+type RuntimePluginOverrides = Partial<ResolvedPluginOptions>;
+
+export type RuntimeExtraOptions = ExtraOptionServiceFields & RuntimePluginOverrides;
+
 // === 4. Public Plugin Configuration API ===
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -194,16 +200,12 @@ export interface ResultReadyContext extends MountContext {
   };
 }
 
-type ExtraOptionServiceFields = Omit<ComponentFactoryExtraOptions, keyof PluginOptionsMap>;
-
-type RuntimePluginOverrides = Partial<ResolvedPluginOptions>;
-
 export interface PluginOptionsReadyContext extends MountContext {
   result: MountContext["result"] & {
     plugins: ResolvedPluginOptions;
   };
 
-  extraOptions: ExtraOptionServiceFields & RuntimePluginOverrides;
+  extraOptions: RuntimeExtraOptions;
 }
 
 export type PipelineMiddleware<In = MountContext, Out = In> = (ctx: In) => Out;

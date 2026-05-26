@@ -1,6 +1,7 @@
 import type { PipelineMiddleware, MountContext, PluginOptionsReadyContext } from "../../../types";
 
 import { assertPluginValue } from "../typeGuards/assertPluginValue.js";
+import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
 
 /*
  * Validates plugin configuration layers used by the pipeline.
@@ -36,7 +37,7 @@ export const assertPluginOptions: PipelineMiddleware<MountContext, PluginOptions
   // Validate extraOptions entries that match plugin names
   for (const name of allowed) {
     if (Object.prototype.hasOwnProperty.call(extraOptions, name)) {
-      assertPluginValue((extraOptions as Record<string, unknown>)[name], name, "extraOptions");
+      assertPluginValue(resolveExtraOptions(extraOptions)[name], name, "extraOptions");
     }
   }
 

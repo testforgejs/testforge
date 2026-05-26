@@ -1,6 +1,7 @@
 import type { MountContext, PluginName, ResolvedPluginConfig } from "../../../types";
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
+import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
 
 /*
  * Extracts and merges the plugin configuration, taking all priority levels into account.
@@ -12,7 +13,7 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
 export function getPluginConfig(ctx: MountContext, name: PluginName): ResolvedPluginConfig | false {
   const base = ctx.result.plugins[name];
 
-  const extraOptions = ctx.extraOptions as Record<string, any>;
+  const extraOptions = resolveExtraOptions(ctx.extraOptions);
   const overlay = extraOptions[name];
 
   const isEnabled =
