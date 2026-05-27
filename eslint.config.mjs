@@ -88,5 +88,10 @@ export default tsEslint.config(
     },
   },
 
+  {
+    files: ["scripts/**/*.js", "scripts/**/*.ts"],
+    extends: [tsEslint.configs.disableTypeChecked],
+  },
+
   prettierConfig,
 );

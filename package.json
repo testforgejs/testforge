@@ -12,7 +12,8 @@
     "check": "npm run test && npm run test:jest && npm run typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "plugin:generate": "node scripts/scaffold-plugin.js"
   },
   "keywords": [],
   "author": "Roman Levchenko",
