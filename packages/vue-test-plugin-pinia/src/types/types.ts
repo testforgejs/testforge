@@ -4,7 +4,7 @@ import type { PluginControlOptions } from "@testforge/vue-test-core";
 
 export type MockStoresFn = (pinia: Pinia) => void;
 
-export interface PiniaPluginOptions extends TestingOptions, PluginControlOptions<Pinia> {
+export interface VueTestPiniaOptions extends TestingOptions, PluginControlOptions<Pinia> {
   /** Callback to mutate stores after creation. */
   mockStores?: MockStoresFn;
 }

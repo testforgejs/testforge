@@ -2,7 +2,7 @@ import { createPluginInstance } from "@testforge/vue-test-core";
 import { createRouter } from "vue-router";
 
 import type { Router } from "vue-router";
-import type { RouterPluginOptions } from "../types/types";
+import type { VueTestRouterOptions } from "../types/types";
 import type { RuntimePluginOptions } from "@testforge/vue-test-core";
 
 /*
@@ -11,7 +11,7 @@ import type { RuntimePluginOptions } from "@testforge/vue-test-core";
  * Extracted into a separate factory to simplify testing and mocking.
  */
 export function createRouterPlugin(
-  options: RuntimePluginOptions<Router, RouterPluginOptions>,
+  options: RuntimePluginOptions<Router, VueTestRouterOptions>,
 ): Router {
-  return createPluginInstance<Router, RouterPluginOptions>(createRouter, options);
+  return createPluginInstance<Router, VueTestRouterOptions>(createRouter, options);
 }

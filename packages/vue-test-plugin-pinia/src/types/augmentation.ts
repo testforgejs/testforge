@@ -1,8 +1,8 @@
 import type {} from "@testforge/vue-test-core";
-import type { PiniaPluginOptions } from "./types";
+import type { VueTestPiniaOptions } from "./types";
 
 declare module "@testforge/vue-test-core" {
   interface PluginOptionsMap {
-    pinia: PiniaPluginOptions;
+    pinia: VueTestPiniaOptions;
   }
 }
