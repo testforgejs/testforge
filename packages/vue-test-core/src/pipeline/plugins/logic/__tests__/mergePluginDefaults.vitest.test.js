@@ -1,19 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { mergePluginPresets } from "../mergePluginPresets";
+import { mergePluginDefaults } from "../mergePluginDefaults";
 
-function createCtx({ plugins = {}, pluginPresets = {} } = {}) {
+function createCtx({ plugins = {}, pluginDefaultsState: pluginDefaultsState = {} } = {}) {
   return {
     result: {
       plugins: { ...plugins },
-      pluginPresets: { ...pluginPresets },
+      pluginDefaultsState: { ...pluginDefaultsState },
     },
   };
 }
 
-describe("mergePluginPresets", () => {
+describe("mergePluginDefaults", () => {
   it("should merge preset as base and keeps plugin config priority", () => {
     const ctx = createCtx({
-      pluginPresets: {
+      pluginDefaultsState: {
         pinia: { a: 1, b: 2 },
       },
       plugins: {
@@ -21,7 +21,7 @@ describe("mergePluginPresets", () => {
       },
     });
 
-    mergePluginPresets(ctx, "pinia");
+    mergePluginDefaults(ctx, "pinia");
 
     expect(ctx.result.plugins.pinia).toEqual({
       a: 1,
@@ -32,13 +32,13 @@ describe("mergePluginPresets", () => {
 
   it("should use only preset when plugin config is undefined", () => {
     const ctx = createCtx({
-      pluginPresets: {
+      pluginDefaultsState: {
         i18n: { locale: "en" },
       },
       plugins: {},
     });
 
-    mergePluginPresets(ctx, "i18n");
+    mergePluginDefaults(ctx, "i18n");
 
     expect(ctx.result.plugins.i18n).toEqual({
       locale: "en",
@@ -47,7 +47,7 @@ describe("mergePluginPresets", () => {
 
   it("should keep plugin disabled when explicitly set to false", () => {
     const ctx = createCtx({
-      pluginPresets: {
+      pluginDefaultsState: {
         router: { history: true },
       },
       plugins: {
@@ -55,7 +55,7 @@ describe("mergePluginPresets", () => {
       },
     });
 
-    mergePluginPresets(ctx, "router");
+    mergePluginDefaults(ctx, "router");
 
     expect(ctx.result.plugins.router).toBe(false);
   });
@@ -63,18 +63,18 @@ describe("mergePluginPresets", () => {
   it("should create empty object when neither preset nor plugin config exist", () => {
     const ctx = createCtx();
 
-    mergePluginPresets(ctx, "unknown");
+    mergePluginDefaults(ctx, "unknown");
 
     expect(ctx.result.plugins.unknown).toEqual({});
   });
 
   it("should return the same ctx reference", () => {
     const ctx = createCtx({
-      pluginPresets: { pinia: { a: 1 } },
+      pluginDefaultsState: { pinia: { a: 1 } },
       plugins: { pinia: {} },
     });
 
-    const result = mergePluginPresets(ctx, "pinia");
+    const result = mergePluginDefaults(ctx, "pinia");
 
     expect(result).toBe(ctx);
   });

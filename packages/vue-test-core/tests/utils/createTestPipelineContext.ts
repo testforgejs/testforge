@@ -16,7 +16,7 @@ export function createTestPipelineContext(
     result: {
       mountOptions: {},
       global: {},
-      pluginPresets: {},
+      pluginDefaultsState: {},
 
       ...(overrides.result ?? {}),
 

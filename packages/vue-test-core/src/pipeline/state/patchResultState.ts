@@ -6,7 +6,7 @@ import { mergeRecord } from "./mergeRecord.js";
  * Safely merges partial result data into the pipeline context.
  *
  * Ensures that the `ctx.result` structure is preserved while
- * updating only the provided fields (`mountOptions`, `plugins`, `pluginPresets`, `global`).
+ * updating only the provided fields (`mountOptions`, `plugins`, `pluginDefaultsState`, `global`).
  *
  * This helper prevents accidental overwrites and guarantees
  * that all result sections remain initialized.
@@ -27,8 +27,11 @@ export function patchResultState<T extends PipelineContext>(ctx: T, patch: Pipel
     ctx.result.plugins = mergeRecord(ctx.result.plugins, patch.plugins);
   }
 
-  if (patch.pluginPresets) {
-    ctx.result.pluginPresets = mergeRecord(ctx.result.pluginPresets, patch.pluginPresets);
+  if (patch.pluginDefaultsState) {
+    ctx.result.pluginDefaultsState = mergeRecord(
+      ctx.result.pluginDefaultsState,
+      patch.pluginDefaultsState,
+    );
   }
 
   if (patch.global) {

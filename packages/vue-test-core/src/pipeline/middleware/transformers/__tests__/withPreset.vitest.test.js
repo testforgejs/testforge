@@ -24,7 +24,7 @@ describe("withPreset middleware", () => {
     expect(patchResultState).not.toHaveBeenCalled();
   });
 
-  it("should call mergeResult with pluginPresets when preset.defaults exists", () => {
+  it("should call mergeResult with pluginDefaultsState when preset.defaults exists", () => {
     const ctx = {
       preset: {
         defaults: {
@@ -41,7 +41,7 @@ describe("withPreset middleware", () => {
 
     expect(patchResultState).toHaveBeenCalledTimes(1);
     expect(patchResultState).toHaveBeenCalledWith(ctx, {
-      pluginPresets: {
+      pluginDefaultsState: {
         pinia: true,
         i18n: false,
       },

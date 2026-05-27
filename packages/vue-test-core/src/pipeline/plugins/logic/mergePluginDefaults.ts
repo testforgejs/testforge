@@ -10,7 +10,7 @@ import type { PipelineContext, PluginName } from "../../../types";
  *
  * This function mutates `ctx.result.plugins[name]`.
  */
-export function mergePluginPresets<T extends PipelineContext>(ctx: T, name: PluginName): T {
+export function mergePluginDefaults<T extends PipelineContext>(ctx: T, name: PluginName): T {
   const { result } = ctx;
 
   const current = result.plugins[name];
@@ -21,7 +21,7 @@ export function mergePluginPresets<T extends PipelineContext>(ctx: T, name: Plug
   }
 
   result.plugins[name] = {
-    ...(result.pluginPresets[name] ?? {}),
+    ...(result.pluginDefaultsState[name] ?? {}),
     ...(current ?? {}),
   };
 

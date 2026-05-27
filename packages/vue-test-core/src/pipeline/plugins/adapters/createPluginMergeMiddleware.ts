@@ -1,6 +1,6 @@
 import type { PipelineMiddleware, PipelineContext, PluginName } from "../../../types";
 
-import { mergePluginPresets } from "../logic/mergePluginPresets.js";
+import { mergePluginDefaults } from "../logic/mergePluginDefaults.js";
 
 /*
  * Creates a middleware that merges plugin presets into ctx.result.plugins[name].
@@ -15,6 +15,6 @@ import { mergePluginPresets } from "../logic/mergePluginPresets.js";
  */
 export function createPluginMergeMiddleware(name: PluginName): PipelineMiddleware {
   return <T extends PipelineContext>(ctx: T): T => {
-    return mergePluginPresets(ctx, name);
+    return mergePluginDefaults(ctx, name);
   };
 }

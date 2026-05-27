@@ -180,14 +180,14 @@ type MountOptionsState = Partial<MountingOptions<any>>;
 export interface PipelineContextResult {
   mountOptions: MountOptionsState;
   global: NonNullable<MountingOptions<any>["global"]>;
-  pluginPresets: PluginConfigDefaults;
+  pluginDefaultsState: PluginConfigDefaults;
   plugins: ResolvedPluginOptions;
 }
 
 export type PipelineResultPatch = {
   mountOptions?: Partial<PipelineContextResult["mountOptions"]>;
   plugins?: Partial<PipelineContextResult["plugins"]>;
-  pluginPresets?: Partial<PipelineContextResult["pluginPresets"]>;
+  pluginDefaultsState?: Partial<PipelineContextResult["pluginDefaultsState"]>;
   global?: Partial<PipelineContextResult["global"]>;
 };
 
@@ -196,7 +196,7 @@ export interface ResultReadyContext extends PipelineContext {
     mountOptions: PipelineContextResult["mountOptions"];
     global: PipelineContextResult["global"];
     plugins: PipelineContextResult["plugins"];
-    pluginPresets: PipelineContextResult["pluginPresets"];
+    pluginDefaultsState: PipelineContextResult["pluginDefaultsState"];
   };
 }
 

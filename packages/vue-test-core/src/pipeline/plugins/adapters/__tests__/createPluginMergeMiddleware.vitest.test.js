@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Important: mock before importing the module under test
-vi.mock("../../logic/mergePluginPresets.js", () => ({
-  mergePluginPresets: vi.fn((ctx) => ctx),
+vi.mock("../../logic/mergePluginDefaults.js", () => ({
+  mergePluginDefaults: vi.fn((ctx) => ctx),
 }));
 
-import { mergePluginPresets } from "../../logic/mergePluginPresets.js";
+import { mergePluginDefaults } from "../../logic/mergePluginDefaults.js";
 import { createPluginMergeMiddleware } from "../createPluginMergeMiddleware.js";
 
 describe("createPluginMergeMiddleware", () => {
@@ -18,17 +18,17 @@ describe("createPluginMergeMiddleware", () => {
     expect(typeof middleware).toBe("function");
   });
 
-  it("should call mergePluginPresets with correct ctx and plugin name", () => {
+  it("should call mergePluginDefaults with correct ctx and plugin name", () => {
     const middleware = createPluginMergeMiddleware("i18n");
     const ctx = { some: "context" };
 
     middleware(ctx);
 
-    expect(mergePluginPresets).toHaveBeenCalledTimes(1);
-    expect(mergePluginPresets).toHaveBeenCalledWith(ctx, "i18n");
+    expect(mergePluginDefaults).toHaveBeenCalledTimes(1);
+    expect(mergePluginDefaults).toHaveBeenCalledWith(ctx, "i18n");
   });
 
-  it("should return the value returned by mergePluginPresets", () => {
+  it("should return the value returned by mergePluginDefaults", () => {
     const middleware = createPluginMergeMiddleware("router");
     const ctx = { foo: "bar" };
 

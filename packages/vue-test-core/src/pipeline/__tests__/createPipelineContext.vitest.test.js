@@ -81,7 +81,7 @@ describe("createPipelineContext", () => {
     expect(ctx.result).toEqual({
       mountOptions: {},
       global: {},
-      pluginPresets: {},
+      pluginDefaultsState: {},
       plugins: {},
     });
   });

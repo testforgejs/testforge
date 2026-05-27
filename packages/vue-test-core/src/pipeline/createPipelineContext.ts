@@ -28,7 +28,7 @@ export function createPipelineContext(params: CreatePipelineContextParams): Pipe
     result: {
       mountOptions: {},
       global: {},
-      pluginPresets: {},
+      pluginDefaultsState: {},
       plugins: {},
     },
   };

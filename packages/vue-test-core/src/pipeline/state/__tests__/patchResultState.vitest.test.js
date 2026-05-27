@@ -4,7 +4,7 @@ const createCtx = () => ({
   result: {
     mountOptions: { a: 1 },
     plugins: { p1: true },
-    pluginPresets: { presetA: true },
+    pluginDefaultsState: { presetA: true },
     global: { g: 1 },
   },
 });
@@ -46,14 +46,14 @@ describe("patchResultState", () => {
     expect(ctx.result.plugins).toEqual({ p1: true, p2: false });
   });
 
-  test("should merge pluginPresets correctly", () => {
+  test("should merge pluginDefaultsState correctly", () => {
     const ctx = createCtx();
 
     patchResultState(ctx, {
-      pluginPresets: { presetB: false },
+      pluginDefaultsState: { presetB: false },
     });
 
-    expect(ctx.result.pluginPresets).toEqual({
+    expect(ctx.result.pluginDefaultsState).toEqual({
       presetA: true,
       presetB: false,
     });
@@ -77,7 +77,7 @@ describe("patchResultState", () => {
     });
 
     expect(ctx.result.mountOptions).toEqual({ a: 1 });
-    expect(ctx.result.pluginPresets).toEqual({ presetA: true });
+    expect(ctx.result.pluginDefaultsState).toEqual({ presetA: true });
     expect(ctx.result.global).toEqual({ g: 1 });
   });
 
@@ -91,7 +91,7 @@ describe("patchResultState", () => {
     expect(ctx.result).toEqual({
       mountOptions: { a: 1 },
       plugins: { p1: true },
-      pluginPresets: { presetA: true },
+      pluginDefaultsState: { presetA: true },
       global: { g: 1 },
     });
   });
@@ -118,7 +118,7 @@ describe("patchResultState", () => {
 
     expect(ctx.result.mountOptions).toBeDefined();
     expect(ctx.result.plugins).toBeDefined();
-    expect(ctx.result.pluginPresets).toBeDefined();
+    expect(ctx.result.pluginDefaultsState).toBeDefined();
     expect(ctx.result.global).toBeDefined();
   });
 });

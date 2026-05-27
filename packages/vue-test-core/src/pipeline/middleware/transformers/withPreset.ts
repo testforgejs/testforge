@@ -8,7 +8,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  * Preset defaults act as the base configuration layer for plugins
  * and are later merged by plugin-specific middleware.
  *
- * The resolved preset config is written into `ctx.result.pluginPresets`.
+ * The resolved preset config is written into `ctx.result.pluginDefaultsState`.
  */
 export const withPreset: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
   const { preset } = ctx;
@@ -16,6 +16,6 @@ export const withPreset: PipelineMiddleware = <T extends PipelineContext>(ctx: T
   if (!preset?.defaults) return ctx;
 
   return patchResultState(ctx, {
-    pluginPresets: { ...preset.defaults },
+    pluginDefaultsState: { ...preset.defaults },
   });
 };

@@ -88,7 +88,7 @@ describe("Mount Pipeline Integration", () => {
 
   describe("Activation & Defaults", () => {
     it("should apply default i18n settings when plugin is active but no options are provided", () => {
-      // pluginPresets.i18n contains { locale: ‘en’ }; the plugin is enabled by default
+      // pluginDefaultsState.i18n contains { locale: ‘en’ }; the plugin is enabled by default
       const result = run(presets);
 
       expect(result.plugins.i18n.locale).toBe("en");
@@ -162,7 +162,7 @@ describe("Mount Pipeline Integration", () => {
 
         // If the order is correct:
         // 1. withPluginsBase collected { keyB: 2 }
-        // 2. withPinia concatenated pluginPresets.pinia + { keyB: 2 }
+        // 2. withPinia concatenated pluginDefaultsState.pinia + { keyB: 2 }
         expect(result.plugins.pinia.keyB).toBe(2);
         expect(result.plugins.pinia.initialState).toBeDefined(); // A sign of working withPinia
       });
@@ -470,7 +470,7 @@ describe("Mount Pipeline Integration", () => {
       const result = run(presets, defaults, overrides);
 
       // All specific default settings have been cleared (replaced with {}),
-      // Only framework's global defaults remain (pluginPresets.pinia)
+      // Only framework's global defaults remain (pluginDefaultsState.pinia)
       expect(result.plugins.pinia.stubActions).toBe(false);
       expect(result.plugins.pinia.initialState).toEqual({});
     });
