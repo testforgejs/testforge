@@ -1,9 +1,11 @@
+import type { VueTestRouterOptions } from "@testforge/vue-test-plugin-router";
+
 import { createMemoryHistory, createWebHistory } from "vue-router";
 
 const isBrowser = typeof window !== "undefined";
 
 // Use a function so that each call creates a NEW instance of the history
-export const getDefaultRouter = () => ({
+export const getDefaultRouter = (): VueTestRouterOptions => ({
   history: isBrowser ? createWebHistory() : createMemoryHistory(),
   routes: [{ path: "/", component: { render: () => null } }],
 });

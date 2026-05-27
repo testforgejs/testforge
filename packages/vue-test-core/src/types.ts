@@ -151,7 +151,7 @@ export type ComponentFactoryExtraOptions = {
 // === 5. Preset System ===
 
 export interface PresetDefinition {
-  manifest: PluginManifestEntry[];
+  manifest: PluginManifestEntry<any, any>[];
   defaults: PluginConfigDefaults;
 }
 

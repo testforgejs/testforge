@@ -1,11 +1,13 @@
-import { defaultI18n } from "./plugins/defaultI18n.js";
-import { defaultPinia } from "./plugins/defaultPinia.js";
-import { getDefaultRouter } from "./plugins/defaultRouter.js";
+import type { TestFrameworkPresets } from "@testforge/vue-test-core";
+import type { VueTestI18nOptions } from "@testforge/vue-test-plugin-i18n";
+
+import { defaultI18n } from "./defaults/defaultI18n.js";
+import { defaultPinia } from "./defaults/defaultPinia.js";
+import { getDefaultRouter } from "./defaults/defaultRouter.js";
 import { piniaPlugin } from "@testforge/vue-test-plugin-pinia";
 import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforge/vue-test-plugin-router";
 
-/** @type TestFrameworkPresets */
 export const presets = {
   default: {
     manifest: [
@@ -29,7 +31,7 @@ export const presets = {
         messages: {},
         fallbackWarn: false,
         missingWarn: false,
-      },
+      } satisfies VueTestI18nOptions,
     },
   },
-};
+} satisfies TestFrameworkPresets;
