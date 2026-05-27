@@ -6,9 +6,7 @@ import type { VueWrapper, MountingOptions } from "@vue/test-utils";
 /** Plugin name (e.g., ‘pinia’, ‘i18n’, ‘router’) */
 export type PluginName = string;
 
-export interface PluginMeta {
-  instance?: unknown;
-}
+export type RuntimeVuePlugin = any;
 
 // === 2. Plugin Registry System ===
 
@@ -46,7 +44,7 @@ export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
   options: TOptions,
 ) => TInstance;
 
-// === 3. Plugin Runtime ===
+// === 3. Plugin Runtime Configuration ===
 
 export type RuntimePluginConfig = Record<string, any>;
 
@@ -89,6 +87,10 @@ type RuntimePluginOverrides = Partial<ResolvedPluginOptions>;
 export type RuntimeExtraOptions = ExtraOptionServiceFields & RuntimePluginOverrides;
 
 // === 4. Public Plugin Configuration API ===
+
+export interface PluginMeta {
+  instance?: unknown;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginOptionsMap {}
