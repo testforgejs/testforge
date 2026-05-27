@@ -1,4 +1,4 @@
-import "./augmentation.js";
+import "./types/augmentation.js";
 
-export { piniaPlugin } from "./piniaPlugin.js";
-export * from "./types";
+export { piniaPlugin } from "./module/piniaPlugin.js";
+export * from "./types/types";

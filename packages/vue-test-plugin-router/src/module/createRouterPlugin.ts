@@ -2,7 +2,7 @@ import { createPluginInstance } from "@testforge/vue-test-core";
 import { createRouter } from "vue-router";
 
 import type { Router } from "vue-router";
-import type { RouterPluginOptions } from "./types";
+import type { RouterPluginOptions } from "../types/types";
 import type { RuntimePluginOptions } from "@testforge/vue-test-core";
 
 /*

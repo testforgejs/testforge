@@ -1,4 +1,4 @@
-import "./augmentation.js";
+import "./types/augmentation.js";
 
-export { routerPlugin } from "./routerPlugin.js";
-export * from "./types";
+export { routerPlugin } from "./module/routerPlugin.js";
+export * from "./types/types";

@@ -1,7 +1,7 @@
-import { createI18nPlugin } from "./createI18nPlugin.js";
+import { createI18nPlugin } from "./createI18nPlugin";
 
 import type { I18n } from "vue-i18n";
-import type { I18nPluginOptions } from "./types";
+import type { I18nPluginOptions } from "../types/types";
 import type { PluginModule } from "@testforge/vue-test-core";
 
 /*

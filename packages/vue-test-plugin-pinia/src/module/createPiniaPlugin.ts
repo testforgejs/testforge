@@ -3,7 +3,7 @@ import { setActivePinia } from "pinia";
 import { createTestingPinia } from "@pinia/testing";
 
 import type { Pinia } from "pinia";
-import type { PiniaPluginOptions } from "./types";
+import type { PiniaPluginOptions } from "../types/types";
 import type { RuntimePluginOptions } from "@testforge/vue-test-core";
 
 /*
