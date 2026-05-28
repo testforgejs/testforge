@@ -1,23 +1,19 @@
 import type { PresetDefinition, SupportedPluginsMap } from "../types";
 
 /*
- * Creates the initial plugins state map based on the preset manifest.
+ * Creates a capability map of plugins supported by the active preset.
  *
- * This function does NOT configure plugins and does NOT apply any defaults.
- * Its only responsibility is to declare which plugins are supported by the
- * current preset and whether they are enabled by default.
+ * Responsibilities:
+ * - declares which plugins exist in the current runtime
+ * - defines whether each plugin is enabled by default
  *
- * The result is used as the foundation for the pipeline state where:
- * - `{}`  means "plugin is supported and enabled by default"
- * - `false` means "plugin is supported but disabled by default"
+ * This function does NOT create runtime plugin configs.
+ * Runtime plugin state is resolved later inside plugin middleware.
  *
- * Later pipeline middleware (withPluginsBase, withPreset, with<Plugin>)
- * will populate these entries with actual configuration.
- *
- * In other words, this function builds the *structural contract* of the
- * plugins section in the pipeline result before any options are applied.
- */
-export function createSupportedPluginsState(
+ * Result semantics:
+ * - `true`  → plugin is supported and enabled by default
+ * - `false` → plugin is supported but disabled by default
+ */ export function createSupportedPluginsState(
   preset: PresetDefinition | undefined,
 ): SupportedPluginsMap {
   const map: SupportedPluginsMap = {};
@@ -25,8 +21,7 @@ export function createSupportedPluginsState(
   if (!preset?.manifest) return map;
 
   for (const { module, enabled } of preset.manifest) {
-    const name = module.getName();
-    map[name] = enabled ? {} : false;
+    map[module.getName()] = enabled;
   }
 
   return map;

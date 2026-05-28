@@ -2,50 +2,61 @@ import { describe, it, expect, vi } from "vitest";
 import { createSupportedPluginsState } from "../createSupportedPluginsState.js";
 
 describe("createSupportedPluginsState", () => {
-  it("should return empty object when preset or manifest is missing", () => {
-    expect(createSupportedPluginsState({})).toEqual({});
-    expect(createSupportedPluginsState(null)).toEqual({});
-    expect(createSupportedPluginsState(undefined)).toEqual({});
-  });
+  describe("Edge Cases", () => {
+    it("should return empty object when preset is undefined", () => {
+      expect(createSupportedPluginsState(undefined)).toEqual({});
+    });
 
-  it("should map enabled plugins to empty objects and disabled to false", () => {
-    const mockPinia = { getName: vi.fn(() => "pinia") };
-    const mockI18n = { getName: vi.fn(() => "i18n") };
+    it("should return empty object when preset is null", () => {
+      expect(createSupportedPluginsState(null)).toEqual({});
+    });
 
-    const preset = {
-      manifest: [
-        { module: mockPinia, enabled: true },
-        { module: mockI18n, enabled: false },
-      ],
-    };
+    it("should return empty object when preset has no manifest", () => {
+      expect(createSupportedPluginsState({})).toEqual({});
+    });
 
-    const result = createSupportedPluginsState(preset);
+    it("should return empty object when manifest is empty", () => {
+      const preset = { manifest: [] };
 
-    expect(result).toEqual({
-      pinia: {},
-      i18n: false,
+      expect(createSupportedPluginsState(preset)).toEqual({});
     });
   });
 
-  it("should call getName for each manifest entry", () => {
-    const getNameA = vi.fn(() => "a");
-    const getNameB = vi.fn(() => "b");
+  describe("Manifest Mapping", () => {
+    it("should map enabled plugins to true and disabled plugins to false", () => {
+      const mockPinia = { getName: vi.fn(() => "pinia") };
+      const mockI18n = { getName: vi.fn(() => "i18n") };
 
-    const preset = {
-      manifest: [
-        { module: { getName: getNameA }, enabled: true },
-        { module: { getName: getNameB }, enabled: true },
-      ],
-    };
+      const preset = {
+        manifest: [
+          { module: mockPinia, enabled: true },
+          { module: mockI18n, enabled: false },
+        ],
+      };
 
-    createSupportedPluginsState(preset);
+      const result = createSupportedPluginsState(preset);
 
-    expect(getNameA).toHaveBeenCalledTimes(1);
-    expect(getNameB).toHaveBeenCalledTimes(1);
-  });
+      expect(result).toEqual({
+        pinia: true,
+        i18n: false,
+      });
+    });
 
-  it("should return empty object when manifest is empty", () => {
-    const preset = { manifest: [] };
-    expect(createSupportedPluginsState(preset)).toEqual({});
+    it("should call getName for each manifest entry", () => {
+      const getNameA = vi.fn(() => "a");
+      const getNameB = vi.fn(() => "b");
+
+      const preset = {
+        manifest: [
+          { module: { getName: getNameA }, enabled: true },
+          { module: { getName: getNameB }, enabled: true },
+        ],
+      };
+
+      createSupportedPluginsState(preset);
+
+      expect(getNameA).toHaveBeenCalledTimes(1);
+      expect(getNameB).toHaveBeenCalledTimes(1);
+    });
   });
 });

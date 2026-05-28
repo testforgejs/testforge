@@ -12,10 +12,11 @@ describe("withPluginsManifest middleware", () => {
     vi.clearAllMocks();
   });
 
-  it("should call mergeResult with supportedPlugins as plugins", () => {
+  it("should convert enabled plugins from true to empty config objects", () => {
     const supportedPlugins = {
-      pinia: { enabled: true },
-      i18n: { enabled: false },
+      pinia: true,
+      i18n: true,
+      router: false,
     };
 
     const ctx = { supportedPlugins };
@@ -26,15 +27,23 @@ describe("withPluginsManifest middleware", () => {
     const result = withPluginsManifest(ctx);
 
     expect(patchResultState).toHaveBeenCalledTimes(1);
+
     expect(patchResultState).toHaveBeenCalledWith(ctx, {
-      plugins: supportedPlugins,
+      plugins: {
+        pinia: {},
+        i18n: {},
+        router: false,
+      },
     });
 
     expect(result).toBe(mergedCtx);
   });
 
-  it("should pass the same supportedPlugins reference (no cloning)", () => {
-    const supportedPlugins = { pinia: {} };
+  it("should create a new plugins object instead of reusing supportedPlugins reference", () => {
+    const supportedPlugins = {
+      pinia: true,
+    };
+
     const ctx = { supportedPlugins };
 
     patchResultState.mockReturnValue(ctx);
@@ -43,18 +52,38 @@ describe("withPluginsManifest middleware", () => {
 
     const [, payload] = patchResultState.mock.calls[0];
 
-    expect(payload.plugins).toBe(supportedPlugins);
+    expect(payload.plugins).not.toBe(supportedPlugins);
   });
 
-  it("should work when supportedPlugins is undefined", () => {
-    const ctx = {};
+  it("should preserve disabled plugins as false", () => {
+    const supportedPlugins = {
+      router: false,
+    };
+
+    const ctx = { supportedPlugins };
+
+    patchResultState.mockReturnValue(ctx);
+
+    withPluginsManifest(ctx);
+
+    const [, payload] = patchResultState.mock.calls[0];
+
+    expect(payload.plugins).toEqual({
+      router: false,
+    });
+  });
+
+  it("should return empty plugins object when supportedPlugins is empty", () => {
+    const ctx = {
+      supportedPlugins: {},
+    };
 
     patchResultState.mockReturnValue(ctx);
 
     const result = withPluginsManifest(ctx);
 
     expect(patchResultState).toHaveBeenCalledWith(ctx, {
-      plugins: undefined,
+      plugins: {},
     });
 
     expect(result).toBe(ctx);

@@ -10,9 +10,11 @@ import { patchResultState } from "../../state/patchResultState.js";
  * structure before plugin configuration merging begins.
  */
 export const withPluginsManifest: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
-  const { supportedPlugins } = ctx;
+  const plugins = Object.fromEntries(
+    Object.entries(ctx.supportedPlugins).map(([name, enabled]) => [name, enabled ? {} : false]),
+  );
 
   return patchResultState(ctx, {
-    plugins: supportedPlugins,
+    plugins,
   });
 };
