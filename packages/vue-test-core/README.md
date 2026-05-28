@@ -384,6 +384,35 @@ You can switch presets or override their settings directly in `testComponentFact
    const wrapper = factory({}, {}, {}, { preset: "apiOnly" });
    ```
 
+#### ⚠️ Presets Define the Entire Managed Plugin Runtime
+
+A preset defines the complete managed plugin runtime environment.
+
+Switching presets replaces the entire supported plugin manifest, not just plugin defaults.
+
+This means that plugins not declared in the active preset manifest are ignored, even if configuration for them is provided in `mountOptions.plugins` or `extraOptions`.
+
+```javascript
+const wrapper = factory(
+  {},
+  {
+    plugins: {
+      pinia: { initialState: { user: { id: 1 } } },
+    },
+  },
+  {},
+  {
+    preset: "i18nPreset",
+  },
+);
+```
+
+If `i18nPreset` only declares the `i18n` plugin in its manifest, the `pinia` configuration above will be ignored and no Pinia instance will be created.
+
+This behavior is intentional.
+
+Presets are treated as isolated runtime environments rather than configuration overlays. This allows tests to use lightweight plugin configurations and avoid unnecessary plugin initialization.
+
 2. **Overriding Settings (Merge)**
 
    Settings from `mountOptions.plugins` are automatically merged with the `defaults` of the active preset:
