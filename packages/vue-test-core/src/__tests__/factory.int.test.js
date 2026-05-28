@@ -919,6 +919,71 @@ describe("testComponentFactory Integration (Universal)", () => {
           }).not.toThrow();
         });
       });
+
+      describe("Unsupported Plugins", () => {
+        it("should throw when plugin is configured but not supported by preset", () => {
+          const factory = testFactory(MockComponent);
+
+          expect(() => {
+            factory(
+              {},
+              {
+                plugins: {
+                  pinia: {},
+                },
+              },
+              {},
+              {
+                preset: "i18nPreset",
+              },
+            );
+          }).toThrow(
+            '[TestFramework] Plugin "pinia" is configured but not supported by the active preset.',
+          );
+        });
+
+        it("should allow supported plugins from preset", () => {
+          const factory = testFactory(MockComponent);
+
+          expect(() => {
+            factory(
+              {},
+              {
+                plugins: {
+                  i18n: {
+                    locale: "fr",
+                  },
+                },
+              },
+              {},
+              {
+                preset: "i18nPreset",
+              },
+            );
+          }).not.toThrow();
+        });
+
+        it("should throw when enabling router in preset that does not support it", () => {
+          const factory = testFactory(MockComponent);
+
+          expect(() => {
+            factory(
+              {},
+              {
+                plugins: {
+                  router: {},
+                },
+              },
+              {},
+              {
+                preset: "i18nPreset",
+              },
+            );
+          }).toThrow(
+            '[TestFramework] Plugin "router" is configured but not supported by the active preset.',
+          );
+        });
+      });
     });
   });
 });

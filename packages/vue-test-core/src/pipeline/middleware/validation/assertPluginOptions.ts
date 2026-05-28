@@ -4,19 +4,19 @@ import type {
   PluginOptionsReadyContext,
 } from "../../../types";
 
-import { assertPluginValue } from "../typeGuards/assertPluginValue.js";
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
+
+import { assertUnsupportedPlugins } from "./validators/assertUnsupportedPlugins";
+import { assertResolvedPluginValues } from "./validators/assertResolvedPluginValues";
+import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPluginValues";
 
 /*
  * Validates plugin configuration layers used by the pipeline.
  *
  * Ensures that:
- * - only supported plugins are present
- * - plugin values have valid runtime shape
- *
- * Validates:
- * - resolved plugin state (`ctx.result.plugins`)
- * - plugin overlays from `extraOptions`
+ * - only plugins supported by the active preset are configured
+ * - plugin runtime values have valid shape
+ * - extra option overlays are runtime-safe
  *
  * After successful validation, plugin-related context types
  * can be treated as narrowed and runtime-safe.
@@ -27,23 +27,13 @@ export const assertPluginOptions: PipelineMiddleware<PipelineContext, PluginOpti
   const { supportedPlugins, extraOptions } = ctx;
   const { plugins } = ctx.result;
 
-  const allowed = Object.keys(supportedPlugins);
+  const supported = new Set(Object.keys(supportedPlugins));
 
-  // Validate result.plugins
-  for (const [name, value] of Object.entries(plugins)) {
-    if (!allowed.includes(name)) {
-      throw new Error(`[TestFramework] Unknown plugin "${name}" detected in plugins.`);
-    }
+  assertUnsupportedPlugins(plugins || {}, supported);
 
-    assertPluginValue(value, name, "plugins");
-  }
+  assertResolvedPluginValues(plugins);
 
-  // Validate extraOptions entries that match plugin names
-  for (const name of allowed) {
-    if (Object.prototype.hasOwnProperty.call(extraOptions, name)) {
-      assertPluginValue(resolveExtraOptions(extraOptions)[name], name, "extraOptions");
-    }
-  }
+  assertExtraOptionPluginValues(resolveExtraOptions(extraOptions), supported);
 
   return ctx as PluginOptionsReadyContext;
 };

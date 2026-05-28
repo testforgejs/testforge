@@ -257,27 +257,39 @@ describe("Mount Pipeline Integration", () => {
   });
 
   describe("Plugin Whitelist Validation", () => {
-    it("should throw an error when an unknown plugin is passed to defaultMountOptions.plugins", () => {
+    it("should throw an error when an unsupported plugin is passed to defaultMountOptions.plugins", () => {
       const defaults = { plugins: { vfm: {} } };
 
-      expect(() => run(presets, defaults)).toThrow(/Unknown plugin "vfm" detected in plugins/);
+      expect(() => run(presets, defaults)).toThrow(
+        /Plugin "vfm" is configured but not supported by the active preset/,
+      );
     });
 
-    it("should throw an error when an unknown plugin is passed to mountOptions.plugins", () => {
+    it("should throw an error when an unsupported plugin is passed to mountOptions.plugins", () => {
       const overrides = { plugins: { vuetify: {} } };
 
       expect(() => run(presets, {}, overrides)).toThrow(
-        /Unknown plugin "vuetify" detected in plugins/,
+        /Plugin "vuetify" is configured but not supported by the active preset/,
       );
     });
 
-    it("should suggest using global.plugins in the error message", () => {
-      const overrides = { plugins: { custom: {} } };
+    /*
+     * Deferred intentionally until planned BREAKING CHANGE:
+     * moving plugin overrides into extraOptions.plugins.
+     *
+     * Current extraOptions is an open technical channel and
+     * does not distinguish plugin names from runtime flags.
+     */
+    it.todo("BREAKING: support plugin validation for extraOptions.plugins");
+    /*it("should throw an error when an unsupported plugin is passed via extraOptions", () => {
+      const extra = {
+        vuetify: {},
+      };
 
-      expect(() => run(presets, {}, overrides)).toThrow(
-        /Unknown plugin "custom" detected in plugins/,
+      expect(() => run(presets, {}, {}, extra)).toThrow(
+        /Plugin "vuetify" is configured but not supported by the active preset/,
       );
-    });
+    });*/
 
     it("should NOT throw an error for unknown keys in extraOptions that are not plugins", () => {
       // Verify that we are not blocking other technical keys in extraOptions

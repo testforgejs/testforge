@@ -27,7 +27,7 @@ describe("assertPluginOptions middleware", () => {
     expect(() => assertPluginOptions(ctx)).not.toThrow();
   });
 
-  it("should throw for unknown plugin in result.plugins", () => {
+  it("should throw for unsupported plugin in result.plugins", () => {
     const ctx = {
       ...baseCtx,
       result: {
@@ -37,7 +37,9 @@ describe("assertPluginOptions middleware", () => {
       },
     };
 
-    expect(() => assertPluginOptions(ctx)).toThrow('Unknown plugin "unknown" detected in plugins');
+    expect(() => assertPluginOptions(ctx)).toThrow(
+      'Plugin "unknown" is configured but not supported by the active preset',
+    );
   });
 
   const invalidValues = [null, [], true, 123, "str"];
