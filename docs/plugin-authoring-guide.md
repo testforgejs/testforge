@@ -116,7 +116,7 @@ Import the augmentation file to guarantee it is bundled into the final `.d.ts` d
 import "./types/augmentation.js";
 
 export { customPlugin } from "./module/customPlugin.js";
-export * from "./types/types.js";
+export * from "./types/types";
 ```
 
 ---
