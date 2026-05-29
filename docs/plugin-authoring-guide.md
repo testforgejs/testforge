@@ -18,6 +18,8 @@ packages/vue-test-plugin-custom/
         └── augmentation.ts    # Global PluginOptionsMap enhancement
 ```
 
+---
+
 ## Step-by-Step Implementation
 
 ### Step 1: Define Plugin Options (`types/types.ts`)
@@ -116,6 +118,8 @@ import "./types/augmentation.js";
 export { customPlugin } from "./module/customPlugin.js";
 export * from "./types/types.js";
 ```
+
+---
 
 ## Plugin Checklist
 
