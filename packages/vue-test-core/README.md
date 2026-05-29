@@ -1,3 +1,104 @@
+## 🏗️ Architectural Architecture: The Plugin & Preset Matrix
+
+`@testforge/vue-test-core` implements a **strict microkernel architecture**. The core engine is completely blind: it has zero internal knowledge of Pinia, Vue Router, vue-i18n, or any other library. It contains no global registries or hardcoded plugin configurations.
+
+Instead, the entire testing environment is driven by **Presets** and a hierarchical **State Layering Pipeline**.
+
+---
+
+### 1. Presets as Runtime Environment Profiles
+
+A Preset in TestForge is not just a collection of convenient defaults. It acts as:
+
+- **A Runtime Environment Profile:** It dictates which parts of your application stack are alive during a test run.
+- **A Plugin Capability Boundary:** It defines the exact boundary of what can be configured. If a plugin isn't in the active preset's manifest, the pipeline ignores its configuration.
+- **A Dependency Graph Declaration:** It maps runtime plugin modules to their core names and initial lifecycle hooks.
+
+A preset defines two critical fields:
+
+- `manifest`: Declares _"What plugins are registered and available in this runtime ecosystem?"_
+- `defaults`: Declares _"What is the global project-wide baseline configuration for these plugins?"_
+
+---
+
+### 2. The 4-Tier State Layering Hierarchy
+
+When a plugin's configuration (like Pinia's `initialState` or Router's `routes`) is resolved, it travels through four distinct architectural layers. Each layer can selectively override or adjust the state inherited from the previous one:
+
+| Layer                        | Defined At               | Scope                             | Merge Type against previous |
+| :--------------------------- | :----------------------- | :-------------------------------- | :-------------------------- |
+| **1. Preset Defaults**       | Global Framework Setup   | Whole Monorepo / Project          | _Base Baseline_             |
+| **2. `defaultMountOptions`** | `testComponentFactory()` | Test File / Component Suite       | **Shallow Overwrite**       |
+| **3. `mountOptions`**        | `factory()` invocation   | Specific `it()` or `test()` block | **Shallow Overwrite**       |
+| **4. `extraOptions`**        | `factory()` 4th argument | Precision fine-tuning             | **Shallow Patch (Overlay)** |
+
+---
+
+### ⚙️ Configuration & Mounting Signatures
+
+The framework is fully compatible with [Vue Test Utils (VTU)](https://vuejs.org) and supports all standard mounting options.
+
+```javascript
+// 1. Factory Creation (File-Level Configuration Baseline)
+const factory = testComponentFactory(
+  Component,
+  defaultProps, // 1st arg: Base props
+  defaultMountOptions, // 2nd arg: Layer 2 plugin overrides & base VTU options
+  defaultSlots, // 3rd arg: Base slots
+);
+
+// 2. Factory Execution (Test-Level Specific Delta)
+const wrapper = factory(
+  props, // 1st arg: Highest priority direct props
+  mountOptions, // 2nd arg: Layer 3 plugin overrides & test VTU options
+  slots, // 3rd arg: Highest priority direct slots
+  extraOptions, // 4th arg: Layer 4 precision plugin overlays & pipeline flags
+);
+```
+
+### Priority and Merge Strategies
+
+#### 1. Flat VTU Options (Shallow Merge)
+
+Options such as `data`, `attrs`, `attachTo`, and `useShallow` are merged using a **shallow merge** strategy between Layer 2 (`defaultMountOptions`) and Layer 3 (`mountOptions`).
+
+- **`useShallow` (Boolean)**: Controls the underlying VTU mounting method.
+  - **Default:** `true` (invokes `shallowMount`).
+  - **Behavior:** If set to `false`, the component will be mounted using `mount` (full rendering of child components).
+- **Props & Slots Priority**: Direct arguments (`props` as 1st arg, `slots` as 3rd arg) represent immediate test intent. They have the absolute highest priority and will completely override any props or slots passed inside the `mountOptions` configuration object.
+
+#### 2. The `global` Section (Deep Merge)
+
+Standard VTU `global` options (`stubs`, `mocks`, `provide`) are processed using a **deep merge** strategy across Layer 2 and Layer 3. This allows seamless "layering" of test-double infrastructure (e.g., adding a stub in a test does not wipe out base stubs defined in the factory).
+
+#### 3. Managed Plugins Override (Layer 2 vs Layer 3 vs Layer 4)
+
+Because managed plugins control critical application state, their merging behavior is carefully designed to protect against **test data pollution**:
+
+- **Full State Reset (Layers 2 & 3 via `plugins`)**: Inside both `defaultMountOptions` and `mountOptions`, managed plugin configurations must be placed inside the `plugins` key (e.g., `mountOptions: { plugins: { pinia: { ... } } }`).
+  - **Behavior:** When Layer 3 defines a plugin block, it **completely replaces** that plugin's block from Layer 2 and Layer 1. This guarantees a clean, unpolluted state (e.g., a test-level `initialState` will completely discard the factory baseline state rather than merging keys).
+- **Fine-Grained Patching (Layer 4 via `extraOptions`)**: If you do _not_ want to wipe out the inherited plugin configuration, but only want to tune a specific property, use `extraOptions`.
+  - **Behavior:** `extraOptions` acts as a **Shallow Overlay** on top of the already resolved plugin state.
+  - _Example:_ If Layer 1 and 2 established a complex base store state, and your test only needs to toggle action stubbing without redeclaring that state, you pass `{ pinia: { stubActions: true } }` in `extraOptions`. The inherited state is preserved, and the stub flag is overlaid.
+
+---
+
+### 🚫 Advanced Pipeline Controls
+
+#### The `skipManagedPlugins` Flag
+
+Passed inside `mountOptions` (2nd execution argument).
+
+- **Type:** `Boolean` (Default: `false`)
+- **What it does:** Completely disables the built-in active preset orchestration for the current test run. Use this when you need to take full manual control over plugin initialization or test legacy third-party instances.
+
+#### The `skipDefaultOptions` Flag
+
+Passed inside `extraOptions` (4th execution argument).
+
+- **Type:** `Boolean` (Default: `false`)
+- **What it does:** Tells the pipeline to completely ignore `defaultMountOptions` defined during factory creation, forcing the current test to resolve only against Global Preset Defaults and immediate `mountOptions`.
+
 ## ⚙️ Configuration (Mount Options)
 
 The framework is fully compatible with [Vue Test Utils (VTU)](https://test-utils.vuejs.org) and supports all standard mounting options. However, it extends their processing logic to make settings reuse more convenient and predictable.
