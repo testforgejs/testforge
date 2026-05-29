@@ -2,26 +2,26 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTestFramework } from "../createTestFramework.js";
 
 import { mergeComponentData } from "../../utils/mergeComponentData.js";
-import { createPipelineContext } from "../../pipeline/createPipelineContext.js";
-import { createPipeline } from "../../pipeline/createPipeline.js";
-import { createMountPipeline } from "../../pipeline/createMountPipeline.js";
+import { createPipelineContext } from "../../pipeline/core/createPipelineContext.js";
+import { createPipeline } from "../../pipeline/core/createPipeline.js";
+import { createMountPipeline } from "../../pipeline/mount/createMountPipeline.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
 
 vi.mock("../../utils/mergeComponentData.js", () => ({
   mergeComponentData: vi.fn((x) => x),
 }));
 
-vi.mock("../../pipeline/createPipelineContext.js", () => ({
+vi.mock("../../pipeline/core/createPipelineContext.js", () => ({
   createPipelineContext: vi.fn(() => ({ ctx: true })),
 }));
 
-vi.mock("../../pipeline/createPipeline.js", () => ({
+vi.mock("../../pipeline/core/createPipeline.js", () => ({
   createPipeline: vi.fn(() => ({
     run: vi.fn(),
   })),
 }));
 
-vi.mock("../../pipeline/createMountPipeline.js", () => ({
+vi.mock("../../pipeline/mount/createMountPipeline.js", () => ({
   createMountPipeline: vi.fn(() => "mount-pipeline"),
 }));
 

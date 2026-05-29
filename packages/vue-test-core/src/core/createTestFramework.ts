@@ -10,9 +10,9 @@ import type {
 import type { Component } from "vue";
 
 import { mergeComponentData } from "../utils/mergeComponentData.js";
-import { createPipelineContext } from "../pipeline/createPipelineContext.js";
-import { createPipeline } from "../pipeline/createPipeline.js";
-import { createMountPipeline } from "../pipeline/createMountPipeline.js";
+import { createPipelineContext } from "../pipeline/core/createPipelineContext.js";
+import { createPipeline } from "../pipeline/core/createPipeline.js";
+import { createMountPipeline } from "../pipeline/mount/createMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
 
 /*

@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../utils/getActivePreset.js", () => ({
+vi.mock("../../../utils/getActivePreset.js", () => ({
   getActivePreset: vi.fn(),
 }));
 
-vi.mock("../../utils/createSupportedPluginsState.js", () => ({
+vi.mock("../../../utils/createSupportedPluginsState.js", () => ({
   createSupportedPluginsState: vi.fn(),
 }));
 
-import { getActivePreset } from "../../utils/getActivePreset.js";
-import { createSupportedPluginsState } from "../../utils/createSupportedPluginsState.js";
-import { createPipelineContext } from "../createPipelineContext.js";
+import { getActivePreset } from "../../../utils/getActivePreset.js";
+import { createSupportedPluginsState } from "../../../utils/createSupportedPluginsState.js";
+import { createPipelineContext } from "../../core/createPipelineContext.js";
 
 describe("createPipelineContext", () => {
   beforeEach(() => {

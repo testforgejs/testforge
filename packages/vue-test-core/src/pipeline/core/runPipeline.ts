@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, PipeResult } from "../types";
+import type { PipelineMiddleware, PipeResult } from "../../types";
 
 /*
  * Runs middleware sequentially using the current context value.

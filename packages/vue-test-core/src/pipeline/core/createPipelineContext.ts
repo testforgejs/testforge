@@ -1,7 +1,7 @@
-import type { PipelineContext, CreatePipelineContextParams } from "../types";
+import type { PipelineContext, CreatePipelineContextParams } from "../../types";
 
-import { getActivePreset } from "../utils/getActivePreset.js";
-import { createSupportedPluginsState } from "../utils/createSupportedPluginsState.js";
+import { getActivePreset } from "../../utils/getActivePreset.js";
+import { createSupportedPluginsState } from "../../utils/createSupportedPluginsState.js";
 
 /*
  * Creates the initial pipeline context for component mounting.

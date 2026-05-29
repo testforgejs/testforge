@@ -1,19 +1,19 @@
-import type { PipelineContext, PipelineMiddleware } from "../types";
+import type { PipelineContext, PipelineMiddleware } from "../../types";
 
 import {
   assertConfigurationShape,
   assertResultShape,
   assertPluginOptions,
-} from "./middleware/validation";
+} from "../middleware/validation";
 import {
   withPreset,
   withPluginsManifest,
   withBaseMountOptions,
   withGlobal,
   withPluginsBase,
-} from "./middleware/transformers";
-import { createPluginsMiddlewares } from "./plugins/builders/createPluginsMiddlewares.js";
-import { createPluginsMergeMiddlewares } from "./plugins/builders/createPluginsMergeMiddlewares.js";
+} from "../middleware/transformers";
+import { createPluginsMiddlewares } from "../plugins/builders/createPluginsMiddlewares.js";
+import { createPluginsMergeMiddlewares } from "../plugins/builders/createPluginsMergeMiddlewares.js";
 
 /*
  * Creates the mount processing pipeline.
