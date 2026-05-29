@@ -16,98 +16,101 @@ A simple component test:
 mount(MyComponent);
 ```
 
-A few weeks later, real app infrastructure appears:
+A few weeks later, real app infrastructure appears: i18n, Pinia, Router, stubs, and global mocks.
 
-- i18n
-- Pinia stores
-- Router
-- global plugins
-- stubs
-- mocks
-- default config
+Suddenly, you hit the **Configuration Explosion** problem.
 
-> And every test slowly turns into a 30-line mount() configuration you copy-paste across the project.
+To test different behaviors of the _same_ component, you need slightly different environments:
 
-Now multiply this by 200+ tests.
+- Test A needs a clean Pinia store.
+- Test B needs the same store, but with one specific action mocked.
+- Test C needs i18n set to `fr` instead of `en`.
+- Test D needs the router to start on a specific protected path.
 
-You start seeing:
+> Vue Test Utils forces you to maintain dozens of massive, slightly different configuration objects.
+> You end up copy-pasting 30 lines of `mount()` boilerplate just to change a single boolean flag or locale string.
 
-- copy-paste mount configs everywhere
-- tests coupled to infrastructure
-- painful refactors when config changes
-- no standard way to build the test environment
-- impossible to share setup across packages
-- presets? plugins? conventions? — all manual
+Now multiply this by 200+ tests. Your test suite becomes a nightmare to maintain:
 
-Your tests no longer describe behavior.
+- **Fragile Setup**: Changing a global dependency breaks 50 tests in unrelated files.
+- **Hidden Intent**: The actual test logic is buried under a mountain of infrastructure wiring.
+- **Maintenance Tax**: A simple refactor requires updating hundreds of boilerplate lines.
 
-They describe **how to assemble Vue**.
+Your tests no longer describe what a component _does_.  
+They describe **how to rebuild your entire enterprise Vue stack** from scratch.
 
 ---
 
-# 3. The Idea (What TestForge changes)
+# 3. The Idea: Context-Aware Overrides
 
-TestForge introduces one simple idea:
+TestForge introduces one simple shift in perspective:
 
-> Separate what you test from how the test environment is built
+> Separate the environment baseline from the specific test delta.
 
-You stop writing `global.plugins` in tests. Ever.
-
-That’s it.
-
-No i18n.  
-No Pinia.  
-No Router.  
-No boilerplate.
-
-Because TestForge builds the mount environment for you using:
-
-- a plugin system
-- presets
-- a deterministic mount pipeline
-- deep/controlled merge strategy
-- infrastructure defaults with clean overrides
-
-Your tests go back to describing **component behavior**, not Vue wiring.
+You define the infrastructure baseline **once** in a centralized factory. Individual tests never touch `global.plugins`. Instead, they pass lightweight, context-aware overrides that TestForge safely merges via its deterministic pipeline.
 
 ---
 
 # 4. Before / After Example
 
-## ❌ Vue Test Utils way
+## ❌ Vue Test Utils way (Configuration Explosion)
+
+Look how much boilerplate you copy-paste across tests just to adjust _one_ tiny detail:
 
 ```javascript
-mount(MyComponent, {
-  props: { ... },
-  global: {
-    plugins: [
-      createI18n({ locale: 'en', messages }),
-      createTestingPinia({ initialState, stubActions: false }),
-      createRouter({ history: createMemoryHistory(), routes }),
-    ],
-    stubs: { ... },
-    mocks: { ... },
-  },
-})
+// Test 1: Testing English locale
+it("renders English greeting", () => {
+  const wrapper = mount(MyComponent, {
+    global: {
+      plugins: [
+        createI18n({ locale: "en", messages }),
+        createTestingPinia({ initialState: { user: { loggedIn: true } } }),
+        createRouter({ history: createMemoryHistory() }),
+      ],
+    },
+  });
+});
+
+// Test 2: Testing French locale (30 lines copied just to change 'en' to 'fr')
+it("renders French greeting", () => {
+  const wrapper = mount(MyComponent, {
+    global: {
+      plugins: [
+        createI18n({ locale: "fr", messages }), // 👈 The only changed line!
+        createTestingPinia({ initialState: { user: { loggedIn: true } } }),
+        createRouter({ history: createMemoryHistory() }),
+      ],
+    },
+  });
+});
 ```
 
-## ✅ TestForge way
+## ✅ The TestForge Way (Clean Deltas)
 
-Instead, you define a **test factory** _ONCE_:
+You initialize a **reusable test factory** for the component. It pre-configures your standard Pinia, Router, and i18n via presets:
 
 ```javascript
 const factory = testComponentFactory(MyComponent);
 ```
 
-The same test becomes:
+Now, your tests only declare **what changes**, keeping the setup purely declarative and laser-focused:
 
 ```javascript
-factory({ title: "Hello" });
-```
+// Test 1: Uses project defaults automatically
+it("renders English greeting", () => {
+  const wrapper = factory();
+});
 
-No plugins.  
-No globals.  
-No infrastructure in sight.
+// Test 2: Safely overrides ONLY the i18n locale layer
+it("renders French greeting", () => {
+  const wrapper = factory({}, { i18n: { locale: "fr" } }); // 👈 Pure intent
+});
+
+// Test 3: Mutates only the required Pinia state block
+it("renders guest view", () => {
+  const wrapper = factory({}, { pinia: { initialState: { user: { loggedIn: false } } } });
+});
+```
 
 ---
 
