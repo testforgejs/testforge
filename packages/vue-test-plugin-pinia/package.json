@@ -19,6 +19,7 @@
     "build": "tsup",
     "dev": "tsup --watch"
   },
+  "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
     "pinia": "^3.0.0",

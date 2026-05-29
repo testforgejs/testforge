@@ -19,6 +19,7 @@
     "build": "tsup",
     "dev": "tsup --watch"
   },
+  "license": "MIT",
   "author": "Roman Levchenko",
   "dependencies": {
     "@testforge/vue-test-plugin-i18n": "workspace:*",
