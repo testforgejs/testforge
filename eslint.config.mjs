@@ -93,5 +93,12 @@ export default tsEslint.config(
     extends: [tsEslint.configs.disableTypeChecked],
   },
 
+  {
+    files: ["**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+    },
+  },
+
   prettierConfig,
 );

@@ -30,7 +30,7 @@ module.exports = {
     "^@testforge/([^/]+)$": "<rootDir>/packages/$1/src/index",
 
     "^vue$": "@vue/runtime-dom",
-    "^@vue/devtools-api$": "<rootDir>/__mocks__/vue-devtools-api.js",
+    "^@vue/devtools-api$": "<rootDir>/__mocks__/vue-devtools-api.cjs",
   },
 
   testMatch: ["**/*.jest.test.js", "**/*.int.test.js"],

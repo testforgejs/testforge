@@ -2,7 +2,6 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 // Get the plugin name from the CLI arguments
 const pluginName = process.argv[2];
