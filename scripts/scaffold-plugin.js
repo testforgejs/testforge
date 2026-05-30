@@ -62,7 +62,7 @@ writeFile(
     "@testforge/vue-test-core": "workspace:*"
   },
   "peerDependencies": {
-    "vue": "^3.0.0"
+    // Add library-specific peerDependencies manually if required
   }
 }`,
 );

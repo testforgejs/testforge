@@ -22,7 +22,7 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
-    "vue-router": "^5.0.0"
+    "vue-router": ">=4 <6"
   },
   "dependencies": {
     "@testforge/vue-test-core": "workspace:*"

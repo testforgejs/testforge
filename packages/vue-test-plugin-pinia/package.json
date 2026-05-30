@@ -22,8 +22,8 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
-    "pinia": "^3.0.0",
-    "@pinia/testing": "^1.0.0"
+    "pinia": ">=3 <4",
+    "@pinia/testing": ">=1 <2"
   },
   "dependencies": {
     "@testforge/vue-test-core": "workspace:*"
