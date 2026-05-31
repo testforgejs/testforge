@@ -9,9 +9,11 @@ export const assertExtraOptionPluginValues = (
   extraOptions: RuntimeExtraOptions,
   supported: Set<string>,
 ): void => {
+  const plugins = extraOptions.plugins ?? {};
+
   for (const name of supported) {
-    if (Object.prototype.hasOwnProperty.call(extraOptions, name)) {
-      assertPluginValue(extraOptions[name], name, "extraOptions");
+    if (Object.prototype.hasOwnProperty.call(plugins, name)) {
+      assertPluginValue(plugins[name], name, "extraOptions");
     }
   }
 };

@@ -668,7 +668,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     it("should merge base and extra i18n options with extra taking precedence when both are provided", () => {
       const baseOptions = { plugins: { i18n: { locale: "en" } } };
-      const extraOptions = { i18n: { locale: "uk" } };
+      const extraOptions = { plugins: { i18n: { locale: "uk" } } };
 
       const factory = testFactory(MockComponent, {}, baseOptions);
       factory({}, {}, {}, extraOptions);
@@ -736,7 +736,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         const customRoutes = [{ path: "/", component: { render: () => null } }];
 
         // Enable the router using the 4th argument (extraOptions)
-        factory({}, {}, {}, { router: { routes: customRoutes } });
+        factory({}, {}, {}, { plugins: { router: { routes: customRoutes } } });
 
         // 1. Verify that the contract for creating the router is invoked with our custom routes
         expect(mockRouterCreate).toHaveBeenCalledWith(

@@ -24,7 +24,7 @@ describe("getPluginConfig helper", () => {
   it("should return false when extraOptions explicitly sets false", () => {
     const ctx = {
       ...baseCtx,
-      extraOptions: { pinia: false },
+      extraOptions: { plugins: { pinia: false } },
     };
 
     expect(getPluginConfig(ctx, "pinia")).toBe(false);
@@ -42,7 +42,7 @@ describe("getPluginConfig helper", () => {
   it("should enable plugin when defined only in extraOptions", () => {
     const ctx = {
       ...baseCtx,
-      extraOptions: { pinia: { b: 2 } },
+      extraOptions: { plugins: { pinia: { b: 2 } } },
     };
 
     expect(getPluginConfig(ctx, "pinia")).toEqual({ b: 2 });
@@ -52,7 +52,7 @@ describe("getPluginConfig helper", () => {
     const ctx = {
       ...baseCtx,
       result: { plugins: { pinia: { a: 1, c: 3 } } },
-      extraOptions: { pinia: { b: 2 } },
+      extraOptions: { plugins: { pinia: { b: 2 } } },
     };
 
     expect(getPluginConfig(ctx, "pinia")).toEqual({
@@ -66,7 +66,7 @@ describe("getPluginConfig helper", () => {
     const ctx = {
       ...baseCtx,
       result: { plugins: { pinia: false } },
-      extraOptions: { pinia: { b: 2 } },
+      extraOptions: { plugins: { pinia: { b: 2 } } },
     };
 
     expect(getPluginConfig(ctx, "pinia")).toEqual({ b: 2 });

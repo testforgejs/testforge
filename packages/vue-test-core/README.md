@@ -25,12 +25,12 @@ A preset defines two critical fields:
 
 When a plugin's configuration (like Pinia's `initialState` or Router's `routes`) is resolved, it travels through four distinct architectural layers. Each layer can selectively override or adjust the state inherited from the previous one:
 
-| Layer                        | Defined At               | Scope                             | Merge Type against previous |
-| :--------------------------- | :----------------------- | :-------------------------------- | :-------------------------- |
-| **1. Preset Defaults**       | Global Framework Setup   | Whole Monorepo / Project          | _Base Baseline_             |
-| **2. `defaultMountOptions`** | `testComponentFactory()` | Test File / Component Suite       | **Shallow Overwrite**       |
-| **3. `mountOptions`**        | `factory()` invocation   | Specific `it()` or `test()` block | **Shallow Overwrite**       |
-| **4. `extraOptions`**        | `factory()` 4th argument | Precision fine-tuning             | **Shallow Patch (Overlay)** |
+| Layer                         | Defined At               | Scope                             | Merge Type against previous |
+| :---------------------------- | :----------------------- | :-------------------------------- | :-------------------------- |
+| **1. Preset Defaults**        | Global Framework Setup   | Whole Monorepo / Project          | _Base Baseline_             |
+| **2. `defaultMountOptions`**  | `testComponentFactory()` | Test File / Component Suite       | **Shallow Overwrite**       |
+| **3. `mountOptions`**         | `factory()` invocation   | Specific `it()` or `test()` block | **Shallow Overwrite**       |
+| **4. `extraOptions.plugins`** | `factory()` 4th argument | Precision fine-tuning             | **Shallow Patch (Overlay)** |
 
 ---
 
@@ -75,29 +75,41 @@ Standard VTU `global` options (`stubs`, `mocks`, `provide`) are processed using 
 
 Because managed plugins control critical application state, their merging behavior is carefully designed to protect against **test data pollution**:
 
-- **Full State Reset (Layers 2 & 3 via `plugins`)**: Inside both `defaultMountOptions` and `mountOptions`, managed plugin configurations must be placed inside the `plugins` key (e.g., `mountOptions: { plugins: { pinia: { ... } } }`).
-  - **Behavior:** When Layer 3 defines a plugin block, it **completely replaces** that plugin's block from Layer 2 and Layer 1. This guarantees a clean, unpolluted state (e.g., a test-level `initialState` will completely discard the factory baseline state rather than merging keys).
-- **Fine-Grained Patching (Layer 4 via `extraOptions`)**: If you do _not_ want to wipe out the inherited plugin configuration, but only want to tune a specific property, use `extraOptions`.
-  - **Behavior:** `extraOptions` acts as a **Shallow Overlay** on top of the already resolved plugin state.
-  - _Example:_ If Layer 1 and 2 established a complex base store state, and your test only needs to toggle action stubbing without redeclaring that state, you pass `{ pinia: { stubActions: true } }` in `extraOptions`. The inherited state is preserved, and the stub flag is overlaid.
+- **Full State Reset (Layers 2 & 3 via `plugins`)**: Inside both `defaultMountOptions` and `mountOptions`, managed plugin configurations are placed inside the `plugins` key (e.g., `mountOptions: { plugins: { pinia: { ... } } }`).
+  - **Behavior:** When Layer 3 defines a plugin configuration block, it **completely replaces** that plugin's block from Layer 2 and Layer 1. This guarantees a clean, unpolluted state (e.g., a test-level `initialState` will completely discard the factory baseline state rather than merging keys).
+- **Fine-Grained Patching (Layer 4 via `extraOptions.plugins`)**: If you do _not_ want to wipe out the inherited plugin configuration, but only want to tune a specific property, use the `plugins` property inside `extraOptions`.
+  - **Behavior:** `extraOptions.plugins` acts as a **Shallow Overlay** on top of the already resolved plugin state.
+  - _Example:_ If Layer 1 and 2 established a complex base store state, and your test only needs to toggle action stubbing without redeclaring that state, you pass it inside the 4th argument: `factory({}, {}, {}, { plugins: { pinia: { stubActions: true } } })`. The inherited state is preserved, and the stub flag is overlaid.
 
 ---
 
 ### 🚫 Advanced Pipeline Controls
 
-#### The `skipManagedPlugins` Flag
+All advanced framework-specific flags are isolated at the root level of the 4th argument (`extraOptions`) to keep them completely separate from business plugin configurations.
 
-Passed inside `mountOptions` (2nd execution argument).
+#### The `preset` Property
+
+- **Type:** `keyof TestFrameworkPresets`
+- **What it does:** Allows dynamically switching or activating a specific preset profile from your project's presets registry for this individual factory call.
+
+#### The `skipDefaultProps` / `skipDefaultSlots` Flags
 
 - **Type:** `Boolean` (Default: `false`)
-- **What it does:** Completely disables the built-in active preset orchestration for the current test run. Use this when you need to take full manual control over plugin initialization or test legacy third-party instances.
+- **What it does:** If set to `true`, the factory completely ignores the `defaultProps` or `defaultSlots` specified during factory creation for this specific test run.
 
 #### The `skipDefaultOptions` Flag
 
-Passed inside `extraOptions` (4th execution argument).
-
 - **Type:** `Boolean` (Default: `false`)
 - **What it does:** Tells the pipeline to completely ignore `defaultMountOptions` defined during factory creation, forcing the current test to resolve only against Global Preset Defaults and immediate `mountOptions`.
+
+#### The `skipManagedPlugins` Flag
+
+_Note: This flag remains inside `mountOptions` (2nd execution argument)._
+
+- **Type:** `Boolean` (Default: `false`)
+- **What it does:** Completely disables the active preset orchestration for the current test run. Use this when you need to take full manual control over plugin initialization using raw VTU arrays.
+
+---
 
 ## ⚙️ Configuration (Mount Options)
 

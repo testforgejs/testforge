@@ -4,6 +4,7 @@ import { getPluginConfig } from "../logic/getPluginConfig.js";
 import { patchPluginState } from "../logic/patchPluginState.js";
 import { resolveRuntimePluginState } from "../logic/resolveRuntimePluginState.js";
 import { resolveExtraOptions } from "../logic/resolveExtraOptions";
+import { getExtraPluginOptions } from "../logic/getExtraPluginOptions";
 
 /*
  * Creates middleware that resolves and applies runtime plugin configuration.
@@ -21,7 +22,10 @@ export function createPluginMiddleware(name: PluginName): PipelineMiddleware {
     if (!config) return ctx;
 
     const extraOptions = resolveExtraOptions(ctx.extraOptions);
-    const runtimeConfig = resolveRuntimePluginState(config, extraOptions[name]);
+    const runtimeConfig = resolveRuntimePluginState(
+      config,
+      getExtraPluginOptions(extraOptions, name),
+    );
 
     return patchPluginState(ctx, name, runtimeConfig);
   };

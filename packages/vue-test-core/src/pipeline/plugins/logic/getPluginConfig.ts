@@ -2,6 +2,7 @@ import type { PipelineContext, PluginName, ResolvedPluginConfig } from "../../..
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
+import { getExtraPluginOptions } from "./getExtraPluginOptions";
 
 /*
  * Extracts and merges the plugin configuration, taking all priority levels into account.
@@ -17,7 +18,7 @@ export function getPluginConfig(
   const base = ctx.result.plugins[name];
 
   const extraOptions = resolveExtraOptions(ctx.extraOptions);
-  const overlay = extraOptions[name];
+  const overlay = getExtraPluginOptions(extraOptions, name);
 
   const isEnabled =
     overlay !== undefined ? overlay !== false : base !== false && base !== undefined;

@@ -78,11 +78,30 @@ export interface ExposeOption<T> {
   expose?: (instance: T) => void;
 }
 
-type ExtraOptionServiceFields = Omit<ComponentFactoryExtraOptions, keyof PluginOptionsMap>;
+export type RuntimeExtraOptions = {
+  /**
+   * Name of the preset to activate for this factory call.
+   * Controls which plugins and defaults will be applied.
+   */
+  preset?: keyof TestFrameworkPresets;
 
-type RuntimePluginOverrides = Partial<ResolvedPluginOptions>;
+  /**
+   * Skip factory-level default props during merge.
+   */
+  skipDefaultProps?: boolean;
 
-export type RuntimeExtraOptions = ExtraOptionServiceFields & RuntimePluginOverrides;
+  /**
+   * Skip factory-level default slots during merge.
+   */
+  skipDefaultSlots?: boolean;
+
+  /**
+   * Skip BASE_MOUNT_OPTIONS during merge.
+   */
+  skipDefaultOptions?: boolean;
+
+  plugins?: ResolvedPluginOptions;
+};
 
 // === 4. Public Plugin Configuration API ===
 
@@ -146,7 +165,9 @@ export type ComponentFactoryExtraOptions = {
    * Skip BASE_MOUNT_OPTIONS during merge.
    */
   skipDefaultOptions?: boolean;
-} & PluginOverridesInput;
+
+  plugins?: PluginOverridesInput;
+};
 
 // === 5. Preset System ===
 

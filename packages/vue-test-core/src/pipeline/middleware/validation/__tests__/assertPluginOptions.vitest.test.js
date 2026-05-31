@@ -63,7 +63,9 @@ describe("assertPluginOptions middleware", () => {
     const ctx = {
       ...baseCtx,
       extraOptions: {
-        pinia: {},
+        plugins: {
+          pinia: {},
+        },
       },
     };
 
@@ -74,7 +76,9 @@ describe("assertPluginOptions middleware", () => {
     const ctx = {
       ...baseCtx,
       extraOptions: {
-        pinia: 123,
+        plugins: {
+          pinia: 123,
+        },
       },
     };
 

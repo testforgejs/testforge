@@ -74,8 +74,10 @@ describe("createPluginMiddleware", () => {
 
     const ctx = {
       extraOptions: {
-        [name]: {
-          __meta: { instance },
+        plugins: {
+          [name]: {
+            __meta: { instance },
+          },
         },
       },
     };

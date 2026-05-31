@@ -5,9 +5,11 @@ import { assertExtraOptionPluginValues } from "../assertExtraOptionPluginValues.
 describe("assertExtraOptionPluginValues", () => {
   it("should NOT throw for valid plugin objects in extraOptions", () => {
     const extraOptions = {
-      pinia: {},
-      i18n: {
-        locale: "en",
+      plugins: {
+        pinia: {},
+        i18n: {
+          locale: "en",
+        },
       },
     };
 
@@ -20,8 +22,10 @@ describe("assertExtraOptionPluginValues", () => {
 
   it("should NOT throw for plugins configured as false", () => {
     const extraOptions = {
-      pinia: false,
-      router: false,
+      plugins: {
+        pinia: false,
+        router: false,
+      },
     };
 
     const supported = new Set(["pinia", "router"]);
@@ -35,7 +39,9 @@ describe("assertExtraOptionPluginValues", () => {
 
   it.each(invalidValues)("should throw for invalid plugin value in extraOptions: %p", (value) => {
     const extraOptions = {
-      pinia: value,
+      plugins: {
+        pinia: value,
+      },
     };
 
     const supported = new Set(["pinia"]);
@@ -62,8 +68,10 @@ describe("assertExtraOptionPluginValues", () => {
 
   it("should validate only supported plugin keys", () => {
     const extraOptions = {
-      pinia: {},
-      vuetify: 123,
+      plugins: {
+        pinia: {},
+        vuetify: 123,
+      },
     };
 
     const supported = new Set(["pinia"]);
@@ -85,7 +93,9 @@ describe("assertExtraOptionPluginValues", () => {
 
   it("should include plugin name in error message", () => {
     const extraOptions = {
-      i18n: 123,
+      plugins: {
+        i18n: 123,
+      },
     };
 
     const supported = new Set(["i18n"]);

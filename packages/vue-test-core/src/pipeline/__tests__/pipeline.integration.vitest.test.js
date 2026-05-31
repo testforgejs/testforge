@@ -59,7 +59,7 @@ describe("Mount Pipeline Integration", () => {
         },
       };
       // Pass only one key to extraOptions
-      const extra = { pinia: { initialState: { keyB: 2 } } };
+      const extra = { plugins: { pinia: { initialState: { keyB: 2 } } } };
 
       const result = run(presets, defaults, {}, extra);
 
@@ -72,9 +72,11 @@ describe("Mount Pipeline Integration", () => {
     it("should extract instance to __sharedInstance and remove __meta when provided in extraOptions", () => {
       const mockInstance = { id: "shared-router" };
       const extra = {
-        router: {
-          __meta: { instance: mockInstance },
-          routes: [],
+        plugins: {
+          router: {
+            __meta: { instance: mockInstance },
+            routes: [],
+          },
         },
       };
 
@@ -136,7 +138,7 @@ describe("Mount Pipeline Integration", () => {
       });
 
       it("should throw an error when a number is passed to extraOptions", () => {
-        const extra = { i18n: 123 };
+        const extra = { plugins: { i18n: 123 } };
 
         expect(() => run(presets, {}, {}, extra)).toThrow(/received number \(123\)/);
       });
@@ -144,7 +146,7 @@ describe("Mount Pipeline Integration", () => {
 
     describe("Negative Scenarios & Edge Cases", () => {
       it("should ignore __meta if it is not an object", () => {
-        const extra = { pinia: { __meta: "not_an_object" } };
+        const extra = { plugins: { pinia: { __meta: "not_an_object" } } };
         const result = run(presets, {}, {}, extra);
 
         expect(result.plugins.pinia.__sharedInstance).toBeUndefined();
@@ -205,9 +207,11 @@ describe("Mount Pipeline Integration", () => {
         const mockRouter = { push: vi.fn() };
         const customRoutes = [{ path: "/test" }];
         const extra = {
-          router: {
-            __meta: { instance: mockRouter },
-            routes: customRoutes,
+          plugins: {
+            router: {
+              __meta: { instance: mockRouter },
+              routes: customRoutes,
+            },
           },
         };
 
@@ -357,7 +361,7 @@ describe("Mount Pipeline Integration", () => {
     // Scenario 4: Checking via extraOptions (Priority)
     it("should enable plugin via extraOptions even if it was disabled in mountOptions", () => {
       const overrides = { plugins: { pinia: false } };
-      const extra = { pinia: { keyA: 1 } };
+      const extra = { plugins: { pinia: { keyA: 1 } } };
 
       const result = run(presets, {}, overrides, extra);
 
@@ -408,7 +412,7 @@ describe("Mount Pipeline Integration", () => {
     });
 
     it("should activate Router only when explicitly requested in extraOptions", () => {
-      const extra = { router: {} };
+      const extra = { plugins: { router: {} } };
       const result = run(presets, {}, {}, extra);
 
       expect(result.plugins.router).toEqual(
@@ -425,7 +429,9 @@ describe("Mount Pipeline Integration", () => {
         plugins: { pinia: { stubActions: false } },
       };
       const extra = {
-        pinia: { stubActions: true },
+        plugins: {
+          pinia: { stubActions: true },
+        },
       };
 
       const result = run(presets, {}, overrides, extra);
@@ -444,7 +450,7 @@ describe("Mount Pipeline Integration", () => {
         },
       };
       // Passing an empty object—this shouldn't change anything
-      const extra = { pinia: {} };
+      const extra = { plugins: { pinia: {} } };
 
       const result = run(presets, {}, overrides, extra);
 
@@ -457,7 +463,7 @@ describe("Mount Pipeline Integration", () => {
 
     it("should enable a disabled plugin if extraOptions contains a configuration object", () => {
       const overrides = { plugins: { router: false } };
-      const extra = { router: { routes: [] } };
+      const extra = { plugins: { router: { routes: [] } } };
 
       const result = run(presets, {}, overrides, extra);
 
@@ -513,7 +519,9 @@ describe("Mount Pipeline Integration", () => {
       };
       // Change only one key in extraOptions
       const extra = {
-        pinia: { stubActions: false },
+        plugins: {
+          pinia: { stubActions: false },
+        },
       };
 
       const result = run(presets, defaults, {}, extra);
@@ -644,7 +652,7 @@ describe("Mount Pipeline Integration", () => {
 
     it("should be undefined for a plugin when no default preset is provided and no options are specified", () => {
       const emptyPresets = {};
-      const result = run(emptyPresets, {}, {}, {}, { i18n: {} });
+      const result = run(emptyPresets, {}, {}, {}, { plugins: { i18n: {} } });
 
       // If there are no presets at all, the plugins should remain empty but not crash
       expect(result.plugins.i18n).toBeUndefined();

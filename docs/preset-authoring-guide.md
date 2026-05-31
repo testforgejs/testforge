@@ -113,6 +113,6 @@ export { testComponentFactory };
 
 ## 🧠 Preset Best Practices
 
-1. **Keep State Minimal**: Do not put massive mock data structures into the preset's `defaults.pinia.initialState`. The preset should represent a blank canvas or a minimal authenticated state. Specific data mutations belong inside the test file using execution-time `mountOptions` or `extraOptions`.
+1. **Keep State Minimal**: Do not put massive mock data structures into the preset's `defaults.pinia.initialState`. The preset should represent a blank canvas or a minimal authenticated state. Specific data mutations belong inside the test file using execution-time `mountOptions` or `extraOptions.plugins`.
 2. **Utilize the default Key**: The framework automatically looks for a key named default in your presets registry. Always provide a comprehensive `default` preset that matches 90% of your project's component needs.
 3. **Isolate Heavy Plugins**: If a specific plugin is heavy or creates significant runtime side-effects (like full Vue Router instantiation on every mount), add it to the manifest with `enabled: false`. This registers the plugin capability boundary but keeps it dormant until a specific test explicitly re-enables it.
