@@ -5,6 +5,7 @@ import type {
 } from "../types";
 
 import { validatePreset } from "./validatePreset.js";
+import { DEFAULT_PRESET_NAME } from "../constants/constants.js";
 
 /*
  * Retrieves the active preset based on the call parameters and available presets.
@@ -19,7 +20,7 @@ export function getActivePreset(
   presets: TestFrameworkPresets = {},
 ): PresetDefinition | undefined {
   const requestedPresetName = extraOptions?.preset?.trim();
-  const activeName = requestedPresetName || "default";
+  const activeName = requestedPresetName || DEFAULT_PRESET_NAME;
   const preset = presets[activeName];
 
   // If a user requests a preset that doesn't exist, an error will be thrown

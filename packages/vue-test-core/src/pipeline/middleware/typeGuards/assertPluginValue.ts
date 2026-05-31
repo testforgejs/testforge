@@ -1,3 +1,5 @@
+import { ERROR_PREFIX } from "../../../constants/constants.js";
+
 /**
  * Asserts that a plugin configuration value has a valid shape.
  *
@@ -39,7 +41,7 @@ export function assertPluginValue(
 
   if (!isValid) {
     throw new Error(
-      `[TestFramework] Invalid configuration for plugin "${name}" in ${source}. ` +
+      `${ERROR_PREFIX} Invalid configuration for plugin "${name}" in ${source}. ` +
         `Expected Object or Boolean (false), but received ${typeof val} (${val}).`,
     );
   }

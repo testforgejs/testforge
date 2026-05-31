@@ -6,6 +6,7 @@ import { presets } from "../../__tests__/utils/presets/mockPresets.js";
 import { piniaPlugin } from "@testforge/vue-test-plugin-pinia";
 import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforge/vue-test-plugin-router";
+import { ERROR_PREFIX } from "../../constants/constants.js";
 
 describe("Mount Pipeline Integration", () => {
   const run = (presets, defaultMountOptions = {}, mountOptions = {}, extraOptions = {}) => {
@@ -125,7 +126,7 @@ describe("Mount Pipeline Integration", () => {
         const overrides = { plugins: { pinia: "i_am_a_string" } };
 
         expect(() => run(presets, {}, overrides)).toThrow(
-          '[TestFramework] Invalid configuration for plugin "pinia"',
+          `${ERROR_PREFIX} Invalid configuration for plugin "pinia"`,
         );
       });
 
@@ -133,7 +134,7 @@ describe("Mount Pipeline Integration", () => {
         const overrides = { plugins: { pinia: null } };
 
         expect(() => run(presets, {}, overrides)).toThrow(
-          '[TestFramework] Invalid configuration for plugin "pinia"',
+          `${ERROR_PREFIX} Invalid configuration for plugin "pinia"`,
         );
       });
 

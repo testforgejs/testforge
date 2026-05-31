@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validatePreset } from "../validatePreset.js";
+import { DEFAULT_PRESET_NAME } from "../../constants/constants.js";
 
 describe("validatePreset", () => {
   // Helpers for creating mock modules
@@ -24,7 +25,7 @@ describe("validatePreset", () => {
         },
       };
 
-      expect(() => validatePreset("default", validPreset)).not.toThrow();
+      expect(() => validatePreset(DEFAULT_PRESET_NAME, validPreset)).not.toThrow();
     });
 
     it("should pass even when defaults are missing (optional field)", () => {

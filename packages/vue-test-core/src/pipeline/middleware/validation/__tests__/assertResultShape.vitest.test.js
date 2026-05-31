@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { assertResultShape } from "../assertResultShape.js";
+import { ERROR_PREFIX } from "../../../../constants/constants.js";
 
 describe("assertResultShape middleware", () => {
   const validCtx = {
@@ -16,7 +17,7 @@ describe("assertResultShape middleware", () => {
 
   it("throws when result is missing", () => {
     expect(() => assertResultShape({})).toThrow(
-      '[TestFramework] Critical error: "result" must be an Object. Received undefined (undefined)',
+      `${ERROR_PREFIX} Critical error: "result" must be an Object. Received undefined (undefined)`,
     );
   });
 
@@ -30,7 +31,7 @@ describe("assertResultShape middleware", () => {
     };
 
     expect(() => assertResultShape(ctx)).toThrow(
-      '[TestFramework] Critical error: "result.mountOptions" must be an Object. Received object (null)',
+      `${ERROR_PREFIX} Critical error: "result.mountOptions" must be an Object. Received object (null)`,
     );
   });
 
@@ -44,7 +45,7 @@ describe("assertResultShape middleware", () => {
     };
 
     expect(() => assertResultShape(ctx)).toThrow(
-      '[TestFramework] Critical error: "result.global" must be an Object. Received undefined (undefined)',
+      `${ERROR_PREFIX} Critical error: "result.global" must be an Object. Received undefined (undefined)`,
     );
   });
 
@@ -58,7 +59,7 @@ describe("assertResultShape middleware", () => {
     };
 
     expect(() => assertResultShape(ctx)).toThrow(
-      '[TestFramework] Critical error: "result.plugins" must be an Object. Received number (123)',
+      `${ERROR_PREFIX} Critical error: "result.plugins" must be an Object. Received number (123)`,
     );
   });
 });

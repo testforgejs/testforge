@@ -1,3 +1,5 @@
+import { ERROR_PREFIX } from "../../../constants/constants.js";
+
 /**
  * Runtime assertion that ensures a value is a plain object.
  *
@@ -21,7 +23,7 @@ export function assertIsObject(val: unknown, name: string): asserts val is Recor
   if (val !== null && typeof val === "object" && !Array.isArray(val)) return;
 
   throw new Error(
-    `[TestFramework] Critical error: "${name}" must be an Object. ` +
+    `${ERROR_PREFIX} Critical error: "${name}" must be an Object. ` +
       `Received ${Array.isArray(val) ? "array" : typeof val} (${val}).`,
   );
 }

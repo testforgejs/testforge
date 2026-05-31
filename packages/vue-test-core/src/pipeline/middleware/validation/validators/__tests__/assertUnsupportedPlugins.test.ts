@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 
-import type { ResolvedPluginOptions } from "packages/vue-test-core/src/types.js";
+import type { ResolvedPluginOptions } from "../../../../../types";
+
+import { ERROR_PREFIX } from "../../../../../constants/constants.js";
 
 import { assertUnsupportedPlugins } from "../assertUnsupportedPlugins.js";
 
@@ -29,7 +31,7 @@ describe("assertUnsupportedPlugins", () => {
     expect(() => {
       assertUnsupportedPlugins(plugins, supported);
     }).toThrow(
-      '[TestFramework] Plugin "vuetify" is configured but not supported by the active preset.',
+      `${ERROR_PREFIX} Plugin "vuetify" is configured but not supported by the active preset.`,
     );
   });
 

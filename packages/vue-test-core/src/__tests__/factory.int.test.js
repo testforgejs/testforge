@@ -1,3 +1,5 @@
+import { ERROR_PREFIX } from "../constants/constants.js";
+
 const runner = typeof vi !== "undefined" ? vi : jest;
 
 describe("testComponentFactory Integration (Universal)", () => {
@@ -938,7 +940,7 @@ describe("testComponentFactory Integration (Universal)", () => {
               },
             );
           }).toThrow(
-            '[TestFramework] Plugin "pinia" is configured but not supported by the active preset.',
+            `${ERROR_PREFIX} Plugin "pinia" is configured but not supported by the active preset.`,
           );
         });
 
@@ -980,7 +982,7 @@ describe("testComponentFactory Integration (Universal)", () => {
               },
             );
           }).toThrow(
-            '[TestFramework] Plugin "router" is configured but not supported by the active preset.',
+            `${ERROR_PREFIX} Plugin "router" is configured but not supported by the active preset.`,
           );
         });
       });

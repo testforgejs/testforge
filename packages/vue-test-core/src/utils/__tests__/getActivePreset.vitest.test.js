@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { getActivePreset } from "../getActivePreset.js";
 import * as validateModule from "../validatePreset.js";
+import { DEFAULT_PRESET_NAME } from "../../constants/constants.js";
+
 vi.spyOn(validateModule, "validatePreset").mockImplementation(() => {});
 
 describe("getActivePreset", () => {
@@ -67,7 +69,10 @@ describe("getActivePreset", () => {
     it("should call validatePreset for default preset", () => {
       getActivePreset({}, mockPresets);
 
-      expect(validateModule.validatePreset).toHaveBeenCalledWith("default", mockPresets.default);
+      expect(validateModule.validatePreset).toHaveBeenCalledWith(
+        DEFAULT_PRESET_NAME,
+        mockPresets.default,
+      );
     });
 
     it("should NOT call validatePreset if preset is not found", () => {
