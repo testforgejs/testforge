@@ -95,7 +95,7 @@ export interface VueTest${pascalName}Options extends Record<string, any>, Plugin
 writeFile(
   "src/types/augmentation.ts",
   `import type {} from "@testforge/vue-test-core";
-import type { VueTest${pascalName}Options } from "./types.js";
+import type { VueTest${pascalName}Options } from "./types";
 
 declare module "@testforge/vue-test-core" {
   interface PluginOptionsMap {
@@ -111,7 +111,7 @@ writeFile(
   `import { createPluginInstance } from "@testforge/vue-test-core";
 
 import type { RuntimePluginOptions } from "@testforge/vue-test-core";
-import type { VueTest${pascalName}Options } from "../types/types.js";
+import type { VueTest${pascalName}Options } from "../types/types";
 
 /*
  * Factory for creating the plugin instance.
@@ -140,7 +140,7 @@ writeFile(
   `import { create${pascalName}Plugin } from "./create${pascalName}Plugin.js";
 
 import type { PluginModule } from "@testforge/vue-test-core";
-import type { VueTest${pascalName}Options } from "../types/types.js";
+import type { VueTest${pascalName}Options } from "../types/types";
 
 export const ${camelName}Plugin: PluginModule<any, VueTest${pascalName}Options> = {
   getName: () => "${camelName}",
@@ -160,7 +160,7 @@ writeFile(
   `import "./types/augmentation.js";
 
 export { ${camelName}Plugin } from "./module/${camelName}Plugin.js";
-export * from "./types/types.js";
+export * from "./types/types";
 `,
 );
 
