@@ -264,3 +264,72 @@ You don’t fight the framework.
 You ask for what you need, and TestForge merges it correctly.
 
 ---
+
+# 6. 📈 Incremental Migration from Vue Test Utils
+
+TestForge is intentionally engineered as a **drop-in architecture extension**, not a destructive replacement. It features 100% backward compatibility with standard [Vue Test Utils (VTU)](https://vuejs.org) configuration formats.
+
+You can migrate your existing test suites in two effortless, risk-free stages.
+
+---
+
+### Stage 1: Zero-Refactor Integration (1:1 Translation)
+
+In the first stage, you don't need to change your existing setup objects. TestForge treats raw VTU configuration objects as valid input and processes them identically to `mount()`.
+
+If your legacy VTU test looks like this:
+
+```javascript
+import { mount } from '@vue/test-utils';
+import MyComponent from './MyComponent.vue';
+
+const VTUConfig = {
+  props: { title: "Hello" },
+  global: {
+    mocks: { \$t: (msg) => msg }
+  }
+};
+
+const wrapper = mount(MyComponent, VTUConfig);
+```
+
+The immediate TestForge equivalent is exactly the same, routed through a reusable factory:
+
+```javascript
+import { testComponentFactory } from "@/tests/setup"; // Your bootstrapped factory
+import MyComponent from "./MyComponent.vue";
+
+const factory = testComponentFactory(MyComponent);
+
+// Pass an empty object as the 1st argument (props) to let TestForge
+// safely process the props directly out of your legacy VTUConfig block.
+const wrapper = factory({}, VTUConfig);
+```
+
+At this stage, your tests will continue to pass exactly as they did before, with zero rewrite tax.
+
+---
+
+### Stage 2: Extracting the Baseline (Unlocking TestForge)
+
+Once your tests run safely on the TestForge engine, you can incrementally refactor them to destroy boilerplate. You do this by extracting shared infrastructure into the factory creation level and leaving only the precise changes (deltas) in the individual tests.
+
+#### 1. Move global configurations to the Factory level:
+
+```javascript
+// Do this once per test file (or move plugins to your global project Preset)
+const factory = testComponentFactory(MyComponent, {}, {
+  global: {
+    mocks: { \$t: (msg) => msg } // Unified baseline
+  }
+});
+```
+
+#### 2. Clean up individual test invocations:
+
+```javascript
+// Now your tests only declare direct, meaningful state definitions
+const wrapper = factory({ title: "Hello" });
+```
+
+By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy infrastructure-building machine down to a **one-line declarative intent**.
