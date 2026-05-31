@@ -45,7 +45,7 @@ runner.doMock("@testforge/vue-test-plugin-router", () => ({
 
 describe("testComponentFactory Integration (Expose Instance)", () => {
   const MockComponent = { name: "MockComponent", render: () => null };
-  let testFactory;
+  let testComponentFactory;
 
   beforeEach(async () => {
     runner.clearAllMocks();
@@ -75,7 +75,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
 
     const { createTestFramework } = await import("../index");
     const { presets } = await import("./utils/presets/mockPresets.js");
-    testFactory = createTestFramework({ presets }).testComponentFactory;
+    testComponentFactory = createTestFramework({ presets }).testComponentFactory;
   });
 
   describe("Expose Instance", () => {
@@ -112,7 +112,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
         },
       };
 
-      const factory = testFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
+      const factory = testComponentFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
 
       factory();
 
@@ -156,7 +156,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
         },
       };
 
-      const factory = testFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
+      const factory = testComponentFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
       factory();
 
       // 2. Verify the connection using mock spies (verify the return value of the `create` call)

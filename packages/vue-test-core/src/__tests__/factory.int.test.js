@@ -7,7 +7,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
   let mockMount;
   let mockShallowMount;
-  let testFactory;
+  let testComponentFactory;
 
   // References to mocked `create` functions to verify their calls
   const mockI18nCreate = runner.fn();
@@ -79,12 +79,12 @@ describe("testComponentFactory Integration (Universal)", () => {
     // Initializing the framework
     const { createTestFramework } = await import("../index");
     const { presets } = await import("./utils/presets/mockPresets.js");
-    testFactory = createTestFramework({ presets }).testComponentFactory;
+    testComponentFactory = createTestFramework({ presets }).testComponentFactory;
   });
 
   describe("VTU Mount Functions", () => {
     it("should use shallowMount by default when no useShallow option is specified", () => {
-      const factory = testFactory(MockComponent, {
+      const factory = testComponentFactory(MockComponent, {
         title: "Base",
       });
 
@@ -103,7 +103,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     });
 
     it("should switch to mount when useShallow is false", () => {
-      const factory = testFactory(MockComponent);
+      const factory = testComponentFactory(MockComponent);
       factory({}, { useShallow: false });
 
       expect(mockMount).toHaveBeenCalledTimes(1);
@@ -114,7 +114,7 @@ describe("testComponentFactory Integration (Universal)", () => {
   describe("Props Priority", () => {
     describe("Specific Test Level", () => {
       it("should prioritize direct props over mountOptions.props when keys conflict", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // The props vs. mountOptions.props argument
         factory({ id: 1 }, { props: { id: 2 } });
@@ -128,7 +128,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should shallow-merge direct props with mountOptions.props when no conflicts", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // The props vs. mountOptions.props argument
         factory({ id: 1 }, { props: { newProps: 2 } });
@@ -142,7 +142,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should use only mountOptions.props when direct props are not provided", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         factory({}, { props: { newProps: 2 } });
 
@@ -158,7 +158,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     describe("Test Suite Level", () => {
       it("should prioritize direct defaultProps over defaultMountOptions.props when keys conflict", () => {
         // The defaultProps vs. defaultMountOptions.props argument
-        const factory = testFactory(MockComponent, { id: 1 }, { props: { id: 2 } });
+        const factory = testComponentFactory(MockComponent, { id: 1 }, { props: { id: 2 } });
 
         factory();
 
@@ -172,7 +172,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       it("should shallow-merge direct props with mountOptions.props when no conflicts", () => {
         // The defaultProps vs. defaultMountOptions.props argument
-        const factory = testFactory(MockComponent, { id: 1 }, { props: { newProps: 2 } });
+        const factory = testComponentFactory(MockComponent, { id: 1 }, { props: { newProps: 2 } });
 
         factory();
 
@@ -185,7 +185,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should use only mountOptions.props when direct props are not provided", () => {
-        const factory = testFactory(MockComponent, {}, { props: { newProps: 2 } });
+        const factory = testComponentFactory(MockComponent, {}, { props: { newProps: 2 } });
 
         factory();
 
@@ -202,7 +202,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       describe("when skipDefaultProps = false (default behavior)", () => {
         // All 4 sources are active
         it("should merge all four sources with direct props having highest priority", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             { defA: 1, defB: 10 }, // defaultProps
             { props: { defA: 2, defC: 30 } }, // defaultMountOptions.props
@@ -228,7 +228,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should fall back to defaultMountOptions.props when direct props & mountOptions.props & defaultProps are empty", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             {},
             { props: { fallback: "from-default-mount" } },
@@ -245,7 +245,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should fall back to defaultProps when defaultMountOptions.props is empty", () => {
-          const factory = testFactory(MockComponent, { base: "default-props" }, {});
+          const factory = testComponentFactory(MockComponent, { base: "default-props" }, {});
 
           factory({}, {});
 
@@ -260,7 +260,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       describe("when skipDefaultProps = true", () => {
         it("should ignore defaultProps and defaultMountOptions but still merge the other two sources", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             { ignored: "default-props" },
             { props: { ignoredBase: "default-mount" } },
@@ -287,7 +287,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should prioritize direct props over mountOptions.props", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             {},
             {
@@ -318,7 +318,7 @@ describe("testComponentFactory Integration (Universal)", () => {
   describe("Slots Priority", () => {
     describe("Specific Test Level", () => {
       it("should prioritize direct slots over mountOptions.slots when keys conflict", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // Direct slots vs. mountOptions.slots argument
         factory({}, { slots: { default: "options slot" } }, { default: "direct slot" });
@@ -332,7 +332,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should shallow-merge direct slots with mountOptions.slots when no conflicts", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // The slots vs. mountOptions.slots argument
         factory({}, { slots: { footer: "footer slot" } }, { header: "header slot" });
@@ -346,7 +346,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should use only mountOptions.slots when direct slots are not provided", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         factory({}, { slots: { default: "options slot" } });
 
@@ -362,7 +362,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     describe("Test Suite Level", () => {
       it("should prioritize direct defaultSlots over defaultMountOptions.slots when keys conflict", () => {
         // The defaultSlots vs. defaultMountOptions.slots argument
-        const factory = testFactory(
+        const factory = testComponentFactory(
           MockComponent,
           {},
           { slots: { default: "options slot" } },
@@ -381,7 +381,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       it("should shallow-merge direct defaultSlots with defaultMountOptions.slots when no conflicts", () => {
         // The defaultSlots vs. defaultMountOptions.slots argument
-        const factory = testFactory(
+        const factory = testComponentFactory(
           MockComponent,
           {},
           { slots: { footer: "footer slot" } },
@@ -399,7 +399,11 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should use only defaultMountOptions.slots when direct defaultSlots are not provided", () => {
-        const factory = testFactory(MockComponent, {}, { slots: { default: "options slot" } });
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          { slots: { default: "options slot" } },
+        );
 
         factory();
 
@@ -415,7 +419,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     describe("Both Levels", () => {
       describe("when skipDefaultSlots = false (default behavior)", () => {
         it("should merge all four sources with direct slots having highest priority", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             {},
             { slots: { slotA: "A1", slotC: "C1" } }, // defaultMountOptions.slots
@@ -443,7 +447,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should fall back to defaultMountOptions.slots when direct slots & mountOptions.slots & defaultSlots are empty", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             {},
             { slots: { fallback: "from-default-mount" } },
@@ -460,7 +464,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should fall back to defaultSlots when defaultMountOptions.slots is empty", () => {
-          const factory = testFactory(MockComponent, {}, {}, { base: "default-slots" });
+          const factory = testComponentFactory(MockComponent, {}, {}, { base: "default-slots" });
 
           factory();
 
@@ -475,7 +479,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       describe("when skipDefaultSlots = true", () => {
         it("should ignore defaultSlots and defaultMountOptions but still merge the other two sources", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             {},
             { props: { ignoredBase: "default-mount" } },
@@ -503,7 +507,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should prioritize direct slots over mountOptions.slots", () => {
-          const factory = testFactory(
+          const factory = testComponentFactory(
             MockComponent,
             {},
             {
@@ -534,7 +538,7 @@ describe("testComponentFactory Integration (Universal)", () => {
   describe("Global Options Merging", () => {
     it("should use only defaultMountOptions when specific test options are missing", () => {
       const defaults = { global: { stubs: { DefaultBtn: true } } };
-      const factory = testFactory(MockComponent, {}, defaults);
+      const factory = testComponentFactory(MockComponent, {}, defaults);
 
       factory();
 
@@ -543,7 +547,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     });
 
     it("should use only mountOptions when defaultMountOptions are missing", () => {
-      const factory = testFactory(MockComponent, {}, {});
+      const factory = testComponentFactory(MockComponent, {}, {});
 
       factory({}, { global: { mocks: { $t: () => "" } } });
 
@@ -558,7 +562,7 @@ describe("testComponentFactory Integration (Universal)", () => {
           mocks: { $route: { path: "/" } },
         },
       };
-      const factory = testFactory(MockComponent, {}, defaults);
+      const factory = testComponentFactory(MockComponent, {}, defaults);
 
       factory(
         {},
@@ -580,7 +584,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     it("should prioritize specific mountOptions over defaultMountOptions for the same key", () => {
       const defaults = { global: { provide: { theme: "light" } } };
-      const factory = testFactory(MockComponent, {}, defaults);
+      const factory = testComponentFactory(MockComponent, {}, defaults);
 
       factory({}, { global: { provide: { theme: "dark" } } });
 
@@ -591,7 +595,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
   describe("Plugin Integration", () => {
     it("should create i18n and pinia plugins by default when no plugin options are provided", () => {
-      const factory = testFactory(MockComponent);
+      const factory = testComponentFactory(MockComponent);
       factory();
 
       expect(mockI18nCreate).toHaveBeenCalledTimes(1);
@@ -599,14 +603,14 @@ describe("testComponentFactory Integration (Universal)", () => {
     });
 
     it("should not create router plugin if it is not in default presets and not requested", () => {
-      const factory = testFactory(MockComponent);
+      const factory = testComponentFactory(MockComponent);
       factory();
 
       expect(mockRouterCreate).not.toHaveBeenCalled();
     });
 
     it("should add default i18n and pinia plugins to global.plugins when no plugin options are provided", () => {
-      const factory = testFactory(MockComponent);
+      const factory = testComponentFactory(MockComponent);
       factory();
 
       // 1. Verify that the plugin creators have been invoked (contract)
@@ -626,7 +630,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       // Create a third-party placeholder plugin (e.g., Vue Final Modal)
       const mockVfm = runner.fn(() => ({ install: () => {} }));
 
-      const factory = testFactory(MockComponent);
+      const factory = testComponentFactory(MockComponent);
 
       // Call the factory by passing a third-party plugin in the mount options
       factory({}, { global: { plugins: [mockVfm] } });
@@ -647,7 +651,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     it("should skip managed plugins when skipManagedPlugins options is set", () => {
       const mockVfm = runner.fn(() => ({ install: () => {} }));
 
-      const factory = testFactory(MockComponent);
+      const factory = testComponentFactory(MockComponent);
 
       factory(
         {},
@@ -672,7 +676,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       const baseOptions = { plugins: { i18n: { locale: "en" } } };
       const extraOptions = { plugins: { i18n: { locale: "uk" } } };
 
-      const factory = testFactory(MockComponent, {}, baseOptions);
+      const factory = testComponentFactory(MockComponent, {}, baseOptions);
       factory({}, {}, {}, extraOptions);
 
       expect(mockI18nCreate).toHaveBeenCalledWith(
@@ -685,7 +689,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     describe("Enable router when it is disabled by default", () => {
       it("should enable router via defaultMountOptions", () => {
         // Configure the factory settings so that the router is enabled by default
-        const factory = testFactory(
+        const factory = testComponentFactory(
           MockComponent,
           {}, // defaultProps
           { plugins: { router: {} } }, // defaultMountOptions
@@ -709,7 +713,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       it("should enable router via mountOptions", () => {
         // Create a regular factory (without a router in the default settings)
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // Enable the router only in this specific call
         factory({}, { plugins: { router: {} } });
@@ -733,7 +737,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should enable router via extraOptions (4th argument)", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         const customRoutes = [{ path: "/", component: { render: () => null } }];
 
@@ -764,7 +768,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         plugins: { i18n: { locale: "en", legacy: true } },
       };
 
-      const factory = testFactory(MockComponent, {}, baseOptions);
+      const factory = testComponentFactory(MockComponent, {}, baseOptions);
       factory();
 
       expect(mockI18nCreate).toHaveBeenCalledWith(
@@ -783,7 +787,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     it("should not create i18n plugin when its option is explicitly set to false", () => {
       // Configuring the factory with explicit i18n disabling
-      const factory = testFactory(MockComponent, {}, { plugins: { i18n: false } });
+      const factory = testComponentFactory(MockComponent, {}, { plugins: { i18n: false } });
 
       factory();
 
@@ -803,7 +807,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     describe("Using Presets", () => {
       it("should add default i18n and pinia plugins when switching to `lightweightPreset` via extraOptions", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // Switch the preset using the 4th argument
         factory({}, {}, {}, { preset: "lightweightPreset" });
@@ -826,7 +830,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should add only i18n to `global.plugins` when switching to `i18nPreset` preset", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // Enable the preset that contains only i18n
         factory({}, {}, {}, { preset: "i18nPreset" });
@@ -846,7 +850,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should override preset default options with provided plugin options", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         // Use i18nPreset, but override the language to ‘fr’ via mountOptions
         factory({}, { plugins: { i18n: { locale: "fr" } } }, {}, { preset: "i18nPreset" });
@@ -868,7 +872,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should skip plugin initialization when it is disabled in the preset manifest", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         factory({}, {}, {}, { preset: "i18nDisabledPreset" });
 
@@ -880,7 +884,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should override preset manifest and skip plugin when options are set to false", () => {
-        const factory = testFactory(MockComponent);
+        const factory = testComponentFactory(MockComponent);
 
         factory({}, { plugins: { i18n: false } }, {}, { preset: "i18nPreset" });
 
@@ -901,7 +905,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         invalidValues.forEach(({ value, type }) => {
           it(`should throw an error when "${type}" is passed to plugin options`, () => {
-            const factory = testFactory(MockComponent);
+            const factory = testComponentFactory(MockComponent);
             expect(() => {
               factory({}, { plugins: { i18n: value } }, {}, { preset: "i18nPreset" });
             }).toThrow(
@@ -915,7 +919,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should NOT throw an error when `false` is passed", () => {
-          const factory = testFactory(MockComponent);
+          const factory = testComponentFactory(MockComponent);
           expect(() => {
             factory({}, { plugins: { i18n: false } }, {}, { preset: "i18nPreset" });
           }).not.toThrow();
@@ -924,7 +928,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       describe("Unsupported Plugins", () => {
         it("should throw when plugin is configured but not supported by preset", () => {
-          const factory = testFactory(MockComponent);
+          const factory = testComponentFactory(MockComponent);
 
           expect(() => {
             factory(
@@ -945,7 +949,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should allow supported plugins from preset", () => {
-          const factory = testFactory(MockComponent);
+          const factory = testComponentFactory(MockComponent);
 
           expect(() => {
             factory(
@@ -966,7 +970,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
 
         it("should throw when enabling router in preset that does not support it", () => {
-          const factory = testFactory(MockComponent);
+          const factory = testComponentFactory(MockComponent);
 
           expect(() => {
             factory(
