@@ -6,6 +6,7 @@ import type {
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   TestFramework,
+  MountRuntimeOptions,
 } from "../types";
 import type { Component } from "vue";
 
@@ -25,7 +26,7 @@ import { mountWithPlugins } from "./mountWithPlugins.js";
  * - plugin-aware mounting
  */
 export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
-  const { presets = {} } = options;
+  const { presets = {}, shallowByDefault = false } = options;
 
   return {
     /*
@@ -87,11 +88,20 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         const pipeline = createPipeline(createMountPipeline(ctx));
         pipeline.run(ctx);
 
+        const mountRuntimeOptions: MountRuntimeOptions = {
+          shallowByDefault,
+        };
+
         // Mount the component with resolved plugin configuration
-        return mountWithPlugins(component, ctx, {
-          props: finalProps,
-          slots: finalSlots,
-        });
+        return mountWithPlugins(
+          component,
+          ctx,
+          {
+            props: finalProps,
+            slots: finalSlots,
+          },
+          mountRuntimeOptions,
+        );
       };
     },
   };

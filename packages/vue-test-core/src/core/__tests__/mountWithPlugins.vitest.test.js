@@ -33,17 +33,53 @@ describe("mountWithPlugins", () => {
 
   // ─────────────────────────────────────────────
   describe("mount strategy selection", () => {
-    it("should use shallowMount by default", () => {
-      mountWithPlugins(component, baseCtx);
+    it("should use default runtime options when runtimeOptions are omitted", () => {
+      const result = mountWithPlugins(component, baseCtx);
 
-      expect(shallowMount).toHaveBeenCalled();
+      expect(mount).toHaveBeenCalledTimes(1);
+      expect(result).toBe("mount-result");
+      expect(shallowMount).not.toHaveBeenCalled();
+    });
+
+    it("should use shallowMount when shallowByDefault is true", () => {
+      const result = mountWithPlugins(
+        component,
+        baseCtx,
+        {},
+        {
+          shallowByDefault: true,
+        },
+      );
+
+      expect(shallowMount).toHaveBeenCalledTimes(1);
+      expect(result).toBe("shallow-result");
       expect(mount).not.toHaveBeenCalled();
     });
 
-    it("should use mount when useShallow = false", () => {
-      mountWithPlugins(component, baseCtx, { useShallow: false });
+    it("should use shallowMount when shallow is true", () => {
+      const result = mountWithPlugins(component, baseCtx, {
+        shallow: true,
+      });
 
-      expect(mount).toHaveBeenCalled();
+      expect(shallowMount).toHaveBeenCalledTimes(1);
+      expect(result).toBe("shallow-result");
+      expect(mount).not.toHaveBeenCalled();
+    });
+
+    it("should prioritize shallow option over shallowByDefault", () => {
+      const result = mountWithPlugins(
+        component,
+        baseCtx,
+        {
+          shallow: false,
+        },
+        {
+          shallowByDefault: true,
+        },
+      );
+
+      expect(mount).toHaveBeenCalledTimes(1);
+      expect(result).toBe("mount-result");
       expect(shallowMount).not.toHaveBeenCalled();
     });
   });
@@ -67,7 +103,7 @@ describe("mountWithPlugins", () => {
     it("should merge managed plugins into global.plugins", () => {
       mountWithPlugins(component, baseCtx);
 
-      const callArgs = shallowMount.mock.calls[0][1];
+      const callArgs = mount.mock.calls[0][1];
 
       expect(callArgs.global.plugins).toEqual(["managed-plugin"]);
     });
@@ -77,7 +113,7 @@ describe("mountWithPlugins", () => {
         global: { plugins: ["existing"] },
       });
 
-      const callArgs = shallowMount.mock.calls[0][1];
+      const callArgs = mount.mock.calls[0][1];
 
       expect(callArgs.global.plugins).toEqual(["existing", "managed-plugin"]);
     });
@@ -90,7 +126,7 @@ describe("mountWithPlugins", () => {
         props: { a: 999 },
       });
 
-      const callArgs = shallowMount.mock.calls[0][1];
+      const callArgs = mount.mock.calls[0][1];
 
       expect(callArgs.props).toEqual({ a: 999 });
     });
@@ -98,7 +134,7 @@ describe("mountWithPlugins", () => {
     it("should pass global from ctx when overrides do not provide one", () => {
       mountWithPlugins(component, baseCtx);
 
-      const callArgs = shallowMount.mock.calls[0][1];
+      const callArgs = mount.mock.calls[0][1];
 
       expect(callArgs.global.mixins).toEqual(["base-mixin"]);
     });

@@ -134,9 +134,6 @@ export interface ComponentFactoryOptions<Props = any, Data = any> extends Mounti
   Props,
   Data
 > {
-  /** Use shallowMount() instead of mount() */
-  useShallow?: boolean;
-
   /** Managed plugin configuration */
   plugins?: PluginOptionsInput;
 
@@ -257,6 +254,20 @@ export type ComponentFactory<T extends abstract new (...args: any) => any = any>
 export interface CreateTestFrameworkOptions {
   /** Preset configurations for plugins */
   presets?: TestFrameworkPresets;
+
+  /**
+   * Default value for Vue Test Utils `shallow` mounting.
+   *
+   * Used when a factory call does not explicitly provide
+   * the `shallow` option.
+   *
+   * @default false
+   */
+  shallowByDefault?: boolean;
+}
+
+export interface MountRuntimeOptions {
+  shallowByDefault: boolean;
 }
 
 export interface TestFramework {

@@ -550,8 +550,8 @@ describe("Mount Pipeline Integration", () => {
       const result = run(presets, BASE_DEFAULTS, overrides, extra);
 
       // 1. Checking flat mount options
-      // `useShallow: true` from the basic options should be missing
-      expect(result.mountOptions.useShallow).toBeUndefined();
+      // `shallow: true` from the basic options should be missing
+      expect(result.mountOptions.shallow).toBeUndefined();
       expect(Object.keys(result.mountOptions)).toHaveLength(0);
 
       // 2. Verifying global

@@ -1,4 +1,4 @@
-import type { PipelineContext, MountWithPluginsOptions } from "../types";
+import type { PipelineContext, MountWithPluginsOptions, MountRuntimeOptions } from "../types";
 import type { Component } from "vue";
 import type { VueWrapper } from "@vue/test-utils";
 
@@ -18,6 +18,9 @@ export function mountWithPlugins(
   component: Component,
   ctx: PipelineContext,
   overrides: MountWithPluginsOptions = {},
+  runtimeOptions: MountRuntimeOptions = {
+    shallowByDefault: false,
+  },
 ): VueWrapper {
   const { result } = ctx;
 
@@ -28,14 +31,16 @@ export function mountWithPlugins(
   };
 
   const {
-    useShallow = true,
+    shallow,
     plugins = {},
     skipManagedPlugins = false,
     global: overrideGlobal,
     ...restOptions
   } = mergedOptions;
 
-  const mountFunction = useShallow ? shallowMount : mount;
+  const shouldUseShallow = shallow ?? runtimeOptions.shallowByDefault;
+
+  const mountFunction = shouldUseShallow ? shallowMount : mount;
   const globalPlugins = skipManagedPlugins ? [] : createPlugins(plugins, ctx);
 
   // Merge resolved global config with runtime overrides

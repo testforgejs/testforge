@@ -1,4 +1,4 @@
-## 🏗️ Architectural Architecture: The Plugin & Preset Matrix
+## 🏗️ Architecture: The Plugin & Preset Matrix
 
 `@testforge/vue-test-core` implements a **strict microkernel architecture**. The core engine is completely blind: it has zero internal knowledge of Pinia, Vue Router, vue-i18n, or any other library. It contains no global registries or hardcoded plugin configurations.
 
@@ -60,11 +60,41 @@ const wrapper = factory(
 
 #### 1. Flat VTU Options (Shallow Merge)
 
-Options such as `data`, `attrs`, `attachTo`, and `useShallow` are merged using a **shallow merge** strategy between Layer 2 (`defaultMountOptions`) and Layer 3 (`mountOptions`).
+Options such as `data`, `attrs`, `attachTo`, and `shallow` are merged using a **shallow merge** strategy between Layer 2 (`defaultMountOptions`) and Layer 3 (`mountOptions`).
 
-- **`useShallow` (Boolean)**: Controls the underlying VTU mounting method.
-  - **Default:** `true` (invokes `shallowMount`).
-  - **Behavior:** If set to `false`, the component will be mounted using `mount` (full rendering of child components).
+- **`shallow` (Boolean)**: Standard Vue Test Utils option that controls whether the component is mounted using mount() or shallowMount().
+  - **Framework Default:** `false` (`mount()` is used).
+  - **Global Override:** `createTestFramework({ shallowByDefault: true })` switches the framework to use `shallowMount()` by default.
+  - **Per-Test Override:** The `shallow` option inside `defaultMountOptions` or `mountOptions` always takes precedence over `shallowByDefault`.
+
+Resolution order:
+
+1. `mountOptions.shallow`
+2. `defaultMountOptions.shallow`
+3. `shallowByDefault`
+4. `false` (fallback to `mount()`)
+
+**Examples:**
+
+```javascript
+createTestFramework({
+  shallowByDefault: true,
+});
+```
+
+All components use `shallowMount()` by default.
+
+```javascript
+factory(
+  {},
+  {
+    shallow: false,
+  },
+);
+```
+
+Forces a full `mount()` even when `shallowByDefault` is enabled.
+
 - **Props & Slots Priority**: Direct arguments (`props` as 1st arg, `slots` as 3rd arg) represent immediate test intent. They have the absolute highest priority and will completely override any props or slots passed inside the `mountOptions` configuration object.
 
 #### 2. The `global` Section (Deep Merge)
@@ -125,9 +155,9 @@ Settings are merged from three sources (in ascending order of priority):
 
 #### 1. Flat VTU Options (Shallow Merge)
 
-Options such as `props`, `data`, `attrs`, `attachTo`, `slots`, and `useShallow` are merged using **shallow merge**.
+Options such as `props`, `data`, `attrs`, `attachTo`, `slots`, and `shallow` are merged using **shallow merge**.
 
-- **`useShallow` (Boolean)** — controls which mounting method from [Vue Test Utils](https://test-utils.vuejs.org) is used.
+- **`shallow` (Boolean)** — controls which mounting method from [Vue Test Utils](https://test-utils.vuejs.org) is used.
   - **Default:** `true` (uses `shallowMount`).
   - **Behavior:** If set to `false`, the component will be mounted using `mount` (full rendering of child components).
   - **Priority:** As with other flat options, the value from `mountOptions` overrides the value from `defaultMountOptions`.

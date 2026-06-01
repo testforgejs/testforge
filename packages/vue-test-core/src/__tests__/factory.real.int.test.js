@@ -7,6 +7,7 @@ const runner = typeof vi !== "undefined" ? vi : jest;
 // 1. Use hoisted to prepare data before mocks are injected (Vitest only)
 // In Jest, this will simply be executed in order.
 const mocks = {
+  mount: runner.fn(),
   shallowMount: runner.fn(),
   i18nCreate: runner.fn(),
   piniaCreate: runner.fn(),
@@ -17,7 +18,7 @@ const mocks = {
 // This ensures that any imports within the project will receive exactly these mocks
 runner.doMock("@vue/test-utils", () => ({
   __esModule: true,
-  mount: runner.fn(),
+  mount: mocks.mount,
   shallowMount: mocks.shallowMount,
 }));
 
@@ -75,7 +76,9 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
 
     const { createTestFramework } = await import("../index");
     const { presets } = await import("./utils/presets/mockPresets.js");
-    testComponentFactory = createTestFramework({ presets }).testComponentFactory;
+    testComponentFactory = createTestFramework({
+      presets,
+    }).testComponentFactory;
   });
 
   describe("Expose Instance", () => {
@@ -127,7 +130,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
       expect(typeof capturedPinia.install).toBe("function");
 
       // Verifying synchronization with Vue Test Utils
-      const [, options] = mocks.shallowMount.mock.calls[0];
+      const [, options] = mocks.mount.mock.calls[0];
       expect(options.global.plugins).toContain(capturedI18n);
       expect(options.global.plugins).toContain(capturedPinia);
       expect(options.global.plugins).toContain(capturedRouter);
@@ -170,10 +173,10 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
       expect(typeof routerCapture.instance.resolve).toBe("function");
 
       // Checking the mock call
-      expect(mocks.shallowMount).toHaveBeenCalled();
+      expect(mocks.mount).toHaveBeenCalled();
 
       // 4. Verify that these captured instances were added to the final shallowMount
-      const [, options] = mocks.shallowMount.mock.calls[0];
+      const [, options] = mocks.mount.mock.calls[0];
       expect(options.global.plugins).toContain(i18nCapture.instance);
       expect(options.global.plugins).toContain(piniaCapture.instance);
       expect(options.global.plugins).toContain(routerCapture.instance);

@@ -132,20 +132,30 @@ describe("createTestFramework → testComponentFactory", () => {
   });
 
   describe("mounting phase", () => {
-    it("should call mountWithPlugins with merged data", () => {
+    it("should call mountWithPlugins with merged data and runtime options", () => {
       mergeComponentData
         .mockReturnValueOnce({ finalProps: 123 })
         .mockReturnValueOnce({ finalSlots: 456 });
 
-      const { testComponentFactory } = createTestFramework();
+      const { testComponentFactory } = createTestFramework({
+        shallowByDefault: true,
+      });
+
       const factory = testComponentFactory({}, {}, {}, {});
 
       factory({}, {}, {});
 
-      expect(mountWithPlugins).toHaveBeenCalledWith({}, expect.any(Object), {
-        props: { finalProps: 123 },
-        slots: { finalSlots: 456 },
-      });
+      expect(mountWithPlugins).toHaveBeenCalledWith(
+        {},
+        expect.any(Object),
+        {
+          props: { finalProps: 123 },
+          slots: { finalSlots: 456 },
+        },
+        {
+          shallowByDefault: true,
+        },
+      );
     });
 
     it("should return mount result", () => {
@@ -156,6 +166,44 @@ describe("createTestFramework → testComponentFactory", () => {
       const result = factory();
 
       expect(result).toBe("wrapper");
+    });
+  });
+
+  describe("runtime mount options", () => {
+    it("should pass shallowByDefault=false by default", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const factory = testComponentFactory(component);
+
+      factory();
+
+      expect(mountWithPlugins).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        {
+          shallowByDefault: false,
+        },
+      );
+    });
+
+    it("should pass shallowByDefault=true when configured", () => {
+      const { testComponentFactory } = createTestFramework({
+        shallowByDefault: true,
+      });
+
+      const factory = testComponentFactory(component);
+
+      factory();
+
+      expect(mountWithPlugins).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        {
+          shallowByDefault: true,
+        },
+      );
     });
   });
 });

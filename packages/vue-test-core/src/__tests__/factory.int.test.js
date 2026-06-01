@@ -2,6 +2,25 @@ import { ERROR_PREFIX } from "../constants/constants.js";
 
 const runner = typeof vi !== "undefined" ? vi : jest;
 
+const createFactory = async () => {
+  const { createTestFramework } = await import("../index");
+  const { presets } = await import("./utils/presets/mockPresets.js");
+
+  return createTestFramework({
+    presets,
+  }).testComponentFactory;
+};
+
+const createFactoryWithShallowDefault = async (shallowByDefault) => {
+  const { createTestFramework } = await import("../index");
+  const { presets } = await import("./utils/presets/mockPresets.js");
+
+  return createTestFramework({
+    presets,
+    shallowByDefault,
+  }).testComponentFactory;
+};
+
 describe("testComponentFactory Integration (Universal)", () => {
   const MockComponent = { name: "MockComponent", render: () => null };
 
@@ -77,37 +96,74 @@ describe("testComponentFactory Integration (Universal)", () => {
     }));
 
     // Initializing the framework
-    const { createTestFramework } = await import("../index");
-    const { presets } = await import("./utils/presets/mockPresets.js");
-    testComponentFactory = createTestFramework({ presets }).testComponentFactory;
+    testComponentFactory = await createFactory();
   });
 
   describe("VTU Mount Functions", () => {
-    it("should use shallowMount by default when no useShallow option is specified", () => {
-      const factory = testComponentFactory(MockComponent, {
-        title: "Base",
+    describe("when shallowByDefault = true", () => {
+      beforeEach(async () => {
+        testComponentFactory = await createFactoryWithShallowDefault(true);
       });
 
-      factory({ title: "Override" });
+      it("should use shallowMount when shallow option is not provided", () => {
+        const factory = testComponentFactory(MockComponent);
 
-      expect(mockShallowMount).toHaveBeenCalledTimes(1);
-      expect(mockShallowMount).toHaveBeenCalledWith(
-        MockComponent,
-        expect.objectContaining({
-          props: { title: "Override" },
-          global: expect.any(Object),
-        }),
-      );
+        factory();
 
-      expect(mockMount).toHaveBeenCalledTimes(0);
+        expect(mockShallowMount).toHaveBeenCalledTimes(1);
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should use shallowMount when shallow is true", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        factory({}, { shallow: true });
+
+        expect(mockShallowMount).toHaveBeenCalledTimes(1);
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should use mount when shallow is false", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        factory({}, { shallow: false });
+
+        expect(mockMount).toHaveBeenCalledTimes(1);
+        expect(mockShallowMount).not.toHaveBeenCalled();
+      });
     });
 
-    it("should switch to mount when useShallow is false", () => {
-      const factory = testComponentFactory(MockComponent);
-      factory({}, { useShallow: false });
+    describe("when shallowByDefault = false", () => {
+      beforeEach(async () => {
+        testComponentFactory = await createFactoryWithShallowDefault(false);
+      });
 
-      expect(mockMount).toHaveBeenCalledTimes(1);
-      expect(mockShallowMount).not.toHaveBeenCalled();
+      it("should use mount when shallow option is not provided", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        factory();
+
+        expect(mockMount).toHaveBeenCalledTimes(1);
+        expect(mockShallowMount).not.toHaveBeenCalled();
+      });
+
+      it("should use shallowMount when shallow is true", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        factory({}, { shallow: true });
+
+        expect(mockShallowMount).toHaveBeenCalledTimes(1);
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should use mount when shallow is false", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        factory({}, { shallow: false });
+
+        expect(mockMount).toHaveBeenCalledTimes(1);
+        expect(mockShallowMount).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -119,7 +175,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         // The props vs. mountOptions.props argument
         factory({ id: 1 }, { props: { id: 2 } });
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             props: { id: 1 }, // The direct argument won
@@ -133,7 +189,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         // The props vs. mountOptions.props argument
         factory({ id: 1 }, { props: { newProps: 2 } });
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             props: { id: 1, newProps: 2 },
@@ -146,7 +202,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory({}, { props: { newProps: 2 } });
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             props: { newProps: 2 },
@@ -162,7 +218,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory();
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             props: { id: 1 }, // The direct argument won
@@ -176,7 +232,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory();
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             props: { id: 1, newProps: 2 },
@@ -189,7 +245,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory();
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             props: { newProps: 2 },
@@ -213,7 +269,7 @@ describe("testComponentFactory Integration (Universal)", () => {
             { props: { defC: 31, userMount: 200 } }, // mountOptions.props
           );
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               props: {
@@ -236,7 +292,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
           factory({}, {});
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               props: { fallback: "from-default-mount" },
@@ -249,7 +305,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
           factory({}, {});
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               props: { base: "default-props" },
@@ -275,7 +331,7 @@ describe("testComponentFactory Integration (Universal)", () => {
             { skipDefaultProps: true },
           );
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               props: {
@@ -304,7 +360,7 @@ describe("testComponentFactory Integration (Universal)", () => {
             { skipDefaultProps: true },
           );
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               props: { key: "direct-value" },
@@ -323,7 +379,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         // Direct slots vs. mountOptions.slots argument
         factory({}, { slots: { default: "options slot" } }, { default: "direct slot" });
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             slots: { default: "direct slot" }, // The direct argument won
@@ -337,7 +393,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         // The slots vs. mountOptions.slots argument
         factory({}, { slots: { footer: "footer slot" } }, { header: "header slot" });
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             slots: { header: "header slot", footer: "footer slot" },
@@ -350,7 +406,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory({}, { slots: { default: "options slot" } });
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             slots: { default: "options slot" },
@@ -371,7 +427,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory();
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             slots: { default: "direct slot" }, // The direct argument won
@@ -390,7 +446,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory();
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             slots: { header: "header slot", footer: "footer slot" },
@@ -407,7 +463,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         factory();
 
-        expect(mockShallowMount).toHaveBeenCalledWith(
+        expect(mockMount).toHaveBeenCalledWith(
           MockComponent,
           expect.objectContaining({
             slots: { default: "options slot" },
@@ -432,7 +488,7 @@ describe("testComponentFactory Integration (Universal)", () => {
             { slotB: "B4", userDirect: "user direct" }, // slots (direct argument)
           );
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               slots: {
@@ -455,7 +511,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
           factory({}, {});
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               slots: { fallback: "from-default-mount" },
@@ -468,7 +524,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
           factory();
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               slots: { base: "default-slots" },
@@ -495,7 +551,7 @@ describe("testComponentFactory Integration (Universal)", () => {
             { skipDefaultSlots: true },
           );
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               slots: {
@@ -524,7 +580,7 @@ describe("testComponentFactory Integration (Universal)", () => {
             { skipDefaultSlots: true },
           );
 
-          expect(mockShallowMount).toHaveBeenCalledWith(
+          expect(mockMount).toHaveBeenCalledWith(
             MockComponent,
             expect.objectContaining({
               slots: { default: "direct-value" },
@@ -542,7 +598,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       factory();
 
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
       expect(options.global.stubs).toEqual({ DefaultBtn: true });
     });
 
@@ -551,7 +607,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       factory({}, { global: { mocks: { $t: () => "" } } });
 
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
       expect(options.global.mocks).toHaveProperty("$t");
     });
 
@@ -574,7 +630,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         },
       );
 
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
       expect(options.global.stubs).toEqual({ BaseBtn: true, Icon: true });
       expect(options.global.mocks).toEqual({
         $route: { path: "/" },
@@ -588,7 +644,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       factory({}, { global: { provide: { theme: "dark" } } });
 
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
       expect(options.global.provide.theme).toBe("dark");
     });
   });
@@ -619,7 +675,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
 
       // 2. Verify that the RESULT of the `create` operation is included in the mount options
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
 
       expect(options.global.plugins).toContain(mockI18nInstance);
       expect(options.global.plugins).toContain(mockPiniaInstance);
@@ -640,7 +696,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
 
       // 2. Verify that both default and third-party plugins are included in the final shallowMount
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
 
       expect(options.global.plugins).toContain(mockI18nInstance); // i18n mock
       expect(options.global.plugins).toContain(mockPiniaInstance); // pinia mock
@@ -667,7 +723,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       expect(mockPiniaCreate).toHaveBeenCalledTimes(0);
 
       // Verify that the factory's result has been added to the shallowMount
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
       expect(options.global.plugins).toContain(mockVfm);
       expect(options.global.plugins).toHaveLength(1);
     });
@@ -686,6 +742,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         }),
       );
     });
+
     describe("Enable router when it is disabled by default", () => {
       it("should enable router via defaultMountOptions", () => {
         // Configure the factory settings so that the router is enabled by default
@@ -707,7 +764,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         );
 
         // 2. Verify that the router instance has been added to the mounting plugins
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         expect(options.global.plugins).toContain(mockRouterInstance);
       });
 
@@ -727,7 +784,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         );
 
         // 2. Verify that the router instance has been successfully injected into Vue Test Utils
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         expect(options.global.plugins).toContain(mockRouterInstance);
 
         // Also, check that the default plugins (i18n, pinia) are still there
@@ -753,7 +810,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         );
 
         // 2. Verify that the router instance has been added to the plugins
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         expect(options.global.plugins).toContain(mockRouterInstance);
 
         // Also, check that the default plugins (i18n, pinia) are still there
@@ -795,7 +852,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       expect(mockI18nCreate).not.toHaveBeenCalled();
 
       // 2. Verify the mounting options
-      const [, options] = mockShallowMount.mock.calls[0];
+      const [, options] = mockMount.mock.calls[0];
 
       // i18n should not be on the list
       expect(options.global.plugins).not.toContain(mockI18nInstance);
@@ -821,7 +878,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         expect(mockPiniaCreate).toHaveBeenCalled();
 
         // 2. Verify the presence of instances in the mount options
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         expect(options.global.plugins).toContain(mockI18nInstance);
         expect(options.global.plugins).toContain(mockPiniaInstance);
 
@@ -840,7 +897,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         expect(mockPiniaCreate).not.toHaveBeenCalled();
 
         // 2. Verify the mounting options (make sure to include [0])
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
 
         expect(options.global.plugins).toContain(mockI18nInstance);
         expect(options.global.plugins).not.toContain(mockPiniaInstance);
@@ -866,7 +923,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         );
 
         // 3. Verify the presence of an instance in the final options
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         expect(options.global.plugins).toContain(mockI18nInstance);
         expect(options.global.plugins).toHaveLength(1);
       });
@@ -878,7 +935,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         // No plugins have been created
         expect(options.global.plugins || []).toHaveLength(0);
       });
@@ -891,7 +948,7 @@ describe("testComponentFactory Integration (Universal)", () => {
         expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
         // Verify that the factory's result has been added to the shallowMount
-        const [, options] = mockShallowMount.mock.calls[0];
+        const [, options] = mockMount.mock.calls[0];
         // No plugins have been created
         expect(options.global.plugins || []).toHaveLength(0);
       });
