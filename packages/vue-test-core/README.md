@@ -1,4 +1,4 @@
-## 🏗️ Architecture: The Plugin & Preset Matrix
+## 🏗️ Architectural Overview: The Plugin & Preset Matrix
 
 `@testforge/vue-test-core` implements a **strict microkernel architecture**. The core engine is completely blind: it has zero internal knowledge of Pinia, Vue Router, vue-i18n, or any other library. It contains no global registries or hardcoded plugin configurations.
 
@@ -18,6 +18,31 @@ A preset defines two critical fields:
 
 - `manifest`: Declares _"What plugins are registered and available in this runtime ecosystem?"_
 - `defaults`: Declares _"What is the global project-wide baseline configuration for these plugins?"_
+
+### ⚠️ Preset Runtime Boundaries
+
+Presets define the complete managed plugin runtime.
+
+If a plugin is not declared in the active preset manifest, configuring it is considered invalid.
+
+```javascript
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {},
+    },
+  },
+  {},
+  {
+    preset: "i18nPreset",
+  },
+);
+```
+
+If `i18nPreset` only declares `i18n`, the framework will reject the pinia configuration.
+
+This guarantees that presets behave as isolated runtime environments rather than partial configuration overlays.
 
 ---
 
@@ -62,38 +87,35 @@ const wrapper = factory(
 
 Options such as `data`, `attrs`, `attachTo`, and `shallow` are merged using a **shallow merge** strategy between Layer 2 (`defaultMountOptions`) and Layer 3 (`mountOptions`).
 
-- **`shallow` (Boolean)**: Standard Vue Test Utils option that controls whether the component is mounted using mount() or shallowMount().
+- **`shallow` (Boolean)**: Standard Vue Test Utils option that controls whether the component is mounted using `mount()` or `shallowMount()`.
   - **Framework Default:** `false` (`mount()` is used).
-  - **Global Override:** `createTestFramework({ shallowByDefault: true })` switches the framework to use `shallowMount()` by default.
+  - **Global Override:** `createTestFramework({ shallowByDefault: true })` switches the framework default to use `shallowMount()`.
   - **Per-Test Override:** The `shallow` option inside `defaultMountOptions` or `mountOptions` always takes precedence over `shallowByDefault`.
 
-Resolution order:
+**Resolution order:**
 
 1. `mountOptions.shallow`
 2. `defaultMountOptions.shallow`
-3. `shallowByDefault`
-4. `false` (fallback to `mount()`)
+3. Global `shallowByDefault` configuration
+4. `false` (fallback to full `mount()`)
 
-**Examples:**
+**Example Usage:**
 
 ```javascript
-createTestFramework({
+// 1. Global Setup: Enable shallow mounting across the whole project
+const { testComponentFactory } = createTestFramework({
   shallowByDefault: true,
 });
-```
 
-All components use `shallowMount()` by default.
-
-```javascript
-factory(
+// 2. Factory / Test Level: Force full render for a specific container test
+const factory = testComponentFactory(
+  MyContainer,
   {},
   {
-    shallow: false,
+    shallow: false, // Forces full mount() overriding the global shallowByDefault flag
   },
 );
 ```
-
-Forces a full `mount()` even when `shallowByDefault` is enabled.
 
 - **Props & Slots Priority**: Direct arguments (`props` as 1st arg, `slots` as 3rd arg) represent immediate test intent. They have the absolute highest priority and will completely override any props or slots passed inside the `mountOptions` configuration object.
 
@@ -140,6 +162,215 @@ _Note: This flag remains inside `mountOptions` (2nd execution argument)._
 - **What it does:** Completely disables the active preset orchestration for the current test run. Use this when you need to take full manual control over plugin initialization using raw VTU arrays.
 
 ---
+
+## 🛠 Managed Plugins
+
+The framework provides enhanced support for several core Vue ecosystem plugins through a managed lifecycle pipeline.
+
+### Currently supported plugins:
+
+- **`pinia`**
+- **`i18n`**
+- **`router`**
+
+Managed plugins differ from standard VTU plugins because they:
+
+- participate in the preset system
+- support hierarchical configuration layering
+- support automatic instance creation
+- support runtime overlays through extraOptions.plugins
+- are validated against the active preset manifest
+
+### Configuration Levels
+
+Managed plugins can be configured at three levels:
+
+1. Preset Defaults (Layer 1)
+
+```javascript
+createTestFramework({
+  presets: {
+    default: {
+      manifest: [...],
+      defaults: {
+        pinia: {
+          stubActions: true,
+        },
+      },
+    },
+  },
+});
+```
+
+2. Factory-Level Configuration (Layer 2)
+
+```javascript
+const factory = testComponentFactory(
+  Component,
+  {},
+  {
+    plugins: {
+      pinia: {
+        initialState: {
+          user: { id: 1 },
+        },
+      },
+    },
+  },
+);
+```
+
+3. Test-Level Configuration (Layer 3)
+
+```javascript
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {
+        initialState: {
+          user: { id: 2 },
+        },
+      },
+    },
+  },
+);
+```
+
+4. Overlay Configuration (Layer 4)
+
+```javascript
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      pinia: {
+        stubActions: false,
+      },
+    },
+  },
+);
+```
+
+Layer 4 patches the already resolved configuration instead of replacing it.
+
+---
+
+## 🔌 Third-Party Plugins
+
+Plugins that are not managed by the framework should be registered using the standard Vue Test Utils mechanism:
+
+```javascript
+factory(
+  {},
+  {
+    global: {
+      plugins: [createVfm()],
+    },
+  },
+);
+```
+
+### Managed vs Third-Party Plugins
+
+| Mechanism        | Purpose                                     |
+| ---------------- | ------------------------------------------- |
+| `plugins`        | Managed plugins (`pinia`, `i18n`, `router`) |
+| `global.plugins` | Third-party Vue plugins                     |
+
+Managed plugins participate in the preset pipeline.  
+Third-party plugins are passed directly to Vue Test Utils without additional processing.
+
+---
+
+## 🔄 Using Pre-created Plugin Instances
+
+Sometimes tests require using an already existing plugin instance instead of allowing the framework to create one.
+
+For this purpose, managed plugins support instance injection through \_\_meta.instance.
+
+```javascript
+const pinia = createTestingPinia();
+
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      pinia: {
+        __meta: {
+          instance: pinia,
+        },
+      },
+    },
+  },
+);
+```
+
+When an instance is provided:
+
+- plugin creation is skipped
+- plugin configuration is ignored
+- the supplied instance is injected directly into VTU
+
+This prevents conflicts between multiple copies of the same plugin.
+
+---
+
+## 🧩 Accessing Plugin Instances
+
+Sometimes tests need direct access to the actual plugin instance.
+
+### Using `expose`
+
+```javascript
+let piniaInstance;
+
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {
+        expose(instance) {
+          piniaInstance = instance;
+        },
+      },
+    },
+  },
+);
+```
+
+The callback is executed immediately after plugin creation and before mounting.
+
+### Using `captureInstance` (Recommended)
+
+```javascript
+const piniaCapture = captureInstance();
+
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...piniaCapture,
+      },
+    },
+  },
+);
+
+expect(piniaCapture.instance).toBeDefined();
+```
+
+Each factory invocation creates completely new plugin instances.
+
+Avoid reusing captured instances between tests.
+
+---
+
+## ======================================================================
 
 ## ⚙️ Configuration (Mount Options)
 
