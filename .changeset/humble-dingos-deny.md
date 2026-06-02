@@ -2,7 +2,7 @@
 "@testforge/vue-test-core": major
 ---
 
-Move plugin overrides under `extraOptions.plugins`.
+feat: move plugin overrides under `extraOptions.plugins`.
 
 Before:
 
