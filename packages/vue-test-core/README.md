@@ -11,13 +11,44 @@ Instead, the entire testing environment is driven by **Presets** and a hierarchi
 A Preset in TestForge is not just a collection of convenient defaults. It acts as:
 
 - **A Runtime Environment Profile:** It dictates which parts of your application stack are alive during a test run.
-- **A Plugin Capability Boundary:** It defines the exact boundary of what can be configured. If a plugin isn't in the active preset's manifest, the pipeline ignores its configuration.
+- **A Plugin Capability Boundary:** It defines the exact boundary of what can be configured. If a plugin isn't declared in the active preset manifest, its configuration is considered invalid and the framework will reject it during validation.
 - **A Dependency Graph Declaration:** It maps runtime plugin modules to their core names and initial lifecycle hooks.
 
 A preset defines two critical fields:
 
 - `manifest`: Declares _"What plugins are registered and available in this runtime ecosystem?"_
 - `defaults`: Declares _"What is the global project-wide baseline configuration for these plugins?"_
+
+#### Preset Structure Example
+
+```javascript
+const presets = {
+  default: {
+    manifest: [
+      { module: piniaPlugin, enabled: true },
+      { module: i18nPlugin, enabled: false },
+    ],
+    defaults: {
+      pinia: {
+        stubActions: true,
+      },
+      i18n: {
+        locale: "uk",
+        messages: { ... },
+      },
+    },
+  },
+  i18nOnly: {
+    manifest: [{ module: i18nPlugin, enabled: true }],
+    defaults: {
+      i18n: {
+        locale: "en",
+        messages: { ... },
+      },
+    },
+  },
+};
+```
 
 ### ⚠️ Preset Runtime Boundaries
 
@@ -43,6 +74,14 @@ factory(
 If `i18nPreset` only declares `i18n`, the framework will reject the pinia configuration.
 
 This guarantees that presets behave as isolated runtime environments rather than partial configuration overlays.
+
+**Important:** If `mountOptions.plugins` or `extraOptions.plugins` contains configuration for a plugin that is **not declared** in the active preset’s manifest, the framework will throw a validation error.
+
+For example, if `i18nPreset` only declares `i18n`, the `pinia`
+configuration above is invalid.
+
+This behavior is intentional. Presets are treated as isolated runtime
+environments rather than partial configuration overlays.
 
 ---
 
@@ -117,7 +156,7 @@ const factory = testComponentFactory(
 );
 ```
 
-- **Props & Slots Priority**: Direct arguments (`props` as 1st arg, `slots` as 3rd arg) represent immediate test intent. They have the absolute highest priority and will completely override any props or slots passed inside the `mountOptions` configuration object.
+- **Props & Slots Priority**: Direct arguments (`props` as 1st arg, `slots` as 3rd arg) represent immediate test intent. They have the absolute highest priority and will completely override any props or slots passed inside the `mountOptions` configuration object. If `props` or `slots` are specified both as direct factory arguments and inside `mountOptions`, the direct arguments always take precedence.
 
 #### 2. The `global` Section (Deep Merge)
 
@@ -132,6 +171,16 @@ Because managed plugins control critical application state, their merging behavi
 - **Fine-Grained Patching (Layer 4 via `extraOptions.plugins`)**: If you do _not_ want to wipe out the inherited plugin configuration, but only want to tune a specific property, use the `plugins` property inside `extraOptions`.
   - **Behavior:** `extraOptions.plugins` acts as a **Shallow Overlay** on top of the already resolved plugin state.
   - _Example:_ If Layer 1 and 2 established a complex base store state, and your test only needs to toggle action stubbing without redeclaring that state, you pass it inside the 4th argument: `factory({}, {}, {}, { plugins: { pinia: { stubActions: true } } })`. The inherited state is preserved, and the stub flag is overlaid.
+
+#### Why Do Layers 2 and 3 Use Full Replacement for Managed Plugins?
+
+Managed plugins control **application state** (`initialState`, `messages`, `routes`, etc.).  
+Deep merging could lead to **test data pollution**. For example:
+
+- Base configuration contains 10 users in `initialState`.
+- In a test you want an empty array.
+
+Deep merging could concatenate arrays instead of replacing them. That’s why on Layers 2 and 3 the plugin configuration **completely replaces** the previous one.
 
 ---
 
@@ -160,6 +209,31 @@ _Note: This flag remains inside `mountOptions` (2nd execution argument)._
 
 - **Type:** `Boolean` (Default: `false`)
 - **What it does:** Completely disables the active preset orchestration for the current test run. Use this when you need to take full manual control over plugin initialization using raw VTU arrays.
+
+#### When is it useful?
+
+Use this option when you need to **take full manual control** over plugin creation and registration, for example:
+
+- when the default behavior of `createPiniaPlugin`, `createI18nPlugin` or `createRouterPlugin` conflicts with your test requirements
+- when you want to use pre-created / mocked / stubbed plugin instances
+- when plugins need to be registered in a custom order or with non-standard configuration
+
+#### Usage example
+
+```javascript
+const wrapper = factory(
+  {},
+  {
+    skipManagedPlugins: true,
+    global: {
+      plugins: [
+        customPiniaInstance, // manually created instance
+        // other plugins as needed
+      ],
+    },
+  },
+);
+```
 
 ---
 
@@ -240,6 +314,8 @@ factory(
 4. Overlay Configuration (Layer 4)
 
 ```javascript
+// Base configuration (Layer 1 + 2): initialState + stubActions: true
+
 factory(
   {},
   {},
@@ -247,7 +323,8 @@ factory(
   {
     plugins: {
       pinia: {
-        stubActions: false,
+        stubActions: false, // only changing this flag
+        // initialState remains from previous layers
       },
     },
   },
@@ -255,6 +332,73 @@ factory(
 ```
 
 Layer 4 patches the already resolved configuration instead of replacing it.
+
+### 🔄 Using Pre-created Instances (`__meta.instance`)
+
+Sometimes in tests you need to use an **already existing** plugin instance (for example, a Pinia instance with pre-populated state or a fully configured Router), instead of letting the framework create one.
+
+For this purpose, managed plugins support a protected `__meta.instance` property:
+
+```javascript
+const sharedPinia = createTestingPinia();
+
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      pinia: {
+        __meta: {
+          instance: sharedPinia,
+        },
+      },
+    },
+  },
+);
+```
+
+**When `__meta.instance` is provided:**
+
+- plugin creation is skipped
+- plugin configuration is ignored
+- the supplied instance is injected directly into Vue Test Utils
+
+Any other plugin options specified alongside `__meta.instance` are ignored because the provided instance takes priority.
+
+**Why is this better than `global.plugins`?**
+
+Using `__meta.instance` allows the framework to recognize that the
+managed plugin already exists and prevents creation of a second instance.
+
+This avoids conflicts between multiple copies of the same plugin and
+keeps the managed plugin lifecycle consistent with the preset pipeline.
+
+### Configuration Validation
+
+The framework performs strict validation:
+
+- Keys in `defaults` and `plugins` must correspond to plugins declared in the active preset’s manifest.
+- Plugin values can only be an `Object` or `false`.
+- Passing third-party plugins (e.g. `vuetify`) into the `plugins` object will cause an error.
+
+#### Disabling Managed Plugins
+
+You can completely disable any managed plugin for a specific test by passing `false`:
+
+```javascript
+factory(
+  {},
+  {
+    plugins: {
+      pinia: false, // Pinia will not be created
+      router: false, // Router will not be created
+    },
+  },
+);
+```
+
+This is useful when you need full manual control over the environment or want to avoid conflicts.
 
 ---
 
@@ -285,41 +429,6 @@ Third-party plugins are passed directly to Vue Test Utils without additional pro
 
 ---
 
-## 🔄 Using Pre-created Plugin Instances
-
-Sometimes tests require using an already existing plugin instance instead of allowing the framework to create one.
-
-For this purpose, managed plugins support instance injection through \_\_meta.instance.
-
-```javascript
-const pinia = createTestingPinia();
-
-factory(
-  {},
-  {},
-  {},
-  {
-    plugins: {
-      pinia: {
-        __meta: {
-          instance: pinia,
-        },
-      },
-    },
-  },
-);
-```
-
-When an instance is provided:
-
-- plugin creation is skipped
-- plugin configuration is ignored
-- the supplied instance is injected directly into VTU
-
-This prevents conflicts between multiple copies of the same plugin.
-
----
-
 ## 🧩 Accessing Plugin Instances
 
 Sometimes tests need direct access to the actual plugin instance.
@@ -343,7 +452,9 @@ factory(
 );
 ```
 
-The callback is executed immediately after plugin creation and before mounting.
+> [!NOTE]
+> Plugin instances are created before component mounting. Both the `expose` callback and `captureInstance()`
+> receive the instance immediately before `mount()` or `shallowMount()` is executed.
 
 ### Using `captureInstance` (Recommended)
 
@@ -364,9 +475,13 @@ factory(
 expect(piniaCapture.instance).toBeDefined();
 ```
 
-Each factory invocation creates completely new plugin instances.
+### Instance Isolation
 
-Avoid reusing captured instances between tests.
+Every call to `factory()` creates a completely new runtime environment.
+
+Pinia, Router and i18n instances are never shared between factory invocations.
+
+Captured instances from previous tests have no relation to instances created in subsequent tests.
 
 ---
 
