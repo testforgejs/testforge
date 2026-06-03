@@ -10,6 +10,7 @@ import {
   withPluginsManifest,
   withBaseMountOptions,
   withGlobal,
+  withAttrs,
   withPluginsBase,
 } from "../middleware/transformers";
 import { createPluginsMiddlewares } from "../plugins/builders/createPluginsMiddlewares.js";
@@ -35,6 +36,7 @@ export function createMountPipeline(ctx: PipelineContext): PipelineMiddleware[] 
     withPluginsManifest,
     withBaseMountOptions,
     withGlobal,
+    withAttrs,
     withPluginsBase,
     assertPluginOptions,
     ...createPluginsMiddlewares(ctx.supportedPlugins),

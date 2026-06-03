@@ -19,6 +19,7 @@ import {
   withPluginsManifest,
   withBaseMountOptions,
   withGlobal,
+  withAttrs,
   withPluginsBase,
 } from "../../middleware/transformers";
 
@@ -45,6 +46,7 @@ describe("createMountPipeline", () => {
       withPluginsManifest,
       withBaseMountOptions,
       withGlobal,
+      withAttrs,
       withPluginsBase,
       assertPluginOptions,
       "plugin-mw-1",

@@ -369,6 +369,71 @@ describe("testComponentFactory Integration (Universal)", () => {
         });
       });
     });
+
+    describe("defaultMountOptions.props vs mountOptions.props", () => {
+      it("should shallow-merge props between defaultMountOptions and mountOptions", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            props: {
+              role: "button",
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            props: {
+              id: "submit",
+            },
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            props: {
+              role: "button",
+              id: "submit",
+            },
+          }),
+        );
+      });
+
+      it("should prioritize mountOptions.props over defaultMountOptions.props when keys conflict", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            props: {
+              id: 1,
+              role: "button",
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            props: {
+              id: 2,
+            },
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            props: {
+              id: 2,
+              role: "button",
+            },
+          }),
+        );
+      });
+    });
   });
 
   describe("Slots Priority", () => {
@@ -646,6 +711,235 @@ describe("testComponentFactory Integration (Universal)", () => {
 
       const [, options] = mockMount.mock.calls[0];
       expect(options.global.provide.theme).toBe("dark");
+    });
+  });
+
+  describe("VTU Mounting Options Passthrough", () => {
+    describe("data", () => {
+      it("should pass data option to mount()", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        const dataFn = () => ({
+          count: 1,
+        });
+
+        factory({}, { data: dataFn });
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            data: dataFn,
+          }),
+        );
+      });
+    });
+
+    describe("attrs", () => {
+      it("should pass attrs option to mount()", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        factory(
+          {},
+          {
+            attrs: {
+              id: "test-id",
+              "data-testid": "button",
+            },
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attrs: {
+              id: "test-id",
+              "data-testid": "button",
+            },
+          }),
+        );
+      });
+
+      it("should use defaultMountOptions.attrs when mountOptions.attrs are not provided", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attrs: {
+              role: "button",
+            },
+          },
+        );
+
+        factory();
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attrs: {
+              role: "button",
+            },
+          }),
+        );
+      });
+
+      it("should shallow-merge attrs between defaultMountOptions and mountOptions", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attrs: {
+              role: "button",
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            attrs: {
+              id: "submit",
+            },
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attrs: {
+              role: "button",
+              id: "submit",
+            },
+          }),
+        );
+      });
+
+      it("should prioritize mountOptions.attrs over defaultMountOptions.attrs when keys conflict", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attrs: {
+              role: "button",
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            attrs: {
+              role: "link",
+            },
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attrs: {
+              role: "link",
+            },
+          }),
+        );
+      });
+
+      it("should ignore defaultMountOptions.attrs when skipDefaultOptions is true", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attrs: {
+              role: "button",
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            attrs: {
+              id: "submit",
+            },
+          },
+          {},
+          {
+            skipDefaultOptions: true,
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attrs: {
+              id: "submit",
+            },
+          }),
+        );
+      });
+    });
+
+    describe("attachTo", () => {
+      it("should pass attachTo option to mount()", () => {
+        const target = "#app";
+
+        const factory = testComponentFactory(MockComponent);
+
+        factory(
+          {},
+          {
+            attachTo: target,
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attachTo: target,
+          }),
+        );
+      });
+
+      it("should allow mountOptions.attachTo to override defaultMountOptions.attachTo", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attachTo: "#default-root",
+          },
+        );
+
+        factory(
+          {},
+          {
+            attachTo: "#test-root",
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attachTo: "#test-root",
+          }),
+        );
+      });
+    });
+
+    it("should preserve unknown VTU options", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      factory(
+        {},
+        {
+          inheritAttrs: false,
+        },
+      );
+
+      expect(mockMount).toHaveBeenCalledWith(
+        MockComponent,
+        expect.objectContaining({
+          inheritAttrs: false,
+        }),
+      );
     });
   });
 

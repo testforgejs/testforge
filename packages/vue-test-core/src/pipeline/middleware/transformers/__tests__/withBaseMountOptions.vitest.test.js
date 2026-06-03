@@ -40,16 +40,33 @@ describe("withBaseMountOptions middleware", () => {
 
     expect(patchResultState).toHaveBeenCalledWith(ctx, {
       mountOptions: {
-        shallow: true, // override
-        attachTo: "#app", // from defaults
-        attrs: { id: "test" }, // from overrides
+        shallow: true,
+        attachTo: "#app",
       },
     });
 
     expect(result).toBe(mergedCtx);
   });
 
-  it("should ignore defaults when skipDefaultOptions is true", () => {
+  it("should exclude attrs from mountOptions processing", () => {
+    const ctx = {
+      defaultMountOptions: {
+        attrs: { role: "button" },
+      },
+      mountOptions: {
+        attrs: { id: "submit" },
+      },
+      extraOptions: { skipDefaultOptions: false },
+    };
+
+    withBaseMountOptions(ctx);
+
+    expect(patchResultState).toHaveBeenCalledWith(ctx, {
+      mountOptions: {},
+    });
+  });
+
+  it("should ignore default flat mount options when skipDefaultOptions is true", () => {
     const ctx = {
       defaultMountOptions,
       mountOptions,
@@ -63,7 +80,6 @@ describe("withBaseMountOptions middleware", () => {
     expect(patchResultState).toHaveBeenCalledWith(ctx, {
       mountOptions: {
         shallow: true,
-        attrs: { id: "test" },
       },
     });
   });

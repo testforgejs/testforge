@@ -22,9 +22,9 @@ export const withBaseMountOptions: PipelineMiddleware = <T extends PipelineConte
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   // Extract what should NOT be processed at this stage
-  const { global: _dg, plugins: _dp, ...flatDefaults } = defaultMountOptions;
+  const { global: _dg, plugins: _dp, attrs: _da, ...flatDefaults } = defaultMountOptions;
 
-  const { global: _mg, plugins: _mp, ...flatOverrides } = mountOptions;
+  const { global: _mg, plugins: _mp, attrs: _ma, ...flatOverrides } = mountOptions;
 
   return patchResultState(ctx, {
     mountOptions: extraOptions.skipDefaultOptions
