@@ -168,6 +168,12 @@ export type ComponentFactoryExtraOptions = {
 
 // === 5. Preset System ===
 
+/**
+ * Default plugin configuration.
+ *
+ * The object keys must correspond to plugin names returned by
+ * `plugin.getName()` for plugins declared in `manifest`.
+ */
 export interface PresetDefinition {
   manifest: PluginManifestEntry<any, any>[];
   defaults: PluginConfigDefaults;
