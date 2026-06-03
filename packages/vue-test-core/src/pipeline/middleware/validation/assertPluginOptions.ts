@@ -7,6 +7,7 @@ import type {
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
 
 import { assertUnsupportedPlugins } from "./validators/assertUnsupportedPlugins";
+import { assertExtraOptionUnsupportedPlugins } from "./validators/assertExtraOptionUnsupportedPlugins";
 import { assertResolvedPluginValues } from "./validators/assertResolvedPluginValues";
 import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPluginValues";
 
@@ -30,6 +31,8 @@ export const assertPluginOptions: PipelineMiddleware<PipelineContext, PluginOpti
   const supported = new Set(Object.keys(supportedPlugins));
 
   assertUnsupportedPlugins(plugins || {}, supported);
+
+  assertExtraOptionUnsupportedPlugins(resolveExtraOptions(extraOptions), supported);
 
   assertResolvedPluginValues(plugins);
 

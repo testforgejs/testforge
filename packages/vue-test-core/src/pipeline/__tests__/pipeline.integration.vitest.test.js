@@ -278,23 +278,17 @@ describe("Mount Pipeline Integration", () => {
       );
     });
 
-    /*
-     * Deferred intentionally until planned BREAKING CHANGE:
-     * moving plugin overrides into extraOptions.plugins.
-     *
-     * Current extraOptions is an open technical channel and
-     * does not distinguish plugin names from runtime flags.
-     */
-    it.todo("BREAKING: support plugin validation for extraOptions.plugins");
-    /*it("should throw an error when an unsupported plugin is passed via extraOptions", () => {
+    it("should throw an error when an unsupported plugin is passed via extraOptions", () => {
       const extra = {
-        vuetify: {},
+        plugins: {
+          vuetify: {},
+        },
       };
 
       expect(() => run(presets, {}, {}, extra)).toThrow(
         /Plugin "vuetify" is configured but not supported by the active preset/,
       );
-    });*/
+    });
 
     it("should NOT throw an error for unknown keys in extraOptions that are not plugins", () => {
       // Verify that we are not blocking other technical keys in extraOptions
