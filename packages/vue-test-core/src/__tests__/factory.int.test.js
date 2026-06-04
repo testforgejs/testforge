@@ -715,8 +715,10 @@ describe("testComponentFactory Integration (Universal)", () => {
   });
 
   describe("VTU Mounting Options Passthrough", () => {
+    // data, attrs and attachTo are processed as flat VTU mount options
+    // through withBaseMountOptions().
     describe("data", () => {
-      it("should pass data option to mount()", () => {
+      it("should use data from mountOptions", () => {
         const factory = testComponentFactory(MockComponent);
 
         const dataFn = () => ({
@@ -729,6 +731,86 @@ describe("testComponentFactory Integration (Universal)", () => {
           MockComponent,
           expect.objectContaining({
             data: dataFn,
+          }),
+        );
+      });
+
+      it("should use data from defaultMountOptions when mountOptions.data is not provided", () => {
+        const defaultData = () => ({
+          count: 1,
+        });
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            data: defaultData,
+          },
+        );
+
+        factory();
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            data: defaultData,
+          }),
+        );
+      });
+
+      it("should allow mountOptions.data to override defaultMountOptions.data", () => {
+        const defaultData = () => ({
+          count: 1,
+        });
+
+        const overrideData = () => ({
+          count: 2,
+        });
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            data: defaultData,
+          },
+        );
+
+        factory({}, { data: overrideData });
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            data: overrideData,
+          }),
+        );
+      });
+
+      it("should ignore defaultMountOptions.data when skipDefaultOptions is true", () => {
+        const defaultData = () => ({
+          count: 1,
+        });
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            data: defaultData,
+          },
+        );
+
+        factory(
+          {},
+          {},
+          {},
+          {
+            skipDefaultOptions: true,
+          },
+        );
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.not.objectContaining({
+            data: defaultData,
           }),
         );
       });
@@ -879,7 +961,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     });
 
     describe("attachTo", () => {
-      it("should pass attachTo option to mount()", () => {
+      it("should use attachTo from mountOptions", () => {
         const target = "#app";
 
         const factory = testComponentFactory(MockComponent);
@@ -895,6 +977,25 @@ describe("testComponentFactory Integration (Universal)", () => {
           MockComponent,
           expect.objectContaining({
             attachTo: target,
+          }),
+        );
+      });
+
+      it("should use attachTo from defaultMountOptions when mountOptions.attachTo is not provided", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attachTo: "#default-root",
+          },
+        );
+
+        factory();
+
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            attachTo: "#default-root",
           }),
         );
       });
@@ -922,24 +1023,1293 @@ describe("testComponentFactory Integration (Universal)", () => {
           }),
         );
       });
+
+      it("should ignore defaultMountOptions.attachTo when skipDefaultOptions is true", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            attachTo: "#default-root",
+          },
+        );
+
+        factory(
+          {},
+          {},
+          {},
+          {
+            skipDefaultOptions: true,
+          },
+        );
+
+        const [, options] = mockMount.mock.calls[0];
+
+        expect(options.attachTo).toBeUndefined();
+      });
     });
 
-    it("should preserve unknown VTU options", () => {
-      const factory = testComponentFactory(MockComponent);
+    describe("unknown options", () => {
+      it("should preserve unknown VTU options", () => {
+        const factory = testComponentFactory(MockComponent);
 
-      factory(
-        {},
-        {
-          inheritAttrs: false,
-        },
-      );
+        factory(
+          {},
+          {
+            inheritAttrs: false,
+          },
+        );
 
-      expect(mockMount).toHaveBeenCalledWith(
-        MockComponent,
-        expect.objectContaining({
-          inheritAttrs: false,
-        }),
-      );
+        expect(mockMount).toHaveBeenCalledWith(
+          MockComponent,
+          expect.objectContaining({
+            inheritAttrs: false,
+          }),
+        );
+      });
+    });
+
+    describe("global", () => {
+      describe("components", () => {
+        it("should use global.components from mountOptions", () => {
+          const factory = testComponentFactory(MockComponent);
+
+          const TestButton = { name: "TestButton" };
+
+          factory(
+            {},
+            {
+              global: {
+                components: {
+                  TestButton,
+                },
+              },
+            },
+          );
+
+          expect(mockMount).toHaveBeenCalledWith(
+            MockComponent,
+            expect.objectContaining({
+              global: expect.objectContaining({
+                components: {
+                  TestButton,
+                },
+              }),
+            }),
+          );
+        });
+
+        it("should use global.components from defaultMountOptions", () => {
+          const TestButton = { name: "TestButton" };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                components: {
+                  TestButton,
+                },
+              },
+            },
+          );
+
+          factory();
+
+          expect(mockMount).toHaveBeenCalledWith(
+            MockComponent,
+            expect.objectContaining({
+              global: expect.objectContaining({
+                components: {
+                  TestButton,
+                },
+              }),
+            }),
+          );
+        });
+
+        it("should merge global.components objects", () => {
+          const BaseButton = { name: "BaseButton" };
+          const TestButton = { name: "TestButton" };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                components: {
+                  BaseButton,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                components: {
+                  TestButton,
+                },
+              },
+            },
+          );
+
+          expect(mockMount).toHaveBeenCalledWith(
+            MockComponent,
+            expect.objectContaining({
+              global: expect.objectContaining({
+                components: {
+                  BaseButton,
+                  TestButton,
+                },
+              }),
+            }),
+          );
+        });
+
+        it("should allow mountOptions.global.components to override default components", () => {
+          const DefaultButton = { name: "DefaultButton" };
+          const OverrideButton = { name: "OverrideButton" };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                components: {
+                  AppButton: DefaultButton,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                components: {
+                  AppButton: OverrideButton,
+                },
+              },
+            },
+          );
+
+          expect(mockMount).toHaveBeenCalledWith(
+            MockComponent,
+            expect.objectContaining({
+              global: expect.objectContaining({
+                components: {
+                  AppButton: OverrideButton,
+                },
+              }),
+            }),
+          );
+        });
+
+        it("should ignore default global.components when skipDefaultOptions is true", () => {
+          const BaseButton = { name: "BaseButton" };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                components: {
+                  BaseButton,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.components).toBeUndefined();
+        });
+      });
+
+      describe("plugins", () => {
+        it("should use global.plugins from mountOptions when defaultMountOptions are empty", () => {
+          const pluginA = { install() {} };
+
+          const factory = testComponentFactory(MockComponent);
+
+          factory(
+            {},
+            {
+              global: {
+                plugins: [pluginA],
+              },
+              skipManagedPlugins: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.plugins).toEqual([pluginA]);
+        });
+
+        it("should use global.plugins from defaultMountOptions when mountOptions are empty", () => {
+          const pluginA = { install() {} };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                plugins: [pluginA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              skipManagedPlugins: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.plugins).toEqual([pluginA]);
+        });
+
+        it("should concatenate global.plugins arrays", () => {
+          const pluginA = { install() {} };
+          const pluginB = { install() {} };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                plugins: [pluginA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                plugins: [pluginB],
+              },
+              skipManagedPlugins: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.plugins).toEqual([pluginA, pluginB]);
+        });
+
+        it("should deduplicate identical plugin references", () => {
+          const pluginA = { install() {} };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                plugins: [pluginA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                plugins: [pluginA],
+              },
+              skipManagedPlugins: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.plugins).toEqual([pluginA]);
+        });
+
+        it("should ignore default global.plugins when skipDefaultOptions is true", () => {
+          const pluginA = { install() {} };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                plugins: [pluginA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              skipManagedPlugins: true,
+            },
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.plugins).toBeUndefined();
+        });
+      });
+
+      describe("directives", () => {
+        it("should use global.directives from mountOptions", () => {
+          const focusDirective = {
+            mounted() {},
+          };
+
+          const factory = testComponentFactory(MockComponent);
+
+          factory(
+            {},
+            {
+              global: {
+                directives: {
+                  focus: focusDirective,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.directives).toEqual({
+            focus: focusDirective,
+          });
+        });
+
+        it("should use global.directives from defaultMountOptions", () => {
+          const focusDirective = {
+            mounted() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                directives: {
+                  focus: focusDirective,
+                },
+              },
+            },
+          );
+
+          factory();
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.directives).toEqual({
+            focus: focusDirective,
+          });
+        });
+
+        it("should merge global.directives", () => {
+          const focusDirective = {
+            mounted() {},
+          };
+
+          const tooltipDirective = {
+            mounted() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                directives: {
+                  focus: focusDirective,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                directives: {
+                  tooltip: tooltipDirective,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.directives).toEqual({
+            focus: focusDirective,
+            tooltip: tooltipDirective,
+          });
+        });
+
+        it("should allow mountOptions.global.directives to override default directives", () => {
+          const oldDirective = {
+            mounted() {},
+          };
+
+          const newDirective = {
+            mounted() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                directives: {
+                  focus: oldDirective,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                directives: {
+                  focus: newDirective,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.directives).toEqual({
+            focus: newDirective,
+          });
+        });
+
+        it("should ignore default global.directives when skipDefaultOptions is true", () => {
+          const focusDirective = {
+            mounted() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                directives: {
+                  focus: focusDirective,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.directives).toBeUndefined();
+        });
+      });
+
+      describe("mixins", () => {
+        it("should use global.mixins from mountOptions", () => {
+          const mixinA = {
+            created() {},
+          };
+
+          const factory = testComponentFactory(MockComponent);
+
+          factory(
+            {},
+            {
+              global: {
+                mixins: [mixinA],
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mixins).toEqual([mixinA]);
+        });
+
+        it("should use global.mixins from defaultMountOptions", () => {
+          const mixinA = {
+            created() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mixins: [mixinA],
+              },
+            },
+          );
+
+          factory();
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mixins).toEqual([mixinA]);
+        });
+
+        it("should concatenate global.mixins arrays", () => {
+          const mixinA = {
+            created() {},
+          };
+
+          const mixinB = {
+            mounted() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mixins: [mixinA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                mixins: [mixinB],
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mixins).toEqual([mixinA, mixinB]);
+        });
+
+        it("should deduplicate identical mixin references", () => {
+          const mixinA = {
+            created() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mixins: [mixinA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                mixins: [mixinA],
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mixins).toEqual([mixinA]);
+        });
+
+        it("should ignore default global.mixins when skipDefaultOptions is true", () => {
+          const mixinA = {
+            created() {},
+          };
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mixins: [mixinA],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mixins).toBeUndefined();
+        });
+      });
+
+      describe("provide", () => {
+        it("should use global.provide from mountOptions", () => {
+          const factory = testComponentFactory(MockComponent);
+
+          factory(
+            {},
+            {
+              global: {
+                provide: {
+                  api: "test-api",
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.provide).toEqual({
+            api: "test-api",
+          });
+        });
+
+        it("should use global.provide from defaultMountOptions", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                provide: {
+                  api: "default-api",
+                },
+              },
+            },
+          );
+
+          factory();
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.provide).toEqual({
+            api: "default-api",
+          });
+        });
+
+        it("should merge global.provide objects", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                provide: {
+                  api: "default-api",
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                provide: {
+                  store: "test-store",
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.provide).toEqual({
+            api: "default-api",
+            store: "test-store",
+          });
+        });
+
+        it("should allow mountOptions.global.provide to override defaults", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                provide: {
+                  api: "default-api",
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                provide: {
+                  api: "test-api",
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.provide).toEqual({
+            api: "test-api",
+          });
+        });
+
+        it("should ignore default global.provide when skipDefaultOptions is true", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                provide: {
+                  api: "default-api",
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.provide).toBeUndefined();
+        });
+      });
+
+      describe("mocks", () => {
+        it("should use global.mocks from mountOptions", () => {
+          const factory = testComponentFactory(MockComponent);
+
+          factory(
+            {},
+            {
+              global: {
+                mocks: {
+                  $t: runner.fn(),
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mocks.$t).toBeDefined();
+        });
+
+        it("should use global.mocks from defaultMountOptions", () => {
+          const tMock = runner.fn();
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mocks: {
+                  $t: tMock,
+                },
+              },
+            },
+          );
+
+          factory();
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mocks).toEqual({
+            $t: tMock,
+          });
+        });
+
+        it("should merge global.mocks objects", () => {
+          const tMock = runner.fn();
+          const routerMock = runner.fn();
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mocks: {
+                  $t: tMock,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                mocks: {
+                  $router: routerMock,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mocks).toEqual({
+            $t: tMock,
+            $router: routerMock,
+          });
+        });
+
+        it("should allow mountOptions.global.mocks to override defaults", () => {
+          const defaultMock = runner.fn();
+          const overrideMock = runner.fn();
+
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mocks: {
+                  $t: defaultMock,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                mocks: {
+                  $t: overrideMock,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mocks).toEqual({
+            $t: overrideMock,
+          });
+        });
+
+        it("should ignore default global.mocks when skipDefaultOptions is true", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                mocks: {
+                  $t: runner.fn(),
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.mocks).toBeUndefined();
+        });
+      });
+
+      describe("stubs", () => {
+        it("should merge global.stubs objects", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterLink: true,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterView: true,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toEqual({
+            RouterLink: true,
+            RouterView: true,
+          });
+        });
+
+        it("should allow mountOptions.global.stubs to override defaults", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterLink: true,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterLink: false,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toEqual({
+            RouterLink: false,
+          });
+        });
+
+        it("should concatenate global.stubs arrays", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: ["RouterLink"],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                stubs: ["RouterView"],
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toEqual(["RouterLink", "RouterView"]);
+        });
+
+        it("should deduplicate global.stubs arrays", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: ["RouterLink"],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                stubs: ["RouterLink"],
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toEqual(["RouterLink"]);
+        });
+
+        it("should replace stubs object with array when types differ", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterLink: true,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                stubs: ["RouterView"],
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toEqual(["RouterView"]);
+        });
+
+        it("should replace stubs array with object when types differ", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: ["RouterLink"],
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterView: true,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toEqual({
+            RouterView: true,
+          });
+        });
+
+        it("should ignore default global.stubs when skipDefaultOptions is true", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                stubs: {
+                  RouterLink: true,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.stubs).toBeUndefined();
+        });
+      });
+
+      describe("config", () => {
+        it("should use global.config from mountOptions", () => {
+          const factory = testComponentFactory(MockComponent);
+
+          factory(
+            {},
+            {
+              global: {
+                config: {
+                  performance: true,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.config).toEqual({
+            performance: true,
+          });
+        });
+
+        it("should use global.config from defaultMountOptions", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                config: {
+                  performance: true,
+                },
+              },
+            },
+          );
+
+          factory();
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.config).toEqual({
+            performance: true,
+          });
+        });
+
+        it("should merge global.config objects", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                config: {
+                  performance: true,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                config: {
+                  warnHandler: runner.fn(),
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.config.performance).toBe(true);
+          expect(options.global.config.warnHandler).toEqual(expect.any(Function));
+        });
+
+        it("should recursively merge nested config objects", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                config: {
+                  optionMergeStrategies: {
+                    foo: "default",
+                  },
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                config: {
+                  optionMergeStrategies: {
+                    bar: "override",
+                  },
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.config.optionMergeStrategies).toEqual({
+            foo: "default",
+            bar: "override",
+          });
+        });
+
+        it("should allow mountOptions.global.config to override defaults", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                config: {
+                  performance: false,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {
+              global: {
+                config: {
+                  performance: true,
+                },
+              },
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.config).toEqual({
+            performance: true,
+          });
+        });
+
+        it("should ignore default global.config when skipDefaultOptions is true", () => {
+          const factory = testComponentFactory(
+            MockComponent,
+            {},
+            {
+              global: {
+                config: {
+                  performance: true,
+                },
+              },
+            },
+          );
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              skipDefaultOptions: true,
+            },
+          );
+
+          const [, options] = mockMount.mock.calls[0];
+
+          expect(options.global.config).toBeUndefined();
+        });
+      });
     });
   });
 
