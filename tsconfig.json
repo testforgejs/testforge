@@ -22,5 +22,5 @@
     "vitest.config.ts",
     "__mocks__/**/*"
   ],
-  "exclude": ["node_modules", "**/dist"]
+  "exclude": ["node_modules", "**/dist", "packages/**/test-d"]
 }

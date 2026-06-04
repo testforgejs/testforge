@@ -9,6 +9,8 @@ export type {
   ComponentFactory,
   ComponentFactoryOptions,
   PluginOptionsMap,
+  PluginOptionsInput,
+  PluginOverridesInput,
   PluginControlOptions,
   RuntimePluginOptions,
   PluginModule,

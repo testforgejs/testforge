@@ -89,6 +89,11 @@ export default tsEslint.config(
   },
 
   {
+    files: ["packages/**/test-d/**/*.test-d.ts"],
+    extends: [tsEslint.configs.disableTypeChecked],
+  },
+
+  {
     files: ["scripts/**/*.js", "scripts/**/*.ts"],
     extends: [tsEslint.configs.disableTypeChecked],
   },

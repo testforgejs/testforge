@@ -17,11 +17,15 @@
   ],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test:types": "tsd"
   },
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
     "@vue/test-utils": "^2.0.0"
+  },
+  "tsd": {
+    "directory": "test-d"
   }
 }
