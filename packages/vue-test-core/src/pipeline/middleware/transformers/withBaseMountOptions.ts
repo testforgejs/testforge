@@ -21,10 +21,37 @@ import { mergeRecord } from "../../state/mergeRecord.js";
 export const withBaseMountOptions: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
-  // Extract what should NOT be processed at this stage
-  const { global: _dg, plugins: _dp, attrs: _da, ...flatDefaults } = defaultMountOptions;
+  // Extract options that are not part of the flat VTU mount option layer.
+  //
+  // Pipeline-managed:
+  // - global
+  // - plugins
+  // - attrs
+  //
+  // Resolved outside the pipeline:
+  // - props
+  // - slots
+  //
+  // Props and slots have their own merge strategy and support
+  // skipDefaultProps / skipDefaultSlots, therefore they are
+  // resolved before pipeline execution.
+  const {
+    global: _dg,
+    plugins: _dp,
+    attrs: _da,
+    props: _dpr,
+    slots: _ds,
+    ...flatDefaults
+  } = defaultMountOptions;
 
-  const { global: _mg, plugins: _mp, attrs: _ma, ...flatOverrides } = mountOptions;
+  const {
+    global: _mg,
+    plugins: _mp,
+    attrs: _ma,
+    props: _mpr,
+    slots: _ms,
+    ...flatOverrides
+  } = mountOptions;
 
   return patchResultState(ctx, {
     mountOptions: extraOptions.skipDefaultOptions
