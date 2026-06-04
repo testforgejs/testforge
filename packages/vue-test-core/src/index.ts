@@ -8,6 +8,7 @@ export { validatePreset } from "./utils/validatePreset.js";
 export type {
   ComponentFactory,
   ComponentFactoryOptions,
+  ComponentFactoryExtraOptions,
   PluginOptionsMap,
   PluginOptionsInput,
   PluginOverridesInput,
