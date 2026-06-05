@@ -89,7 +89,7 @@ export default tsEslint.config(
   },
 
   {
-    files: ["packages/**/test-d/**/*.test-d.ts"],
+    files: ["packages/**/test-d/**/*.test-d.ts", "packages/**/test-d/**/shared-plugin-types.ts"],
     extends: [tsEslint.configs.disableTypeChecked],
   },
 

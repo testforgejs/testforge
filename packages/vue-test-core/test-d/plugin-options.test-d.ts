@@ -1,25 +1,7 @@
 import { expectType, expectError } from "tsd";
+// Registers PluginOptionsMap test augmentation
+import "./shared-plugin-types";
 import type { PluginOptionsInput, PluginOverridesInput } from "../dist/index";
-
-// Test plugin types
-
-interface PiniaOptions {
-  stubActions?: boolean;
-  initialState?: Record<string, unknown>;
-}
-
-interface I18nOptions {
-  locale?: string;
-}
-
-// Module augmentation
-
-declare module "../dist/index" {
-  interface PluginOptionsMap {
-    pinia: PiniaOptions;
-    i18n: I18nOptions;
-  }
-}
 
 // -----------------------------
 // PluginOptionsInput

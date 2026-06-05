@@ -1,22 +1,7 @@
 import { expectType, expectError } from "tsd";
-
+// Registers PluginOptionsMap test augmentation
+import "./shared-plugin-types";
 import type { ComponentFactoryExtraOptions } from "../dist/index";
-
-interface PiniaOptions {
-  stubActions?: boolean;
-  initialState?: Record<string, unknown>;
-}
-
-interface I18nOptions {
-  locale?: string;
-}
-
-declare module "../dist/index" {
-  interface PluginOptionsMap {
-    pinia: PiniaOptions;
-    i18n: I18nOptions;
-  }
-}
 
 const validOptions: ComponentFactoryExtraOptions = {
   plugins: {
