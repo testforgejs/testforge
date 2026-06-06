@@ -94,6 +94,11 @@ export default tsEslint.config(
   },
 
   {
+    files: ["packages/*/smoke/**/*"],
+    extends: [tsEslint.configs.disableTypeChecked],
+  },
+
+  {
     files: ["scripts/**/*.js", "scripts/**/*.ts"],
     extends: [tsEslint.configs.disableTypeChecked],
   },

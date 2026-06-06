@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     // environment: "node",
-    include: ["**/*.vitest.test.js", "**/*.test.ts", "**/*.int.test.js"],
+    include: ["**/*.vitest.test.js", "**/*.vitest.test.cjs", "**/*.test.ts", "**/*.int.test.js"],
   },
   resolve: {
     alias: [
