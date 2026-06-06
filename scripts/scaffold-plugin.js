@@ -56,7 +56,8 @@ writeFile(
     "dist"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "@testforge/vue-test-core": "workspace:*"
