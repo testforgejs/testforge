@@ -141,6 +141,9 @@ importers:
 
   packages/vue-test-preset-recommended:
     dependencies:
+      '@testforge/vue-test-core':
+        specifier: workspace:*
+        version: link:../vue-test-core
       '@testforge/vue-test-plugin-i18n':
         specifier: workspace:*
         version: link:../vue-test-plugin-i18n

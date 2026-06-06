@@ -22,6 +22,7 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "dependencies": {
+    "@testforge/vue-test-core": "workspace:*",
     "@testforge/vue-test-plugin-i18n": "workspace:*",
     "@testforge/vue-test-plugin-pinia": "workspace:*",
     "@testforge/vue-test-plugin-router": "workspace:*"
