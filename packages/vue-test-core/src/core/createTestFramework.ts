@@ -38,12 +38,12 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
      * - preset-based plugin resolution
      * - runtime mount pipeline processing
      */
-    testComponentFactory(
-      component: Component,
+    testComponentFactory<T extends Component>(
+      component: T,
       defaultProps: Dictionary = {},
       defaultMountOptions: ComponentFactoryOptions = {},
       defaultSlots: SlotsMap = {},
-    ): ComponentFactory {
+    ): ComponentFactory<T> {
       return (
         props: Dictionary = {},
         mountOptions: ComponentFactoryOptions = {},

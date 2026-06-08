@@ -1,5 +1,5 @@
 import type { Component } from "vue";
-import type { VueWrapper, MountingOptions } from "@vue/test-utils";
+import type { MountingOptions, mount } from "@vue/test-utils";
 
 // === 1. Core Plugin Model ===
 
@@ -249,13 +249,20 @@ export type PipeResult<
 
 // === 7. Component Factory ===
 
-/** Main component factory returned by testComponentFactory */
-export type ComponentFactory<T extends abstract new (...args: any) => any = any> = (
+/**
+ * Main component factory returned by testComponentFactory
+ *
+ * Preserve exact Vue Test Utils wrapper typing.
+ *
+ * TestForge intentionally mirrors VTU mount() return types
+ * instead of maintaining a parallel wrapper type hierarchy.
+ */
+export type ComponentFactory<T extends Component> = (
   props?: Dictionary,
   mountOptions?: ComponentFactoryOptions,
   slots?: SlotsMap,
   extraOptions?: ComponentFactoryExtraOptions,
-) => VueWrapper<InstanceType<T>>;
+) => ReturnType<typeof mount<T>>;
 
 export interface CreateTestFrameworkOptions {
   /** Preset configurations for plugins */
@@ -277,8 +284,8 @@ export interface MountRuntimeOptions {
 }
 
 export interface TestFramework {
-  testComponentFactory<T extends abstract new (...args: any) => any>(
-    component: Component,
+  testComponentFactory<T extends Component>(
+    component: T,
     defaultProps?: Dictionary,
     defaultMountOptions?: ComponentFactoryOptions,
     defaultSlots?: SlotsMap,

@@ -1,6 +1,5 @@
 import type { PipelineContext, MountWithPluginsOptions, MountRuntimeOptions } from "../types";
 import type { Component } from "vue";
-import type { VueWrapper } from "@vue/test-utils";
 
 import { mount, shallowMount } from "@vue/test-utils";
 import { createPlugins } from "../pluginsRegistry/createPlugins.js";
@@ -14,14 +13,14 @@ import { createPlugins } from "../pluginsRegistry/createPlugins.js";
  * - merge global mounting configuration
  * - choose between mount() and shallowMount()
  */
-export function mountWithPlugins(
-  component: Component,
+export function mountWithPlugins<T extends Component>(
+  component: T,
   ctx: PipelineContext,
   overrides: MountWithPluginsOptions = {},
   runtimeOptions: MountRuntimeOptions = {
     shallowByDefault: false,
   },
-): VueWrapper {
+): ReturnType<typeof mount<T>> {
   const { result } = ctx;
 
   const mergedOptions = {
@@ -57,5 +56,5 @@ export function mountWithPlugins(
   return mountFunction(component, {
     ...restOptions,
     global: finalGlobal,
-  });
+  } as any);
 }
