@@ -16,6 +16,7 @@ export type {
   RuntimePluginOptions,
   PluginModule,
   PresetDefinition,
+  TestFramework,
   TestFrameworkPresets,
 } from "./types";
 
