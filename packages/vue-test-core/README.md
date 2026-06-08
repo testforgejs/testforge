@@ -458,6 +458,8 @@ factory(
 
 ### Using `captureInstance` (Recommended)
 
+`captureInstance()` is a small helper built on top of `expose` that stores the instance reference for later access in assertions.
+
 ```javascript
 const piniaCapture = captureInstance();
 
@@ -474,6 +476,17 @@ factory(
 
 expect(piniaCapture.instance).toBeDefined();
 ```
+
+After mounting, the captured instance can be inspected or manipulated directly in the test.
+
+> [!TIP]
+> In TypeScript, you can provide the instance type explicitly:
+>
+> ```ts
+> const i18nCapture = captureInstance<I18n>();
+> ```
+>
+> Otherwise `instance` is typed as `unknown`.
 
 ### Instance Isolation
 
