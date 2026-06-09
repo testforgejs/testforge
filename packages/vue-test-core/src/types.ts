@@ -1,5 +1,6 @@
 import type { Component } from "vue";
 import type { MountingOptions, mount } from "@vue/test-utils";
+import type { ComponentProps } from "vue-component-type-helpers";
 
 // === 1. Core Plugin Model ===
 
@@ -130,10 +131,12 @@ export type PluginOverridesInput = {
   [K in keyof PluginOptionsMap]?: PluginOverride<PluginOptionsMap[K]>;
 };
 
-export interface ComponentFactoryOptions<Props = any, Data = any> extends MountingOptions<
-  Props,
-  Data
+export interface ComponentFactoryOptions<Props = any, Data = any> extends Omit<
+  MountingOptions<Props, Data>,
+  "props"
 > {
+  props?: Props;
+
   /** Managed plugin configuration */
   plugins?: PluginOptionsInput;
 
@@ -250,6 +253,22 @@ export type PipeResult<
 // === 7. Component Factory ===
 
 /**
+ * Input props accepted by TestForge.
+ *
+ * Props are intentionally typed as Partial<ComponentProps<T>>.
+ *
+ * TestForge merges props from multiple sources:
+ * - factory defaults
+ * - mount option props
+ * - per-test props
+ *
+ * Because each source represents only a partial contribution
+ * to the final prop set, requiring complete component props
+ * at every layer would be unnecessarily restrictive.
+ */
+export type ComponentPropsInput<T extends Component> = Partial<ComponentProps<T>>;
+
+/**
  * Main component factory returned by testComponentFactory
  *
  * Preserve exact Vue Test Utils wrapper typing.
@@ -258,8 +277,8 @@ export type PipeResult<
  * instead of maintaining a parallel wrapper type hierarchy.
  */
 export type ComponentFactory<T extends Component> = (
-  props?: Dictionary,
-  mountOptions?: ComponentFactoryOptions,
+  props?: ComponentPropsInput<T>,
+  mountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>>,
   slots?: SlotsMap,
   extraOptions?: ComponentFactoryExtraOptions,
 ) => ReturnType<typeof mount<T>>;
@@ -284,10 +303,13 @@ export interface MountRuntimeOptions {
 }
 
 export interface TestFramework {
+  /**
+   * Creates a reusable component mounting factory.
+   */
   testComponentFactory<T extends Component>(
     component: T,
-    defaultProps?: Dictionary,
-    defaultMountOptions?: ComponentFactoryOptions,
+    defaultProps?: ComponentPropsInput<T>,
+    defaultMountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>>,
     defaultSlots?: SlotsMap,
   ): ComponentFactory<T>;
 }
@@ -296,18 +318,16 @@ export interface TestFramework {
 
 export type PlainObject = Record<string, unknown>;
 
-export type Dictionary<V = unknown> = Record<string, V>;
-
 export type SlotsMap = MountingOptions<any>["slots"];
 
 export interface MergeComponentDataParams<V = unknown> {
   // Level 1: Test Suite / Factory defaults
-  defaultMountData?: Record<string, V>;
-  defaultData?: Record<string, V>;
+  defaultMountData?: Record<string, V> | null;
+  defaultData?: Record<string, V> | null;
 
   // Level 2: Specific test
-  mountData?: Record<string, V>;
-  directData?: Record<string, V>;
+  mountData?: Record<string, V> | null;
+  directData?: Record<string, V> | null;
 
   // Control flags
   skipDefault?: boolean;

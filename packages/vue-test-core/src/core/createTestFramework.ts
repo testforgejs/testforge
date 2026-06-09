@@ -1,14 +1,15 @@
 import type {
   SlotsMap,
-  Dictionary,
   CreateTestFrameworkOptions,
   ComponentFactory,
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
+  ComponentPropsInput,
   TestFramework,
   MountRuntimeOptions,
 } from "../types";
 import type { Component } from "vue";
+import type { ComponentProps } from "vue-component-type-helpers";
 
 import { mergeComponentData } from "../utils/mergeComponentData.js";
 import { createPipelineContext } from "../pipeline/core/createPipelineContext.js";
@@ -40,13 +41,13 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
      */
     testComponentFactory<T extends Component>(
       component: T,
-      defaultProps: Dictionary = {},
-      defaultMountOptions: ComponentFactoryOptions = {},
+      defaultProps: ComponentPropsInput<T> = {},
+      defaultMountOptions: ComponentFactoryOptions<ComponentPropsInput<T>> = {},
       defaultSlots: SlotsMap = {},
     ): ComponentFactory<T> {
       return (
-        props: Dictionary = {},
-        mountOptions: ComponentFactoryOptions = {},
+        props: ComponentPropsInput<T> = {},
+        mountOptions: ComponentFactoryOptions<ComponentPropsInput<T>> = {},
         slots: SlotsMap = {},
         extraOptions: ComponentFactoryExtraOptions = {},
       ) => {
