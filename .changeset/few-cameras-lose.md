@@ -3,7 +3,7 @@
 "@testforge/vue-test-plugin-i18n": patch
 ---
 
-feat: refactored plugin typing architecture.
+fix: refactored plugin typing architecture.
 
 Plugin generics were reordered from `<TOptions, TInstance>` to `<TInstance, TOptions>` for improved readability and API ergonomics.
 
