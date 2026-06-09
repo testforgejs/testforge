@@ -60,7 +60,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         } = extraOptions;
 
         // Resolve final props
-        const finalProps = mergeComponentData<ComponentPropsInput<T>>({
+        const finalProps = mergeComponentData({
           defaultMountData: defaultMountOptions.props,
           defaultData: defaultProps,
           mountData: mountOptions.props,
@@ -70,7 +70,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         });
 
         // Resolve final slots
-        const finalSlots = mergeComponentData<ComponentSlotsInput<T>>({
+        const finalSlots = mergeComponentData({
           defaultMountData: defaultMountOptions.slots,
           defaultData: defaultSlots,
           mountData: mountOptions.slots,
