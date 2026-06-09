@@ -1,4 +1,10 @@
-import type { PipelineContext, MountWithPluginsOptions, MountRuntimeOptions } from "../types";
+import type {
+  PipelineContext,
+  MountWithPluginsOptions,
+  MountRuntimeOptions,
+  ComponentPropsInput,
+  ComponentSlotsInput,
+} from "../types";
 import type { Component } from "vue";
 
 import { mount, shallowMount } from "@vue/test-utils";
@@ -16,7 +22,7 @@ import { createPlugins } from "../pluginsRegistry/createPlugins.js";
 export function mountWithPlugins<T extends Component>(
   component: T,
   ctx: PipelineContext,
-  overrides: MountWithPluginsOptions = {},
+  overrides: MountWithPluginsOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>> = {},
   runtimeOptions: MountRuntimeOptions = {
     shallowByDefault: false,
   },

@@ -9,14 +9,14 @@ import type { MergeComponentDataParams } from "../types";
  * 3. mountData (from the mountOptions of a specific test)
  * 4. directData (direct argument of the factory call)
  */
-export function mergeComponentData<V = unknown>({
-  defaultMountData = {},
-  defaultData = {},
-  mountData = {},
-  directData = {},
+export function mergeComponentData<T extends object>({
+  defaultMountData = {} as T,
+  defaultData = {} as T,
+  mountData = {} as T,
+  directData = {} as T,
   skipDefault = false,
   skipOptions = false,
-}: MergeComponentDataParams<V>): Record<string, V> {
+}: MergeComponentDataParams<T>): T {
   // If skipDefault is true → completely ignore test suite level
   const level1 = skipDefault
     ? {}
@@ -31,5 +31,5 @@ export function mergeComponentData<V = unknown>({
     ...directData,
   };
 
-  return { ...level1, ...level2 };
+  return { ...level1, ...level2 } as T;
 }

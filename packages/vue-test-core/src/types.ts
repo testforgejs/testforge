@@ -1,6 +1,6 @@
 import type { Component } from "vue";
 import type { MountingOptions, mount } from "@vue/test-utils";
-import type { ComponentProps } from "vue-component-type-helpers";
+import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers";
 
 // === 1. Core Plugin Model ===
 
@@ -131,11 +131,15 @@ export type PluginOverridesInput = {
   [K in keyof PluginOptionsMap]?: PluginOverride<PluginOptionsMap[K]>;
 };
 
-export interface ComponentFactoryOptions<Props = any, Data = any> extends Omit<
+export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
   MountingOptions<Props, Data>,
-  "props"
+  "props" | "slots"
 > {
+  /** Strictly typed props */
   props?: Props;
+
+  /** Strictly typed slots */
+  slots?: Slots;
 
   /** Managed plugin configuration */
   plugins?: PluginOptionsInput;
@@ -268,6 +272,12 @@ export type PipeResult<
  */
 export type ComponentPropsInput<T extends Component> = Partial<ComponentProps<T>>;
 
+type RelaxedSlot<T> = T extends (props: infer P) => unknown ? (props: P) => unknown : () => unknown;
+
+export type ComponentSlotsInput<T extends Component> = Partial<{
+  [K in keyof ComponentSlots<T>]: RelaxedSlot<ComponentSlots<T>[K]>;
+}>;
+
 /**
  * Main component factory returned by testComponentFactory
  *
@@ -278,8 +288,8 @@ export type ComponentPropsInput<T extends Component> = Partial<ComponentProps<T>
  */
 export type ComponentFactory<T extends Component> = (
   props?: ComponentPropsInput<T>,
-  mountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>>,
-  slots?: SlotsMap,
+  mountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>>,
+  slots?: ComponentSlotsInput<T>,
   extraOptions?: ComponentFactoryExtraOptions,
 ) => ReturnType<typeof mount<T>>;
 
@@ -309,8 +319,8 @@ export interface TestFramework {
   testComponentFactory<T extends Component>(
     component: T,
     defaultProps?: ComponentPropsInput<T>,
-    defaultMountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>>,
-    defaultSlots?: SlotsMap,
+    defaultMountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>>,
+    defaultSlots?: ComponentSlotsInput<T>,
   ): ComponentFactory<T>;
 }
 
@@ -318,20 +328,21 @@ export interface TestFramework {
 
 export type PlainObject = Record<string, unknown>;
 
-export type SlotsMap = MountingOptions<any>["slots"];
-
-export interface MergeComponentDataParams<V = unknown> {
+export interface MergeComponentDataParams<T extends object> {
   // Level 1: Test Suite / Factory defaults
-  defaultMountData?: Record<string, V> | null;
-  defaultData?: Record<string, V> | null;
+  defaultMountData?: T | null;
+  defaultData?: T | null;
 
   // Level 2: Specific test
-  mountData?: Record<string, V> | null;
-  directData?: Record<string, V> | null;
+  mountData?: T | null;
+  directData?: T | null;
 
   // Control flags
   skipDefault?: boolean;
   skipOptions?: boolean;
 }
 
-export type MountWithPluginsOptions = ComponentFactoryOptions & MountingOptions<Component>;
+export type MountWithPluginsOptions<Props = any, Slots = any> = ComponentFactoryOptions<
+  Props,
+  Slots
+>;

@@ -1,15 +1,14 @@
 import type {
-  SlotsMap,
   CreateTestFrameworkOptions,
   ComponentFactory,
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   ComponentPropsInput,
+  ComponentSlotsInput,
   TestFramework,
   MountRuntimeOptions,
 } from "../types";
 import type { Component } from "vue";
-import type { ComponentProps } from "vue-component-type-helpers";
 
 import { mergeComponentData } from "../utils/mergeComponentData.js";
 import { createPipelineContext } from "../pipeline/core/createPipelineContext.js";
@@ -42,13 +41,16 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
     testComponentFactory<T extends Component>(
       component: T,
       defaultProps: ComponentPropsInput<T> = {},
-      defaultMountOptions: ComponentFactoryOptions<ComponentPropsInput<T>> = {},
-      defaultSlots: SlotsMap = {},
+      defaultMountOptions: ComponentFactoryOptions<
+        ComponentPropsInput<T>,
+        ComponentSlotsInput<T>
+      > = {},
+      defaultSlots: ComponentSlotsInput<T> = {},
     ): ComponentFactory<T> {
       return (
         props: ComponentPropsInput<T> = {},
-        mountOptions: ComponentFactoryOptions<ComponentPropsInput<T>> = {},
-        slots: SlotsMap = {},
+        mountOptions: ComponentFactoryOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>> = {},
+        slots: ComponentSlotsInput<T> = {},
         extraOptions: ComponentFactoryExtraOptions = {},
       ) => {
         const {
@@ -58,7 +60,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         } = extraOptions;
 
         // Resolve final props
-        const finalProps = mergeComponentData({
+        const finalProps = mergeComponentData<ComponentPropsInput<T>>({
           defaultMountData: defaultMountOptions.props,
           defaultData: defaultProps,
           mountData: mountOptions.props,
@@ -68,7 +70,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         });
 
         // Resolve final slots
-        const finalSlots: SlotsMap = mergeComponentData({
+        const finalSlots = mergeComponentData<ComponentSlotsInput<T>>({
           defaultMountData: defaultMountOptions.slots,
           defaultData: defaultSlots,
           mountData: mountOptions.slots,
