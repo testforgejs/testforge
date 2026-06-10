@@ -333,3 +333,88 @@ const wrapper = factory({ title: "Hello" });
 ```
 
 By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy infrastructure-building machine down to a **one-line declarative intent**.
+
+> ## Behavior parity with Vue Test Utils
+>
+> TestForge intentionally maintains compatibility with Vue Test Utils behavior and types to simplify migration and enable incremental adoption.
+
+---
+
+# 7. Principles
+
+> ## Behavior parity with Vue Test Utils
+>
+> TestForge intentionally preserves Vue Test Utils behavior and typing semantics to simplify migration. Existing VTU configurations should continue to work unchanged, allowing TestForge features to be adopted incrementally.
+
+> ## Plugin-first architecture
+>
+> Plugins are first-class citizens and can contribute runtime behavior, configuration, and type augmentation.
+
+> ## Strong typing
+>
+> TypeScript types are inferred from components and plugins whenever possible.
+
+> ## Opt-in abstractions
+>
+> TestForge extends Vue Test Utils rather than replacing it. Users can adopt additional abstractions only when they provide value.
+
+---
+
+# FAQ
+
+## Literal types inside data()
+
+When using union literal types in component state:
+
+```typescript
+data() {
+  return {
+    status: "idle" as "idle" | "loading" | "success",
+  };
+}
+```
+
+TypeScript may widen string literals when overriding data():
+
+```typescript
+framework.testComponentFactory(
+  Component,
+  {},
+  {
+    data() {
+      return {
+        status: "loading",
+      };
+    },
+  },
+);
+```
+
+which produces:
+
+```log
+Type 'string' is not assignable to
+'idle' | 'loading' | 'success'
+```
+
+This behavior is inherited from Vue Test Utils and TypeScript itself.
+
+To preserve literal types, use:
+
+```typescript
+data() {
+  return {
+    status: "loading" as const,
+  };
+}
+```
+
+or:
+
+```typescript
+data() {
+  return {
+    status: "loading" as "idle" | "loading" | "success",
+  };
+}
+```
