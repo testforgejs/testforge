@@ -44,6 +44,8 @@ export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
 ) => TInstance;
 
 // === 3. Plugin Runtime Configuration ===
+// Runtime state accumulated by middleware.
+// Component-specific generic information is intentionally erased.
 
 export type RuntimePluginConfig = Record<string, any>;
 
@@ -209,11 +211,17 @@ export interface PipelineContext {
   result: PipelineContextResult;
 }
 
-type MountOptionsState = Partial<MountingOptions<any>>;
+/**
+ * Runtime type.
+ *
+ * The pipeline operates without knowledge of a specific component,
+ * therefore Props/Data generics are intentionally erased.
+ */
+type MountOptionsState = Partial<MountingOptions<any, any>>;
 
 export interface PipelineContextResult {
   mountOptions: MountOptionsState;
-  global: NonNullable<MountingOptions<any>["global"]>;
+  global: NonNullable<MountingOptions<any, any>["global"]>;
   pluginDefaultsState: PluginConfigDefaults;
   plugins: ResolvedPluginOptions;
 }
