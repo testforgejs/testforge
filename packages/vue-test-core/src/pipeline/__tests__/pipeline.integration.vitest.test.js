@@ -120,6 +120,208 @@ describe("Mount Pipeline Integration", () => {
     });
   });
 
+  /**
+   * Verify data override behavior
+   *
+   * data() definitions are replaced rather than merged.
+   * The most specific level wins.
+   */
+  describe("Data Option (Function Override)", () => {
+    it("should use data from defaultMountOptions when no override is provided", () => {
+      const defaults = {
+        data() {
+          return {
+            counter: 1,
+            status: "idle",
+          };
+        },
+      };
+
+      const result = run(presets, defaults);
+
+      expect(result.mountOptions.data()).toEqual({
+        counter: 1,
+        status: "idle",
+      });
+    });
+
+    it("should override default data function when mountOptions provides data", () => {
+      const defaults = {
+        data() {
+          return {
+            counter: 1,
+            status: "idle",
+          };
+        },
+      };
+
+      const overrides = {
+        data() {
+          return {
+            counter: 42,
+            status: "loading",
+          };
+        },
+      };
+
+      const result = run(presets, defaults, overrides);
+
+      expect(result.mountOptions.data()).toEqual({
+        counter: 42,
+        status: "loading",
+      });
+    });
+
+    it("should not merge results of data functions", () => {
+      const defaults = {
+        data() {
+          return {
+            counter: 1,
+            status: "idle",
+          };
+        },
+      };
+
+      const overrides = {
+        data() {
+          return {
+            counter: 42,
+          };
+        },
+      };
+
+      const result = run(presets, defaults, overrides);
+
+      expect(result.mountOptions.data()).toEqual({
+        counter: 42,
+      });
+
+      expect(result.mountOptions.data()).not.toEqual({
+        counter: 42,
+        status: "idle",
+      });
+    });
+
+    it("should ignore default data when skipDefaultOptions is true", () => {
+      const defaults = {
+        data() {
+          return {
+            counter: 1,
+          };
+        },
+      };
+
+      const extra = {
+        skipDefaultOptions: true,
+      };
+
+      const result = run(presets, defaults, {}, extra);
+
+      expect(result.mountOptions.data).toBeUndefined();
+    });
+  });
+
+  /**
+   * Verify attrs merge behavior
+   *
+   * attrs are shallow-merged.
+   * More specific values override existing keys.
+   */
+  describe("Attrs (Shallow Merge)", () => {
+    it("should merge attrs from default and mount options", () => {
+      const defaults = {
+        attrs: {
+          id: "base-id",
+          class: "base-class",
+        },
+      };
+
+      const overrides = {
+        attrs: {
+          title: "tooltip",
+        },
+      };
+
+      const result = run(presets, defaults, overrides);
+
+      expect(result.mountOptions.attrs).toEqual({
+        id: "base-id",
+        class: "base-class",
+        title: "tooltip",
+      });
+    });
+
+    it("should override existing attr values", () => {
+      const defaults = {
+        attrs: {
+          class: "base-class",
+          title: "base-title",
+        },
+      };
+
+      const overrides = {
+        attrs: {
+          title: "custom-title",
+        },
+      };
+
+      const result = run(presets, defaults, overrides);
+
+      expect(result.mountOptions.attrs).toEqual({
+        class: "base-class",
+        title: "custom-title",
+      });
+    });
+
+    it("should replace arrays instead of concatenating them", () => {
+      const defaults = {
+        attrs: {
+          items: [1, 2],
+        },
+      };
+
+      const overrides = {
+        attrs: {
+          items: [],
+        },
+      };
+
+      const result = run(presets, defaults, overrides);
+
+      expect(result.mountOptions.attrs.items).toEqual([]);
+    });
+
+    it("should preserve default attrs when mount options do not provide attrs", () => {
+      const defaults = {
+        attrs: {
+          id: "base-id",
+        },
+      };
+
+      const result = run(presets, defaults);
+
+      expect(result.mountOptions.attrs).toEqual({
+        id: "base-id",
+      });
+    });
+
+    it("should ignore default attrs when skipDefaultOptions is true", () => {
+      const defaults = {
+        attrs: {
+          id: "base-id",
+        },
+      };
+
+      const extra = {
+        skipDefaultOptions: true,
+      };
+
+      const result = run(presets, defaults, {}, extra);
+
+      expect(result.mountOptions.attrs).toBeUndefined();
+    });
+  });
+
   describe("Mount Pipeline Advanced Scenarios", () => {
     describe("Plugin Configuration Validation", () => {
       it("should throw an error when a string is passed to plugin options", () => {
