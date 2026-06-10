@@ -1,6 +1,7 @@
 import { expectError, expectType } from "tsd";
 import { createTestFramework } from "../dist/index";
-import { defineComponent, h } from "vue";
+import { defineComponent } from "vue";
+import { mount } from "@vue/test-utils";
 // Registers PluginOptionsMap test augmentation
 import "./shared-plugin-types";
 
@@ -265,6 +266,199 @@ expectError(
     {},
     {
       default: (props: { user: { age: number } }) => props.user,
+    },
+  ),
+);
+
+/**
+ * Verify Data
+ */
+
+const OptionsComponent = defineComponent({
+  name: "OptionsComponent",
+  data() {
+    return {
+      counter: 0,
+      status: "idle" as "idle" | "loading" | "success",
+    };
+  },
+  render() {
+    return null;
+  },
+});
+
+/**
+ * Baseline VTU behavior.
+ *
+ * TestForge intentionally preserves Vue Test Utils typing
+ * and configuration semantics to simplify migration.
+ */
+expectError(
+  mount(OptionsComponent, {
+    data() {
+      return {
+        counter: 42,
+        status: "loading",
+      };
+    },
+  }),
+);
+
+mount(OptionsComponent, {
+  data() {
+    return {
+      counter: 42,
+      status: "loading" as const,
+    };
+  },
+});
+
+mount(OptionsComponent, {
+  data() {
+    return {
+      counter: 42,
+      invalidStateKey: true,
+    };
+  },
+});
+
+mount(OptionsComponent, {
+  data() {
+    return {
+      status: "loading" as const,
+      invalidStateKey: true,
+    };
+  },
+});
+
+mount(OptionsComponent, {
+  data() {
+    return {};
+  },
+});
+
+expectError(
+  mount(OptionsComponent, {
+    data() {
+      return {
+        invalidStateKey: true,
+      };
+    },
+  }),
+);
+
+// Verify defaultMountOptions
+
+framework.testComponentFactory(
+  OptionsComponent,
+  {},
+  {
+    data() {
+      return {
+        counter: 42,
+        status: "loading" as const,
+      };
+    },
+  },
+);
+
+framework.testComponentFactory(
+  OptionsComponent,
+  {},
+  {
+    data() {
+      return {
+        counter: 42,
+        status: "loading" as "idle" | "loading" | "success",
+      };
+    },
+  },
+);
+
+framework.testComponentFactory(
+  OptionsComponent,
+  {},
+  {
+    data() {
+      return {
+        status: "loading" as const,
+        invalidStateKey: true,
+      };
+    },
+  },
+);
+
+expectError(
+  framework.testComponentFactory(
+    OptionsComponent,
+    {},
+    {
+      data() {
+        return {
+          invalidStateKey: true,
+        };
+      },
+    },
+  ),
+);
+
+// Verify mountOptions
+
+const optionsFactory = framework.testComponentFactory(OptionsComponent);
+
+const optionsWrapper = optionsFactory(
+  {},
+  {
+    data() {
+      return {
+        counter: 42,
+        status: "loading",
+      };
+    },
+  },
+);
+
+expectType<number>(optionsWrapper.vm.counter);
+expectType<"idle" | "loading" | "success">(optionsWrapper.vm.status);
+
+// Error: Existing keys were not passed to the state
+expectError(
+  optionsFactory(
+    {},
+    {
+      data() {
+        return {
+          invalidStateKey: true,
+        };
+      },
+    },
+  ),
+);
+
+// Error: Incorrect data type passed for an existing key
+expectError(
+  optionsFactory(
+    {},
+    {
+      data() {
+        return {
+          counter: "forty-two" as any as string,
+        };
+      },
+    },
+  ),
+);
+
+// 3. Error: Passing a value that is not part of the union literal
+expectError(
+  optionsFactory(
+    {},
+    {
+      data() {
+        return {
+          status: "error" as any as string,
+        };
+      },
     },
   ),
 );

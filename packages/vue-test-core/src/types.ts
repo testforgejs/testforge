@@ -133,8 +133,11 @@ export type PluginOverridesInput = {
 
 export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
   MountingOptions<Props, Data>,
-  "props" | "slots"
+  "props" | "slots" | "data"
 > {
+  /** Strictly typed data */
+  data?: () => Data;
+
   /** Strictly typed props */
   props?: Props;
 
@@ -278,6 +281,15 @@ export type ComponentSlotsInput<T extends Component> = Partial<{
   [K in keyof ComponentSlots<T>]: RelaxedSlot<ComponentSlots<T>[K]>;
 }>;
 
+// The exact equivalent of the type from Vue Test Utils
+export type ComponentData<T extends Component> = T extends { data?(...args: any): infer D }
+  ? D extends Record<string, any>
+    ? D
+    : Record<string, never>
+  : Record<string, never>;
+
+export type ComponentDataInput<T extends Component> = Partial<ComponentData<T>>;
+
 /**
  * Main component factory returned by testComponentFactory
  *
@@ -288,7 +300,11 @@ export type ComponentSlotsInput<T extends Component> = Partial<{
  */
 export type ComponentFactory<T extends Component> = (
   props?: ComponentPropsInput<T>,
-  mountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>>,
+  mountOptions?: ComponentFactoryOptions<
+    ComponentPropsInput<T>,
+    ComponentSlotsInput<T>,
+    ComponentDataInput<T>
+  >,
   slots?: ComponentSlotsInput<T>,
   extraOptions?: ComponentFactoryExtraOptions,
 ) => ReturnType<typeof mount<T>>;
@@ -319,7 +335,11 @@ export interface TestFramework {
   testComponentFactory<T extends Component>(
     component: T,
     defaultProps?: ComponentPropsInput<T>,
-    defaultMountOptions?: ComponentFactoryOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>>,
+    defaultMountOptions?: ComponentFactoryOptions<
+      ComponentPropsInput<T>,
+      ComponentSlotsInput<T>,
+      ComponentDataInput<T>
+    >,
     defaultSlots?: ComponentSlotsInput<T>,
   ): ComponentFactory<T>;
 }
@@ -342,7 +362,8 @@ export interface MergeComponentDataParams<T extends object> {
   skipOptions?: boolean;
 }
 
-export type MountWithPluginsOptions<Props = any, Slots = any> = ComponentFactoryOptions<
+export type MountWithPluginsOptions<Props = any, Slots = any, Data = any> = ComponentFactoryOptions<
   Props,
-  Slots
+  Slots,
+  Data
 >;

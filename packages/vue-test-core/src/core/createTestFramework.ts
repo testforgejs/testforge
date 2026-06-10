@@ -5,6 +5,7 @@ import type {
   ComponentFactoryExtraOptions,
   ComponentPropsInput,
   ComponentSlotsInput,
+  ComponentDataInput,
   TestFramework,
   MountRuntimeOptions,
 } from "../types";
@@ -43,13 +44,18 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       defaultProps: ComponentPropsInput<T> = {},
       defaultMountOptions: ComponentFactoryOptions<
         ComponentPropsInput<T>,
-        ComponentSlotsInput<T>
+        ComponentSlotsInput<T>,
+        ComponentDataInput<T>
       > = {},
       defaultSlots: ComponentSlotsInput<T> = {},
     ): ComponentFactory<T> {
       return (
         props: ComponentPropsInput<T> = {},
-        mountOptions: ComponentFactoryOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>> = {},
+        mountOptions: ComponentFactoryOptions<
+          ComponentPropsInput<T>,
+          ComponentSlotsInput<T>,
+          ComponentDataInput<T>
+        > = {},
         slots: ComponentSlotsInput<T> = {},
         extraOptions: ComponentFactoryExtraOptions = {},
       ) => {

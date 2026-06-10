@@ -4,6 +4,7 @@ import type {
   MountRuntimeOptions,
   ComponentPropsInput,
   ComponentSlotsInput,
+  ComponentDataInput,
 } from "../types";
 import type { Component } from "vue";
 
@@ -22,7 +23,11 @@ import { createPlugins } from "../pluginsRegistry/createPlugins.js";
 export function mountWithPlugins<T extends Component>(
   component: T,
   ctx: PipelineContext,
-  overrides: MountWithPluginsOptions<ComponentPropsInput<T>, ComponentSlotsInput<T>> = {},
+  overrides: MountWithPluginsOptions<
+    ComponentPropsInput<T>,
+    ComponentSlotsInput<T>,
+    ComponentDataInput<T>
+  > = {},
   runtimeOptions: MountRuntimeOptions = {
     shallowByDefault: false,
   },
