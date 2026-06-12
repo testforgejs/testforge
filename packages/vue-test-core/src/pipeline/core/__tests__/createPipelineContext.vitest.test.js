@@ -42,7 +42,7 @@ describe("createPipelineContext", () => {
       presets: { presetA: {} },
     });
 
-    expect(getActivePreset).toHaveBeenCalledWith({ preset: "presetA" }, { presetA: {} });
+    expect(getActivePreset).toHaveBeenCalledWith({ presetA: {} }, { preset: "presetA" });
   });
 
   it("should set preset and supportedPlugins correctly", () => {

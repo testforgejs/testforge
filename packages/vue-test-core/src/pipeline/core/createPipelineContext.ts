@@ -15,7 +15,7 @@ import { createSupportedPluginsState } from "../../utils/createSupportedPluginsS
 export function createPipelineContext(params: CreatePipelineContextParams): PipelineContext {
   const { defaultMountOptions = {}, mountOptions = {}, extraOptions = {}, presets = {} } = params;
 
-  const activePreset = getActivePreset(extraOptions, presets);
+  const activePreset = getActivePreset(presets, extraOptions);
   const supportedPlugins = createSupportedPluginsState(activePreset);
 
   return {

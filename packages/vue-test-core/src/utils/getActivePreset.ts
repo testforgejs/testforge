@@ -16,8 +16,8 @@ import { DEFAULT_PRESET_NAME } from "../constants/constants.js";
  * 3. If preset exists → it is validated via `validatePreset`.
  */
 export function getActivePreset(
-  extraOptions?: ComponentFactoryExtraOptions,
   presets: TestFrameworkPresets = {},
+  extraOptions?: ComponentFactoryExtraOptions,
 ): PresetDefinition | undefined {
   const requestedPresetName = extraOptions?.preset?.trim();
   const activeName = requestedPresetName || DEFAULT_PRESET_NAME;
