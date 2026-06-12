@@ -16,6 +16,7 @@ import { createPipelineContext } from "../pipeline/core/createPipelineContext.js
 import { createPipeline } from "../pipeline/core/createPipeline.js";
 import { createMountPipeline } from "../pipeline/mount/createMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
+import { validateCreateTestFrameworkOptions } from "../validators/validateCreateTestFrameworkOptions.js";
 
 /*
  * Creates the main TestFramework instance.
@@ -27,6 +28,7 @@ import { mountWithPlugins } from "./mountWithPlugins.js";
  * - plugin-aware mounting
  */
 export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
+  validateCreateTestFrameworkOptions(options);
   const { presets = {}, shallowByDefault = false } = options;
 
   return {

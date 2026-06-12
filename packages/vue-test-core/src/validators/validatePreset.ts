@@ -1,3 +1,5 @@
+import { ERROR_PREFIX } from "../constants/constants.js";
+
 import type { PresetDefinition, PluginName, PluginManifestEntry } from "../types";
 
 /*
@@ -11,11 +13,11 @@ import type { PresetDefinition, PluginName, PluginManifestEntry } from "../types
  */
 export function validatePreset(name: PluginName, preset: PresetDefinition): void {
   if (!preset) {
-    throw new Error(`[Validator] Preset "${name}" is null or undefined.`);
+    throw new Error(`${ERROR_PREFIX} Preset "${name}" is null or undefined.`);
   }
 
   if (!Array.isArray(preset.manifest)) {
-    throw new Error(`[Validator] Preset "${name}" must have a "manifest" array.`);
+    throw new Error(`${ERROR_PREFIX} Preset "${name}" must have a "manifest" array.`);
   }
 
   const manifestPluginNames = new Set<PluginName>();
@@ -25,19 +27,19 @@ export function validatePreset(name: PluginName, preset: PresetDefinition): void
     const { module, enabled } = entry;
 
     if (!module || typeof module.getName !== "function") {
-      throw new Error(`[Validator] Invalid module at manifest[${index}] in preset "${name}".`);
+      throw new Error(`${ERROR_PREFIX} Invalid module at manifest[${index}] in preset "${name}".`);
     }
 
     const pluginName = module.getName();
     if (manifestPluginNames.has(pluginName)) {
       throw new Error(
-        `[Validator] Duplicate plugin "${pluginName}" in manifest of preset "${name}".`,
+        `${ERROR_PREFIX} Duplicate plugin "${pluginName}" in manifest of preset "${name}".`,
       );
     }
 
     if (typeof enabled !== "boolean") {
       throw new Error(
-        `[Validator] Plugin "${pluginName}" in preset "${name}" must have a boolean "enabled" flag.`,
+        `${ERROR_PREFIX} Plugin "${pluginName}" in preset "${name}" must have a boolean "enabled" flag.`,
       );
     }
 
@@ -51,7 +53,7 @@ export function validatePreset(name: PluginName, preset: PresetDefinition): void
     defaultKeys.forEach((key) => {
       if (!manifestPluginNames.has(key)) {
         throw new Error(
-          `[Validator] Preset "${name}" contains defaults for unknown plugin "${key}". ` +
+          `${ERROR_PREFIX} Preset "${name}" contains defaults for unknown plugin "${key}". ` +
             `This plugin is not present in the manifest.`,
         );
       }
@@ -61,7 +63,7 @@ export function validatePreset(name: PluginName, preset: PresetDefinition): void
 
       if (!isObject) {
         throw new Error(
-          `[Validator] Invalid default configuration for plugin "${key}" in preset "${name}". ` +
+          `${ERROR_PREFIX} Invalid default configuration for plugin "${key}" in preset "${name}". ` +
             `Expected Object, but received ${typeof value}.`,
         );
       }

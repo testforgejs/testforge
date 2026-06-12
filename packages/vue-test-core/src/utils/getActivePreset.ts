@@ -4,7 +4,7 @@ import type {
   PresetDefinition,
 } from "../types";
 
-import { validatePreset } from "./validatePreset.js";
+import { validatePreset } from "../validators/validatePreset.js";
 import { DEFAULT_PRESET_NAME } from "../constants/constants.js";
 
 /*

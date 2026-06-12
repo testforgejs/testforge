@@ -1,9 +1,5 @@
 import type { PlainObject } from "../types";
-
-// Checks whether the element is a regular object (not an array and not null)
-function isPlainObject(item: unknown): item is PlainObject {
-  return !!item && typeof item === "object" && !Array.isArray(item);
-}
+import { isPlainObject } from "../guards/isPlainObject.js";
 
 /*
  * IMPORTANT CONTRACT:

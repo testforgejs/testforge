@@ -100,17 +100,17 @@ describe("createTestFramework → testComponentFactory", () => {
 
   describe("mount context creation", () => {
     it("should create mount context with correct arguments", () => {
-      const presets = { test: true };
+      const presets = { test: { manifest: [], defaults: {} } };
       const { testComponentFactory } = createTestFramework({ presets });
 
       const factory = testComponentFactory(component);
 
-      factory({}, {}, {}, { extra: true });
+      factory({}, {}, {}, { preset: "abcd" });
 
       expect(createPipelineContext).toHaveBeenCalledWith({
         defaultMountOptions: {},
         mountOptions: {},
-        extraOptions: { extra: true },
+        extraOptions: { preset: "abcd" },
         presets,
       });
     });
@@ -203,6 +203,22 @@ describe("createTestFramework → testComponentFactory", () => {
         {
           shallowByDefault: true,
         },
+      );
+    });
+  });
+
+  describe("validate options", () => {
+    test("should throw an error when shallowByDefault is not a boolean", () => {
+      expect(() =>
+        createTestFramework({
+          shallowByDefault: "true",
+        }),
+      ).toThrow('"shallowByDefault" must be a boolean');
+    });
+
+    test("should throw an error when options is not a plain object", () => {
+      expect(() => createTestFramework(123)).toThrow(
+        "createTestFramework options must be a plain object.",
       );
     });
   });
