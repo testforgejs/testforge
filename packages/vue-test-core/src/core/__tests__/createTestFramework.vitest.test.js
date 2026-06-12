@@ -285,5 +285,76 @@ describe("createTestFramework → testComponentFactory", () => {
         }).not.toThrow();
       });
     });
+
+    describe("component factory validation", () => {
+      it.each([
+        ["props", 123],
+        ["props", []],
+        ["props", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component);
+
+        expect(() => {
+          factory(value);
+        }).toThrow('"props" must be a plain object');
+      });
+
+      it.each([
+        ["mountOptions", 123],
+        ["mountOptions", []],
+        ["mountOptions", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component);
+
+        expect(() => {
+          factory({}, value);
+        }).toThrow('"mountOptions" must be a plain object');
+      });
+
+      it.each([
+        ["slots", 123],
+        ["slots", []],
+        ["slots", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component);
+
+        expect(() => {
+          factory({}, {}, value);
+        }).toThrow('"slots" must be a plain object');
+      });
+
+      it.each([
+        ["extraOptions", 123],
+        ["extraOptions", []],
+        ["extraOptions", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component);
+
+        expect(() => {
+          factory({}, {}, {}, value);
+        }).toThrow('"extraOptions" must be a plain object');
+      });
+
+      it("should not throw for valid arguments", () => {
+        const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component);
+
+        expect(() => {
+          factory(
+            {},
+            {
+              props: {},
+              slots: {},
+            },
+            {},
+            {},
+          );
+        }).not.toThrow();
+      });
+    });
   });
 });
