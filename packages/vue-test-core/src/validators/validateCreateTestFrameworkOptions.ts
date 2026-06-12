@@ -6,6 +6,11 @@ import type { CreateTestFrameworkOptions } from "../types";
 
 /*
  * Validates createTestFramework() options.
+ *
+ * Validation rules:
+ * - options must be a plain object
+ * - presets must be valid
+ * - shallowByDefault must be a boolean when provided
  */
 export function validateCreateTestFrameworkOptions(options: CreateTestFrameworkOptions = {}): void {
   assertIsPlainObject(options, "createTestFramework options");

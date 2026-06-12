@@ -208,18 +208,82 @@ describe("createTestFramework → testComponentFactory", () => {
   });
 
   describe("validate options", () => {
-    test("should throw an error when shallowByDefault is not a boolean", () => {
-      expect(() =>
-        createTestFramework({
-          shallowByDefault: "true",
-        }),
-      ).toThrow('"shallowByDefault" must be a boolean');
+    describe("createTestFramework validation", () => {
+      test("should throw an error when shallowByDefault is not a boolean", () => {
+        expect(() =>
+          createTestFramework({
+            shallowByDefault: "true",
+          }),
+        ).toThrow('"shallowByDefault" must be a boolean');
+      });
+
+      test("should throw an error when options is not a plain object", () => {
+        expect(() => createTestFramework(123)).toThrow(
+          "createTestFramework options must be a plain object.",
+        );
+      });
     });
 
-    test("should throw an error when options is not a plain object", () => {
-      expect(() => createTestFramework(123)).toThrow(
-        "createTestFramework options must be a plain object.",
-      );
+    describe("testComponentFactory validation", () => {
+      it("should throw when component is not an object", () => {
+        const { testComponentFactory } = createTestFramework();
+
+        expect(() => {
+          testComponentFactory(null);
+        }).toThrow("testComponentFactory() requires a valid Vue component");
+      });
+
+      it.each([
+        ["defaultProps", 123],
+        ["defaultProps", []],
+        ["defaultProps", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+
+        expect(() => {
+          testComponentFactory(component, value);
+        }).toThrow('"defaultProps" must be a plain object');
+      });
+
+      it.each([
+        ["defaultMountOptions", 123],
+        ["defaultMountOptions", []],
+        ["defaultMountOptions", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+
+        expect(() => {
+          testComponentFactory(component, {}, value);
+        }).toThrow('"defaultMountOptions" must be a plain object');
+      });
+
+      it.each([
+        ["defaultSlots", 123],
+        ["defaultSlots", []],
+        ["defaultSlots", "foo"],
+      ])("should throw when %s is invalid", (_name, value) => {
+        const { testComponentFactory } = createTestFramework();
+
+        expect(() => {
+          testComponentFactory(component, {}, {}, value);
+        }).toThrow('"defaultSlots" must be a plain object');
+      });
+
+      it("should not throw for valid arguments", () => {
+        const { testComponentFactory } = createTestFramework();
+
+        expect(() => {
+          testComponentFactory(
+            component,
+            {},
+            {
+              props: {},
+              slots: {},
+            },
+            {},
+          );
+        }).not.toThrow();
+      });
     });
   });
 });

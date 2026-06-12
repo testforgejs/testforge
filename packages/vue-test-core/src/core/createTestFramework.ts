@@ -17,6 +17,7 @@ import { createPipeline } from "../pipeline/core/createPipeline.js";
 import { createMountPipeline } from "../pipeline/mount/createMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
 import { validateCreateTestFrameworkOptions } from "../validators/validateCreateTestFrameworkOptions.js";
+import { validateTestComponentFactoryArguments } from "../validators/validateTestComponentFactoryArguments.js";
 
 /*
  * Creates the main TestFramework instance.
@@ -51,6 +52,13 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       > = {},
       defaultSlots: ComponentSlotsInput<T> = {},
     ): ComponentFactory<T> {
+      validateTestComponentFactoryArguments(
+        component,
+        defaultProps,
+        defaultMountOptions,
+        defaultSlots,
+      );
+
       return (
         props: ComponentPropsInput<T> = {},
         mountOptions: ComponentFactoryOptions<
