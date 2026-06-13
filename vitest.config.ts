@@ -6,6 +6,10 @@ export default defineConfig({
     globals: true,
     // environment: "node",
     include: ["**/*.vitest.test.js", "**/*.vitest.test.cjs", "**/*.test.ts", "**/*.int.test.js"],
+    typecheck: {
+      enabled: true,
+      include: ["**/*.type-spec.ts", "**/*.test.ts"],
+    },
   },
   resolve: {
     alias: [
