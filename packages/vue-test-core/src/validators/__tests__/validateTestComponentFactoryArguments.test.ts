@@ -1,11 +1,16 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { validateTestComponentFactoryArguments } from "../validateTestComponentFactoryArguments.js";
 import { validatePlainObjectArgument } from "../validatePlainObjectArgument.js";
+import { validateComponentFactoryOptions } from "../validateComponentFactoryOptions.js";
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
-// Mock the child validator to isolate the logic of the current function
 vi.mock("../validatePlainObjectArgument.js", () => ({
   validatePlainObjectArgument: vi.fn(),
+}));
+
+vi.mock("../validateComponentFactoryOptions.js", () => ({
+  validateComponentFactoryOptions: vi.fn(),
 }));
 
 describe("validateTestComponentFactoryArguments", () => {
@@ -19,7 +24,7 @@ describe("validateTestComponentFactoryArguments", () => {
       { description: "a functional/class component", value: () => {} },
     ])("should pass component validation when $description is provided", ({ value }) => {
       expect(() => {
-        validateTestComponentFactoryArguments(value, {}, {}, {});
+        validateTestComponentFactoryArguments(value, {}, {}, {}, {});
       }).not.toThrow();
     });
 
@@ -31,24 +36,62 @@ describe("validateTestComponentFactoryArguments", () => {
       { type: "boolean", value: true },
     ])("should throw an error when component is a $type", ({ value }) => {
       expect(() => {
-        validateTestComponentFactoryArguments(value, {}, {}, {});
+        validateTestComponentFactoryArguments(value, {}, {}, {}, {});
       }).toThrow(`${ERROR_PREFIX} testComponentFactory() requires a valid Vue component.`);
     });
   });
 
-  describe("delegation to validatePlainObjectArgument", () => {
-    it("should invoke validatePlainObjectArgument for all optional configuration objects", () => {
-      const dummyComponent = {};
-      const mockProps = { id: 1 };
-      const mockOptions = { shallow: true };
-      const mockSlots = { default: "text" };
+  describe("defaultProps and defaultSlots validation", () => {
+    it("should delegate validation of defaultProps and defaultSlots", () => {
+      const component = {};
+      const defaultProps = { id: 1 };
+      const defaultSlots = { default: "text" };
 
-      validateTestComponentFactoryArguments(dummyComponent, mockProps, mockOptions, mockSlots);
+      validateTestComponentFactoryArguments(component, defaultProps, {}, defaultSlots, {});
 
-      // Verify that the child validator was called for each argument with the correct name
-      expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockProps, "defaultProps");
-      expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockOptions, "defaultMountOptions");
-      expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockSlots, "defaultSlots");
+      expect(validatePlainObjectArgument).toHaveBeenCalledWith(defaultProps, "defaultProps");
+
+      expect(validatePlainObjectArgument).toHaveBeenCalledWith(defaultSlots, "defaultSlots");
+    });
+  });
+
+  describe("defaultMountOptions validation delegation", () => {
+    it("should delegate defaultMountOptions validation to validateComponentFactoryOptions", () => {
+      const component = {};
+      const defaultMountOptions = {
+        shallow: true,
+      };
+
+      validateTestComponentFactoryArguments(component, {}, defaultMountOptions, {}, {});
+
+      expect(validateComponentFactoryOptions).toHaveBeenCalledWith(
+        defaultMountOptions,
+        "defaultMountOptions",
+        {},
+      );
+    });
+
+    it("should pass presets to validateComponentFactoryOptions", () => {
+      const component = {};
+
+      const presets = {
+        default: {
+          manifest: [],
+          defaults: {},
+        },
+      };
+
+      const defaultMountOptions = {
+        shallow: true,
+      };
+
+      validateTestComponentFactoryArguments(component, {}, defaultMountOptions, {}, presets);
+
+      expect(validateComponentFactoryOptions).toHaveBeenCalledWith(
+        defaultMountOptions,
+        "defaultMountOptions",
+        presets,
+      );
     });
   });
 });

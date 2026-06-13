@@ -1,16 +1,20 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { validateComponentFactoryArguments } from "../validateComponentFactoryArguments.js";
 import { validatePlainObjectArgument } from "../validatePlainObjectArgument.js";
-import { validateBooleanOption } from "../validateBooleanOption.js";
+import { validateComponentFactoryOptions } from "../validateComponentFactoryOptions.js";
+import { validateComponentFactoryExtraOptions } from "../validateComponentFactoryExtraOptions.js";
 
-// Mock child validators to isolate testing of the current function
 vi.mock("../validatePlainObjectArgument.js", () => ({
   validatePlainObjectArgument: vi.fn(),
 }));
 
-// Mock child validators to isolate testing of the current function
-vi.mock("../validateBooleanOption.js", () => ({
-  validateBooleanOption: vi.fn(),
+vi.mock("../validateComponentFactoryOptions.js", () => ({
+  validateComponentFactoryOptions: vi.fn(),
+}));
+
+vi.mock("../validateComponentFactoryExtraOptions.js", () => ({
+  validateComponentFactoryExtraOptions: vi.fn(),
 }));
 
 describe("validateComponentFactoryArguments", () => {
@@ -19,46 +23,96 @@ describe("validateComponentFactoryArguments", () => {
   });
 
   describe("plain object arguments validation", () => {
-    it("should invoke validatePlainObjectArgument for all four primary arguments", () => {
+    it("should validate props and slots as plain objects", () => {
       const mockProps = { foo: "bar" };
       const mockMountOptions = { shallow: true };
       const mockSlots = { default: "text" };
-      const mockExtraOptions = {};
 
-      validateComponentFactoryArguments(mockProps, mockMountOptions, mockSlots, mockExtraOptions);
+      validateComponentFactoryArguments(mockProps, mockMountOptions, mockSlots, {});
 
-      // Check that the base arguments are passed to the object validator with the correct names
       expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockProps, "props");
-      expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockMountOptions, "mountOptions");
+
       expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockSlots, "slots");
-      expect(validatePlainObjectArgument).toHaveBeenCalledWith(mockExtraOptions, "extraOptions");
     });
   });
 
-  describe("extra options properties validation", () => {
-    it("should invoke validateBooleanOption for all specific flags inside extraOptions", () => {
-      const mockExtraOptions = {
+  describe("mountOptions validation delegation", () => {
+    it("should delegate mountOptions validation to validateComponentFactoryOptions", () => {
+      const mountOptions = {
+        shallow: true,
+      };
+
+      const extraOptions = {
+        preset: "default",
+      };
+
+      const presets = {
+        default: {
+          manifest: [],
+          defaults: {},
+        },
+      };
+
+      validateComponentFactoryArguments({}, mountOptions, {}, extraOptions, presets);
+
+      expect(validateComponentFactoryOptions).toHaveBeenCalledWith(
+        mountOptions,
+        "mountOptions",
+        presets,
+        extraOptions,
+      );
+    });
+
+    it("should pass empty presets by default", () => {
+      const mountOptions = {};
+
+      validateComponentFactoryArguments({}, mountOptions, {}, {});
+
+      expect(validateComponentFactoryOptions).toHaveBeenCalledWith(
+        mountOptions,
+        "mountOptions",
+        {},
+        {},
+      );
+    });
+  });
+
+  describe("extraOptions validation delegation", () => {
+    it("should delegate extraOptions validation to validateComponentFactoryExtraOptions", () => {
+      const extraOptions = {
         skipDefaultProps: true,
         skipDefaultSlots: false,
         skipDefaultOptions: true,
       };
 
-      // Pass valid placeholders as the first 3 arguments
-      validateComponentFactoryArguments({}, {}, {}, mockExtraOptions);
+      validateComponentFactoryArguments({}, {}, {}, extraOptions);
 
-      // Check that the properties of the `extraOptions` object are retrieved and validated as Boolean options
-      expect(validateBooleanOption).toHaveBeenCalledWith(
-        mockExtraOptions.skipDefaultProps,
-        "skipDefaultProps",
-      );
-      expect(validateBooleanOption).toHaveBeenCalledWith(
-        mockExtraOptions.skipDefaultSlots,
-        "skipDefaultSlots",
-      );
-      expect(validateBooleanOption).toHaveBeenCalledWith(
-        mockExtraOptions.skipDefaultOptions,
-        "skipDefaultOptions",
-      );
+      expect(validateComponentFactoryExtraOptions).toHaveBeenCalledWith(extraOptions, {});
+    });
+
+    it("should pass presets to validateComponentFactoryExtraOptions", () => {
+      const presets = {
+        default: {
+          manifest: [],
+          defaults: {},
+        },
+      };
+
+      const extraOptions = {
+        preset: "default",
+      };
+
+      validateComponentFactoryArguments({}, {}, {}, extraOptions, presets);
+
+      expect(validateComponentFactoryExtraOptions).toHaveBeenCalledWith(extraOptions, presets);
+    });
+
+    it("should pass an empty object as presets by default", () => {
+      const extraOptions = {};
+
+      validateComponentFactoryArguments({}, {}, {}, extraOptions);
+
+      expect(validateComponentFactoryExtraOptions).toHaveBeenCalledWith(extraOptions, {});
     });
   });
 });

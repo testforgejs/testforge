@@ -58,6 +58,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         defaultProps,
         defaultMountOptions,
         defaultSlots,
+        presets,
       );
 
       return (
@@ -70,7 +71,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         slots: ComponentSlotsInput<T> = {},
         extraOptions: ComponentFactoryExtraOptions = {},
       ) => {
-        validateComponentFactoryArguments(props, mountOptions, slots, extraOptions);
+        validateComponentFactoryArguments(props, mountOptions, slots, extraOptions, presets);
 
         const {
           skipDefaultProps = false,

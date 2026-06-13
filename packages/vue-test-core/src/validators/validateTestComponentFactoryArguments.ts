@@ -1,5 +1,8 @@
 import { ERROR_PREFIX } from "../constants/constants.js";
 import { validatePlainObjectArgument } from "./validatePlainObjectArgument.js";
+import { validateComponentFactoryOptions } from "./validateComponentFactoryOptions.js";
+
+import type { ComponentFactoryOptions, TestFrameworkPresets } from "../types";
 
 /*
  * Validates testComponentFactory() arguments.
@@ -15,6 +18,7 @@ export function validateTestComponentFactoryArguments(
   defaultProps: unknown,
   defaultMountOptions: unknown,
   defaultSlots: unknown,
+  presets: TestFrameworkPresets,
 ): void {
   // Vue component
   const isComponent =
@@ -25,6 +29,11 @@ export function validateTestComponentFactoryArguments(
   }
 
   validatePlainObjectArgument(defaultProps, "defaultProps");
-  validatePlainObjectArgument(defaultMountOptions, "defaultMountOptions");
+  validateComponentFactoryOptions(
+    defaultMountOptions as ComponentFactoryOptions,
+    "defaultMountOptions",
+    presets,
+  );
+
   validatePlainObjectArgument(defaultSlots, "defaultSlots");
 }

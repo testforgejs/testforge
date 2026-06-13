@@ -100,7 +100,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
   describe("mount context creation", () => {
     it("should create mount context with correct arguments", () => {
-      const presets = { test: { manifest: [], defaults: {} } };
+      const presets = { abcd: { manifest: [], defaults: {} } };
       const { testComponentFactory } = createTestFramework({ presets });
 
       const factory = testComponentFactory(component);
@@ -284,6 +284,182 @@ describe("createTestFramework → testComponentFactory", () => {
           );
         }).not.toThrow();
       });
+
+      describe("defaultMountOptions plugin validation", () => {
+        it("should warn when a plugin option is placed at the root of defaultMountOptions", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          expect(() => {
+            // Intentionally bypass type safety to verify runtime DX warning.
+            // Plugin options must be placed under defaultMountOptions.plugins.
+            // @ts-expect-error testing invalid configuration
+            testComponentFactory(component, {}, { i18n: {} });
+          }).not.toThrow();
+
+          expect(warnSpy).toHaveBeenCalledTimes(1);
+
+          expect(warnSpy.mock.calls[0][0]).toContain(
+            'Detected plugin option "i18n" at the root of "defaultMountOptions"',
+          );
+
+          expect(warnSpy.mock.calls[0][0]).toContain(
+            'Did you mean to use "defaultMountOptions.plugins.i18n"?',
+          );
+        });
+
+        it("should not warn when plugin options are placed under defaultMountOptions.plugins", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          testComponentFactory(
+            component,
+            {},
+            {
+              plugins: {
+                i18n: {},
+              },
+            },
+          );
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+
+        it("should ignore unknown root options", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+                {
+                  module: {
+                    getName: () => "pinia",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          // @ts-expect-error testing arbitrary user input
+          testComponentFactory(component, {}, { foo: {} });
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+
+        it("should not warn when the plugin is configured both at the root and under plugins", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          // @ts-expect-error testing invalid configuration
+          testComponentFactory(
+            component,
+            {},
+            {
+              i18n: {},
+              plugins: {
+                i18n: {},
+              },
+            },
+          );
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+
+        it("should always use the default preset for defaultMountOptions validation", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+            custom: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "pinia",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          expect(() => {
+            // @ts-expect-error testing invalid configuration
+            testComponentFactory(component, {}, { i18n: {} });
+          }).not.toThrow();
+
+          expect(warnSpy).toHaveBeenCalledTimes(1);
+
+          expect(warnSpy.mock.calls[0][0]).toContain('"defaultMountOptions"');
+        });
+      });
     });
 
     describe("component factory validation", () => {
@@ -354,6 +530,257 @@ describe("createTestFramework → testComponentFactory", () => {
             {},
           );
         }).not.toThrow();
+      });
+
+      describe("mountOptions plugin validation", () => {
+        it("should warn when a plugin option is placed at the root of mountOptions", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          expect(() => {
+            // Intentionally bypass type safety to verify runtime DX warning.
+            // Plugin options must be placed under mountOptions.plugins.
+            // @ts-expect-error testing invalid configuration
+            factory({}, { i18n: {} });
+          }).not.toThrow();
+
+          expect(warnSpy).toHaveBeenCalledTimes(1);
+
+          expect(warnSpy.mock.calls[0][0]).toContain(
+            'Detected plugin option "i18n" at the root of "mountOptions"',
+          );
+
+          expect(warnSpy.mock.calls[0][0]).toContain(
+            'Did you mean to use "mountOptions.plugins.i18n"?',
+          );
+        });
+
+        it("should not warn when plugin options are placed under mountOptions.plugins", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          factory(
+            {},
+            {
+              plugins: {
+                i18n: {},
+              },
+            },
+          );
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+
+        it("should ignore unknown root options", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+                {
+                  module: {
+                    getName: () => "pinia",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          // @ts-expect-error testing arbitrary user input
+          factory({}, { foo: {} });
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+
+        it("should not warn when the plugin is configured both at the root and under plugins", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          factory(
+            {},
+            {
+              // @ts-expect-error testing invalid configuration
+              i18n: {},
+              plugins: {
+                i18n: {},
+              },
+            },
+          );
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+      });
+
+      describe("extraOptions plugin validation", () => {
+        it("should warn when a plugin override is placed at the root of extraOptions", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          expect(() => {
+            // Intentionally bypass type safety to verify runtime DX warning.
+            // Plugin overrides must be placed under extraOptions.plugins.
+            // @ts-expect-error testing invalid configuration
+            factory({}, {}, {}, { i18n: {} });
+          }).not.toThrow();
+
+          expect(warnSpy).toHaveBeenCalledTimes(1);
+
+          expect(warnSpy.mock.calls[0][0]).toContain(
+            'Detected plugin option "i18n" at the root of "extraOptions"',
+          );
+
+          expect(warnSpy.mock.calls[0][0]).toContain(
+            'Did you mean to use "extraOptions.plugins.i18n"?',
+          );
+        });
+
+        it("should not warn when plugin override is placed under extraOptions.plugins", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          factory(
+            {},
+            {},
+            {},
+            {
+              plugins: {
+                i18n: {},
+              },
+            },
+          );
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
+
+        it("should ignore unknown root options", () => {
+          const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                  },
+                  enabled: true,
+                },
+                {
+                  module: {
+                    getName: () => "pinia",
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          const { testComponentFactory } = createTestFramework({ presets });
+
+          const factory = testComponentFactory(component);
+
+          // @ts-expect-error testing arbitrary user input
+          factory({}, {}, {}, { foo: {} });
+
+          expect(warnSpy).not.toHaveBeenCalled();
+        });
       });
     });
   });

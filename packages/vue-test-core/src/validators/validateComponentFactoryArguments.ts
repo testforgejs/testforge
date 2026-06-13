@@ -1,7 +1,12 @@
 import { validatePlainObjectArgument } from "./validatePlainObjectArgument.js";
-import { validateBooleanOption } from "./validateBooleanOption.js";
+import { validateComponentFactoryOptions } from "./validateComponentFactoryOptions.js";
+import { validateComponentFactoryExtraOptions } from "./validateComponentFactoryExtraOptions.js";
 
-import type { ComponentFactoryExtraOptions } from "../types";
+import type {
+  ComponentFactoryOptions,
+  ComponentFactoryExtraOptions,
+  TestFrameworkPresets,
+} from "../types";
 
 /*
  * Validates component factory invocation arguments.
@@ -20,17 +25,16 @@ export function validateComponentFactoryArguments(
   mountOptions: unknown,
   slots: unknown,
   extraOptions: unknown,
+  presets: TestFrameworkPresets = {},
 ): void {
   validatePlainObjectArgument(props, "props");
-  validatePlainObjectArgument(mountOptions, "mountOptions");
+  validateComponentFactoryOptions(
+    mountOptions as ComponentFactoryOptions,
+    "mountOptions",
+    presets,
+    extraOptions as ComponentFactoryExtraOptions,
+  );
   validatePlainObjectArgument(slots, "slots");
-  validatePlainObjectArgument(extraOptions, "extraOptions");
 
-  const options = extraOptions as ComponentFactoryExtraOptions;
-
-  validateBooleanOption(options.skipDefaultProps, "skipDefaultProps");
-
-  validateBooleanOption(options.skipDefaultSlots, "skipDefaultSlots");
-
-  validateBooleanOption(options.skipDefaultOptions, "skipDefaultOptions");
+  validateComponentFactoryExtraOptions(extraOptions as ComponentFactoryExtraOptions, presets);
 }
