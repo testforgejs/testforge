@@ -26,7 +26,7 @@ describe("warnRootPluginOption", () => {
     ["i18n", "mountOptions"],
     ["pinia", "defaultMountOptions"],
     ["router", "extraOptions"],
-  ])(
+  ] as const)(
     'should include plugin name "%s" and context "%s" in the warning message',
     (pluginName, context) => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -43,7 +43,7 @@ describe("warnRootPluginOption", () => {
     },
   );
 
-  it.each(["defaultMountOptions", "mountOptions", "extraOptions"])(
+  it.each(["defaultMountOptions", "mountOptions", "extraOptions"] as const)(
     'should include "%s" in the suggested path',
     (context) => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});

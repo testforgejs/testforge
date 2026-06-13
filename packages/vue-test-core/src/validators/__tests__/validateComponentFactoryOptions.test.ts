@@ -89,7 +89,7 @@ describe("validateComponentFactoryOptions", () => {
   });
 
   describe("context propagation", () => {
-    it.each(["defaultMountOptions", "mountOptions", "extraOptions"])(
+    it.each(["defaultMountOptions", "mountOptions", "extraOptions"] as const)(
       "should pass %s to warnRootPluginOptions",
       (context) => {
         validateComponentFactoryOptions({}, context);

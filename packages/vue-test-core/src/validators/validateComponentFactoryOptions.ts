@@ -6,6 +6,7 @@ import type {
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   TestFrameworkPresets,
+  OptionsContext,
 } from "../types";
 
 /*
@@ -26,7 +27,7 @@ import type {
  */
 export function validateComponentFactoryOptions(
   options: ComponentFactoryOptions,
-  context: string,
+  context: OptionsContext,
   presets: TestFrameworkPresets = {},
   extraOptions?: ComponentFactoryExtraOptions,
 ): void {

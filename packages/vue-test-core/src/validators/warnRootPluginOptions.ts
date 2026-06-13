@@ -5,6 +5,7 @@ import type {
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   TestFrameworkPresets,
+  OptionsContext,
 } from "../types";
 
 /*
@@ -31,7 +32,7 @@ import type {
  */
 export function warnRootPluginOptions(
   options: ComponentFactoryOptions | ComponentFactoryExtraOptions,
-  context: string,
+  context: OptionsContext,
   presets: TestFrameworkPresets = {},
   extraOptions?: ComponentFactoryExtraOptions,
 ): void {

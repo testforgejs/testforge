@@ -108,6 +108,13 @@ export type RuntimeExtraOptions = {
 
 // === 4. Public Plugin Configuration API ===
 
+/**
+ * Identifies which configuration object is currently being validated.
+ *
+ * Used to produce more informative runtime error and warning messages.
+ */
+export type OptionsContext = "defaultMountOptions" | "mountOptions" | "extraOptions";
+
 export interface PluginMeta {
   instance?: unknown;
 }
