@@ -10,7 +10,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  *
  * The resolved preset config is written into `ctx.result.pluginDefaultsState`.
  */
-export const withPreset: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
+export const withPreset: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
   const { preset } = ctx;
 
   if (!preset?.defaults) return ctx;

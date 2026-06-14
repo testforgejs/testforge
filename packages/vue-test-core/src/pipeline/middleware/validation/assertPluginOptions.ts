@@ -24,7 +24,7 @@ import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPlu
  */
 export const assertPluginOptions: PipelineMiddleware<PipelineContext, PluginOptionsReadyContext> = (
   ctx,
-) => {
+): PluginOptionsReadyContext => {
   const { supportedPlugins, extraOptions } = ctx;
   const { plugins } = ctx.result;
 

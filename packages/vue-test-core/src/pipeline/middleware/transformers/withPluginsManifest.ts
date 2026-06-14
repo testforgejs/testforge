@@ -9,7 +9,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  * pipeline execution and establishes the initial `ctx.result.plugins`
  * structure before plugin configuration merging begins.
  */
-export const withPluginsManifest: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
+export const withPluginsManifest: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
   const plugins = Object.fromEntries(
     Object.entries(ctx.supportedPlugins).map(([name, enabled]) => [name, enabled ? {} : false]),
   );

@@ -14,7 +14,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  *
  * The resolved global config is written into `ctx.result.global`.
  */
-export const withGlobal: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
+export const withGlobal: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   return patchResultState(ctx, {

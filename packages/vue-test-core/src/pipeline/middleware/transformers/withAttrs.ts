@@ -14,7 +14,7 @@ import { mergeRecord } from "../../state/mergeRecord.js";
  * Priority:
  * mountOptions.attrs > defaultMountOptions.attrs
  */
-export const withAttrs: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
+export const withAttrs: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   const attrs = mergeRecord(

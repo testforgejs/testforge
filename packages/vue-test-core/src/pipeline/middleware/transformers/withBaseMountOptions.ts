@@ -18,7 +18,7 @@ import { mergeRecord } from "../../state/mergeRecord.js";
  *
  * The resolved options are written into `ctx.result.mountOptions`.
  */
-export const withBaseMountOptions: PipelineMiddleware = <T extends PipelineContext>(ctx: T) => {
+export const withBaseMountOptions: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   // Extract options that are not part of the flat VTU mount option layer.
