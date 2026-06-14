@@ -1,3 +1,5 @@
+import { getPresetManifest } from "./getPresetManifest.js";
+
 import type { PresetDefinition, SupportedPluginsMap } from "../types";
 
 /*
@@ -18,9 +20,7 @@ import type { PresetDefinition, SupportedPluginsMap } from "../types";
 ): SupportedPluginsMap {
   const map: SupportedPluginsMap = {};
 
-  if (!preset?.manifest) return map;
-
-  for (const { module, enabled } of preset.manifest) {
+  for (const { module, enabled } of getPresetManifest(preset)) {
     map[module.getName()] = enabled;
   }
 
