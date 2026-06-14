@@ -1,15 +1,24 @@
 import { describe, it, expectTypeOf } from "vitest";
-import type { PipelineContext, ResultReadyContext, PluginOptionsReadyContext } from "../../types";
+import type {
+  PipelineContext,
+  PipelineMiddleware,
+  ResultReadyContext,
+  PluginOptionsReadyContext,
+} from "../../types";
 
-import { assertConfigurationShape } from "../middleware/validation/assertConfigurationShape";
-import { assertResultShape } from "../middleware/validation/assertResultShape";
-import { withPreset } from "../middleware/transformers/withPreset";
-import { withPluginsManifest } from "../middleware/transformers/withPluginsManifest";
-import { withBaseMountOptions } from "../middleware/transformers/withBaseMountOptions";
-import { withGlobal } from "../middleware/transformers/withGlobal";
-import { withAttrs } from "../middleware/transformers/withAttrs";
-import { withPluginsBase } from "../middleware/transformers/withPluginsBase";
-import { assertPluginOptions } from "../middleware/validation/assertPluginOptions";
+import { assertConfigurationShape } from "../middleware/validation/assertConfigurationShape.js";
+import { assertResultShape } from "../middleware/validation/assertResultShape.js";
+import { withPreset } from "../middleware/transformers/withPreset.js";
+import { withPluginsManifest } from "../middleware/transformers/withPluginsManifest.js";
+import { withBaseMountOptions } from "../middleware/transformers/withBaseMountOptions.js";
+import { withGlobal } from "../middleware/transformers/withGlobal.js";
+import { withAttrs } from "../middleware/transformers/withAttrs.js";
+import { withPluginsBase } from "../middleware/transformers/withPluginsBase.js";
+import { assertPluginOptions } from "../middleware/validation/assertPluginOptions.js";
+import { createPluginsMiddlewares } from "../plugins/builders/createPluginsMiddlewares.js";
+import { createPluginMiddleware } from "../plugins/adapters/createPluginMiddleware.js";
+import { createPluginsMergeMiddlewares } from "../plugins/builders/createPluginsMergeMiddlewares.js";
+import { createPluginMergeMiddleware } from "../plugins/adapters/createPluginMergeMiddleware.js";
 
 describe("Pipeline Type Transformation Flow", () => {
   it("should correctly track and transform types step-by-step through middleware execution", () => {
@@ -84,6 +93,57 @@ describe("Pipeline Type Transformation Flow", () => {
 
     // Check that PluginOptionsReadyContext inherits from the base PipelineContext
     expectTypeOf<PluginOptionsReadyContext>().toExtend<PipelineContext>();
+
+    // ------------------------------------------------------------------------
+    // DYNAMIC STEP 10: Testing the plugin adapter (createPluginMiddleware)
+    // Input: PluginOptionsReadyContext (result of Step 9) -> Output: PluginOptionsReadyContext
+    // ------------------------------------------------------------------------
+
+    // 1. Create a middleware instance for a specific plugin
+    const mockRouterMiddleware = createPluginMiddleware("router");
+    type RouterMiddlewareType = typeof mockRouterMiddleware;
+
+    // 2. Check how this middleware handles the context of Step 9
+    type Stage10_OutputContext = RouterMiddlewareType extends (
+      ctx: Stage9_OutputContext,
+    ) => infer Out
+      ? Out
+      : never;
+
+    expectTypeOf<Stage10_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+
+    // ------------------------------------------------------------------------
+    // BUILDER CHECK: Testing the array contract (createPluginsMiddlewares)
+    // ------------------------------------------------------------------------
+    type BuilderResult = ReturnType<typeof createPluginsMiddlewares>;
+
+    // Verify that the builder returns strictly an array of middleware compatible with PluginOptionsReadyContext
+    expectTypeOf<BuilderResult>().toEqualTypeOf<
+      PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext>[]
+    >();
+
+    // ------------------------------------------------------------------------
+    // DYNAMIC STEP 11: Testing the preset merge adapter (createPluginMergeMiddleware)
+    // Input: PluginOptionsReadyContext (result of Step 10) -> Output: PluginOptionsReadyContext
+    // ------------------------------------------------------------------------
+    const mockMergeMiddleware = createPluginMergeMiddleware("router");
+
+    type Stage11_OutputContext = typeof mockMergeMiddleware extends (
+      ctx: Stage10_OutputContext,
+    ) => infer Out
+      ? Out
+      : never;
+
+    expectTypeOf<Stage11_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+
+    // ------------------------------------------------------------------------
+    // CHECKING THE MERGE BUILDER: Testing the array contract (createPluginsMergeMiddlewares)
+    // ------------------------------------------------------------------------
+    type MergeBuilderResult = ReturnType<typeof createPluginsMergeMiddlewares>;
+
+    expectTypeOf<MergeBuilderResult>().toEqualTypeOf<
+      PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext>[]
+    >();
   });
 
   it("should correctly infer pipe result type using PipeResult helper for entire static pipeline sequence", () => {

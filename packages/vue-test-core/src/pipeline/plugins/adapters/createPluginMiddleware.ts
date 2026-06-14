@@ -1,4 +1,9 @@
-import type { PipelineMiddleware, PipelineContext, PluginName } from "../../../types";
+import type {
+  PipelineMiddleware,
+  PipelineContext,
+  PluginOptionsReadyContext,
+  PluginName,
+} from "../../../types";
 
 import { getPluginConfig } from "../logic/getPluginConfig.js";
 import { patchPluginState } from "../logic/patchPluginState.js";
@@ -15,7 +20,9 @@ import { getExtraPluginOptions } from "../logic/getExtraPluginOptions";
  * - normalize the config into runtime-safe shape
  * - write the resolved config into `ctx.result.plugins`
  */
-export function createPluginMiddleware(name: PluginName): PipelineMiddleware {
+export function createPluginMiddleware(
+  name: PluginName,
+): PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext> {
   return <T extends PipelineContext>(ctx: T): T => {
     const config = getPluginConfig(ctx, name);
 

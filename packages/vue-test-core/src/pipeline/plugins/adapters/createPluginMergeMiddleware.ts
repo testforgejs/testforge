@@ -1,4 +1,9 @@
-import type { PipelineMiddleware, PipelineContext, PluginName } from "../../../types";
+import type {
+  PipelineMiddleware,
+  PipelineContext,
+  PluginOptionsReadyContext,
+  PluginName,
+} from "../../../types";
 
 import { mergePluginDefaults } from "../logic/mergePluginDefaults.js";
 
@@ -13,7 +18,9 @@ import { mergePluginDefaults } from "../logic/mergePluginDefaults.js";
  * - Does nothing if plugin is explicitly disabled (`false`)
  * - Does not interact with extraOptions
  */
-export function createPluginMergeMiddleware(name: PluginName): PipelineMiddleware {
+export function createPluginMergeMiddleware(
+  name: PluginName,
+): PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext> {
   return <T extends PipelineContext>(ctx: T): T => {
     return mergePluginDefaults(ctx, name);
   };
