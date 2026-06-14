@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test:types": "tsd"
+    "test:types": "tsd",
+    "docs:generate": "typedoc"
   },
   "license": "MIT",
   "author": "Roman Levchenko",

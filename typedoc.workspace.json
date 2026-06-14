@@ -1,0 +1,9 @@
+{
+  "extends": ["./typedoc.base.json"],
+  "entryPoints": ["packages/*"],
+  "entryPointStrategy": "packages",
+  "out": "docs/api-reference",
+  "readme": "README.md",
+  "hidePageTitle": false,
+  "hideBreadcrumbs": false
+}

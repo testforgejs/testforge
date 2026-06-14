@@ -16,7 +16,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
-    "plugin:generate": "node scripts/scaffold-plugin.js"
+    "plugin:generate": "node scripts/scaffold-plugin.js",
+    "docs:gen": "node scripts/docs.js",
+    "docs:all": "typedoc --options typedoc.workspace.json",
+    "preinstall": "npx only-allow pnpm"
   },
   "keywords": [],
   "author": "Roman Levchenko",
@@ -47,6 +50,8 @@
     "ts-jest": "^29.4.9",
     "tsd": "^0.33.0",
     "tsup": "^8.5.1",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
     "vitest": "^4.1.4",
