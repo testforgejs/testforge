@@ -1,14 +1,14 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import readline from "readline/promises";
+import readline from "readline";
 import { stdin as input, stdout as output } from "process";
 
 const PACKAGES_DIR = path.join(process.cwd(), "packages");
 const PREFIX = "vue-test-plugin-";
 
 async function main() {
-  // 1. Checking for the presence of the “packages” folder
+  // 1. Checking for the presence of the "packages" folder
   if (!fs.existsSync(PACKAGES_DIR)) {
     console.error(`❌ Error: The folder '${PACKAGES_DIR}' was not found.`);
     process.exit(1);
@@ -26,11 +26,10 @@ async function main() {
     process.exit(0);
   }
 
-  // 3. Check for the presence of the passed argument (for example, “router” or “vue-test-plugin-router”)
+  // 3. Checking for the presence of a CLI argument (navigating through the menu)
   const arg = process.argv[2]?.trim();
 
   if (arg) {
-    // Looking for an exact match (either by full name or by nickname)
     const targetPlugin = plugins.find(
       (plugin) => plugin === arg || plugin.replace(PREFIX, "") === arg,
     );
@@ -45,39 +44,92 @@ async function main() {
     return;
   }
 
-  // 4. If no argument is provided, display the interactive menu
-  console.log("\nAvailable plugins for generating documentation:");
-  plugins.forEach((plugin, index) => {
-    const shortName = plugin.replace(PREFIX, "");
-    console.log(`  [${index + 1}] ${shortName} (${plugin})`);
-  });
-  console.log(`  [0] Exit the script\n`);
-
-  const rl = readline.createInterface({ input, output });
-  const answer = await rl.question("Enter the plugin number: ");
-  rl.close();
-
-  const selectedIndex = parseInt(answer.trim(), 10);
-
-  if (selectedIndex === 0 || isNaN(selectedIndex)) {
+  // 4. Interactive selection in the Changeset style
+  const selectedPlugin = await selectPluginInteractive(plugins);
+  if (selectedPlugin) {
+    runDocsGeneration(selectedPlugin);
+  } else {
     console.log("👋 Exit the script.");
     process.exit(0);
   }
-
-  if (selectedIndex < 1 || selectedIndex > plugins.length) {
-    console.error("❌ Invalid number. Please restart the script.");
-    process.exit(1);
-  }
-
-  runDocsGeneration(plugins[selectedIndex - 1]);
 }
 
-// Moved the generation startup into a separate function for DRY
+/*
+ * Interactive plugin selection menu using arrows
+ */
+function selectPluginInteractive(plugins) {
+  return new Promise((resolve) => {
+    let cursor = 0;
+
+    // Prepare a list of options (add an exit point)
+    const choices = [
+      ...plugins.map((p) => ({ name: p.replace(PREFIX, ""), value: p })),
+      { name: "Exit the script", value: null },
+    ];
+
+    // Menu rendering function in the console
+    const render = () => {
+      // Clear the previous menu output
+      output.write("\x1Bc");
+      output.write("\nAvailable plugins for generating documentation:\n");
+      output.write("Use (↑ / ↓) to navigate, (Enter) to select\n\n");
+
+      choices.forEach((choice, index) => {
+        if (index === cursor) {
+          // Highlight the selected item with a blue arrow
+          output.write(` \x1b[36m❯\x1b[0m \x1b[36m${choice.name}\x1b[0m\n`);
+        } else {
+          output.write(`   ${choice.name}\n`);
+        }
+      });
+      output.write("\n");
+    };
+
+    // Initialize raw mode for key interception
+    readline.emitKeypressEvents(input);
+    if (input.isTTY) {
+      input.setRawMode(true);
+    }
+    input.resume();
+
+    render();
+
+    // Keyboard press listener
+    const onKeypress = (str, key) => {
+      // Support for Ctrl+C to exit immediately
+      if (key.ctrl && key.name === "c") {
+        cleanup();
+        process.exit(0);
+      }
+
+      if (key.name === "up") {
+        cursor = cursor === 0 ? choices.length - 1 : cursor - 1;
+        render();
+      } else if (key.name === "down") {
+        cursor = cursor === choices.length - 1 ? 0 : cursor + 1;
+        render();
+      } else if (key.name === "return") {
+        cleanup();
+        resolve(choices[cursor].value);
+      }
+    };
+
+    // Clearing input streams after selection
+    const cleanup = () => {
+      input.removeListener("keypress", onKeypress);
+      if (input.isTTY) {
+        input.setRawMode(false);
+      }
+      input.pause();
+    };
+
+    input.on("keypress", onKeypress);
+  });
+}
+
 function runDocsGeneration(pluginName) {
-  // Find the path to the selected plugin's package.json file
   const packageJsonPath = path.join(PACKAGES_DIR, pluginName, "package.json");
 
-  // Check if `package.json` exists and if it contains the required script
   if (fs.existsSync(packageJsonPath)) {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
