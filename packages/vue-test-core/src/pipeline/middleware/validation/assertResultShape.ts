@@ -1,4 +1,9 @@
-import type { PipelineMiddleware, PipelineContext, ResultReadyContext } from "../../../types";
+import type {
+  PipelineMiddleware,
+  PipelineContext,
+  ResultReadyContext,
+  PluginOptionsReadyContext,
+} from "../../../types";
 
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
@@ -11,15 +16,44 @@ import { assertIsObject } from "../typeGuards/assertIsObject.js";
  * After successful validation, the pipeline can safely treat
  * `ctx.result` as fully initialized.
  */
-export const assertResultShape: PipelineMiddleware<PipelineContext, ResultReadyContext> = (
-  ctx,
-): ResultReadyContext => {
+function validateResult(ctx: PipelineContext): void {
   const { result } = ctx;
-
   assertIsObject(result, "result");
   assertIsObject(result.mountOptions, "result.mountOptions");
   assertIsObject(result.global, "result.global");
   assertIsObject(result.plugins, "result.plugins");
+}
 
+/*
+ * Validates the initial runtime structure of `ctx.result`.
+ *
+ * Ensures that all top-level result containers required by subsequent transformers
+ * exist and are valid plain objects before the pipeline begins data injection.
+ *
+ * Transmutes the pipeline context from `PipelineContext` to `ResultReadyContext`
+ * to guarantee that all result sub-objects are fully initialized.
+ */
+export const assertResultShape: PipelineMiddleware<PipelineContext, ResultReadyContext> = (
+  ctx,
+): ResultReadyContext => {
+  validateResult(ctx);
   return ctx as ResultReadyContext;
+};
+
+/*
+ * Performs final post-processing runtime validation of the pipeline result.
+ *
+ * Runs as the last stage of the mounting pipeline to ensure that no middleware
+ * or dynamic plugin layers corrupted the required `ctx.result` structure.
+ *
+ * Strictly maintains the `PluginOptionsReadyContext` signature to prevent
+ * compile-time type erasure, guaranteeing that all resolved plugin types
+ * remain accessible at the end of execution.
+ */
+export const assertFinalResultShape: PipelineMiddleware<
+  PluginOptionsReadyContext,
+  PluginOptionsReadyContext
+> = (ctx): PluginOptionsReadyContext => {
+  validateResult(ctx);
+  return ctx;
 };

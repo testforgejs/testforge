@@ -7,7 +7,10 @@ import type {
 } from "../../types";
 
 import { assertConfigurationShape } from "../middleware/validation/assertConfigurationShape.js";
-import { assertResultShape } from "../middleware/validation/assertResultShape.js";
+import {
+  assertResultShape,
+  assertFinalResultShape,
+} from "../middleware/validation/assertResultShape.js";
 import { withPreset } from "../middleware/transformers/withPreset.js";
 import { withPluginsManifest } from "../middleware/transformers/withPluginsManifest.js";
 import { withBaseMountOptions } from "../middleware/transformers/withBaseMountOptions.js";
@@ -144,6 +147,19 @@ describe("Pipeline Type Transformation Flow", () => {
     expectTypeOf<MergeBuilderResult>().toEqualTypeOf<
       PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext>[]
     >();
+
+    // ------------------------------------------------------------------------
+    // FINAL STEP 12: Revalidate the result (assertResultShape)
+    // Input: PluginOptionsReadyContext -> Output: PluginOptionsReadyContext
+    // ------------------------------------------------------------------------
+
+    type Stage12_OutputContext = typeof assertFinalResultShape extends (
+      ctx: Stage11_OutputContext,
+    ) => infer Out
+      ? Out
+      : never;
+
+    expectTypeOf<Stage12_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
   });
 
   it("should correctly infer pipe result type using PipeResult helper for entire static pipeline sequence", () => {

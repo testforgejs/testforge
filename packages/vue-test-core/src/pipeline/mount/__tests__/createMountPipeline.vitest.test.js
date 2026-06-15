@@ -11,6 +11,7 @@ vi.mock("../../plugins/builders/createPluginsMergeMiddlewares.js", () => ({
 import {
   assertConfigurationShape,
   assertResultShape,
+  assertFinalResultShape,
   assertPluginOptions,
 } from "../../middleware/validation";
 
@@ -52,7 +53,7 @@ describe("createMountPipeline", () => {
       "plugin-mw-1",
       "plugin-mw-2",
       "merge-mw-1",
-      assertResultShape,
+      assertFinalResultShape,
     ]);
   });
 

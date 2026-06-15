@@ -3,6 +3,7 @@ import type { PipelineContext, PipelineMiddleware } from "../../types";
 import {
   assertConfigurationShape,
   assertResultShape,
+  assertFinalResultShape,
   assertPluginOptions,
 } from "../middleware/validation";
 import {
@@ -41,6 +42,6 @@ export function createMountPipeline(ctx: PipelineContext): PipelineMiddleware[] 
     assertPluginOptions,
     ...createPluginsMiddlewares(ctx.supportedPlugins),
     ...createPluginsMergeMiddlewares(ctx.supportedPlugins),
-    assertResultShape,
+    assertFinalResultShape,
   ];
 }
