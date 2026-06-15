@@ -257,7 +257,10 @@ export interface PluginOptionsReadyContext extends PipelineContext {
   extraOptions: RuntimeExtraOptions;
 }
 
-export type PipelineMiddleware<In = PipelineContext, Out = In> = (ctx: In) => Out;
+export type PipelineMiddleware<
+  In extends PipelineContext = PipelineContext,
+  Out extends PipelineContext = In,
+> = (ctx: In) => Out;
 
 export interface Pipeline<In = PipelineContext, Out = In> {
   run: (ctx: In) => Out;
