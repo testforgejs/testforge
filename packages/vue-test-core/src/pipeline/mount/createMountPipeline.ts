@@ -1,4 +1,4 @@
-import type { PipelineContext, PipelineMiddleware } from "../../types";
+import type { PipelineContext } from "../../types";
 
 import {
   assertConfigurationShape,
@@ -17,7 +17,7 @@ import {
 import { createPluginsMiddlewares } from "../plugins/builders/createPluginsMiddlewares.js";
 import { createPluginsMergeMiddlewares } from "../plugins/builders/createPluginsMergeMiddlewares.js";
 
-/*
+/**
  * Creates the mount processing pipeline.
  *
  * Pipeline stages:
@@ -28,8 +28,11 @@ import { createPluginsMergeMiddlewares } from "../plugins/builders/createPlugins
  * - validate the final runtime result
  *
  * Middleware order is significant.
+ *
+ * @param ctx - The initial pipeline context object.
+ * @returns A strictly typed read-only tuple of pipeline middleware preserving end-to-end type flow.
  */
-export function createMountPipeline(ctx: PipelineContext): PipelineMiddleware[] {
+export function createMountPipeline(ctx: PipelineContext) {
   return [
     assertConfigurationShape,
     assertResultShape,
@@ -43,5 +46,5 @@ export function createMountPipeline(ctx: PipelineContext): PipelineMiddleware[] 
     ...createPluginsMiddlewares(ctx.supportedPlugins),
     ...createPluginsMergeMiddlewares(ctx.supportedPlugins),
     assertFinalResultShape,
-  ];
+  ] as const;
 }
