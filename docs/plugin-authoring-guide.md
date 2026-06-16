@@ -62,10 +62,10 @@ import { createCustomLibraryInstance } from "some-vue-library";
 
 import type { CustomInstance } from "some-vue-library";
 import type { VueTestCustomOptions } from "../types/types";
-import type { RuntimePluginOptions } from "@testforge/vue-test-core";
+import type { PluginOptionsWithMeta } from "@testforge/vue-test-core";
 
 export function createCustomPlugin(
-  options: RuntimePluginOptions<CustomInstance, VueTestCustomOptions>,
+  options: PluginOptionsWithMeta<CustomInstance, VueTestCustomOptions>,
 ): CustomInstance {
   // Pass the original library constructor and the runtime options object
   const instance = createPluginInstance<CustomInstance, VueTestCustomOptions>(

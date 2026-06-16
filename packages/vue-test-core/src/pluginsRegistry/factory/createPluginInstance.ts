@@ -1,4 +1,4 @@
-import type { RuntimePluginOptions } from "../../types";
+import type { PluginOptionsWithMeta } from "../../types";
 
 import { exposeInstance } from "../helpers/exposeInstance.js";
 
@@ -16,7 +16,7 @@ import { exposeInstance } from "../helpers/exposeInstance.js";
  */
 export function createPluginInstance<T, TOptions extends object>(
   factory: (options: TOptions) => T,
-  options: RuntimePluginOptions<T, TOptions>,
+  options: PluginOptionsWithMeta<T, TOptions>,
 ): T {
   const instance = options.__sharedInstance ?? factory(options);
   exposeInstance<T>(instance, options);

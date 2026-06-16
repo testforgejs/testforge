@@ -70,7 +70,7 @@ export interface PluginRuntimeMeta<T> {
   expose?: (instance: T) => void;
 }
 
-export type RuntimePluginOptions<T, TOptions = object> = TOptions & PluginRuntimeMeta<T>;
+export type PluginOptionsWithMeta<T, TOptions = object> = TOptions & PluginRuntimeMeta<T>;
 
 export interface InstanceCapture<T> {
   expose(instance: T): void;

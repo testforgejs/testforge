@@ -14,7 +14,7 @@ export type {
   PluginOptionsInput,
   PluginOverridesInput,
   PluginControlOptions,
-  RuntimePluginOptions,
+  PluginOptionsWithMeta,
   PluginModule,
   PresetDefinition,
   TestFramework,
