@@ -17,7 +17,7 @@ vi.mock("../../pipeline/core/createPipelineContext.js", () => ({
 
 vi.mock("../../pipeline/core/createPipeline.js", () => ({
   createPipeline: vi.fn(() => ({
-    run: vi.fn(),
+    run: vi.fn((ctx) => ctx),
   })),
 }));
 

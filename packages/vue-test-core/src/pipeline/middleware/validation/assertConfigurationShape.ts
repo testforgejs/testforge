@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, PipelineContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext, RuntimeContext } from "../../../types";
 
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 
@@ -8,12 +8,12 @@ import { assertIsObject } from "../typeGuards/assertIsObject.js";
  * Ensures that all top-level pipeline configuration objects exist
  * and are valid plain objects before pipeline processing begins.
  */
-export const assertConfigurationShape: PipelineMiddleware = <T extends PipelineContext>(
-  ctx: T,
-): T => {
+export const assertConfigurationShape: PipelineMiddleware<PipelineContext, RuntimeContext> = (
+  ctx,
+): RuntimeContext => {
   assertIsObject(ctx.defaultMountOptions, "defaultMountOptions");
   assertIsObject(ctx.mountOptions, "mountOptions");
   assertIsObject(ctx.extraOptions, "extraOptions");
 
-  return ctx;
+  return ctx as RuntimeContext;
 };

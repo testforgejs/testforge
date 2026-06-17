@@ -2,8 +2,8 @@ import { describe, it, expectTypeOf } from "vitest";
 import type {
   PipelineContext,
   PipelineMiddleware,
-  ResultReadyContext,
-  PluginOptionsReadyContext,
+  RuntimeContext,
+  MountReadyContext,
 } from "../../types";
 
 import { assertConfigurationShape } from "../middleware/validation/assertConfigurationShape.js";
@@ -28,62 +28,67 @@ describe("Pipeline Type Transformation Flow", () => {
     // STEP 0: Pipeline entry point
     type Stage0_Context = PipelineContext;
 
-    // STEP 1: assertConfigurationShape (Input: PipelineContext -> Output: PipelineContext)
+    // STEP 1: assertConfigurationShape (Input: PipelineContext -> Output: RuntimeContext)
     type Stage1_OutputContext = typeof assertConfigurationShape extends (
       ctx: Stage0_Context,
     ) => infer Out
       ? Out
       : never;
-    expectTypeOf<Stage1_OutputContext>().toEqualTypeOf<PipelineContext>();
+    expectTypeOf<Stage1_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 2: assertResultShape (Input: PipelineContext -> Output: ResultReadyContext)
+    // STEP 2: assertResultShape (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage2_OutputContext = typeof assertResultShape extends (
       ctx: Stage1_OutputContext,
     ) => infer Out
       ? Out
       : never;
-    expectTypeOf<Stage2_OutputContext>().toEqualTypeOf<ResultReadyContext>();
+    expectTypeOf<Stage2_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 3: withPreset (Input: ResultReadyContext -> Output: ResultReadyContext)
+    // STEP 3: withPreset (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage3_OutputContext = typeof withPreset extends (ctx: Stage2_OutputContext) => infer Out
       ? Out
       : never;
+    expectTypeOf<Stage3_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 4: withPluginsManifest (Input: ResultReadyContext -> Output: ResultReadyContext)
+    // STEP 4: withPluginsManifest (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage4_OutputContext = typeof withPluginsManifest extends (
       ctx: Stage3_OutputContext,
     ) => infer Out
       ? Out
       : never;
+    expectTypeOf<Stage4_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 5: withBaseMountOptions (Input: ResultReadyContext -> Output: ResultReadyContext)
+    // STEP 5: withBaseMountOptions (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage5_OutputContext = typeof withBaseMountOptions extends (
       ctx: Stage4_OutputContext,
     ) => infer Out
       ? Out
       : never;
+    expectTypeOf<Stage5_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 6: withGlobal (Input: ResultReadyContext -> Output: ResultReadyContext)
+    // STEP 6: withGlobal (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage6_OutputContext = typeof withGlobal extends (ctx: Stage5_OutputContext) => infer Out
       ? Out
       : never;
+    expectTypeOf<Stage6_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 7: withAttrs (Input: ResultReadyContext -> Output: ResultReadyContext)
+    // STEP 7: withAttrs (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage7_OutputContext = typeof withAttrs extends (ctx: Stage6_OutputContext) => infer Out
       ? Out
       : never;
+    expectTypeOf<Stage7_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // STEP 8: withPluginsBase (Input: ResultReadyContext -> Output: ResultReadyContext)
+    // STEP 8: withPluginsBase (Input: RuntimeContext -> Output: RuntimeContext)
     type Stage8_OutputContext = typeof withPluginsBase extends (
       ctx: Stage7_OutputContext,
     ) => infer Out
       ? Out
       : never;
-    expectTypeOf<Stage8_OutputContext>().toEqualTypeOf<ResultReadyContext>();
+    expectTypeOf<Stage8_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
     // ------------------------------------------------------------------------
-    // STEP 9: Validating and narrowing down plugin options (assertPluginOptions)
-    // Input: ResultReadyContext (result of Step 8) -> Output: PluginOptionsReadyContext
+    // STEP 9: Validating plugin options (assertPluginOptions)
+    // Input: RuntimeContext (result of Step 8) -> Output: RuntimeContext
     // ------------------------------------------------------------------------
     type Stage9_OutputContext = typeof assertPluginOptions extends (
       ctx: Stage8_OutputContext,
@@ -92,14 +97,14 @@ describe("Pipeline Type Transformation Flow", () => {
       : never;
 
     // Checking the final narrowing of the static section of the pipeline
-    expectTypeOf<Stage9_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+    expectTypeOf<Stage9_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
-    // Check that PluginOptionsReadyContext inherits from the base PipelineContext
-    expectTypeOf<PluginOptionsReadyContext>().toExtend<PipelineContext>();
+    // Check that MountReadyContext inherits from the base PipelineContext
+    expectTypeOf<MountReadyContext>().toExtend<PipelineContext>();
 
     // ------------------------------------------------------------------------
     // DYNAMIC STEP 10: Testing the plugin adapter (createPluginMiddleware)
-    // Input: PluginOptionsReadyContext (result of Step 9) -> Output: PluginOptionsReadyContext
+    // Input: RuntimeContext (result of Step 9) -> Output: RuntimeContext
     // ------------------------------------------------------------------------
 
     // 1. Create a middleware instance for a specific plugin
@@ -113,21 +118,21 @@ describe("Pipeline Type Transformation Flow", () => {
       ? Out
       : never;
 
-    expectTypeOf<Stage10_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+    expectTypeOf<Stage10_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
     // ------------------------------------------------------------------------
     // BUILDER CHECK: Testing the array contract (createPluginsMiddlewares)
     // ------------------------------------------------------------------------
     type BuilderResult = ReturnType<typeof createPluginsMiddlewares>;
 
-    // Verify that the builder returns strictly an array of middleware compatible with PluginOptionsReadyContext
+    // Verify that the builder returns strictly an array of middleware compatible with MountReadyContext
     expectTypeOf<BuilderResult>().toEqualTypeOf<
-      PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext>[]
+      PipelineMiddleware<RuntimeContext, RuntimeContext>[]
     >();
 
     // ------------------------------------------------------------------------
     // DYNAMIC STEP 11: Testing the preset merge adapter (createPluginMergeMiddleware)
-    // Input: PluginOptionsReadyContext (result of Step 10) -> Output: PluginOptionsReadyContext
+    // Input: RuntimeContext (result of Step 10) -> Output: RuntimeContext
     // ------------------------------------------------------------------------
     const mockMergeMiddleware = createPluginMergeMiddleware("router");
 
@@ -137,7 +142,7 @@ describe("Pipeline Type Transformation Flow", () => {
       ? Out
       : never;
 
-    expectTypeOf<Stage11_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+    expectTypeOf<Stage11_OutputContext>().toEqualTypeOf<RuntimeContext>();
 
     // ------------------------------------------------------------------------
     // CHECKING THE MERGE BUILDER: Testing the array contract (createPluginsMergeMiddlewares)
@@ -145,12 +150,12 @@ describe("Pipeline Type Transformation Flow", () => {
     type MergeBuilderResult = ReturnType<typeof createPluginsMergeMiddlewares>;
 
     expectTypeOf<MergeBuilderResult>().toEqualTypeOf<
-      PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext>[]
+      PipelineMiddleware<RuntimeContext, RuntimeContext>[]
     >();
 
     // ------------------------------------------------------------------------
     // FINAL STEP 12: Revalidate the result (assertResultShape)
-    // Input: PluginOptionsReadyContext -> Output: PluginOptionsReadyContext
+    // Input: RuntimeContext -> Output: MountReadyContext
     // ------------------------------------------------------------------------
 
     type Stage12_OutputContext = typeof assertFinalResultShape extends (
@@ -159,7 +164,7 @@ describe("Pipeline Type Transformation Flow", () => {
       ? Out
       : never;
 
-    expectTypeOf<Stage12_OutputContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+    expectTypeOf<Stage12_OutputContext>().toEqualTypeOf<MountReadyContext>();
   });
 
   it("should correctly infer pipe result type using PipeResult helper for entire static pipeline sequence", () => {
@@ -178,6 +183,6 @@ describe("Pipeline Type Transformation Flow", () => {
 
     type InferredContext = import("../../types").PipeResult<PipelineContext, MiddlewareChain>;
 
-    expectTypeOf<InferredContext>().toEqualTypeOf<PluginOptionsReadyContext>();
+    expectTypeOf<InferredContext>().toEqualTypeOf<RuntimeContext>();
   });
 });

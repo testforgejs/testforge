@@ -109,7 +109,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
 
         // Build and execute the mount pipeline
         const pipeline = createPipeline(createMountPipeline(ctx));
-        pipeline.run(ctx);
+        const readyCtx = pipeline.run(ctx);
 
         const mountRuntimeOptions: MountRuntimeOptions = {
           shallowByDefault,
@@ -118,7 +118,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         // Mount the component with resolved plugin configuration
         return mountWithPlugins(
           component,
-          ctx,
+          readyCtx,
           {
             props: finalProps,
             slots: finalSlots,

@@ -1,7 +1,7 @@
 import type {
   PipelineMiddleware,
   PipelineContext,
-  PluginOptionsReadyContext,
+  RuntimeContext,
   PluginName,
 } from "../../../types";
 
@@ -22,7 +22,7 @@ import { getExtraPluginOptions } from "../logic/getExtraPluginOptions";
  */
 export function createPluginMiddleware(
   name: PluginName,
-): PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext> {
+): PipelineMiddleware<RuntimeContext, RuntimeContext> {
   return <T extends PipelineContext>(ctx: T): T => {
     const config = getPluginConfig(ctx, name);
 

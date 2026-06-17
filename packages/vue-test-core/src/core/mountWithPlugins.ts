@@ -1,5 +1,5 @@
 import type {
-  PluginOptionsReadyContext,
+  MountReadyContext,
   MountWithPluginsOptions,
   MountRuntimeOptions,
   ComponentPropsInput,
@@ -22,7 +22,7 @@ import { createPlugins } from "../pluginsRegistry/createPlugins.js";
  */
 export function mountWithPlugins<T extends Component>(
   component: T,
-  ctx: PluginOptionsReadyContext,
+  ctx: MountReadyContext,
   overrides: MountWithPluginsOptions<
     ComponentPropsInput<T>,
     ComponentSlotsInput<T>,

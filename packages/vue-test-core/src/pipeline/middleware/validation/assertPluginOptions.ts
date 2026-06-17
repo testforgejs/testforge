@@ -1,8 +1,4 @@
-import type {
-  PipelineMiddleware,
-  PipelineContext,
-  PluginOptionsReadyContext,
-} from "../../../types";
+import type { PipelineMiddleware, RuntimeContext } from "../../../types";
 
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
 
@@ -22,9 +18,9 @@ import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPlu
  * After successful validation, plugin-related context types
  * can be treated as narrowed and runtime-safe.
  */
-export const assertPluginOptions: PipelineMiddleware<PipelineContext, PluginOptionsReadyContext> = (
+export const assertPluginOptions: PipelineMiddleware<RuntimeContext, RuntimeContext> = (
   ctx,
-): PluginOptionsReadyContext => {
+): RuntimeContext => {
   const { supportedPlugins, extraOptions } = ctx;
   const { plugins } = ctx.result;
 
@@ -38,5 +34,5 @@ export const assertPluginOptions: PipelineMiddleware<PipelineContext, PluginOpti
 
   assertExtraOptionPluginValues(resolveExtraOptions(extraOptions), supported);
 
-  return ctx as PluginOptionsReadyContext;
+  return ctx as RuntimeContext;
 };

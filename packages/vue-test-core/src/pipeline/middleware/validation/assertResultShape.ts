@@ -1,8 +1,8 @@
 import type {
   PipelineMiddleware,
   PipelineContext,
-  ResultReadyContext,
-  PluginOptionsReadyContext,
+  RuntimeContext,
+  MountReadyContext,
 } from "../../../types";
 
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
@@ -30,14 +30,14 @@ function validateResult(ctx: PipelineContext): void {
  * Ensures that all top-level result containers required by subsequent transformers
  * exist and are valid plain objects before the pipeline begins data injection.
  *
- * Transmutes the pipeline context from `PipelineContext` to `ResultReadyContext`
+ * Transmutes the pipeline context from `PipelineContext` to `RuntimeContext`
  * to guarantee that all result sub-objects are fully initialized.
  */
-export const assertResultShape: PipelineMiddleware<PipelineContext, ResultReadyContext> = (
+export const assertResultShape: PipelineMiddleware<RuntimeContext, RuntimeContext> = (
   ctx,
-): ResultReadyContext => {
+): RuntimeContext => {
   validateResult(ctx);
-  return ctx as ResultReadyContext;
+  return ctx as RuntimeContext;
 };
 
 /*
@@ -46,14 +46,13 @@ export const assertResultShape: PipelineMiddleware<PipelineContext, ResultReadyC
  * Runs as the last stage of the mounting pipeline to ensure that no middleware
  * or dynamic plugin layers corrupted the required `ctx.result` structure.
  *
- * Strictly maintains the `PluginOptionsReadyContext` signature to prevent
+ * Strictly maintains the `MountReadyContext` signature to prevent
  * compile-time type erasure, guaranteeing that all resolved plugin types
  * remain accessible at the end of execution.
  */
-export const assertFinalResultShape: PipelineMiddleware<
-  PluginOptionsReadyContext,
-  PluginOptionsReadyContext
-> = (ctx): PluginOptionsReadyContext => {
+export const assertFinalResultShape: PipelineMiddleware<RuntimeContext, MountReadyContext> = (
+  ctx,
+): MountReadyContext => {
   validateResult(ctx);
-  return ctx;
+  return ctx as MountReadyContext;
 };

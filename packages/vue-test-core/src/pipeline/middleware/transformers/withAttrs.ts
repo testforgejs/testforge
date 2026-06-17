@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, PipelineContext } from "../../../types";
+import type { PipelineMiddleware, RuntimeContext } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 import { mergeRecord } from "../../state/mergeRecord.js";
@@ -14,7 +14,7 @@ import { mergeRecord } from "../../state/mergeRecord.js";
  * Priority:
  * mountOptions.attrs > defaultMountOptions.attrs
  */
-export const withAttrs: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
+export const withAttrs: PipelineMiddleware<RuntimeContext> = (ctx): RuntimeContext => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   const attrs = mergeRecord(

@@ -1,6 +1,6 @@
 import type {
   PipelineMiddleware,
-  PluginOptionsReadyContext,
+  RuntimeContext,
   SupportedPluginsMap,
   PluginName,
 } from "../../../types";
@@ -15,7 +15,7 @@ import { createPluginMergeMiddleware } from "../../plugins/adapters/createPlugin
  */
 export function createPluginsMergeMiddlewares(
   supportedPlugins: SupportedPluginsMap,
-): PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext>[] {
+): PipelineMiddleware<RuntimeContext, RuntimeContext>[] {
   return Object.keys(supportedPlugins).map((name) =>
     createPluginMergeMiddleware(name as PluginName),
   );

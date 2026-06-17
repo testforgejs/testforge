@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { assertResultShape, assertFinalResultShape } from "../assertResultShape";
 import { ERROR_PREFIX } from "../../../../constants/constants.js";
 
-import type { PipelineContext } from "../../../../types";
+import type { RuntimeContext } from "../../../../types";
 
 // Register the list of middleware to be tested for parameterization
 const middlewares = [
@@ -28,7 +28,7 @@ describe("Result shape validation middleware layers", () => {
         pluginDefaultsState: {},
         plugins: { router: {} },
       },
-    };
+    } as unknown as RuntimeContext;
 
     it("should pass when result shape is valid", () => {
       expect(() => fn(validCtx)).not.toThrow();
@@ -55,7 +55,7 @@ describe("Result shape validation middleware layers", () => {
           manifest: [],
           defaults: {},
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
       // Act & Assert
       expect(() => fn(invalidCtx)).toThrow(
@@ -75,7 +75,7 @@ describe("Result shape validation middleware layers", () => {
           defaults: {},
         },
         result: null,
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
       // Act & Assert
       expect(() => fn(invalidCtx)).toThrow(
@@ -91,7 +91,7 @@ describe("Result shape validation middleware layers", () => {
           pluginDefaultsState: {},
           plugins: {},
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
       // Act & Assert
       expect(() => fn(invalidCtx)).toThrow(
@@ -108,7 +108,7 @@ describe("Result shape validation middleware layers", () => {
           pluginDefaultsState: {},
           plugins: {},
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
       // Act & Assert
       expect(() => fn(invalidCtx)).toThrow(
@@ -124,7 +124,7 @@ describe("Result shape validation middleware layers", () => {
           pluginDefaultsState: {},
           plugins: {},
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
       // Act & Assert
       expect(() => fn(invalidCtx)).toThrow(
@@ -139,9 +139,9 @@ describe("Result shape validation middleware layers", () => {
           global: 123,
           plugins: {},
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
-      expect(() => assertResultShape(invalidCtx)).toThrow(
+      expect(() => fn(invalidCtx)).toThrow(
         `${ERROR_PREFIX} Critical error: "result.global" must be an Object. Received number (123)`,
       );
     });
@@ -154,7 +154,7 @@ describe("Result shape validation middleware layers", () => {
           global: {},
           pluginDefaultsState: {},
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
       // Act & Assert
       expect(() => fn(invalidCtx)).toThrow(
@@ -169,9 +169,9 @@ describe("Result shape validation middleware layers", () => {
           global: {},
           plugins: 123,
         },
-      } as unknown as PipelineContext;
+      } as unknown as RuntimeContext;
 
-      expect(() => assertResultShape(invalidCtx)).toThrow(
+      expect(() => fn(invalidCtx)).toThrow(
         `${ERROR_PREFIX} Critical error: "result.plugins" must be an Object. Received number (123)`,
       );
     });

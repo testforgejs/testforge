@@ -218,6 +218,20 @@ export interface PipelineContext {
   result: PipelineContextResult;
 }
 
+declare const RuntimeContextBrand: unique symbol;
+
+export interface RuntimeContext extends PipelineContext {
+  readonly [RuntimeContextBrand]: true;
+}
+
+declare const MountReadyBrand: unique symbol;
+
+export interface MountReadyContext extends RuntimeContext {
+  extraOptions: RuntimeExtraOptions;
+
+  readonly [MountReadyBrand]: true;
+}
+
 /**
  * Runtime type.
  *
@@ -240,23 +254,6 @@ export type PipelineResultPatch = {
   global?: Partial<PipelineContextResult["global"]>;
 };
 
-export interface ResultReadyContext extends PipelineContext {
-  result: {
-    mountOptions: PipelineContextResult["mountOptions"];
-    global: PipelineContextResult["global"];
-    plugins: PipelineContextResult["plugins"];
-    pluginDefaultsState: PipelineContextResult["pluginDefaultsState"];
-  };
-}
-
-export interface PluginOptionsReadyContext extends PipelineContext {
-  result: PipelineContext["result"] & {
-    plugins: ResolvedPluginOptions;
-  };
-
-  extraOptions: RuntimeExtraOptions;
-}
-
 export type PipelineMiddleware<
   In extends PipelineContext = PipelineContext,
   Out extends PipelineContext = In,
@@ -266,13 +263,11 @@ export interface Pipeline<In = PipelineContext, Out = In> {
   run: (ctx: In) => Out;
 }
 
-export type PipeResult<
-  In,
-  Ms extends readonly PipelineMiddleware<any, any>[],
-> = Ms extends readonly [PipelineMiddleware<any, infer Out>, ...infer Rest]
-  ? Rest extends readonly PipelineMiddleware<any, any>[]
-    ? PipeResult<Out, Rest>
-    : Out
+export type PipeResult<In, Ms extends readonly any[]> = Ms extends readonly [
+  ...any[],
+  infer Last extends (...args: any[]) => any,
+]
+  ? ReturnType<Last>
   : In;
 
 // === 7. Component Factory ===

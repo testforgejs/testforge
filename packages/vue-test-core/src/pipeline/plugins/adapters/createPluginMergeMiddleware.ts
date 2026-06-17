@@ -1,7 +1,7 @@
 import type {
   PipelineMiddleware,
   PipelineContext,
-  PluginOptionsReadyContext,
+  RuntimeContext,
   PluginName,
 } from "../../../types";
 
@@ -20,7 +20,7 @@ import { mergePluginDefaults } from "../logic/mergePluginDefaults.js";
  */
 export function createPluginMergeMiddleware(
   name: PluginName,
-): PipelineMiddleware<PluginOptionsReadyContext, PluginOptionsReadyContext> {
+): PipelineMiddleware<RuntimeContext, RuntimeContext> {
   return <T extends PipelineContext>(ctx: T): T => {
     return mergePluginDefaults(ctx, name);
   };

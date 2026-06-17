@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, PipelineContext } from "../../../types";
+import type { PipelineMiddleware, RuntimeContext } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 import { mergeRecord } from "../../state/mergeRecord.js";
@@ -18,7 +18,7 @@ import { mergeRecord } from "../../state/mergeRecord.js";
  *
  * The resolved options are written into `ctx.result.mountOptions`.
  */
-export const withBaseMountOptions: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
+export const withBaseMountOptions: PipelineMiddleware<RuntimeContext> = (ctx): RuntimeContext => {
   const { defaultMountOptions, mountOptions, extraOptions } = ctx;
 
   // Extract options that are not part of the flat VTU mount option layer.

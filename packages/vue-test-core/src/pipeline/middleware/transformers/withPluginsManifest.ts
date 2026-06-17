@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, PipelineContext } from "../../../types";
+import type { PipelineMiddleware, RuntimeContext } from "../../../types";
 
 import { patchResultState } from "../../state/patchResultState.js";
 
@@ -9,7 +9,7 @@ import { patchResultState } from "../../state/patchResultState.js";
  * pipeline execution and establishes the initial `ctx.result.plugins`
  * structure before plugin configuration merging begins.
  */
-export const withPluginsManifest: PipelineMiddleware = <T extends PipelineContext>(ctx: T): T => {
+export const withPluginsManifest: PipelineMiddleware<RuntimeContext> = (ctx): RuntimeContext => {
   const plugins = Object.fromEntries(
     Object.entries(ctx.supportedPlugins).map(([name, enabled]) => [name, enabled ? {} : false]),
   );
