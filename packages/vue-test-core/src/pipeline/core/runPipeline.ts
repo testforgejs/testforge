@@ -8,7 +8,7 @@ import type { PipelineMiddleware, PipelineContext, PipeResult } from "../../type
  */
 export function runPipeline<
   In extends PipelineContext,
-  Ms extends readonly PipelineMiddleware<any, any>[],
+  Ms extends readonly PipelineMiddleware<PipelineContext, PipelineContext>[],
 >(ctx: In, middlewares: Ms): PipeResult<In, Ms> {
   let context: PipelineContext = ctx;
 
