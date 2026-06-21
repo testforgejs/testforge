@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTestFramework } from "../createTestFramework.js";
-
 import { mergeComponentData } from "../../utils/mergeComponentData.js";
 import { createPipelineContext } from "../../pipeline/core/createPipelineContext.js";
 import { createPipeline } from "../../pipeline/core/createPipeline.js";
 import { createMountPipeline } from "../../pipeline/mount/createMountPipeline.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
+
+import type {
+  ComponentFactoryExtraOptions,
+  ComponentFactoryOptions,
+  CreateTestFrameworkOptions,
+} from "../../types";
 
 vi.mock("../../utils/mergeComponentData.js", () => ({
   mergeComponentData: vi.fn((x) => x),
@@ -38,7 +43,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
   describe("props and slots merging", () => {
     it("merges props and slots via mergeComponentData", () => {
-      mergeComponentData
+      vi.mocked(mergeComponentData)
         .mockReturnValueOnce({ mergedProps: true })
         .mockReturnValueOnce({ mergedSlots: true });
 
@@ -124,7 +129,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
       factory();
 
-      const pipeline = createPipeline.mock.results[0].value;
+      const pipeline = vi.mocked(createPipeline).mock.results[0].value;
 
       expect(createMountPipeline).toHaveBeenCalledWith({ ctx: true });
       expect(pipeline.run).toHaveBeenCalledWith({ ctx: true });
@@ -133,7 +138,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
   describe("mounting phase", () => {
     it("should call mountWithPlugins with merged data and runtime options", () => {
-      mergeComponentData
+      vi.mocked(mergeComponentData)
         .mockReturnValueOnce({ finalProps: 123 })
         .mockReturnValueOnce({ finalSlots: 456 });
 
@@ -209,16 +214,16 @@ describe("createTestFramework → testComponentFactory", () => {
 
   describe("validate options", () => {
     describe("createTestFramework validation", () => {
-      test("should throw an error when shallowByDefault is not a boolean", () => {
+      it("should throw an error when shallowByDefault is not a boolean", () => {
         expect(() =>
           createTestFramework({
             shallowByDefault: "true",
-          }),
+          } as unknown as CreateTestFrameworkOptions),
         ).toThrow('"shallowByDefault" must be a boolean');
       });
 
-      test("should throw an error when options is not a plain object", () => {
-        expect(() => createTestFramework(123)).toThrow(
+      it("should throw an error when options is not a plain object", () => {
+        expect(() => createTestFramework(123 as unknown as CreateTestFrameworkOptions)).toThrow(
           "createTestFramework options must be a plain object.",
         );
       });
@@ -229,7 +234,7 @@ describe("createTestFramework → testComponentFactory", () => {
         const { testComponentFactory } = createTestFramework();
 
         expect(() => {
-          testComponentFactory(null);
+          testComponentFactory(null as unknown as CreateTestFrameworkOptions);
         }).toThrow("testComponentFactory() requires a valid Vue component");
       });
 
@@ -253,7 +258,7 @@ describe("createTestFramework → testComponentFactory", () => {
         const { testComponentFactory } = createTestFramework();
 
         expect(() => {
-          testComponentFactory(component, {}, value);
+          testComponentFactory(component, {}, value as unknown as ComponentFactoryOptions);
         }).toThrow('"defaultMountOptions" must be a plain object');
       });
 
@@ -295,6 +300,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -332,6 +338,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -364,12 +371,14 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
                 {
                   module: {
                     getName: () => "pinia",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -380,8 +389,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
           const { testComponentFactory } = createTestFramework({ presets });
 
-          // @ts-expect-error testing arbitrary user input
-          testComponentFactory(component, {}, { foo: {} });
+          testComponentFactory(component, {}, { foo: {} } as unknown as ComponentFactoryOptions);
 
           expect(warnSpy).not.toHaveBeenCalled();
         });
@@ -395,6 +403,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -405,17 +414,12 @@ describe("createTestFramework → testComponentFactory", () => {
 
           const { testComponentFactory } = createTestFramework({ presets });
 
-          // @ts-expect-error testing invalid configuration
-          testComponentFactory(
-            component,
-            {},
-            {
+          testComponentFactory(component, {}, {
+            i18n: {},
+            plugins: {
               i18n: {},
-              plugins: {
-                i18n: {},
-              },
             },
-          );
+          } as unknown as ComponentFactoryOptions);
 
           expect(warnSpy).not.toHaveBeenCalled();
         });
@@ -429,6 +433,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -440,6 +445,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "pinia",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -451,8 +457,7 @@ describe("createTestFramework → testComponentFactory", () => {
           const { testComponentFactory } = createTestFramework({ presets });
 
           expect(() => {
-            // @ts-expect-error testing invalid configuration
-            testComponentFactory(component, {}, { i18n: {} });
+            testComponentFactory(component, {}, { i18n: {} } as unknown as ComponentFactoryOptions);
           }).not.toThrow();
 
           expect(warnSpy).toHaveBeenCalledTimes(1);
@@ -485,7 +490,7 @@ describe("createTestFramework → testComponentFactory", () => {
         const factory = testComponentFactory(component);
 
         expect(() => {
-          factory({}, value);
+          factory({}, value as unknown as ComponentFactoryOptions);
         }).toThrow('"mountOptions" must be a plain object');
       });
 
@@ -511,7 +516,7 @@ describe("createTestFramework → testComponentFactory", () => {
         const factory = testComponentFactory(component);
 
         expect(() => {
-          factory({}, {}, {}, value);
+          factory({}, {}, {}, value as unknown as ComponentFactoryExtraOptions);
         }).toThrow('"extraOptions" must be a plain object');
       });
 
@@ -542,6 +547,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -581,6 +587,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -614,12 +621,14 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
                 {
                   module: {
                     getName: () => "pinia",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -632,8 +641,7 @@ describe("createTestFramework → testComponentFactory", () => {
 
           const factory = testComponentFactory(component);
 
-          // @ts-expect-error testing arbitrary user input
-          factory({}, { foo: {} });
+          factory({}, { foo: {} } as unknown as ComponentFactoryOptions);
 
           expect(warnSpy).not.toHaveBeenCalled();
         });
@@ -647,6 +655,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -684,6 +693,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -723,6 +733,7 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
@@ -758,12 +769,14 @@ describe("createTestFramework → testComponentFactory", () => {
                 {
                   module: {
                     getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },
                 {
                   module: {
                     getName: () => "pinia",
+                    getDefinition: () => ({ create: () => {} }),
                   },
                   enabled: true,
                 },

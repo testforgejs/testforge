@@ -13,10 +13,19 @@ import { mount, shallowMount } from "@vue/test-utils";
 import { createPlugins } from "../../pluginsRegistry/createPlugins.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
 
+import type { MountReadyContext } from "../../types";
+
+const mockMount = vi.mocked(mount);
+
 describe("mountWithPlugins", () => {
   const component = { name: "TestComponent" };
 
   const baseCtx = {
+    defaultMountOptions: {},
+    mountOptions: {},
+    extraOptions: {},
+    supportedPlugins: {},
+    preset: undefined,
     result: {
       mountOptions: {
         props: { a: 1 },
@@ -25,7 +34,7 @@ describe("mountWithPlugins", () => {
       plugins: { test: true },
       global: { mixins: ["base-mixin"] },
     },
-  };
+  } as unknown as MountReadyContext;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,19 +112,23 @@ describe("mountWithPlugins", () => {
     it("should merge managed plugins into global.plugins", () => {
       mountWithPlugins(component, baseCtx);
 
-      const callArgs = mount.mock.calls[0][1];
+      const callArgs = mockMount.mock.calls[0][1];
 
-      expect(callArgs.global.plugins).toEqual(["managed-plugin"]);
+      expect(callArgs).toBeDefined();
+      expect(callArgs!.global!.plugins).toEqual(["managed-plugin"]);
     });
 
     it("should preserve existing global.plugins and append managed ones", () => {
+      const mockPlugin = () => {};
+
       mountWithPlugins(component, baseCtx, {
-        global: { plugins: ["existing"] },
+        global: { plugins: [mockPlugin] },
       });
 
-      const callArgs = mount.mock.calls[0][1];
+      const callArgs = mockMount.mock.calls[0][1];
 
-      expect(callArgs.global.plugins).toEqual(["existing", "managed-plugin"]);
+      expect(callArgs).toBeDefined();
+      expect(callArgs!.global!.plugins).toEqual([mockPlugin, "managed-plugin"]);
     });
   });
 
@@ -126,36 +139,45 @@ describe("mountWithPlugins", () => {
         props: { a: 999 },
       });
 
-      const callArgs = mount.mock.calls[0][1];
+      const callArgs = mockMount.mock.calls[0][1];
 
-      expect(callArgs.props).toEqual({ a: 999 });
+      expect(callArgs).toBeDefined();
+      expect(callArgs!.props).toEqual({ a: 999 });
     });
 
     it("should pass global from ctx when overrides do not provide one", () => {
       mountWithPlugins(component, baseCtx);
 
-      const callArgs = mount.mock.calls[0][1];
+      const callArgs = mockMount.mock.calls[0][1];
 
-      expect(callArgs.global.mixins).toEqual(["base-mixin"]);
+      expect(callArgs).toBeDefined();
+      expect(callArgs!.global!.mixins).toEqual(["base-mixin"]);
     });
   });
 
   // ─────────────────────────────────────────────
   describe("immutability guarantees", () => {
     it("should not mutate ctx.result.global object", () => {
-      const originalGlobal = { plugins: ["from-ctx"] };
+      const mockPlugin = () => {};
+      const originalGlobal = { plugins: [mockPlugin] };
 
       const ctx = {
+        defaultMountOptions: {},
+        mountOptions: {},
+        extraOptions: {},
+        supportedPlugins: {},
+        preset: undefined,
         result: {
           mountOptions: {},
           plugins: {},
+          pluginDefaultsState: {},
           global: originalGlobal,
         },
-      };
+      } as unknown as MountReadyContext;
 
       mountWithPlugins(component, ctx, {});
 
-      expect(ctx.result.global).toEqual({ plugins: ["from-ctx"] });
+      expect(ctx.result.global).toEqual({ plugins: [mockPlugin] });
     });
   });
 });
