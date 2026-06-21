@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createMockCtx } from "../../../__tests__/fixtures.js";
 
-// Important: mock before importing the module under test
 vi.mock("../../logic/mergePluginDefaults.js", () => ({
   mergePluginDefaults: vi.fn((ctx) => ctx),
 }));
 
 import { mergePluginDefaults } from "../../logic/mergePluginDefaults.js";
 import { createPluginMergeMiddleware } from "../createPluginMergeMiddleware.js";
+
+import type { RuntimeContext } from "../../../../types";
 
 describe("createPluginMergeMiddleware", () => {
   beforeEach(() => {
@@ -20,8 +22,7 @@ describe("createPluginMergeMiddleware", () => {
 
   it("should call mergePluginDefaults with correct ctx and plugin name", () => {
     const middleware = createPluginMergeMiddleware("i18n");
-    const ctx = { some: "context" };
-
+    const ctx = createMockCtx<RuntimeContext>({ mountOptions: { attrs: { some: "context" } } });
     middleware(ctx);
 
     expect(mergePluginDefaults).toHaveBeenCalledTimes(1);
@@ -30,7 +31,7 @@ describe("createPluginMergeMiddleware", () => {
 
   it("should return the value returned by mergePluginDefaults", () => {
     const middleware = createPluginMergeMiddleware("router");
-    const ctx = { foo: "bar" };
+    const ctx = createMockCtx<RuntimeContext>({ mountOptions: { attrs: { some: "context" } } });
 
     const result = middleware(ctx);
 

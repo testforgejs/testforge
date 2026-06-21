@@ -8,6 +8,8 @@ vi.mock("../../../plugins/adapters/createPluginMergeMiddleware.js", () => ({
 import { createPluginMergeMiddleware } from "../../adapters/createPluginMergeMiddleware.js";
 import { createPluginsMergeMiddlewares } from "../createPluginsMergeMiddlewares.js";
 
+const mockCreatePluginMergeMiddleware = vi.mocked(createPluginMergeMiddleware);
+
 describe("createPluginsMergeMiddlewares", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -15,17 +17,17 @@ describe("createPluginsMergeMiddlewares", () => {
 
   it("should create middleware for each supported plugin", () => {
     const supportedPlugins = {
-      pinia: {},
-      i18n: {},
-      router: {},
+      pinia: true,
+      i18n: true,
+      router: true,
     };
 
     const result = createPluginsMergeMiddlewares(supportedPlugins);
 
-    expect(createPluginMergeMiddleware).toHaveBeenCalledTimes(3);
-    expect(createPluginMergeMiddleware).toHaveBeenCalledWith("pinia");
-    expect(createPluginMergeMiddleware).toHaveBeenCalledWith("i18n");
-    expect(createPluginMergeMiddleware).toHaveBeenCalledWith("router");
+    expect(mockCreatePluginMergeMiddleware).toHaveBeenCalledTimes(3);
+    expect(mockCreatePluginMergeMiddleware).toHaveBeenCalledWith("pinia");
+    expect(mockCreatePluginMergeMiddleware).toHaveBeenCalledWith("i18n");
+    expect(mockCreatePluginMergeMiddleware).toHaveBeenCalledWith("router");
 
     expect(result).toEqual(["mw:pinia", "mw:i18n", "mw:router"]);
   });
@@ -34,19 +36,19 @@ describe("createPluginsMergeMiddlewares", () => {
     const result = createPluginsMergeMiddlewares({});
 
     expect(result).toEqual([]);
-    expect(createPluginMergeMiddleware).not.toHaveBeenCalled();
+    expect(mockCreatePluginMergeMiddleware).not.toHaveBeenCalled();
   });
 
   it("should preserve order of Object.keys iteration", () => {
     const supportedPlugins = {
-      first: {},
-      second: {},
-      third: {},
+      first: true,
+      second: true,
+      third: true,
     };
 
     createPluginsMergeMiddlewares(supportedPlugins);
 
-    expect(createPluginMergeMiddleware.mock.calls.map((c) => c[0])).toEqual([
+    expect(mockCreatePluginMergeMiddleware.mock.calls.map((c) => c[0])).toEqual([
       "first",
       "second",
       "third",

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createMockCtx } from "../../__tests__/fixtures.js";
 
 vi.mock("../../plugins/builders/createPluginsMiddlewares.js", () => ({
   createPluginsMiddlewares: vi.fn(() => ["plugin-mw-1", "plugin-mw-2"]),
@@ -34,10 +35,9 @@ describe("createMountPipeline", () => {
   });
 
   it("should create middleware pipeline in correct order", () => {
-    const ctx = {
-      supportedPlugins: { pinia: {}, i18n: {} },
-    };
-
+    const ctx = createMockCtx({
+      supportedPlugins: { pinia: true, i18n: true },
+    });
     const pipeline = createMountPipeline(ctx);
 
     expect(pipeline).toEqual([
@@ -58,9 +58,9 @@ describe("createMountPipeline", () => {
   });
 
   it("should pass supportedPlugins into plugin factories", () => {
-    const ctx = {
-      supportedPlugins: { pinia: {}, i18n: {} },
-    };
+    const ctx = createMockCtx({
+      supportedPlugins: { pinia: true, i18n: true },
+    });
 
     createMountPipeline(ctx);
 

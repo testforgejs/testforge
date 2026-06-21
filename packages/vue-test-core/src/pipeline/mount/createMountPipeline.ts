@@ -19,14 +19,6 @@ import { createPluginsMergeMiddlewares } from "../plugins/builders/createPlugins
 
 /**
  * Creates the mount processing pipeline.
- *
- * Pipeline stages:
- * - validate input context
- * - initialize preset and plugin state
- * - resolve mount configuration
- * - resolve plugin runtime configuration
- * - validate the final runtime result
- *
  * Middleware order is significant.
  *
  * @param ctx - The initial pipeline context object.

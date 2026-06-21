@@ -8,8 +8,15 @@ import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforge/vue-test-plugin-router";
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
+import type { RuntimePluginConfig, TestFrameworkPresets } from "../../types";
+
 describe("Mount Pipeline Integration", () => {
-  const run = (presets, defaultMountOptions = {}, mountOptions = {}, extraOptions = {}) => {
+  const run = (
+    presets: TestFrameworkPresets,
+    defaultMountOptions = {},
+    mountOptions = {},
+    extraOptions = {},
+  ) => {
     const ctx = createPipelineContext({
       defaultMountOptions,
       mountOptions,
@@ -49,8 +56,10 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, overrides);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // Verify that the array has been replaced, not concatenated, in [1, 2]
-      expect(result.plugins.pinia.initialState.list).toEqual([]);
+      expect(piniaConfig.initialState.list).toEqual([]);
     });
 
     it("should augment plugin config when using extraOptions instead of mountOptions", () => {
@@ -64,8 +73,10 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, {}, extra);
 
-      expect(result.plugins.pinia.stubActions).toBe(true);
-      expect(result.plugins.pinia.initialState).toEqual({ keyB: 2 });
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
+      expect(piniaConfig.stubActions).toBe(true);
+      expect(piniaConfig.initialState).toEqual({ keyB: 2 });
     });
   });
 
@@ -83,9 +94,11 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, {}, {}, extra);
 
-      expect(result.plugins.router.__sharedInstance).toBe(mockInstance);
-      expect(result.plugins.router.__meta).toBeUndefined();
-      expect(result.plugins.router.routes).toEqual([]);
+      const routerConfig = result.plugins.router as RuntimePluginConfig;
+
+      expect(routerConfig.__sharedInstance).toBe(mockInstance);
+      expect(routerConfig.__meta).toBeUndefined();
+      expect(routerConfig.routes).toEqual([]);
     });
   });
 
@@ -94,7 +107,8 @@ describe("Mount Pipeline Integration", () => {
       // pluginDefaultsState.i18n contains { locale: ‘en’ }; the plugin is enabled by default
       const result = run(presets);
 
-      expect(result.plugins.i18n.locale).toBe("en");
+      const i18nConfig = result.plugins.i18n as RuntimePluginConfig;
+      expect(i18nConfig.locale).toBe("en");
     });
 
     it("should return false for a plugin when it is explicitly disabled in mountOptions", () => {
@@ -115,6 +129,7 @@ describe("Mount Pipeline Integration", () => {
 
       expect(result.mountOptions.shallow).toBe(false);
       // Verify that no objects managed by other middleware have been passed into `mountOptions`
+      // @ts-expect-error Intentionally passing invalid mountOptions
       expect(result.mountOptions.plugins).toBeUndefined();
       expect(result.mountOptions.global).toBeUndefined();
     });
@@ -139,7 +154,9 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults);
 
-      expect(result.mountOptions.data()).toEqual({
+      const dataFn = result.mountOptions.data;
+      expect(dataFn).toBeDefined();
+      expect(dataFn!()).toEqual({
         counter: 1,
         status: "idle",
       });
@@ -166,7 +183,9 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, overrides);
 
-      expect(result.mountOptions.data()).toEqual({
+      const dataFn = result.mountOptions.data;
+      expect(dataFn).toBeDefined();
+      expect(dataFn!()).toEqual({
         counter: 42,
         status: "loading",
       });
@@ -192,11 +211,13 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, overrides);
 
-      expect(result.mountOptions.data()).toEqual({
+      const dataFn = result.mountOptions.data;
+      expect(dataFn).toBeDefined();
+      expect(dataFn!()).toEqual({
         counter: 42,
       });
 
-      expect(result.mountOptions.data()).not.toEqual({
+      expect(dataFn!()).not.toEqual({
         counter: 42,
         status: "idle",
       });
@@ -288,7 +309,7 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, overrides);
 
-      expect(result.mountOptions.attrs.items).toEqual([]);
+      expect(result.mountOptions.attrs!.items).toEqual([]);
     });
 
     it("should preserve default attrs when mount options do not provide attrs", () => {
@@ -352,7 +373,8 @@ describe("Mount Pipeline Integration", () => {
         const extra = { plugins: { pinia: { __meta: "not_an_object" } } };
         const result = run(presets, {}, {}, extra);
 
-        expect(result.plugins.pinia.__sharedInstance).toBeUndefined();
+        const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+        expect(piniaConfig.__sharedInstance).toBeUndefined();
       });
     });
 
@@ -365,11 +387,13 @@ describe("Mount Pipeline Integration", () => {
 
         const result = run(presets, defaults, overrides);
 
+        const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
         // If the order is correct:
         // 1. withPluginsBase collected { keyB: 2 }
         // 2. withPinia concatenated pluginDefaultsState.pinia + { keyB: 2 }
-        expect(result.plugins.pinia.keyB).toBe(2);
-        expect(result.plugins.pinia.initialState).toBeDefined(); // A sign of working withPinia
+        expect(piniaConfig.keyB).toBe(2);
+        expect(piniaConfig.initialState).toBeDefined(); // A sign of working withPinia
       });
     });
 
@@ -380,8 +404,10 @@ describe("Mount Pipeline Integration", () => {
 
         const result = run(presets, {}, overrides);
 
-        expect(result.plugins.router.routes).toHaveLength(1);
-        expect(result.plugins.router.routes[0].path).toBe("/");
+        const routerConfig = result.plugins.router as RuntimePluginConfig;
+
+        expect(routerConfig.routes).toHaveLength(1);
+        expect(routerConfig.routes[0].path).toBe("/");
       });
 
       it('should return "false" for Router when no options are provided (default state from manifest)', () => {
@@ -400,10 +426,10 @@ describe("Mount Pipeline Integration", () => {
 
         const result = run(presets, {}, overrides);
 
-        expect(result.plugins.router.routes).toEqual(customRoutes);
-        expect(result.plugins.router.routes).not.toContainEqual(
-          expect.objectContaining({ path: "/" }),
-        );
+        const routerConfig = result.plugins.router as RuntimePluginConfig;
+
+        expect(routerConfig.routes).toEqual(customRoutes);
+        expect(routerConfig.routes).not.toContainEqual(expect.objectContaining({ path: "/" }));
       });
 
       it("should allow providing a shared router instance via __meta while keeping custom routes", () => {
@@ -420,8 +446,10 @@ describe("Mount Pipeline Integration", () => {
 
         const result = run(presets, {}, {}, extra);
 
-        expect(result.plugins.router.__sharedInstance).toBe(mockRouter);
-        expect(result.plugins.router.routes).toEqual(customRoutes);
+        const routerConfig = result.plugins.router as RuntimePluginConfig;
+
+        expect(routerConfig.__sharedInstance).toBe(mockRouter);
+        expect(routerConfig.routes).toEqual(customRoutes);
       });
     });
   });
@@ -562,8 +590,10 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, {}, overrides, extra);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // extraOptions has the highest activation priority
-      expect(result.plugins.pinia.keyA).toBe(1);
+      expect(piniaConfig.keyA).toBe(1);
     });
   });
 
@@ -633,8 +663,10 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, {}, overrides, extra);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // extraOptions overrides the value from mountOptions
-      expect(result.plugins.pinia.stubActions).toBe(true);
+      expect(piniaConfig.stubActions).toBe(true);
     });
 
     it("should NOT affect existing options when extraOptions provides an empty object (Noop behavior)", () => {
@@ -651,11 +683,13 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, {}, overrides, extra);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // The data from `mountOptions` must remain unchanged
-      expect(result.plugins.pinia.initialState).toEqual({
+      expect(piniaConfig.initialState).toEqual({
         user: { id: 1 },
       });
-      expect(result.plugins.pinia.stubActions).toBe(true);
+      expect(piniaConfig.stubActions).toBe(true);
     });
 
     it("should enable a disabled plugin if extraOptions contains a configuration object", () => {
@@ -664,9 +698,11 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, {}, overrides, extra);
 
+      const routerConfig = result.plugins.router as RuntimePluginConfig;
+
       // extraOptions forces the feature to be enabled, even if the defaultMountOptions or mountOptions returns false
-      expect(result.plugins.router).not.toBe(false);
-      expect(result.plugins.router.routes).toEqual([]);
+      expect(routerConfig).not.toBe(false);
+      expect(routerConfig.routes).toEqual([]);
     });
   });
 
@@ -684,10 +720,12 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, overrides);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // All specific default settings have been cleared (replaced with {}),
       // Only framework's global defaults remain (pluginDefaultsState.pinia)
-      expect(result.plugins.pinia.stubActions).toBe(false);
-      expect(result.plugins.pinia.initialState).toEqual({});
+      expect(piniaConfig.stubActions).toBe(false);
+      expect(piniaConfig.initialState).toEqual({});
     });
 
     it("should act as a NOOP when mountOptions.plugins provides an empty object", () => {
@@ -703,9 +741,11 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, overrides);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // All specific default settings remain unchanged
-      expect(result.plugins.pinia.stubActions).toBe(true);
-      expect(result.plugins.pinia.initialState.keyA).toBe(1);
+      expect(piniaConfig.stubActions).toBe(true);
+      expect(piniaConfig.initialState.keyA).toBe(1);
     });
 
     it("should act as a PARTIAL OVERLAY when extraOptions provides specific keys", () => {
@@ -723,9 +763,11 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, defaults, {}, extra);
 
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // stubActions has changed, but the default initialState remains the same
-      expect(result.plugins.pinia.stubActions).toBe(false);
-      expect(result.plugins.pinia.initialState).toEqual({ keyA: 1 });
+      expect(piniaConfig.stubActions).toBe(false);
+      expect(piniaConfig.initialState).toEqual({ keyA: 1 });
     });
   });
 
@@ -753,12 +795,16 @@ describe("Mount Pipeline Integration", () => {
       // 2. Verifying global
       // The BaseButton stub should be absent
       expect(result.global.stubs).toEqual({ MyIcon: true });
-      expect(result.global.stubs.BaseButton).toBeUndefined();
+
+      const stubs = result.global.stubs as Record<string, any>;
+      expect(stubs.BaseButton).toBeUndefined();
 
       // 3. Verifying plugins
+      const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
+
       // `stubActions: true` from the basic options should be missing
-      expect(result.plugins.pinia.initialState).toEqual({ user: {} });
-      expect(result.plugins.pinia.stubActions).toBe(false); // Returned to the framework's default settings
+      expect(piniaConfig.initialState).toEqual({ user: {} });
+      expect(piniaConfig.stubActions).toBe(false); // Returned to the framework's default settings
     });
 
     it("should result in empty configurations if skipDefaultOptions is true and mountOptions are empty", () => {
@@ -836,7 +882,8 @@ describe("Mount Pipeline Integration", () => {
       const extraOptions = { preset: "custom" };
       const result = run(defaultPresets, {}, {}, extraOptions);
 
-      expect(result.plugins.i18n.locale).toBe("fr");
+      const i18nConfig = result.plugins.i18n as RuntimePluginConfig;
+      expect(i18nConfig.locale).toBe("fr");
     });
 
     it("should throw error when requested preset does not exist", () => {
@@ -847,12 +894,19 @@ describe("Mount Pipeline Integration", () => {
       }).toThrow('[withPreset] Requested preset "non-existent" not found');
     });
 
-    it("should be undefined for a plugin when no default preset is provided and no options are specified", () => {
-      const emptyPresets = {};
-      const result = run(emptyPresets, {}, {}, {}, { plugins: { i18n: {} } });
-
-      // If there are no presets at all, the plugins should remain empty but not crash
-      expect(result.plugins.i18n).toBeUndefined();
+    it("should throw when a plugin is configured in extraOptions but no preset supports it", () => {
+      expect(() => {
+        run(
+          {},
+          {},
+          {},
+          {
+            plugins: {
+              i18n: {},
+            },
+          },
+        );
+      }).toThrow(/Plugin "i18n".*not supported by the active preset/);
     });
 
     it("should NOT re-enable plugin when it is explicitly disabled by user even if preset has data", () => {

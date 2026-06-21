@@ -1,13 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { mergePluginDefaults } from "../mergePluginDefaults";
+import { createMockCtx } from "../../../__tests__/fixtures.js";
+
+import type { PipelineContextResult, RuntimeContext } from "../../../../types";
 
 function createCtx({ plugins = {}, pluginDefaultsState: pluginDefaultsState = {} } = {}) {
-  return {
+  return createMockCtx<RuntimeContext>({
     result: {
       plugins: { ...plugins },
       pluginDefaultsState: { ...pluginDefaultsState },
-    },
-  };
+    } as PipelineContextResult,
+  });
 }
 
 describe("mergePluginDefaults", () => {

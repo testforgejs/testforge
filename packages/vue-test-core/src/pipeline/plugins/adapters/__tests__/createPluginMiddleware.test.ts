@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createMockCtx } from "../../../__tests__/fixtures.js";
 
 vi.mock("../../logic/getPluginConfig.js", () => ({
   getPluginConfig: vi.fn(),
@@ -12,17 +13,25 @@ import { getPluginConfig } from "../../logic/getPluginConfig.js";
 import { patchPluginState } from "../../logic/patchPluginState.js";
 import { createPluginMiddleware } from "../createPluginMiddleware.js";
 
+import { ComponentFactoryExtraOptions, RuntimeContext } from "../../../../types";
+
+const mockGetPluginConfig = vi.mocked(getPluginConfig);
+const mockPatchPluginState = vi.mocked(patchPluginState);
+const mergedResult = createMockCtx({ mountOptions: { attrs: { merged: true } } });
+
 describe("createPluginMiddleware", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockPatchPluginState.mockReturnValue(mergedResult);
   });
 
   const name = "pinia";
   const middleware = createPluginMiddleware(name);
 
   it("should return ctx when plugin is disabled", () => {
-    const ctx = {};
-    getPluginConfig.mockReturnValue(false);
+    const ctx = createMockCtx();
+    mockGetPluginConfig.mockReturnValue(false);
 
     const result = middleware(ctx);
 
@@ -31,16 +40,15 @@ describe("createPluginMiddleware", () => {
   });
 
   it("should call mergePlugin with config when enabled", () => {
-    const ctx = { extraOptions: {} };
+    const ctx = createMockCtx<RuntimeContext>({ extraOptions: {} });
     const config = { a: 1 };
 
-    getPluginConfig.mockReturnValue(config);
-    patchPluginState.mockReturnValue({ merged: true });
+    mockGetPluginConfig.mockReturnValue(config);
 
     const result = middleware(ctx);
 
-    expect(patchPluginState).toHaveBeenCalledWith(ctx, name, config);
-    expect(result).toEqual({ merged: true });
+    expect(mockPatchPluginState).toHaveBeenCalledWith(ctx, name, config);
+    expect(result).toEqual(mergedResult);
   });
 
   it("should not mutate original config", () => {
@@ -50,16 +58,15 @@ describe("createPluginMiddleware", () => {
       __meta: { instance: true },
     };
 
-    getPluginConfig.mockReturnValue(config);
+    mockGetPluginConfig.mockReturnValue(config);
 
-    const ctx = {
+    const ctx = createMockCtx<RuntimeContext>({
       extraOptions: {
         [name]: {
           __meta: { instance },
         },
-      },
-    };
-
+      } as ComponentFactoryExtraOptions,
+    });
     middleware(ctx);
 
     expect(config).toEqual({
@@ -72,7 +79,7 @@ describe("createPluginMiddleware", () => {
     const instance = {};
     const config = { a: 1 };
 
-    const ctx = {
+    const ctx = createMockCtx<RuntimeContext>({
       extraOptions: {
         plugins: {
           [name]: {
@@ -80,10 +87,8 @@ describe("createPluginMiddleware", () => {
           },
         },
       },
-    };
-
-    getPluginConfig.mockReturnValue(config);
-    patchPluginState.mockReturnValue(ctx);
+    });
+    mockGetPluginConfig.mockReturnValue(config);
 
     middleware(ctx);
 
@@ -99,10 +104,9 @@ describe("createPluginMiddleware", () => {
       __meta: { instance: true },
     };
 
-    const ctx = { extraOptions: {} };
+    const ctx = createMockCtx<RuntimeContext>({ extraOptions: {} });
 
-    getPluginConfig.mockReturnValue(config);
-    patchPluginState.mockReturnValue(ctx);
+    mockGetPluginConfig.mockReturnValue(config);
 
     middleware(ctx);
 
