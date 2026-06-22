@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-
 import { assertExtraOptionPluginValues } from "../assertExtraOptionPluginValues.js";
+
+import type { ResolvedPluginOptions } from "../../../../../types";
 
 describe("assertExtraOptionPluginValues", () => {
   it("should NOT throw for valid plugin objects in extraOptions", () => {
@@ -25,7 +26,7 @@ describe("assertExtraOptionPluginValues", () => {
       plugins: {
         pinia: false,
         router: false,
-      },
+      } as const,
     };
 
     const supported = new Set(["pinia", "router"]);
@@ -41,7 +42,7 @@ describe("assertExtraOptionPluginValues", () => {
     const extraOptions = {
       plugins: {
         pinia: value,
-      },
+      } as ResolvedPluginOptions,
     };
 
     const supported = new Set(["pinia"]);
@@ -52,11 +53,12 @@ describe("assertExtraOptionPluginValues", () => {
   });
 
   it("should ignore unknown extraOptions keys", () => {
+    // Intentionally include unknown keys to verify runtime ignores them.
     const extraOptions = {
       skipDefaultProps: true,
       skipDefaultSlots: false,
-      //someTechnicalFlag: 123,
-      //anotherKey: true,
+      someTechnicalFlag: 123,
+      anotherKey: true,
     };
 
     const supported = new Set(["pinia", "i18n"]);
@@ -71,7 +73,7 @@ describe("assertExtraOptionPluginValues", () => {
       plugins: {
         pinia: {},
         vuetify: 123,
-      },
+      } as unknown as ResolvedPluginOptions,
     };
 
     const supported = new Set(["pinia"]);
@@ -95,7 +97,7 @@ describe("assertExtraOptionPluginValues", () => {
     const extraOptions = {
       plugins: {
         i18n: 123,
-      },
+      } as unknown as ResolvedPluginOptions,
     };
 
     const supported = new Set(["i18n"]);

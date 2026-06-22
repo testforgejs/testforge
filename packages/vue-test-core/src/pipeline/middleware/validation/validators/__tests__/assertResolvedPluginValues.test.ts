@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-
 import { assertResolvedPluginValues } from "../assertResolvedPluginValues.js";
+
+import type { ResolvedPluginOptions } from "../../../../../types";
 
 describe("assertResolvedPluginValues", () => {
   it("should NOT throw for valid plugin objects", () => {
@@ -20,7 +21,7 @@ describe("assertResolvedPluginValues", () => {
     const plugins = {
       pinia: false,
       router: false,
-    };
+    } as const;
 
     expect(() => {
       assertResolvedPluginValues(plugins);
@@ -32,7 +33,7 @@ describe("assertResolvedPluginValues", () => {
   it.each(invalidValues)("should throw for invalid plugin value: %p", (value) => {
     const plugins = {
       pinia: value,
-    };
+    } as ResolvedPluginOptions;
 
     expect(() => {
       assertResolvedPluginValues(plugins);
@@ -42,7 +43,7 @@ describe("assertResolvedPluginValues", () => {
   it("should include plugin name in error message", () => {
     const plugins = {
       i18n: 123,
-    };
+    } as unknown as ResolvedPluginOptions;
 
     expect(() => {
       assertResolvedPluginValues(plugins);
