@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { createPluginInstance } from "../createPluginInstance.js";
 
+import type { PluginRuntimeMeta } from "../../../types";
+
 describe("createPluginInstance", () => {
   describe("factory usage", () => {
     it("should call factory with options when __sharedInstance is not provided", () => {
@@ -78,7 +80,9 @@ describe("createPluginInstance", () => {
       const instance = { a: 1 };
       const factory = vi.fn(() => instance);
 
-      expect(() => createPluginInstance(factory, { expose: 123 })).not.toThrow();
+      expect(() =>
+        createPluginInstance(factory, { expose: 123 } as unknown as PluginRuntimeMeta<any>),
+      ).not.toThrow();
     });
   });
 

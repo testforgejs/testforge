@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { exposeInstance } from "../exposeInstance.js";
 
+import type { PluginRuntimeMeta } from "../../../types";
+
 describe("exposeInstance", () => {
   describe("when expose callback is provided", () => {
     it("should call expose with the plugin instance", () => {
@@ -20,11 +22,15 @@ describe("exposeInstance", () => {
     });
 
     it("should do nothing when expose is not a function", () => {
-      expect(() => exposeInstance({}, { expose: "not-a-function" })).not.toThrow();
+      expect(() =>
+        exposeInstance({}, { expose: "not-a-function" } as unknown as PluginRuntimeMeta<any>),
+      ).not.toThrow();
     });
 
     it("should do nothing when expose is null", () => {
-      expect(() => exposeInstance({}, { expose: null })).not.toThrow();
+      expect(() =>
+        exposeInstance({}, { expose: null } as unknown as PluginRuntimeMeta<any>),
+      ).not.toThrow();
     });
   });
 
@@ -39,11 +45,9 @@ describe("exposeInstance", () => {
 
       exposeInstance(instance, options);
 
-      // ссылки те же
       expect(instance).toBe(instanceRef);
       expect(options).toBe(optionsRef);
 
-      // содержимое не изменилось
       expect(instance).toEqual({ a: 1 });
       expect(options.expose).toBe(expose);
     });
