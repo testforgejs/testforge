@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { mergeComponentData } from "../mergeComponentData.js";
 
+type Data = Record<string, number>;
+
 describe("mergeComponentData", () => {
   describe("merging priority", () => {
     it("should respect priority: direct > mount > defaultData > defaultMountData", () => {
@@ -108,10 +110,10 @@ describe("mergeComponentData", () => {
 
   describe("immutability", () => {
     it("should not mutate any input objects", () => {
-      const defaultMountData = { a: 1 };
-      const defaultData = { b: 2 };
-      const mountData = { c: 3 };
-      const directData = { d: 4 };
+      const defaultMountData: Data = { a: 1 };
+      const defaultData: Data = { b: 2 };
+      const mountData: Data = { c: 3 };
+      const directData: Data = { d: 4 };
 
       const snapshot = {
         defaultMountData: { ...defaultMountData },

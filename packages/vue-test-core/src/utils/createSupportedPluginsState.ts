@@ -15,12 +15,19 @@ import type { PresetDefinition, SupportedPluginsMap } from "../types";
  * Result semantics:
  * - `true`  → plugin is supported and enabled by default
  * - `false` → plugin is supported but disabled by default
- */ export function createSupportedPluginsState(
+ */
+export function createSupportedPluginsState(
   preset: PresetDefinition | undefined,
 ): SupportedPluginsMap {
   const map: SupportedPluginsMap = {};
 
   for (const { module, enabled } of getPresetManifest(preset)) {
+    if (typeof enabled !== "boolean") {
+      throw new Error(
+        `[TestForge] Plugin "${module.getName()}" has invalid "enabled" value: ${String(enabled)}. Expected boolean.`,
+      );
+    }
+
     map[module.getName()] = enabled;
   }
 

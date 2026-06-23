@@ -361,6 +361,8 @@ export interface TestFramework {
 
 export type PlainObject = Record<string, unknown>;
 
+export type Mergeable = PlainObject | unknown[];
+
 export interface MergeComponentDataParams<T extends object> {
   // Level 1: Test Suite / Factory defaults
   defaultMountData?: T | null;

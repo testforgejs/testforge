@@ -1,5 +1,6 @@
-import type { PlainObject } from "../types";
 import { isPlainObject } from "../guards/isPlainObject.js";
+
+import type { Mergeable, PlainObject } from "../types";
 
 /*
  * IMPORTANT CONTRACT:
@@ -11,27 +12,37 @@ import { isPlainObject } from "../guards/isPlainObject.js";
  * - Arrays are union-merged with unique values
  * - Primitives are replaced
  */
-export function mergeConfigs<T extends PlainObject>(target: T, source: T): T {
-  if (!isPlainObject(target) || !isPlainObject(source)) {
+export function mergeConfigs<T extends Mergeable>(target: T, source: T): T {
+  const arrays = Array.isArray(target) && Array.isArray(source);
+
+  const objects = isPlainObject(target) && isPlainObject(source);
+
+  if (arrays) {
+    return [...new Set([...target, ...source])] as T;
+  }
+  /*if (!isPlainObject(target) || !isPlainObject(source)) {
     return (
       Array.isArray(target) && Array.isArray(source) ? [...new Set([...target, ...source])] : source
     ) as T;
-  }
+  }*/
+  if (objects) {
+    const output: PlainObject = { ...target };
 
-  const output: PlainObject = { ...target };
+    for (const key of Object.keys(source)) {
+      const targetValue = target[key];
+      const sourceValue = source[key];
 
-  for (const key of Object.keys(source)) {
-    const targetValue = target[key];
-    const sourceValue = source[key];
-
-    if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-      output[key] = [...new Set([...targetValue, ...sourceValue])];
-    } else if (isPlainObject(targetValue) && isPlainObject(sourceValue)) {
-      output[key] = mergeConfigs(targetValue as PlainObject, sourceValue as PlainObject);
-    } else {
-      output[key] = sourceValue;
+      if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
+        output[key] = [...new Set([...targetValue, ...sourceValue])];
+      } else if (isPlainObject(targetValue) && isPlainObject(sourceValue)) {
+        output[key] = mergeConfigs(targetValue as PlainObject, sourceValue as PlainObject);
+      } else {
+        output[key] = sourceValue;
+      }
     }
+
+    return output as T;
   }
 
-  return output as T;
+  throw new Error("[TestForge] mergeConfigs() expects two plain objects or two arrays.");
 }
