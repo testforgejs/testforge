@@ -1,4 +1,4 @@
-import type { ResolvedPluginOptions, PipelineContext, RuntimeVuePlugin } from "../types";
+import type { ResolvedPluginOptions, PipelineContext, MountPlugin } from "../types";
 
 import { createPluginRegistry } from "./createPluginRegistry.js";
 
@@ -28,8 +28,8 @@ import { createPluginRegistry } from "./createPluginRegistry.js";
 export function createPlugins(
   options: ResolvedPluginOptions = {},
   ctx: PipelineContext,
-): RuntimeVuePlugin[] {
-  const plugins: RuntimeVuePlugin[] = [];
+): MountPlugin[] {
+  const plugins: MountPlugin[] = [];
 
   const { preset } = ctx;
   const registry = createPluginRegistry(preset?.manifest);

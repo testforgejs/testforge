@@ -7,7 +7,7 @@ import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers"
 /** Plugin name (e.g., ‘pinia’, ‘i18n’, ‘router’) */
 export type PluginName = string;
 
-export type RuntimeVuePlugin = any;
+export type MountPlugin = any;
 
 // === 2. Plugin Registry System ===
 
