@@ -341,11 +341,8 @@ export interface MountRuntimeOptions {
   shallowByDefault: boolean;
 }
 
-export interface TestFramework {
-  /**
-   * Creates a reusable component mounting factory.
-   */
-  testComponentFactory<T extends Component>(
+export interface ComponentFactoryCreator {
+  <T extends Component>(
     component: T,
     defaultProps?: ComponentPropsInput<T>,
     defaultMountOptions?: ComponentFactoryOptions<
@@ -355,6 +352,13 @@ export interface TestFramework {
     >,
     defaultSlots?: ComponentSlotsInput<T>,
   ): ComponentFactory<T>;
+}
+
+export interface TestFramework {
+  /**
+   * Creates a reusable component mounting factory.
+   */
+  testComponentFactory: ComponentFactoryCreator;
 }
 
 // === 8. Utility Types ===

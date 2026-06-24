@@ -8,6 +8,7 @@ export { validatePresets } from "./validators/validatePresets.js";
 // Public types
 export type {
   ComponentFactory,
+  ComponentFactoryCreator,
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   PluginOptionsMap,

@@ -1,5 +1,6 @@
 import type {
   CreateTestFrameworkOptions,
+  ComponentFactoryCreator,
   ComponentFactory,
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
@@ -33,99 +34,99 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
   validateCreateTestFrameworkOptions(options);
   const { presets = {}, shallowByDefault = false } = options;
 
-  return {
-    /*
-     * Creates a reusable component mounting factory.
-     *
-     * The resulting factory supports:
-     * - default props and slots
-     * - plugin-aware mount configuration
-     * - preset-based plugin resolution
-     * - runtime mount pipeline processing
-     */
-    testComponentFactory<T extends Component>(
-      component: T,
-      defaultProps: ComponentPropsInput<T> = {},
-      defaultMountOptions: ComponentFactoryOptions<
+  /*
+   * Creates a reusable component mounting factory.
+   *
+   * The resulting factory supports:
+   * - default props and slots
+   * - plugin-aware mount configuration
+   * - preset-based plugin resolution
+   * - runtime mount pipeline processing
+   */
+  const testComponentFactory: ComponentFactoryCreator = <T extends Component>(
+    component: T,
+    defaultProps: ComponentPropsInput<T> = {},
+    defaultMountOptions: ComponentFactoryOptions<
+      ComponentPropsInput<T>,
+      ComponentSlotsInput<T>,
+      ComponentDataInput<T>
+    > = {},
+    defaultSlots: ComponentSlotsInput<T> = {},
+  ): ComponentFactory<T> => {
+    validateTestComponentFactoryArguments(
+      component,
+      defaultProps,
+      defaultMountOptions,
+      defaultSlots,
+      presets,
+    );
+
+    return (
+      props: ComponentPropsInput<T> = {},
+      mountOptions: ComponentFactoryOptions<
         ComponentPropsInput<T>,
         ComponentSlotsInput<T>,
         ComponentDataInput<T>
       > = {},
-      defaultSlots: ComponentSlotsInput<T> = {},
-    ): ComponentFactory<T> {
-      validateTestComponentFactoryArguments(
-        component,
-        defaultProps,
+      slots: ComponentSlotsInput<T> = {},
+      extraOptions: ComponentFactoryExtraOptions = {},
+    ) => {
+      validateComponentFactoryArguments(props, mountOptions, slots, extraOptions, presets);
+
+      const {
+        skipDefaultProps = false,
+        skipDefaultSlots = false,
+        skipDefaultOptions = false,
+      } = extraOptions;
+
+      // Resolve final props
+      const finalProps = mergeComponentData({
+        defaultMountData: defaultMountOptions.props,
+        defaultData: defaultProps,
+        mountData: mountOptions.props,
+        directData: props,
+        skipDefault: skipDefaultProps,
+        skipOptions: skipDefaultOptions,
+      });
+
+      // Resolve final slots
+      const finalSlots = mergeComponentData({
+        defaultMountData: defaultMountOptions.slots,
+        defaultData: defaultSlots,
+        mountData: mountOptions.slots,
+        directData: slots,
+        skipDefault: skipDefaultSlots,
+        skipOptions: skipDefaultOptions,
+      });
+
+      // Create the initial pipeline context
+      const ctx = createPipelineContext({
         defaultMountOptions,
-        defaultSlots,
+        mountOptions,
+        extraOptions,
         presets,
-      );
+      });
 
-      return (
-        props: ComponentPropsInput<T> = {},
-        mountOptions: ComponentFactoryOptions<
-          ComponentPropsInput<T>,
-          ComponentSlotsInput<T>,
-          ComponentDataInput<T>
-        > = {},
-        slots: ComponentSlotsInput<T> = {},
-        extraOptions: ComponentFactoryExtraOptions = {},
-      ) => {
-        validateComponentFactoryArguments(props, mountOptions, slots, extraOptions, presets);
+      // Build and execute the mount pipeline
+      const pipeline = createPipeline(createMountPipeline(ctx));
+      const readyCtx = pipeline.run(ctx);
 
-        const {
-          skipDefaultProps = false,
-          skipDefaultSlots = false,
-          skipDefaultOptions = false,
-        } = extraOptions;
-
-        // Resolve final props
-        const finalProps = mergeComponentData({
-          defaultMountData: defaultMountOptions.props,
-          defaultData: defaultProps,
-          mountData: mountOptions.props,
-          directData: props,
-          skipDefault: skipDefaultProps,
-          skipOptions: skipDefaultOptions,
-        });
-
-        // Resolve final slots
-        const finalSlots = mergeComponentData({
-          defaultMountData: defaultMountOptions.slots,
-          defaultData: defaultSlots,
-          mountData: mountOptions.slots,
-          directData: slots,
-          skipDefault: skipDefaultSlots,
-          skipOptions: skipDefaultOptions,
-        });
-
-        // Create the initial pipeline context
-        const ctx = createPipelineContext({
-          defaultMountOptions,
-          mountOptions,
-          extraOptions,
-          presets,
-        });
-
-        // Build and execute the mount pipeline
-        const pipeline = createPipeline(createMountPipeline(ctx));
-        const readyCtx = pipeline.run(ctx);
-
-        const mountRuntimeOptions: MountRuntimeOptions = {
-          shallowByDefault,
-        };
-
-        // Mount the component with resolved plugin configuration
-        return mountWithPlugins(
-          component,
-          readyCtx,
-          {
-            props: finalProps,
-            slots: finalSlots,
-          },
-          mountRuntimeOptions,
-        );
+      const mountRuntimeOptions: MountRuntimeOptions = {
+        shallowByDefault,
       };
-    },
+
+      // Mount the component with resolved plugin configuration
+      return mountWithPlugins(
+        component,
+        readyCtx,
+        {
+          props: finalProps,
+          slots: finalSlots,
+        },
+        mountRuntimeOptions,
+      );
+    };
   };
+
+  return { testComponentFactory };
 }
