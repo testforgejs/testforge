@@ -492,14 +492,6 @@ describe("Mount Pipeline Integration", () => {
   });
 
   describe("Plugin Whitelist Validation", () => {
-    it("should throw an error when an unsupported plugin is passed to defaultMountOptions.plugins", () => {
-      const defaults = { plugins: { vfm: {} } };
-
-      expect(() => run(presets, defaults)).toThrow(
-        /Plugin "vfm" is configured but not supported by the active preset/,
-      );
-    });
-
     it("should throw an error when an unsupported plugin is passed to mountOptions.plugins", () => {
       const overrides = { plugins: { vuetify: {} } };
 
@@ -531,6 +523,29 @@ describe("Mount Pipeline Integration", () => {
       const overrides = { plugins: { pinia: "invalid_string" } };
 
       expect(() => run(presets, {}, overrides)).toThrow(/Expected Object or Boolean/);
+    });
+
+    it("should exclude unsupported default plugins from runtime plugin state", () => {
+      const defaults = {
+        plugins: {
+          pinia: {},
+          vfm: {},
+        },
+      };
+
+      const mockPresets = {
+        default: {
+          manifest: [{ module: piniaPlugin, enabled: true }],
+          defaults: {
+            pinia: {},
+          },
+        },
+      };
+
+      const result = run(mockPresets, defaults);
+
+      expect(result.plugins.pinia).toEqual({});
+      expect(result.plugins.vfm).toBeUndefined();
     });
   });
 

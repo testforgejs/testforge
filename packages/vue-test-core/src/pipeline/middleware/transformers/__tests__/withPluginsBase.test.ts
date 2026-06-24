@@ -35,6 +35,7 @@ describe("withPluginsBase middleware", () => {
       defaultMountOptions,
       mountOptions,
       extraOptions: { skipDefaultOptions: false },
+      supportedPlugins: { pinia: true, i18n: true },
     });
 
     const result = withPluginsBase(ctx);

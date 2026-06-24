@@ -2617,6 +2617,12 @@ describe("testComponentFactory Integration (Universal)", () => {
         expect(options.global.plugins || []).toHaveLength(0);
       });
 
+      it("should not throw when defaultMountOptions contains additional plugins", async () => {
+        const factory = testComponentFactory(MockComponent, {}, { plugins: { pinia: {} } });
+        factory({});
+        expect(() => factory({}, {}, {}, { preset: "i18nPreset" })).not.toThrow();
+      });
+
       describe("Plugin Options Validation Errors", () => {
         const invalidValues = [
           { value: 123, type: "number" },

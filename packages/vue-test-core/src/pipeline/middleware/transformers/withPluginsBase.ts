@@ -1,5 +1,6 @@
 import type { PipelineMiddleware, RuntimeContext } from "../../../types";
 
+import { filterSupportedPlugins } from "../../plugins/logic/filterSupportedPlugins.js";
 import { patchResultState } from "../../state/patchResultState.js";
 
 /*
@@ -15,11 +16,13 @@ import { patchResultState } from "../../state/patchResultState.js";
  * and later processed by plugin-specific middleware layers.
  */
 export const withPluginsBase: PipelineMiddleware<RuntimeContext> = (ctx): RuntimeContext => {
-  const { defaultMountOptions, mountOptions, extraOptions } = ctx;
+  const { defaultMountOptions, mountOptions, extraOptions, supportedPlugins } = ctx;
 
   return patchResultState(ctx, {
     plugins: {
-      ...(extraOptions.skipDefaultOptions ? {} : defaultMountOptions.plugins || {}),
+      ...(extraOptions.skipDefaultOptions
+        ? {}
+        : filterSupportedPlugins(defaultMountOptions.plugins ?? {}, supportedPlugins)),
       ...(mountOptions.plugins || {}),
     },
   });
