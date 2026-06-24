@@ -17,7 +17,7 @@
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
     "plugin:generate": "node scripts/scaffold-plugin.js",
-    "docs:gen": "node scripts/docs.js",
+    "docs:plugin": "node scripts/docs-plugins.js",
     "docs:all": "typedoc --options typedoc.workspace.json",
     "preinstall": "npx only-allow pnpm"
   },
