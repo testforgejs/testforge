@@ -2,7 +2,7 @@
   "name": "testforge-monorepo",
   "version": "0.0.1",
   "type": "module",
-  "description": "",
+  "description": "The TestForge ecosystem — extensible component testing tools for Vue 3",
   "private": true,
   "scripts": {
     "build": "pnpm --filter \"./packages/**\" run build",
@@ -54,7 +54,7 @@
     "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
-    "vitest": "^4.1.4",
+    "vitest": "~4.1.4",
     "vue": "^3.5.32",
     "vue-i18n": "^11.3.2",
     "vue-router": "^5.0.4"
