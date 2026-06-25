@@ -24,7 +24,7 @@
   "author": "Roman Levchenko",
   "peerDependencies": {
     "@vue/test-utils": "^2.0.0",
-    "vue": "^3.0.0"
+    "vue": "^3.3.0"
   },
   "tsd": {
     "directory": "test-d"
