@@ -22,6 +22,18 @@
     "test:types": "tsd",
     "docs:generate": "typedoc"
   },
+  "keywords": [
+    "vue",
+    "vue3",
+    "testing",
+    "component-testing",
+    "vue-test-utils",
+    "pinia",
+    "state-management",
+    "stores",
+    "testforge",
+    "testforge-plugin"
+  ],
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {

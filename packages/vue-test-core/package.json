@@ -21,6 +21,19 @@
     "dev": "tsup --watch",
     "test:types": "tsd"
   },
+  "keywords": [
+    "vue",
+    "vue3",
+    "testing",
+    "component-testing",
+    "vue-test-utils",
+    "vitest",
+    "jest",
+    "testforge",
+    "testing-framework",
+    "component-test",
+    "vue-testing"
+  ],
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {

@@ -20,6 +20,18 @@
     "build": "tsup",
     "dev": "tsup --watch"
   },
+  "keywords": [
+    "vue",
+    "vue3",
+    "testing",
+    "component-testing",
+    "vue-test-utils",
+    "preset",
+    "configuration",
+    "recommended",
+    "testforge",
+    "testforge-preset"
+  ],
   "license": "MIT",
   "author": "Roman Levchenko",
   "dependencies": {

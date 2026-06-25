@@ -22,6 +22,19 @@
     "test:types": "tsd",
     "docs:generate": "typedoc"
   },
+  "keywords": [
+    "vue",
+    "vue3",
+    "testing",
+    "component-testing",
+    "vue-test-utils",
+    "vue-router",
+    "router",
+    "routing",
+    "navigation",
+    "testforge",
+    "testforge-plugin"
+  ],
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {

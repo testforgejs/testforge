@@ -22,6 +22,18 @@
     "test:types": "tsd",
     "docs:generate": "typedoc"
   },
+  "keywords": [
+    "vue",
+    "vue3",
+    "testing",
+    "vue-test-utils",
+    "vue-i18n",
+    "i18n",
+    "localization",
+    "testforge",
+    "testforge-plugin",
+    "component-testing"
+  ],
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
