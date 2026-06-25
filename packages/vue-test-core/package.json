@@ -2,6 +2,7 @@
   "name": "@testforge/vue-test-core",
   "version": "0.1.0",
   "type": "module",
+  "description": "Core testing utilities and pipeline orchestration for the TestForge component testing framework",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

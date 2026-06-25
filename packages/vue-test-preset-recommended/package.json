@@ -2,6 +2,7 @@
   "name": "@testforge/vue-test-preset-recommended",
   "version": "0.1.0",
   "type": "module",
+  "description": "Official recommended preset for getting started with the TestForge framework",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
