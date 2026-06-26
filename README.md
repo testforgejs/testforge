@@ -41,7 +41,48 @@ They describe **how to rebuild your entire enterprise Vue stack** from scratch.
 
 ---
 
-# 3. The Idea: Context-Aware Overrides
+# 3. Quick Start
+
+The fastest way to get started is to install the core framework along with the recommended preset. The preset automatically includes official plugins for **Pinia**, **Vue Router**, and **vue-i18n**.
+
+### Install Dependencies
+
+npm install -D @testforge/vue-test-core @testforge/vue-test-preset-recommended
+
+### Initialize the Framework
+
+Create a configuration file (e.g., `tests/setup.ts`) to initialize the framework with the recommended preset and export your testing factory:
+
+import { createTestFramework } from '@testforge/vue-test-core';
+import { presets } from '@testforge/vue-test-preset-recommended';
+
+```typescript
+const framework = createTestFramework({ presets });
+
+export const testComponentFactory = framework.testComponentFactory;
+```
+
+### Write Your First Test
+
+Now you can import your custom factory inside your `*.test.ts` or `*.spec.ts` files to easily mount and test your Vue components:
+
+```typescript
+import { testComponentFactory } from "./setup";
+import MyComponent from "@/components/MyComponent.vue";
+
+// Create a configured factory for the component
+const factory = testComponentFactory(MyComponent);
+
+test("renders correctly", () => {
+  // Mount the component with presets automatically applied
+  const wrapper = factory();
+
+  // Your Vitest assertions here
+  expect(wrapper.exists()).toBe(true);
+});
+```
+
+# 4. The Idea: Context-Aware Overrides
 
 TestForge introduces one simple shift in perspective:
 
@@ -51,7 +92,7 @@ You define the infrastructure baseline **once** in a centralized factory. Indivi
 
 ---
 
-# 4. Before / After Example
+# 5. Before / After Example
 
 ## ❌ Vue Test Utils way (Configuration Explosion)
 
@@ -114,14 +155,14 @@ it("renders guest view", () => {
 
 ---
 
-# 5. Core Concepts
+# 6. Core Concepts
 
 TestForge is built around a few ideas that work together.  
 Individually they are simple. Together they remove almost all test setup noise.
 
 ---
 
-## 5.1 Test Component Factory
+## 6.1 Test Component Factory
 
 The **Test Component Factory** is the entry point you use in tests.
 
@@ -153,7 +194,7 @@ All without the test knowing how.
 
 ---
 
-## 5.2 Plugin System
+## 6.2 Plugin System
 
 TestForge treats i18n, Pinia, Router and any future integration as **plugins**.
 
@@ -181,7 +222,7 @@ Because of this, TestForge can:
 
 ---
 
-## 5.3 Presets
+## 6.3 Presets
 
 A preset is a declarative description of a test environment.
 
@@ -226,7 +267,7 @@ You can create your own presets for your organization or monorepo.
 
 ---
 
-## 5.4 Mount Pipeline
+## 6.4 Mount Pipeline
 
 The **Mount Pipeline** is the internal engine that prepares the final mount options.
 
@@ -247,7 +288,7 @@ Because this is centralized:
 
 ---
 
-## 5.5 Default vs Override Philosophy
+## 6.5 Default vs Override Philosophy
 
 TestForge follows a strict rule:
 
@@ -265,7 +306,7 @@ You ask for what you need, and TestForge merges it correctly.
 
 ---
 
-# 6. 📈 Incremental Migration from Vue Test Utils
+# 7. 📈 Incremental Migration from Vue Test Utils
 
 TestForge is intentionally engineered as a **drop-in architecture extension**, not a destructive replacement. It features 100% backward compatibility with standard [Vue Test Utils (VTU)](https://vuejs.org) configuration formats.
 
@@ -340,7 +381,7 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 ---
 
-# 7. Principles
+# 8. Principles
 
 > ## Behavior parity with Vue Test Utils
 >
