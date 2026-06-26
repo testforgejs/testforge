@@ -70,7 +70,7 @@ export interface PluginRuntimeMeta<TInstance> {
   expose?: (instance: TInstance) => void;
 }
 
-export type PluginOptionsWithMeta<TInstance, TOptions = object> = TOptions &
+export type RuntimePluginOptions<TInstance, TOptions = object> = TOptions &
   PluginRuntimeMeta<TInstance>;
 
 export interface InstanceCapture<T> {
