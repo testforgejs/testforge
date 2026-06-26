@@ -65,12 +65,13 @@ export type RuntimePluginState = RuntimePluginConfig & {
   __sharedInstance?: unknown;
 };
 
-export interface PluginRuntimeMeta<T> {
-  __sharedInstance?: T;
-  expose?: (instance: T) => void;
+export interface PluginRuntimeMeta<TInstance> {
+  __sharedInstance?: TInstance;
+  expose?: (instance: TInstance) => void;
 }
 
-export type PluginOptionsWithMeta<T, TOptions = object> = TOptions & PluginRuntimeMeta<T>;
+export type PluginOptionsWithMeta<TInstance, TOptions = object> = TOptions &
+  PluginRuntimeMeta<TInstance>;
 
 export interface InstanceCapture<T> {
   expose(instance: T): void;

@@ -1,4 +1,5 @@
 import { createPiniaPlugin } from "./createPiniaPlugin.js";
+import { setActivePinia } from "pinia";
 
 import type { Pinia } from "pinia";
 import type { VueTestPiniaOptions } from "../types/types";
@@ -14,6 +15,9 @@ export const piniaPlugin: PluginModule<Pinia, VueTestPiniaOptions> = {
     //     }
     // },
     create: createPiniaPlugin,
-    // afterCreate(instance, ctx) {},
+    // Automatically sets the active Pinia instance for current test context.
+    afterCreate(instance) {
+      setActivePinia(instance);
+    },
   }),
 };

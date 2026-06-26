@@ -14,11 +14,11 @@ import { exposeInstance } from "../helpers/exposeInstance.js";
  * {@link exposeInstance} to allow tests to capture it via
  * the optional `options.expose` callback.
  */
-export function createPluginInstance<T, TOptions extends object>(
-  factory: (options: TOptions) => T,
-  options: PluginOptionsWithMeta<T, TOptions>,
-): T {
+export function createPluginInstance<TInstance, TOptions extends object>(
+  factory: (options: TOptions) => TInstance,
+  options: PluginOptionsWithMeta<TInstance, TOptions>,
+): TInstance {
   const instance = options.__sharedInstance ?? factory(options);
-  exposeInstance<T>(instance, options);
+  exposeInstance<TInstance>(instance, options);
   return instance;
 }
