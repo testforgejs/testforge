@@ -3,14 +3,11 @@ import { createTestingPinia } from "@pinia/testing";
 
 import type { Pinia } from "pinia";
 import type { VueTestPiniaOptions } from "../types/types";
-import type { PluginOptionsWithMeta } from "@testforge/vue-test-core";
 
 /*
  * Factory for creating a Pinia Testing plugin instance.
  */
-export function createPiniaPlugin(
-  options: PluginOptionsWithMeta<Pinia, VueTestPiniaOptions>,
-): Pinia {
+export function createPiniaPlugin(options: VueTestPiniaOptions): Pinia {
   const pinia = createPluginInstance<Pinia, VueTestPiniaOptions>(createTestingPinia, options);
   if (options.mockStores) {
     options.mockStores(pinia);
