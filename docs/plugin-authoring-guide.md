@@ -26,6 +26,32 @@ packages/vue-test-plugin-custom/
 
 Declare the plugin options interface. Extend it from both the third-party library's native options and the core `PluginControlOptions<TInstance>`. This automatically hooks up support for the `expose` callback.
 
+### What is TInstance?
+
+`TInstance` represents the runtime plugin instance created by your plugin factory.
+
+This is the object that TestForge eventually passes to Vue Test Utils
+via `global.plugins` during component mounting.
+
+Examples:
+
+- Pinia → `Pinia`
+- Router → `Router`
+- I18n → `I18n`
+- Vuetify → `ReturnType<typeof createVuetify>`
+
+Recommended method for getting the instance type:
+
+```typescript
+// Library exports instance type
+import type { Router } from "vue-router";
+
+// Library exports factory only
+import { createVuetify } from "vuetify";
+
+type VuetifyInstance = ReturnType<typeof createVuetify>;
+```
+
 ```typescript
 import type { CustomOptions, CustomInstance } from "some-vue-library";
 import type { PluginControlOptions } from "@testforge/vue-test-core";
@@ -62,23 +88,13 @@ import { createCustomLibraryInstance } from "some-vue-library";
 
 import type { CustomInstance } from "some-vue-library";
 import type { VueTestCustomOptions } from "../types/types";
-import type { PluginOptionsWithMeta } from "@testforge/vue-test-core";
 
-export function createCustomPlugin(
-  options: PluginOptionsWithMeta<CustomInstance, VueTestCustomOptions>,
-): CustomInstance {
+export function createCustomPlugin(options: VueTestCustomOptions): CustomInstance {
   // Pass the original library constructor and the runtime options object
-  const instance = createPluginInstance<CustomInstance, VueTestCustomOptions>(
+  return createPluginInstance<CustomInstance, VueTestCustomOptions>(
     createCustomLibraryInstance,
     options,
   );
-
-  // Apply test-specific runtime mutations (e.g., setting up mocks)
-  if (!options.__sharedInstance && options.mockApis) {
-    instance.setupMocks();
-  }
-
-  return instance;
 }
 ```
 
@@ -107,6 +123,12 @@ export const customPlugin: PluginModule<CustomInstance, VueTestCustomOptions> = 
 };
 ```
 
+The `beforeCreate` and `afterCreate` hooks are optional.
+
+Most plugins only need:
+
+getDefinition: () => ({ create })
+
 ### Step 5: Export Publicly (`index.ts`)
 
 Import the augmentation file to guarantee it is bundled into the final `.d.ts` declaration graph, then export your plugin module.
@@ -119,6 +141,112 @@ export { customPlugin } from "./module/customPlugin.js";
 export * from "./types/types";
 ```
 
+## Plugin Lifecycle
+
+A TestForge plugin may participate in three lifecycle stages:
+
+```text
+User options
+    ↓
+beforeCreate(ctx, options)
+    ↓
+create(options)
+    ↓
+afterCreate(instance, ctx)
+```
+
+`beforeCreate(ctx, options)`
+Executed before the plugin instance is created.
+
+Typical use cases:
+
+- inject defaults from the active preset
+- normalize user configuration
+- derive runtime values from pipeline state
+- modify options based on other enabled plugins
+
+Must return the final options object that will be passed to `create()`.
+
+```typescript
+beforeCreate(ctx, options) {
+  return {
+    ...options,
+    legacyMode: false,
+  };
+}
+```
+
+---
+
+`create(options)`
+
+Responsible for creating the actual Vue plugin instance.
+
+This hook is mandatory.
+
+```typescript
+create: createCustomPlugin;
+```
+
+---
+
+`afterCreate(instance, ctx)`
+
+Executed after the plugin instance has been created.
+
+Typical use cases:
+
+- registering global mocks
+- setting active instances
+- attaching test helpers
+- synchronizing plugin state with external libraries
+
+```typescript
+afterCreate(instance, ctx) {
+  setActivePinia(instance);
+}
+```
+
+Most plugins do not need `beforeCreate()` or `afterCreate()`.
+
+The majority of TestForge plugins only implement `create()`.
+
+---
+
+## Shared Instances
+
+TestForge may internally reuse plugin instances when shared mode is enabled.
+
+Plugin authors do not need to handle this explicitly.
+
+The `createPluginInstance()` helper guarantees that:
+
+- existing instances are reused as needed
+- `expose()` callbacks are still executed
+- lifecycle hooks continue to work correctly
+
+---
+
+## When should I use beforeCreate and afterCreate?
+
+| Hook         | Typical usage                           |
+| ------------ | --------------------------------------- |
+| beforeCreate | merge defaults, normalize config        |
+| create       | create plugin instance                  |
+| afterCreate  | activate global state, register helpers |
+
+Pinia:
+afterCreate() -> setActivePinia()
+
+Router:
+create() only
+
+I18n:
+create() only
+
+Vuetify:
+create() only
+
 ---
 
 ## Plugin Checklist
@@ -126,4 +254,3 @@ export * from "./types/types";
 1. **Name Alignment:** The string returned by `getName()` is identical to the property key inside `interface PluginOptionsMap` in `augmentation.ts`.
 2. **Type Side-Effects Exported:** The main `index.ts` contains an explicit `import "./types/augmentation.js"`.
 3. **Isolated Side-Effects:** Instance creation logic is completely encapsulated within the `create*.ts` file, keeping the factory testable independently from the core registry.
-4. **Safe Singleton Re-runs:** All secondary runtime modifications (like setting active instances or store mocking) are wrapped inside an `if (!options.__sharedInstance)` block.
