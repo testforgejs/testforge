@@ -1,0 +1,40 @@
+{
+  "name": "@testforge/vue-test-plugin-vuetify",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "testing",
+    "component-testing",
+    "vue-test-utils",
+    "vuetify",
+    "testforge",
+    "testforge-plugin"
+  ],
+  "license": "MIT",
+  "author": "Roman Levchenko",
+  "peerDependencies": {
+    "vuetify": "^3.0.0 || ^4.0.0"
+  },
+  "dependencies": {
+    "@testforge/vue-test-core": "workspace:*"
+  }
+}
