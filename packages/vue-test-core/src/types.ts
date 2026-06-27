@@ -1,4 +1,4 @@
-import type { Component } from "vue";
+import type { Component, Plugin } from "vue";
 import type { MountingOptions, mount } from "@vue/test-utils";
 import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers";
 
@@ -7,17 +7,23 @@ import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers"
 /** Plugin name (e.g., ‘pinia’, ‘i18n’, ‘router’) */
 export type PluginName = string;
 
-export type MountPlugin = any;
+/**
+ * Runtime value returned by a TestForge plugin factory.
+ *
+ * The returned value must be compatible with
+ * Vue Test Utils `global.plugins`.
+ */
+export type MountPlugin = Plugin | [Plugin, ...unknown[]];
 
 // === 2. Plugin Registry System ===
 
-export interface PluginDefinition<TInstance = unknown, TOptions = unknown> {
+export interface PluginDefinition<TInstance extends MountPlugin = MountPlugin, TOptions = unknown> {
   beforeCreate?: (ctx: PipelineContext, options: TOptions) => TOptions;
   create: (options: TOptions) => TInstance;
   afterCreate?: (instance: TInstance, ctx: PipelineContext) => void;
 }
 
-export interface PluginModule<TInstance = unknown, TOptions = unknown> {
+export interface PluginModule<TInstance extends MountPlugin = MountPlugin, TOptions = unknown> {
   getName(): PluginName;
   getDefinition(): PluginDefinition<TInstance, TOptions>;
 }
@@ -30,7 +36,10 @@ export interface PluginRegistry {
   getNames(): PluginName[];
 }
 
-export interface PluginManifestEntry<TInstance = unknown, TOptions = unknown> {
+export interface PluginManifestEntry<
+  TInstance extends MountPlugin = MountPlugin,
+  TOptions = unknown,
+> {
   module: PluginModule<TInstance, TOptions>;
   enabled: boolean;
 }
