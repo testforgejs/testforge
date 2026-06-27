@@ -111,7 +111,6 @@ writeFile(
   `src/module/create${pascalName}Plugin.ts`,
   `import { createPluginInstance } from "@testforge/vue-test-core";
 
-import type { PluginOptionsWithMeta } from "@testforge/vue-test-core";
 import type { VueTest${pascalName}Options } from "../types/types";
 
 /*
@@ -119,18 +118,21 @@ import type { VueTest${pascalName}Options } from "../types/types";
  * Separated to simplify isolated unit testing.
  */
 export function create${pascalName}Plugin(
-  options: PluginOptionsWithMeta<any, VueTest${pascalName}Options>,
+  options: VueTest${pascalName}Options,
 ): any {
-  // TODO: Replace line below with actual library factory (e.g., createPluginInstance(createLibrary, options))
-  const fakeConstructor = (opts: any) => ({ install: () => {}, ...opts });
-  
-  const instance = createPluginInstance<any, VueTest${pascalName}Options>(fakeConstructor, options);
+  // TODO: Replace with actual library factory
+  // Example:
+  // return createPluginInstance(createLibrary, options);
 
-  if (!options.__sharedInstance && options.mockData) {
-    // Apply runtime modifications here
-  }
+  const fakeConstructor = (opts: any) => ({
+    install: () => {},
+    ...opts,
+  });
 
-  return instance;
+  return createPluginInstance<any, VueTest${pascalName}Options>(
+    fakeConstructor,
+    options,
+  );
 }
 `,
 );
