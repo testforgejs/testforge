@@ -213,6 +213,116 @@ The majority of TestForge plugins only implement `create()`.
 
 ---
 
+## Plugin Categories
+
+TestForge supports two categories of Vue plugins.
+
+Choosing the correct category is important because it determines how your plugin should implement `create()` and whether advanced features such as `expose()` or `__meta.instance` are available.
+
+---
+
+### 1. Stateful Plugin Factories
+
+These plugins create and return a runtime instance.
+
+Examples:
+
+- Pinia
+- Vue Router
+- Vue I18n
+- Vuetify
+
+Typical Vue APIs:
+
+```typescript
+createPinia();
+createRouter();
+createI18n();
+createVuetify();
+```
+
+---
+
+Implementation:
+
+```typescript
+export function createRouterPlugin(options: VueTestRouterOptions): Router {
+  return createPluginInstance(createRouter, options);
+}
+```
+
+Characteristics:
+
+- produce a runtime instance
+- support `expose()`
+- support `__meta.instance`
+- support instance reuse through internal shared-instance mechanisms
+- may participate in afterCreate() lifecycle hooks
+
+This is the preferred integration style for modern Vue libraries.
+
+---
+
+### 2. Install-based Plugins
+
+These plugins do not create a runtime instance.
+
+Instead, they expose either:
+
+- an install object
+- an install function
+
+Examples:
+
+- PrimeVue
+- legacy Vue plugins
+- many Vue 2 compatible plugins
+
+Typical Vue APIs:
+
+```typescript
+app.use(PrimeVue, options);
+```
+
+Implementation:
+
+```typescript
+export function createPrimeVuePlugin(options: VueTestPrimeVueOptions): PrimeVueMountPlugin {
+  return createVuePlugin(PrimeVue, options);
+}
+```
+
+Characteristics:
+
+- do not produce a runtime instance
+- do not support `expose()`
+- do not support `__meta.instance`
+- do not benefit from instance reuse
+- are mounted as standard Vue plugin tuples
+
+---
+
+### Which category should I choose?
+
+Use Stateful Plugin Factory if the library exposes a factory function:
+
+```typescript
+createRouter();
+createPinia();
+createI18n();
+createVuetify();
+```
+
+Use Install-based Plugin if the library exposes an install object or install function:
+
+```typescript
+app.use(SomePlugin, options);
+```
+
+If both APIs exist, prefer the factory approach because it enables better test isolation and allows TestForge to provide instance-level features such as `expose()` and `__meta.instance`.
+
+---
+
 ## Shared Instances
 
 TestForge may internally reuse plugin instances when shared mode is enabled.
