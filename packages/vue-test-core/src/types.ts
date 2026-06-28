@@ -17,15 +17,15 @@ export type MountPlugin = Plugin | [Plugin, ...unknown[]];
 
 // === 2. Plugin Registry System ===
 
-export interface PluginDefinition<TInstance extends MountPlugin = MountPlugin, TOptions = unknown> {
+export interface PluginDefinition<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
   beforeCreate?: (ctx: PipelineContext, options: TOptions) => TOptions;
-  create: (options: TOptions) => TInstance;
-  afterCreate?: (instance: TInstance, ctx: PipelineContext) => void;
+  create: (options: TOptions) => TPlugin;
+  afterCreate?: (plugin: TPlugin, ctx: PipelineContext) => void;
 }
 
-export interface PluginModule<TInstance extends MountPlugin = MountPlugin, TOptions = unknown> {
+export interface PluginModule<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
   getName(): PluginName;
-  getDefinition(): PluginDefinition<TInstance, TOptions>;
+  getDefinition(): PluginDefinition<TPlugin, TOptions>;
 }
 
 export interface PluginRegistry {
@@ -37,10 +37,10 @@ export interface PluginRegistry {
 }
 
 export interface PluginManifestEntry<
-  TInstance extends MountPlugin = MountPlugin,
+  TPlugin extends MountPlugin = MountPlugin,
   TOptions = unknown,
 > {
-  module: PluginModule<TInstance, TOptions>;
+  module: PluginModule<TPlugin, TOptions>;
   enabled: boolean;
 }
 
@@ -82,13 +82,13 @@ export interface PluginRuntimeMeta<TInstance> {
 export type RuntimePluginOptions<TInstance, TOptions = object> = TOptions &
   PluginRuntimeMeta<TInstance>;
 
-export interface InstanceCapture<T> {
-  expose(instance: T): void;
-  readonly instance: T | undefined;
+export interface InstanceCapture<TInstance> {
+  expose(instance: TInstance): void;
+  readonly instance: TInstance | undefined;
 }
 
-export interface ExposeOption<T> {
-  expose?: (instance: T) => void;
+export interface ExposeOption<TInstance> {
+  expose?: (instance: TInstance) => void;
 }
 
 export type RuntimeExtraOptions = {
