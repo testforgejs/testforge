@@ -733,6 +733,16 @@ This mechanism ensures that the `instance` field never conflicts with the intern
 
 ---
 
+### When should `__meta.instance` be used?
+
+Providing `__meta.instance` is mainly useful for plugins that maintain
+runtime state, such as Pinia, Router or Vue I18n.
+
+Plugins implemented as install objects or install tuples typically do not
+benefit from instance reuse because they do not expose meaningful runtime state.
+
+---
+
 ### 🔌 Connecting Third-Party Plugins
 
 If you need to connect a plugin that is **not** managed by the framework (for example, `vue-final-modal`, `vuetify`, etc.), use the standard Vue Test Utils mechanism via the `global.plugins` section:

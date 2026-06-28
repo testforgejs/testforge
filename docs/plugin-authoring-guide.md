@@ -80,7 +80,7 @@ declare module "@testforge/vue-test-core" {
 
 ### Step 3: Implement the Isolated Factory (`module/createCustomPlugin.ts`)
 
-Write a dedicated function to initialize the library instance. Leverage the core's built-in `createPluginInstance` helper. It automatically handles reusing cached singletons (`__sharedInstance`) and firing the `expose` callback.
+Write a dedicated function to initialize the library instance. Leverage the core's built-in `createPluginInstance` helper. It automatically handles reusing cached singletons (`__meta.instance`) and firing the `expose` callback.
 
 ```typescript
 import { createPluginInstance } from "@testforge/vue-test-core";
