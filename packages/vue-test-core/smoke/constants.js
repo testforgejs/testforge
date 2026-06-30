@@ -3,6 +3,7 @@ export const EXPECTED_EXPORTS = [
   "captureInstance",
   "createPluginInstance",
   "createTestFramework",
+  "createVuePlugin",
   "validatePreset",
   "validatePresets",
 ];
