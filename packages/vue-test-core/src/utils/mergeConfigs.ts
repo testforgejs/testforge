@@ -1,4 +1,5 @@
 import { isPlainObject } from "../guards/isPlainObject.js";
+import { ERROR_PREFIX } from "../constants/constants.js";
 
 import type { Mergeable, PlainObject } from "../types";
 
@@ -20,11 +21,7 @@ export function mergeConfigs<T extends Mergeable>(target: T, source: T): T {
   if (arrays) {
     return [...new Set([...target, ...source])] as T;
   }
-  /*if (!isPlainObject(target) || !isPlainObject(source)) {
-    return (
-      Array.isArray(target) && Array.isArray(source) ? [...new Set([...target, ...source])] : source
-    ) as T;
-  }*/
+
   if (objects) {
     const output: PlainObject = { ...target };
 
@@ -44,5 +41,5 @@ export function mergeConfigs<T extends Mergeable>(target: T, source: T): T {
     return output as T;
   }
 
-  throw new Error("[TestForge] mergeConfigs() expects two plain objects or two arrays.");
+  throw new Error(`${ERROR_PREFIX} mergeConfigs() expects two plain objects or two arrays.`);
 }
