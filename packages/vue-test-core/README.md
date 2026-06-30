@@ -374,6 +374,18 @@ managed plugin already exists and prevents creation of a second instance.
 This avoids conflicts between multiple copies of the same plugin and
 keeps the managed plugin lifecycle consistent with the preset pipeline.
 
+---
+
+### When should `__meta.instance` be used?
+
+Providing `__meta.instance` is mainly useful for plugins that maintain
+runtime state, such as Pinia, Router or Vue I18n.
+
+Plugins implemented as install objects or install tuples typically do not
+benefit from instance reuse because they do not expose meaningful runtime state.
+
+---
+
 ### Configuration Validation
 
 The framework performs strict validation:
