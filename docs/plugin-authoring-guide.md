@@ -221,7 +221,7 @@ Choosing the correct category is important because it determines how your plugin
 
 ---
 
-### 1. Stateful Plugin Factories
+### 1. Stateful Factory Plugins
 
 These plugins create and return a runtime instance.
 
@@ -265,7 +265,7 @@ This is the preferred integration style for modern Vue libraries.
 
 ### 2. Install-based Plugins
 
-These plugins do not create a runtime instance.
+These plugins do not create a stateful runtime instance.
 
 Instead, they expose either:
 
@@ -287,6 +287,12 @@ app.use(PrimeVue, options);
 Implementation:
 
 ```typescript
+import PrimeVue from "primevue/config";
+import type { PrimeVueConfiguration } from "primevue/config";
+
+export type PrimeVueMountPlugin = [typeof PrimeVue, PrimeVueConfiguration];
+export type VueTestPrimeVueOptions = PrimeVueConfiguration;
+
 export function createPrimeVuePlugin(options: VueTestPrimeVueOptions): PrimeVueMountPlugin {
   return createVuePlugin(PrimeVue, options);
 }
@@ -298,7 +304,7 @@ Characteristics:
 - do not support `expose()`
 - do not support `__meta.instance`
 - do not benefit from instance reuse
-- are mounted as standard Vue plugin tuples
+- are internally represented as Vue Test Utils plugin tuples
 
 ---
 
@@ -319,13 +325,13 @@ Use Install-based Plugin if the library exposes an install object or install fun
 app.use(SomePlugin, options);
 ```
 
-If both APIs exist, prefer the factory approach because it enables better test isolation and allows TestForge to provide instance-level features such as `expose()` and `__meta.instance`.
+If a library provides both APIs, prefer the factory API whenever possible because it enables better test isolation and allows TestForge to provide instance-level features such as `expose()` and `__meta.instance`.
 
 ---
 
 ## Shared Instances
 
-TestForge may internally reuse plugin instances when shared mode is enabled.
+Stateful factory plugins may internally reuse plugin instances when shared mode is enabled.
 
 Plugin authors do not need to handle this explicitly.
 
@@ -364,3 +370,4 @@ create() only
 1. **Name Alignment:** The string returned by `getName()` is identical to the property key inside `interface PluginOptionsMap` in `augmentation.ts`.
 2. **Type Side-Effects Exported:** The main `index.ts` contains an explicit `import "./types/augmentation.js"`.
 3. **Isolated Side-Effects:** Instance creation logic is completely encapsulated within the `create*.ts` file, keeping the factory testable independently from the core registry.
+4. Stateful plugins should avoid duplicating side effects when reused through shared instances.
