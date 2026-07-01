@@ -2,6 +2,7 @@
   "name": "@testforge/vue-test-plugin-primevue",
   "version": "0.0.1",
   "type": "module",
+  "description": "Official TestForge plugin for PrimeVue integration in component tests",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,7 +18,9 @@
   ],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test:types": "tsd",
+    "docs:generate": "typedoc"
   },
   "keywords": [
     "vue",
