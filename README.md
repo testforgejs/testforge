@@ -4,6 +4,12 @@
 
 > A test framework layer on top of [@vue/test-utils](https://test-utils.vuejs.org/) that eliminates mount boilerplate and scales Vue test architecture.
 
+> [!IMPORTANT]
+> **The Problem**: **Vue Test Utils** is excellent, but configuring Pinia, Router, i18n and other plugins repeatedly across test suites quickly becomes repetitive and error-prone.
+
+> [!NOTE]
+> **The Solution**: **TestForge** provides a preset-driven runtime that keeps plugin configuration consistent while preserving full Vue Test Utils compatibility.
+
 ---
 
 # 2. The problem every Vue project eventually hits
@@ -81,6 +87,14 @@ test("renders correctly", () => {
   expect(wrapper.exists()).toBe(true);
 });
 ```
+
+## Why TestForge?
+
+- **Zero boilerplate** — tests describe _what_ is being tested, not _how_ to set up the entire stack
+- **Consistent environments** via presets
+- **Safe overrides** with a clear hierarchy (Preset → Factory → Test)
+- **Full VTU compatibility** — painless two-step migration
+- **Type safety** out of the box
 
 # 4. The Idea: Context-Aware Overrides
 
@@ -186,7 +200,7 @@ The factory:
 - activates plugins
 - builds `global` config
 - chooses `mount` / `shallowMount`
-- runs the mount pipeline
+- runs the **Mount Pipeline**
 
 All without the test knowing how.
 
@@ -205,7 +219,7 @@ Each plugin:
 
 - has a name
 - knows how to create its Vue instance
-- participates in the mount pipeline
+- participates in the **Mount Pipeline**
 
 Examples provided by TestForge:
 
@@ -321,14 +335,14 @@ In the first stage, you don't need to change your existing setup objects. TestFo
 If your legacy VTU test looks like this:
 
 ```javascript
-import { mount } from '@vue/test-utils';
-import MyComponent from './MyComponent.vue';
+import { mount } from "@vue/test-utils";
+import MyComponent from "./MyComponent.vue";
 
 const VTUConfig = {
   props: { title: "Hello" },
   global: {
-    mocks: { \$t: (msg) => msg }
-  }
+    mocks: { $t: (msg) => msg },
+  },
 };
 
 const wrapper = mount(MyComponent, VTUConfig);
@@ -359,11 +373,15 @@ Once your tests run safely on the TestForge engine, you can incrementally refact
 
 ```javascript
 // Do this once per test file (or move plugins to your global project Preset)
-const factory = testComponentFactory(MyComponent, {}, {
-  global: {
-    mocks: { \$t: (msg) => msg } // Unified baseline
-  }
-});
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {
+    global: {
+      mocks: { $t: (msg) => msg }, // Unified baseline
+    },
+  },
+);
 ```
 
 #### 2. Clean up individual test invocations:
