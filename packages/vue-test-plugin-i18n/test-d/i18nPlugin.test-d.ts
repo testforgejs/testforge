@@ -86,6 +86,28 @@ const wrapper = factory(
   },
 );
 
+// Verify captured instance type
+const i18nCapture = captureInstance();
+
+factory(
+  {},
+  {
+    plugins: {
+      i18n: {
+        locale: "en",
+        messages: {
+          en: {
+            hello: "Hello World",
+          },
+        },
+        ...i18nCapture,
+      },
+    },
+  },
+);
+
+expectType<I18n | undefined>(capture.instance);
+
 // Verify factory return type
 expectType<ReturnType<typeof mount<typeof TypedComponent>>>(wrapper);
 expectAssignable<VueWrapper<InstanceType<typeof TypedComponent>>>(wrapper);
