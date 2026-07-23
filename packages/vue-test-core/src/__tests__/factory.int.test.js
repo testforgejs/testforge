@@ -677,10 +677,16 @@ describe("testComponentFactory Integration (Universal)", () => {
     });
 
     it("should deeply merge nested objects like stubs and mocks", () => {
+      const mockApi = {
+        getUser: runner.fn(),
+        getUsers: runner.fn(),
+        createUser: runner.fn(),
+      };
+
       const defaults = {
         global: {
-          stubs: { BaseBtn: true },
-          mocks: { $route: { path: "/" } },
+          stubs: { BaseButton: true },
+          mocks: { $api: mockApi },
         },
       };
       const factory = testComponentFactory(MockComponent, {}, defaults);
@@ -689,16 +695,16 @@ describe("testComponentFactory Integration (Universal)", () => {
         {},
         {
           global: {
-            stubs: { Icon: true },
+            stubs: { BaseModal: true },
             mocks: { $store: {} },
           },
         },
       );
 
       const [, options] = mockMount.mock.calls[0];
-      expect(options.global.stubs).toEqual({ BaseBtn: true, Icon: true });
+      expect(options.global.stubs).toEqual({ BaseButton: true, BaseModal: true });
       expect(options.global.mocks).toEqual({
-        $route: { path: "/" },
+        $api: mockApi,
         $store: {},
       });
     });
