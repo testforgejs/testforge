@@ -2421,6 +2421,87 @@ describe("testComponentFactory Integration (Universal)", () => {
       );
     });
 
+    describe("Plugin Configuration Replacement", () => {
+      it("should not preserve captureInstance from defaultMountOptions when plugin configuration is overridden", () => {
+        const capture = captureInstance();
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...capture,
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                initialState: {
+                  user: {
+                    id: 1,
+                  },
+                },
+              },
+            },
+          },
+        );
+
+        expect(capture.instance).toBeUndefined();
+      });
+
+      it("should completely replace plugin configuration before invoking plugin factory", async () => {
+        runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
+          piniaPlugin: {
+            getName: () => "pinia",
+            getDefinition: () => ({ create: mockPiniaCreate }),
+          },
+        }));
+
+        runner.resetModules();
+        runner.clearAllMocks();
+
+        const testComponentFactory = await createFactory();
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                stubActions: true,
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                initialState: { user: { id: 123 } },
+              },
+            },
+          },
+          {},
+          {},
+        );
+
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+        const [calledOptions] = mockPiniaCreate.mock.calls[0];
+
+        console.log(calledOptions);
+        expect(calledOptions.stubActions).not.toEqual(true);
+        expect(calledOptions.initialState).toEqual({ user: { id: 123 } });
+      });
+    });
+
     describe("Enable router when it is disabled by default", () => {
       it("should enable router via defaultMountOptions", () => {
         // Configure the factory settings so that the router is enabled by default
