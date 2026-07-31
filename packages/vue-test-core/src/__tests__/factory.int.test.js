@@ -1,3 +1,4 @@
+import { captureInstance } from "../utils/captureInstance.js";
 import { ERROR_PREFIX } from "../constants/constants.js";
 
 const runner = typeof vi !== "undefined" ? vi : jest;
@@ -55,28 +56,6 @@ describe("testComponentFactory Integration (Universal)", () => {
     mockPiniaCreate.mockReturnValue(mockPiniaInstance);
     mockRouterCreate.mockReturnValue(mockRouterInstance);
 
-    // Mock the PUBLIC interfaces of the packages
-    runner.doMock("@testforge/vue-test-plugin-i18n", () => ({
-      i18nPlugin: {
-        getName: () => "i18n",
-        getDefinition: () => ({ create: mockI18nCreate }),
-      },
-    }));
-
-    runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
-      piniaPlugin: {
-        getName: () => "pinia",
-        getDefinition: () => ({ create: mockPiniaCreate }),
-      },
-    }));
-
-    runner.doMock("@testforge/vue-test-plugin-router", () => ({
-      routerPlugin: {
-        getName: () => "router",
-        getDefinition: () => ({ create: mockRouterCreate }),
-      },
-    }));
-
     // Mock vue-test-utils
     mockMount = runner.fn().mockReturnValue({
       unmount: runner.fn(),
@@ -92,7 +71,7 @@ describe("testComponentFactory Integration (Universal)", () => {
 
     runner.doMock("@vue/test-utils", () => ({
       mount: mockMount,
-      shallowMount: mockShallowMount, // mockShallowMount должен быть создан заранее через runner.fn()
+      shallowMount: mockShallowMount, // mockShallowMount must be created in advance using runner.fn()
     }));
 
     // Initializing the framework
@@ -2320,6 +2299,35 @@ describe("testComponentFactory Integration (Universal)", () => {
   });
 
   describe("Plugin Integration", () => {
+    beforeEach(async () => {
+      runner.resetModules();
+      runner.clearAllMocks();
+
+      // Mock the PUBLIC interfaces of the packages
+      runner.doMock("@testforge/vue-test-plugin-i18n", () => ({
+        i18nPlugin: {
+          getName: () => "i18n",
+          getDefinition: () => ({ create: mockI18nCreate }),
+        },
+      }));
+
+      runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
+        piniaPlugin: {
+          getName: () => "pinia",
+          getDefinition: () => ({ create: mockPiniaCreate }),
+        },
+      }));
+
+      runner.doMock("@testforge/vue-test-plugin-router", () => ({
+        routerPlugin: {
+          getName: () => "router",
+          getDefinition: () => ({ create: mockRouterCreate }),
+        },
+      }));
+
+      testComponentFactory = await createFactory();
+    });
+
     it("should create i18n and pinia plugins by default when no plugin options are provided", () => {
       const factory = testComponentFactory(MockComponent);
       factory();
@@ -2723,6 +2731,205 @@ describe("testComponentFactory Integration (Universal)", () => {
           );
         });
       });
+    });
+  });
+
+  describe("Plugin Instances", () => {
+    beforeEach(async () => {
+      runner.unmock("@testforge/vue-test-plugin-i18n");
+      runner.unmock("@testforge/vue-test-plugin-pinia");
+      runner.unmock("@testforge/vue-test-plugin-router");
+
+      runner.resetModules();
+      runner.clearAllMocks();
+
+      testComponentFactory = await createFactory();
+    });
+
+    describe("Instance Exposing", () => {
+      it("should expose the created plugin instance when captureInstance helper is used", async () => {
+        const capture = captureInstance();
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: { ...capture },
+            },
+          },
+        );
+
+        factory();
+
+        expect(capture.instance).toBeDefined();
+        expect(typeof capture.instance.install).toBe("function");
+      });
+
+      it("should expose the created plugin instance when raw expose callback is provided", () => {
+        let exposedInstance;
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                expose(instance) {
+                  exposedInstance = instance;
+                },
+              },
+            },
+          },
+        );
+
+        factory();
+
+        expect(exposedInstance).toBeDefined();
+        expect(typeof exposedInstance.install).toBe("function");
+      });
+    });
+
+    describe("__meta.instance", () => {
+      it("should reuse the provided plugin instance when __meta.instance is provided", () => {
+        const providedPinia = {
+          id: "Mock Pinia Instance",
+          install() {},
+        };
+
+        const factory = testComponentFactory(MockComponent);
+
+        factory(
+          {},
+          {},
+          {},
+          {
+            plugins: {
+              pinia: {
+                __meta: {
+                  instance: providedPinia,
+                },
+              },
+            },
+          },
+        );
+
+        const [, options] = mockMount.mock.calls[0];
+
+        expect(options.global.plugins).toContain(providedPinia);
+      });
+    });
+
+    it("should expose the reused plugin instance through captureInstance when it is provided via __meta.instance", () => {
+      const providedPinia = {
+        id: "Mock Pinia Instance",
+        install() {},
+      };
+      const capture = captureInstance();
+
+      const factory = testComponentFactory(
+        MockComponent,
+        {},
+        {
+          plugins: {
+            pinia: {
+              ...capture,
+            },
+          },
+        },
+      );
+
+      factory(
+        {},
+        {},
+        {},
+        {
+          plugins: {
+            pinia: {
+              __meta: {
+                instance: providedPinia,
+              },
+            },
+          },
+        },
+      );
+
+      expect(capture.instance).toBe(providedPinia);
+    });
+
+    it("should expose provided instance through expose callback when it is provided via __meta.instance", () => {
+      const providedPinia = {
+        id: "Mock Pinia Instance",
+        install() {},
+      };
+
+      let exposed;
+
+      const factory = testComponentFactory(
+        MockComponent,
+        {},
+        {
+          plugins: {
+            pinia: {
+              expose(instance) {
+                exposed = instance;
+              },
+            },
+          },
+        },
+      );
+
+      factory(
+        {},
+        {},
+        {},
+        {
+          plugins: {
+            pinia: {
+              __meta: {
+                instance: providedPinia,
+              },
+            },
+          },
+        },
+      );
+
+      expect(exposed).toBe(providedPinia);
+    });
+
+    it("should prioritize __meta.instance and ignore accompanying plugin options during mount", async () => {
+      const providedPinia = {
+        id: "Mock Pinia Instance",
+        install() {},
+      };
+
+      const factory = testComponentFactory(MockComponent, {}, {});
+
+      factory(
+        {},
+        {
+          plugins: {
+            pinia: {
+              initialState: { user: { id: 123 } },
+              stubActions: true,
+            },
+          },
+        },
+        {},
+        {
+          plugins: {
+            pinia: {
+              __meta: {
+                instance: providedPinia,
+              },
+            },
+          },
+        },
+      );
+
+      const [, options] = mockMount.mock.calls[0];
+
+      expect(options.global.plugins).toContain(providedPinia);
     });
   });
 });
