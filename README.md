@@ -97,7 +97,67 @@ test("renders correctly", () => {
 - **Full VTU compatibility** — painless two-step migration
 - **Type safety** out of the box
 
-# 4. The Idea: Context-Aware Overrides
+# 4. Multiple Test Environments
+
+Large applications often contain several independent testing contexts.
+
+For example:
+
+- application components that use the full application stack
+- isolated UI components that don't need Vue Router
+- design-system components using only PrimeVue or Vuetify
+- admin modules with additional plugins
+- package-level tests inside a monorepo
+
+Instead of forcing every test to use one global configuration, TestForge allows you to create multiple independent framework instances.
+
+Each framework owns its own:
+
+- preset registry
+- managed plugin graph
+- default plugin configuration
+- mounting pipeline
+
+```typescript
+// tests/app.ts
+import { createTestFramework } from "@testforge/vue-test-core";
+import { appPresets } from "./presets/app";
+
+export const { testComponentFactory: appFactory } = createTestFramework({
+  presets: appPresets,
+});
+```
+
+```typescript
+// tests/design-system.ts
+import { createTestFramework } from "@testforge/vue-test-core";
+import { designSystemPresets } from "./presets/design-system";
+
+export const { testComponentFactory: dsFactory } = createTestFramework({
+  presets: designSystemPresets,
+});
+```
+
+Tests simply import the factory that matches their environment:
+
+```typescript
+import { appFactory } from "@/tests/app";
+
+const factory = appFactory(MyComponent);
+```
+
+```typescript
+import { dsFactory } from "@/tests/design-system";
+
+const factory = dsFactory(Button);
+```
+
+Because every framework instance is isolated, changing presets or plugin defaults in one environment never affects another.
+
+> [!TIP]
+> Most projects only need a single framework instance. Multiple environments become useful for large applications, monorepos, shared UI libraries, or projects that require different managed plugin sets.
+
+# 5. The Idea: Context-Aware Overrides
 
 TestForge introduces one simple shift in perspective:
 
@@ -107,7 +167,7 @@ You define the infrastructure baseline **once** in a centralized factory. Indivi
 
 ---
 
-# 5. Before / After Example
+# 6. Before / After Example
 
 ## ❌ Vue Test Utils way (Configuration Explosion)
 
@@ -170,14 +230,14 @@ it("renders guest view", () => {
 
 ---
 
-# 6. Core Concepts
+# 7. Core Concepts
 
 TestForge is built around a few ideas that work together.  
 Individually they are simple. Together they remove almost all test setup noise.
 
 ---
 
-## 6.1 Test Component Factory
+## 7.1 Test Component Factory
 
 The **Test Component Factory** is the entry point you use in tests.
 
@@ -209,7 +269,7 @@ All without the test knowing how.
 
 ---
 
-## 6.2 Plugin System
+## 7.2 Plugin System
 
 TestForge treats i18n, Pinia, Router and any future integration as **plugins**.
 
@@ -237,7 +297,7 @@ Because of this, TestForge can:
 
 ---
 
-## 6.3 Presets
+## 7.3 Presets
 
 A preset is a declarative description of a test environment.
 
@@ -282,7 +342,7 @@ You can create your own presets for your organization or monorepo.
 
 ---
 
-## 6.4 Mount Pipeline
+## 7.4 Mount Pipeline
 
 The **Mount Pipeline** is the internal engine that prepares the final mount options.
 
@@ -303,7 +363,7 @@ Because this is centralized:
 
 ---
 
-## 6.5 Default vs Override Philosophy
+## 7.5 Default vs Override Philosophy
 
 TestForge follows a strict rule:
 
@@ -321,7 +381,7 @@ You ask for what you need, and TestForge merges it correctly.
 
 ---
 
-# 7. 📈 Incremental Migration from Vue Test Utils
+# 8. 📈 Incremental Migration from Vue Test Utils
 
 TestForge is intentionally engineered as a **drop-in architecture extension**, not a destructive replacement. It features 100% backward compatibility with standard [Vue Test Utils (VTU)](https://vuejs.org) configuration formats.
 
@@ -400,7 +460,7 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 ---
 
-# 8. Principles
+# 9. Principles
 
 > ## Behavior parity with Vue Test Utils
 >
@@ -420,7 +480,7 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 ---
 
-# FAQ
+# 10. FAQ
 
 ## Literal types inside data()
 
