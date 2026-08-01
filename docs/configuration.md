@@ -14,6 +14,25 @@ It covers:
 
 If you are new to TestForge, start with the [Getting Started Guide](getting-started.md).
 
+## Table of Contents
+
+- [1. `testComponentFactory` Signature](#testcomponentfactory-signature)
+- [2. The 4-Tier Configuration Layering Model](#configuration-layers)
+- [3. Merge Strategies](#merge-strategies)
+  - [3.1. Flat Vue Test Utils Options](#flat-vtu-options)
+  - [3.2. The `global` Section](#global-options)
+  - [3.3. Managed Plugin Configuration](#managed-plugin-configuration)
+  - [3.4. Props & Slots Priority](#props-slots-priority)
+- [4. Execution Flags](#execution-flags)
+- [5. Managed Plugins](#managed-plugins)
+- [6. Third-Party Plugins](#third-party-plugins)
+- [7. Advanced: Working with Plugin Instances](#plugin-instances)
+  - [7.1. Using Pre-created Instances (`__meta.instance`)](#precreated-plugin-instances)
+  - [7.2. Accessing Plugin Instances](#accessing-plugin-instances)
+  - [7.3. Instance Isolation](#instance-isolation)
+
+<a id="testcomponentfactory-signature"></a>
+
 ## 1. 📝 `testComponentFactory` Signature
 
 `testComponentFactory` creates a reusable factory for mounting a specific component.
@@ -59,6 +78,8 @@ The arguments configure an individual component mount.
 The exact resolution and merge behavior of these arguments is described in the following sections.
 
 ---
+
+<a id="configuration-layers"></a>
 
 ## 2. 🥞 The 4-Tier Configuration Layering Model
 
@@ -216,11 +237,15 @@ The inherited `initialState` is preserved.
 
 ---
 
+<a id="merge-strategies"></a>
+
 ## 3. 🔄 Merge Strategies
 
 Not all configuration is merged in the same way.
 
 TestForge uses different strategies depending on the type of configuration being resolved.
+
+<a id="flat-vtu-options"></a>
 
 ### 3.1. Flat Vue Test Utils Options
 
@@ -315,6 +340,10 @@ The most specific configuration wins.
 > [!NOTE]
 > This section covers flat VTU mount options. The `global` object and managed plugin configurations follow separate resolution rules and are described in the following sections.
 
+---
+
+<a id="global-options"></a>
+
 ### 3.2. The `global` Section
 
 Standard VTU `global` options (`stubs`, `mocks`, `provide`) are processed using a **selective recursive merge** strategy across Layer 2 and Layer 3. This allows seamless "layering" of test-double infrastructure (e.g., adding a stub in a test does not wipe out base stubs defined in the factory).
@@ -392,6 +421,10 @@ This behavior is useful when a factory defines shared test infrastructure and in
 > [!NOTE]
 > The `global` section follows its own recursive merge rules. It should not be confused with managed plugin configuration, which intentionally uses replacement semantics at Layers 2 and 3.
 
+---
+
+<a id="managed-plugin-configuration"></a>
+
 ### 3.3. Managed Plugin Configuration
 
 Managed plugin configuration uses different rules from standard Vue Test Utils options.
@@ -408,6 +441,9 @@ Because these options can represent application state, blindly deep-merging them
 #### Layers 2 and 3: Full Replacement
 
 When a managed plugin is configured through `defaultMountOptions.plugins` or `mountOptions.plugins`, the plugin configuration replaces the corresponding configuration from the previous layer.
+
+> [!NOTE]
+> Plugin replacement occurs at the configuration object level, not per property. Consequently, fields such as `expose`, `captureInstance`, and `__meta` are discarded when a plugin configuration is overridden in Layer 3. If they should remain active, they must be included in the overriding configuration.
 
 For example, suppose the factory has:
 
@@ -507,6 +543,10 @@ preserves the existing state while changing only the action-stubbing option.
 >
 > Use Layer 4 when you need to patch an already resolved configuration without replacing it.
 
+---
+
+<a id="props-slots-priority"></a>
+
 ### 3.4. Props & Slots Priority
 
 Component props and slots follow a separate resolution model.
@@ -534,6 +574,8 @@ Direct `slots` passed to `factory()` take precedence over factory-level `default
 Props and slots are therefore resolved separately from the managed plugin configuration layering model described above.
 
 ---
+
+<a id="execution-flags"></a>
 
 ## 4. 🎛️ Execution Flags
 
@@ -672,6 +714,8 @@ This is useful when:
 > `skipManagedPlugins` disables TestForge's managed plugin orchestration for the current mount. It does not disable Vue Test Utils' own `global.plugins` mechanism.
 
 ---
+
+<a id="managed-plugins"></a>
 
 ## 5. 🛠 Managed Plugins
 
@@ -862,6 +906,8 @@ This allows a preset to make a heavy integration available to the project withou
 
 ---
 
+<a id="third-party-plugins"></a>
+
 ## 6. 🔌 Third-Party Plugins
 
 TestForge-managed plugins are tightly integrated into the framework's configuration and preset lifecycle pipeline.
@@ -907,9 +953,13 @@ Use the standard Vue Test Utils array when:
 
 ---
 
+<a id="plugin-instances"></a>
+
 ## 7. 🛡 Advanced: Working with Plugin Instances
 
 In most cases, you do not need to interact directly with plugin instances. However, doing so is useful when you need to assert the internal state of **Pinia**, **Vue Router**, or **Vue I18n** after a component has performed an action.
+
+<a id="precreated-plugin-instances"></a>
 
 ### 7.1. Using Pre-created Instances (`__meta.instance`)
 
@@ -968,6 +1018,8 @@ Using `__meta.instance` allows TestForge to recognize that the managed plugin al
 > Providing `__meta.instance` is mainly useful for plugins that maintain heavy runtime state, such as **Pinia** or **Vue Router**. Plugins implemented as plain install objects (like **Vuetify** or **PrimeVue**) do not benefit from instance reuse because they do not expose meaningful runtime state to assert.
 
 ---
+
+<a id="accessing-plugin-instances"></a>
 
 ### 7.2. Accessing Plugin Instances
 
@@ -1034,6 +1086,8 @@ After mounting, the captured instance can be inspected or manipulated directly i
 > Plugin instances are created before component mounting. Both the `expose` callback and `captureInstance()` receive the instance immediately before `mount()` or `shallowMount()` is executed.
 
 ---
+
+<a id="instance-isolation"></a>
 
 ### 7.3. Instance Isolation
 
