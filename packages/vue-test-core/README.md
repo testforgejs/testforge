@@ -93,12 +93,19 @@ test("renders correctly", () => {
 
 👉 For a complete setup walkthrough, see the [Getting Started Guide](../../docs/getting-started.md).
 
-## Related Documentation
+## Documentation
 
 - **[Getting Started Guide](../../docs/getting-started.md)** — Set up TestForge in a project and create reusable component test factories.
 - **[Configuration & Advanced Usage](../../docs/configuration.md)** — Learn about configuration layers, merge strategies, execution flags, and plugin lifecycle behavior.
 - **[Plugin Authoring Guide](../../docs/plugin-authoring-guide.md)** — Create custom TestForge plugins.
 - **[Preset Authoring Guide](../../docs/preset-authoring-guide.md)** — Create custom presets for your project or organization.
+
+## Project
+
+This package is part of the **TestForge** monorepo.
+
+- **[TestForge Project Overview](../../README.md)** — project overview, package ecosystem, roadmap and repository information.
+- **Repository:** https://github.com/testforgejs/testforge
 
 ## Related packages
 
@@ -108,10 +115,6 @@ test("renders correctly", () => {
 - `@testforge/vue-test-plugin-i18n`
 - `@testforge/vue-test-plugin-vuetify`
 - `@testforge/vue-test-plugin-primevue`
-
-## Repository
-
-https://github.com/testforgejs/testforge
 
 ## License
 
