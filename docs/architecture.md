@@ -21,7 +21,7 @@ A preset defines two critical fields:
 
 ### Preset Structure Example
 
-```javascript
+```typescript
 const presets = {
   default: {
     manifest: [
@@ -56,7 +56,7 @@ Presets define the complete managed plugin runtime.
 
 If a plugin is not declared in the active preset manifest, configuring it is considered invalid.
 
-```javascript
+```typescript
 factory(
   {},
   {

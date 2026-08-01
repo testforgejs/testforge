@@ -18,7 +18,7 @@ At the beginning, Vue tests look clean.
 
 A simple component test:
 
-```javascript
+```typescript
 mount(MyComponent);
 ```
 
@@ -173,7 +173,7 @@ You define the infrastructure baseline **once** in a centralized factory. Indivi
 
 Look how much boilerplate you copy-paste across tests just to adjust _one_ tiny detail:
 
-```javascript
+```typescript
 // Test 1: Testing English locale
 it("renders English greeting", () => {
   const wrapper = mount(MyComponent, {
@@ -205,13 +205,13 @@ it("renders French greeting", () => {
 
 You initialize a **reusable test factory** for the component. It pre-configures your standard Pinia, Router, and i18n via presets:
 
-```javascript
+```typescript
 const factory = testComponentFactory(MyComponent);
 ```
 
 Now, your tests only declare **what changes**, keeping the setup purely declarative and laser-focused:
 
-```javascript
+```typescript
 // Test 1: Uses project defaults automatically
 it("renders English greeting", () => {
   const wrapper = factory();
@@ -244,13 +244,13 @@ The **Test Component Factory** is the entry point you use in tests.
 You don’t call `mount` from [@vue/test-utils](https://test-utils.vuejs.org/) directly anymore.  
 You create a factory once and reuse it.
 
-```javascript
+```typescript
 const factory = testComponentFactory(MyComponent);
 ```
 
 Then in tests:
 
-```javascript
+```typescript
 factory({ title: "Hello" });
 ```
 
@@ -309,7 +309,7 @@ It defines:
 
 Example idea:
 
-```javascript
+```typescript
 // Example:
 const presets = {
   default: {
@@ -395,7 +395,7 @@ In the first stage, you don't need to change your existing setup objects. TestFo
 
 If your legacy VTU test looks like this:
 
-```javascript
+```typescript
 import { mount } from "@vue/test-utils";
 import MyComponent from "./MyComponent.vue";
 
@@ -411,7 +411,7 @@ const wrapper = mount(MyComponent, VTUConfig);
 
 The immediate TestForge equivalent is exactly the same, routed through a reusable factory:
 
-```javascript
+```typescript
 import { testComponentFactory } from "@/tests/setup"; // Your bootstrapped factory
 import MyComponent from "./MyComponent.vue";
 
@@ -432,7 +432,7 @@ Once your tests run safely on the TestForge engine, you can incrementally refact
 
 #### 1. Move global configurations to the Factory level:
 
-```javascript
+```typescript
 // Do this once per test file (or move plugins to your global project Preset)
 const factory = testComponentFactory(
   MyComponent,
@@ -447,7 +447,7 @@ const factory = testComponentFactory(
 
 #### 2. Clean up individual test invocations:
 
-```javascript
+```typescript
 // Now your tests only declare direct, meaningful state definitions
 const wrapper = factory({ title: "Hello" });
 ```
