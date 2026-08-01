@@ -59,13 +59,14 @@ npm install -D @testforge/vue-test-core @testforge/vue-test-preset-recommended
 
 Create a configuration file (e.g., `tests/setup.ts`) to initialize the framework with the recommended preset and export your testing factory:
 
-import { createTestFramework } from '@testforge/vue-test-core';
-import { presets } from '@testforge/vue-test-preset-recommended';
-
 ```typescript
-const framework = createTestFramework({ presets });
+@/tests/setup.ts
+import { createTestFramework } from "@testforge/vue-test-core";
+import { presets } from "@testforge/vue-test-preset-recommended";
 
-export const testComponentFactory = framework.testComponentFactory;
+const { testComponentFactory } = createTestFramework({ presets });
+
+export testComponentFactory;
 ```
 
 ### Write Your First Test
@@ -436,7 +437,7 @@ data() {
 TypeScript may widen string literals when overriding data():
 
 ```typescript
-framework.testComponentFactory(
+testComponentFactory(
   Component,
   {},
   {

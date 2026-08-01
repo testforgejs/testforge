@@ -99,7 +99,7 @@ Each layer represents a different configuration scope and is designed for a diff
 Preset defaults provide the project-wide baseline configuration for managed plugins.
 
 ```typescript
-const framework = createTestFramework({
+const { testComponentFactory } = createTestFramework({
   presets: {
     default: {
       manifest: [
@@ -129,7 +129,7 @@ Managed plugins must be declared in the active preset manifest before they can b
 Factory-level defaults are defined when creating a component factory.
 
 ```typescript
-const factory = framework.testComponentFactory(
+const factory = testComponentFactory(
   MyComponent,
   {},
   {
@@ -292,7 +292,10 @@ The effective configuration keeps `attachTo` from the factory defaults while the
 The framework also provides a global `shallowByDefault` option:
 
 ```typescript
-const framework = createTestFramework({
+import { createTestFramework } from "@testforge/vue-test-core";
+import { presets } from "@testforge/vue-test-preset-recommended";
+
+export const { testComponentFactory } = createTestFramework({
   presets,
   shallowByDefault: true,
 });
@@ -310,12 +313,12 @@ The resolution order is:
 For example:
 
 ```typescript
-const framework = createTestFramework({
+const { testComponentFactory } = createTestFramework({
   presets,
   shallowByDefault: true,
 });
 
-const factory = framework.testComponentFactory(
+const factory = testComponentFactory(
   MyComponent,
   {},
   {
@@ -369,7 +372,7 @@ const mockApi = {
   getUser: () => Promise.resolve({ id: 1 }),
 };
 
-const factory = framework.testComponentFactory(
+const factory = testComponentFactory(
   MyComponent,
   {},
   {
@@ -747,7 +750,7 @@ Managed plugins are available only when they are registered in the active preset
 For example, you must register the plugin module in the manifest:
 
 ```typescript
-const framework = createTestFramework({
+const { testComponentFactory } = createTestFramework({
   presets: {
     default: {
       manifest: [
@@ -762,12 +765,14 @@ const framework = createTestFramework({
     },
   },
 });
+
+export { testComponentFactory };
 ```
 
 Only after `pinia` is declared in the active manifest can it be safely used and configured across your component factories and tests:
 
 ```typescript
-const factory = framework.testComponentFactory(MyComponent);
+const factory = testComponentFactory(MyComponent);
 
 factory(
   {},
@@ -919,7 +924,7 @@ For example:
 ```typescript
 import ThirdPartyPlugin from "third-party-plugin";
 
-const factory = framework.testComponentFactory(MyComponent);
+const factory = testComponentFactory(MyComponent);
 
 const wrapper = factory(
   {},
@@ -972,7 +977,7 @@ import { createTestingPinia } from "@pinia/testing";
 
 const sharedPinia = createTestingPinia();
 
-const factory = framework.testComponentFactory(MyComponent);
+const factory = testComponentFactory(MyComponent);
 
 factory(
   {},
@@ -1034,7 +1039,7 @@ import type { Pinia } from "pinia";
 
 let piniaInstance: Pinia;
 
-const factory = framework.testComponentFactory(MyComponent);
+const factory = testComponentFactory(MyComponent);
 
 factory(
   {},
@@ -1061,7 +1066,7 @@ expect(piniaInstance).toBeDefined();
 ```typescript
 const piniaCapture = captureInstance();
 
-const factory = framework.testComponentFactory(MyComponent);
+const factory = testComponentFactory(MyComponent);
 
 factory(
   {},
