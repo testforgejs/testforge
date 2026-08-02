@@ -1,6 +1,6 @@
-# 1. Title
+# TestForge
 
-## TestForge — Declarative Test Infrastructure for Vue
+## Declarative Test Infrastructure for Vue
 
 > A test framework layer on top of [@vue/test-utils](https://test-utils.vuejs.org/) that eliminates mount boilerplate and scales Vue test architecture.
 
@@ -12,7 +12,29 @@
 
 ---
 
-# 2. The problem every Vue project eventually hits
+## Table of Contents
+
+- [The problem every Vue project eventually hits](#the-problem)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Multiple Test Environments](#multiple-test-environments)
+- [The Idea: Context-Aware Overrides](#context-aware-overrides)
+- [Before / After Example](#before-after)
+- [Core Concepts](#core-concepts)
+  - [Test Component Factory](#test-component-factory)
+  - [Plugin System](#plugin-system)
+  - [Presets](#presets)
+  - [Mount Pipeline](#mount-pipeline)
+  - [Default vs Override Philosophy](#default-vs-override-philosophy)
+- [Incremental Migration from Vue Test Utils](#incremental-migration)
+- [Principles](#principles)
+- [FAQ](#faq)
+
+---
+
+<a id="the-problem"></a>
+
+# The problem every Vue project eventually hits
 
 At the beginning, Vue tests look clean.
 
@@ -47,15 +69,17 @@ They describe **how to rebuild your entire enterprise Vue stack** from scratch.
 
 ---
 
-# 3. Quick Start
+<a id="quick-start"></a>
+
+# Quick Start
 
 The fastest way to get started is to install the core framework along with the recommended preset. The preset automatically includes official plugins for **Pinia**, **Vue Router**, and **vue-i18n**.
 
-### Install Dependencies
+## Install Dependencies
 
 npm install -D @testforge/vue-test-core @testforge/vue-test-preset-recommended
 
-### Initialize the Framework
+## Initialize the Framework
 
 Create a configuration file (e.g., `tests/setup.ts`) to initialize the framework with the recommended preset and export your testing factory:
 
@@ -69,7 +93,7 @@ const { testComponentFactory } = createTestFramework({ presets });
 export testComponentFactory;
 ```
 
-### Write Your First Test
+## Write Your First Test
 
 Now you can import your custom factory inside your `*.test.ts` or `*.spec.ts` files to easily mount and test your Vue components:
 
@@ -97,7 +121,33 @@ test("renders correctly", () => {
 - **Full VTU compatibility** — painless two-step migration
 - **Type safety** out of the box
 
-# 4. Multiple Test Environments
+---
+
+<a id="documentation"></a>
+
+# Documentation
+
+TestForge documentation is organized into several focused guides.
+
+## Getting Started
+
+- [Getting Started](docs/getting-started.md)
+- [Configuration & Advanced Usage](docs/configuration.md)
+
+## Extending TestForge
+
+- [Plugin Authoring Guide](docs/plugin-authoring-guide.md) — Create custom TestForge plugins
+- [Preset Authoring Guide](docs/preset-authoring-guide.md) — Create custom presets for your project or organization
+
+## Package Documentation
+
+- [@testforge/vue-test-core](packages/vue-test-core/README.md)
+
+---
+
+<a id="multiple-test-environments"></a>
+
+# Multiple Test Environments
 
 Large applications often contain several independent testing contexts.
 
@@ -157,7 +207,11 @@ Because every framework instance is isolated, changing presets or plugin default
 > [!TIP]
 > Most projects only need a single framework instance. Multiple environments become useful for large applications, monorepos, shared UI libraries, or projects that require different managed plugin sets.
 
-# 5. The Idea: Context-Aware Overrides
+---
+
+<a id="context-aware-overrides"></a>
+
+# The Idea: Context-Aware Overrides
 
 TestForge introduces one simple shift in perspective:
 
@@ -167,7 +221,9 @@ You define the infrastructure baseline **once** in a centralized factory. Indivi
 
 ---
 
-# 6. Before / After Example
+<a id="before-after"></a>
+
+# Before / After Example
 
 ## ❌ Vue Test Utils way (Configuration Explosion)
 
@@ -230,14 +286,18 @@ it("renders guest view", () => {
 
 ---
 
-# 7. Core Concepts
+<a id="core-concepts"></a>
+
+# Core Concepts
 
 TestForge is built around a few ideas that work together.  
 Individually they are simple. Together they remove almost all test setup noise.
 
 ---
 
-## 7.1 Test Component Factory
+<a id="test-component-factory"></a>
+
+## Test Component Factory
 
 The **Test Component Factory** is the entry point you use in tests.
 
@@ -269,7 +329,9 @@ All without the test knowing how.
 
 ---
 
-## 7.2 Plugin System
+<a id="plugin-system"></a>
+
+## Plugin System
 
 TestForge treats i18n, Pinia, Router and any future integration as **plugins**.
 
@@ -297,7 +359,9 @@ Because of this, TestForge can:
 
 ---
 
-## 7.3 Presets
+<a id="presets"></a>
+
+## Presets
 
 A preset is a declarative description of a test environment.
 
@@ -342,7 +406,9 @@ You can create your own presets for your organization or monorepo.
 
 ---
 
-## 7.4 Mount Pipeline
+<a id="mount-pipeline"></a>
+
+## Mount Pipeline
 
 The **Mount Pipeline** is the internal engine that prepares the final mount options.
 
@@ -363,7 +429,9 @@ Because this is centralized:
 
 ---
 
-## 7.5 Default vs Override Philosophy
+<a id="default-vs-override-philosophy"></a>
+
+## Default vs Override Philosophy
 
 TestForge follows a strict rule:
 
@@ -381,7 +449,9 @@ You ask for what you need, and TestForge merges it correctly.
 
 ---
 
-# 8. 📈 Incremental Migration from Vue Test Utils
+<a id="incremental-migration"></a>
+
+# Incremental Migration from Vue Test Utils
 
 TestForge is intentionally engineered as a **drop-in architecture extension**, not a destructive replacement. It features 100% backward compatibility with standard [Vue Test Utils (VTU)](https://vuejs.org) configuration formats.
 
@@ -389,7 +459,7 @@ You can migrate your existing test suites in two effortless, risk-free stages.
 
 ---
 
-### Stage 1: Zero-Refactor Integration (1:1 Translation)
+## Stage 1: Zero-Refactor Integration (1:1 Translation)
 
 In the first stage, you don't need to change your existing setup objects. TestForge treats raw VTU configuration objects as valid input and processes them identically to `mount()`.
 
@@ -426,11 +496,11 @@ At this stage, your tests will continue to pass exactly as they did before, with
 
 ---
 
-### Stage 2: Extracting the Baseline (Unlocking TestForge)
+## Stage 2: Extracting the Baseline (Unlocking TestForge)
 
 Once your tests run safely on the TestForge engine, you can incrementally refactor them to destroy boilerplate. You do this by extracting shared infrastructure into the factory creation level and leaving only the precise changes (deltas) in the individual tests.
 
-#### 1. Move global configurations to the Factory level:
+### 1. Move global configurations to the Factory level:
 
 ```typescript
 // Do this once per test file (or move plugins to your global project Preset)
@@ -445,7 +515,7 @@ const factory = testComponentFactory(
 );
 ```
 
-#### 2. Clean up individual test invocations:
+### 2. Clean up individual test invocations:
 
 ```typescript
 // Now your tests only declare direct, meaningful state definitions
@@ -460,7 +530,9 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 ---
 
-# 9. Principles
+<a id="principles"></a>
+
+# Principles
 
 > ## Behavior parity with Vue Test Utils
 >
@@ -480,7 +552,9 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 ---
 
-# 10. FAQ
+<a id="faq"></a>
+
+# FAQ
 
 ## Literal types inside data()
 

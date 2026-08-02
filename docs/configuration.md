@@ -1139,4 +1139,4 @@ const second = factory(
 expect(firstCapture.instance).not.toBe(secondCapture.instance);
 ```
 
-When a test intentionally requires a shared plugin instance (for example, to share state across multiple mounts or helpers), do not rely on automatic managed instance creation. Instead, explicitly create the instance and pass it via `__meta.instance` as described in [Section 7.1](#71-using-pre-created-instances-__metainstance).
+When a test intentionally requires a shared plugin instance (for example, to share state across multiple mounts or helpers), do not rely on automatic managed instance creation. Instead, explicitly create the instance and pass it via `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances).

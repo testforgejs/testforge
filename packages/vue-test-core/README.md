@@ -91,14 +91,14 @@ test("renders correctly", () => {
 });
 ```
 
-👉 For a complete setup walkthrough, see the [Getting Started Guide](../../docs/getting-started.md).
+👉 For a complete walkthrough, continue with the [Getting Started Guide](../../docs/getting-started.md).
 
 ## Documentation
 
-- **[Getting Started Guide](../../docs/getting-started.md)** — Set up TestForge in a project and create reusable component test factories.
-- **[Configuration & Advanced Usage](../../docs/configuration.md)** — Learn about configuration layers, merge strategies, execution flags, and plugin lifecycle behavior.
-- **[Plugin Authoring Guide](../../docs/plugin-authoring-guide.md)** — Create custom TestForge plugins.
-- **[Preset Authoring Guide](../../docs/preset-authoring-guide.md)** — Create custom presets for your project or organization.
+- [Getting Started Guide](../../docs/getting-started.md) — Set up TestForge in a project and create reusable component test factories.
+- [Configuration & Advanced Usage](../../docs/configuration.md) — Learn about configuration layers, merge strategies, execution flags, and plugin lifecycle behavior.
+- [Plugin Authoring Guide](../../docs/plugin-authoring-guide.md) — Create custom TestForge plugins.
+- [Preset Authoring Guide](../../docs/preset-authoring-guide.md) — Create custom presets for your project or organization.
 
 ## Project
 
