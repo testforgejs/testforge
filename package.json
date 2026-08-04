@@ -32,7 +32,6 @@
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^10.0.1",
-    "@pinia/testing": "^1.0.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
     "@vue/test-utils": "^2.4.6",
@@ -45,9 +44,7 @@
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "lint-staged": "^16.4.0",
-    "pinia": "^3.0.4",
     "prettier": "^3.8.3",
-    "primevue": "^4.5.5",
     "ts-jest": "^29.4.9",
     "tsd": "^0.33.0",
     "tsup": "^8.5.1",
@@ -56,10 +53,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
     "vitest": "~4.1.4",
-    "vue": "^3.5.32",
-    "vue-i18n": "^11.3.2",
-    "vue-router": "^5.0.4",
-    "vuetify": "^4.1.2"
+    "vue": "^3.5.32"
   },
   "dependencies": {
     "happy-dom": "^20.9.0"

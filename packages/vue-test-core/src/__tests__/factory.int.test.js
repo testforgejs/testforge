@@ -2496,7 +2496,6 @@ describe("testComponentFactory Integration (Universal)", () => {
         expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
         const [calledOptions] = mockPiniaCreate.mock.calls[0];
 
-        console.log(calledOptions);
         expect(calledOptions.stubActions).not.toEqual(true);
         expect(calledOptions.initialState).toEqual({ user: { id: 123 } });
       });

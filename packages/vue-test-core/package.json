@@ -36,14 +36,19 @@
   ],
   "license": "MIT",
   "author": "Roman Levchenko",
+  "dependencies": {
+    "vue-component-type-helpers": "^3.3.4"
+  },
   "peerDependencies": {
     "@vue/test-utils": "^2.0.0",
     "vue": "^3.3.0"
   },
+  "devDependencies": {
+    "vue-router": "^5.0.0",
+    "@testforge/vue-test-plugin-i18n": "workspace:*",
+    "@testforge/vue-test-plugin-pinia": "workspace:*"
+  },
   "tsd": {
     "directory": "test-d"
-  },
-  "dependencies": {
-    "vue-component-type-helpers": "^3.3.4"
   }
 }

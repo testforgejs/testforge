@@ -34,10 +34,12 @@
   ],
   "license": "MIT",
   "author": "Roman Levchenko",
-  "dependencies": {
-    "primevue": "^3.0.0 || ^4.0.0"
-  },
   "peerDependencies": {
+    "primevue": "^3.0.0 || ^4.0.0",
+    "@testforge/vue-test-core": "workspace:*"
+  },
+  "devDependencies": {
+    "primevue": "^4.0.0",
     "@testforge/vue-test-core": "workspace:*"
   }
 }

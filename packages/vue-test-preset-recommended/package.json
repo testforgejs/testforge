@@ -40,6 +40,11 @@
     "@testforge/vue-test-plugin-router": "workspace:*"
   },
   "peerDependencies": {
-    "@testforge/vue-test-core": "workspace:*"
+    "@testforge/vue-test-core": "workspace:*",
+    "vue-router": ">=4 <6"
+  },
+  "devDependencies": {
+    "@testforge/vue-test-core": "workspace:*",
+    "vue-router": "^5.0.0"
   }
 }

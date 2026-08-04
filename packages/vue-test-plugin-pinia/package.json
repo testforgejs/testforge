@@ -38,9 +38,12 @@
   "author": "Roman Levchenko",
   "peerDependencies": {
     "pinia": ">=3 <4",
-    "@pinia/testing": ">=1 <2"
+    "@pinia/testing": ">=1 <2",
+    "@testforge/vue-test-core": "workspace:*"
   },
-  "dependencies": {
+  "devDependencies": {
+    "pinia": "^3.0.0",
+    "@pinia/testing": "^1.0.0",
     "@testforge/vue-test-core": "workspace:*"
   }
 }

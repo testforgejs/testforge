@@ -37,9 +37,11 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
+    "@testforge/vue-test-core": "workspace:*",
     "vue-i18n": ">=9 <12"
   },
-  "dependencies": {
-    "@testforge/vue-test-core": "workspace:*"
+  "devDependencies": {
+    "@testforge/vue-test-core": "workspace:*",
+    "vue-i18n": "^11.4.8"
   }
 }
