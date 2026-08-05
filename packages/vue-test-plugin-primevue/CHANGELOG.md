@@ -1,10 +1,27 @@
-# @testforge/vue-test-plugin-router
+# @testforge/vue-test-plugin-primevue
 
 ## 1.0.0-beta.0
 
+### Minor Changes
+
+- 15fec23: feat: added initial support for PrimeVue integration via `@testforge/vue-test-plugin-primevue`
+
+  The plugin supports install-based Vue plugins by producing
+  Vue Test Utils compatible plugin tuples:
+
+  ```ts
+  plugins: {
+    primevue: {
+      ripple: true,
+    },
+  }
+  ```
+
+  This implementation also serves as a reference example for
+  non-instance Vue plugin integrations within TestForge.
+
 ### Patch Changes
 
-- ef8afca: fix: add missing export for `routerPlugin` in entry point
 - Updated dependencies [fc3f261]
 - Updated dependencies [20594ee]
 - Updated dependencies [dd54f06]
@@ -32,14 +49,3 @@
 - Updated dependencies [6c2d7b5]
 - Updated dependencies [e4e4934]
   - @testforge/vue-test-core@1.0.0-beta.0
-
-## 0.1.0
-
-### Minor Changes
-
-- init: setup monorepo and initial package structure
-
-### Patch Changes
-
-- Updated dependencies
-  - @testforge/vue-test-core@0.1.0

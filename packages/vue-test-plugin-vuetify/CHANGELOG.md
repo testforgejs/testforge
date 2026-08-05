@@ -1,10 +1,22 @@
-# @testforge/vue-test-plugin-router
+# @testforge/vue-test-plugin-vuetify
 
 ## 1.0.0-beta.0
 
+### Minor Changes
+
+- 67489d6: feat: add initial Vuetify plugin implementation for TestForge
+
+  Features included in the initial release:
+  - automatic integration with `createVuetify()`
+  - support for `VuetifyOptions`
+  - `PluginControlOptions` support including `expose()`
+  - module augmentation for `PluginOptionsMap`
+  - full compatibility with the TestForge plugin pipeline
+
+  The plugin currently targets Vuetify 3 and is expected to remain compatible with future Vuetify 4 releases that continue to expose the `createVuetify()` factory API.
+
 ### Patch Changes
 
-- ef8afca: fix: add missing export for `routerPlugin` in entry point
 - Updated dependencies [fc3f261]
 - Updated dependencies [20594ee]
 - Updated dependencies [dd54f06]
@@ -32,14 +44,3 @@
 - Updated dependencies [6c2d7b5]
 - Updated dependencies [e4e4934]
   - @testforge/vue-test-core@1.0.0-beta.0
-
-## 0.1.0
-
-### Minor Changes
-
-- init: setup monorepo and initial package structure
-
-### Patch Changes
-
-- Updated dependencies
-  - @testforge/vue-test-core@0.1.0

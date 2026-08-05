@@ -1,6 +1,6 @@
 {
   "name": "@testforge/vue-test-preset-recommended",
-  "version": "0.1.0",
+  "version": "1.0.0-beta.0",
   "type": "module",
   "description": "Official recommended preset for getting started with the TestForge framework",
   "main": "./dist/index.cjs",

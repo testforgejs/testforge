@@ -1,6 +1,6 @@
 {
   "name": "@testforge/vue-test-plugin-vuetify",
-  "version": "0.0.1",
+  "version": "1.0.0-beta.0",
   "type": "module",
   "description": "Official TestForge plugin for Vuetify integration in component tests",
   "main": "./dist/index.cjs",
