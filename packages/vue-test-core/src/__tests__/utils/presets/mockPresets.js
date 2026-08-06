@@ -1,7 +1,7 @@
 import { createMemoryHistory } from "vue-router";
-import { piniaPlugin } from "@testforge/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforge/vue-test-plugin-router";
+import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
 
 /** @type TestFrameworkPresets */
 export const presets = {

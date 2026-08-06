@@ -23,21 +23,21 @@ runner.doMock("@vue/test-utils", () => ({
 }));
 
 // 3. Use the same approach for plugins
-runner.doMock("@testforge/vue-test-plugin-i18n", () => ({
+runner.doMock("@testforgejs/vue-test-plugin-i18n", () => ({
   i18nPlugin: {
     getName: () => "i18n",
     getDefinition: () => ({ create: mocks.i18nCreate }),
   },
 }));
 
-runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
+runner.doMock("@testforgejs/vue-test-plugin-pinia", () => ({
   piniaPlugin: {
     getName: () => "pinia",
     getDefinition: () => ({ create: mocks.piniaCreate }),
   },
 }));
 
-runner.doMock("@testforge/vue-test-plugin-router", () => ({
+runner.doMock("@testforgejs/vue-test-plugin-router", () => ({
   routerPlugin: {
     getName: () => "router",
     getDefinition: () => ({ create: mocks.routerCreate }),
@@ -55,13 +55,13 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
     // Loading actual implementations for proxying
     let actualI18n, actualPinia, actualRouter;
     if (typeof vi !== "undefined") {
-      actualI18n = await vi.importActual("@testforge/vue-test-plugin-i18n");
-      actualPinia = await vi.importActual("@testforge/vue-test-plugin-pinia");
-      actualRouter = await vi.importActual("@testforge/vue-test-plugin-router");
+      actualI18n = await vi.importActual("@testforgejs/vue-test-plugin-i18n");
+      actualPinia = await vi.importActual("@testforgejs/vue-test-plugin-pinia");
+      actualRouter = await vi.importActual("@testforgejs/vue-test-plugin-router");
     } else {
-      actualI18n = jest.requireActual("@testforge/vue-test-plugin-i18n");
-      actualPinia = jest.requireActual("@testforge/vue-test-plugin-pinia");
-      actualRouter = jest.requireActual("@testforge/vue-test-plugin-router");
+      actualI18n = jest.requireActual("@testforgejs/vue-test-plugin-i18n");
+      actualPinia = jest.requireActual("@testforgejs/vue-test-plugin-pinia");
+      actualRouter = jest.requireActual("@testforgejs/vue-test-plugin-router");
     }
 
     // Customizing spy behavior using custom code

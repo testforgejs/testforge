@@ -54,7 +54,7 @@ type VuetifyInstance = ReturnType<typeof createVuetify>;
 
 ```typescript
 import type { CustomOptions, CustomInstance } from "some-vue-library";
-import type { PluginControlOptions } from "@testforge/vue-test-core";
+import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
 export interface VueTestCustomOptions extends CustomOptions, PluginControlOptions<CustomInstance> {
   /** Additional test-specific configuration fields (optional) */
@@ -67,10 +67,10 @@ export interface VueTestCustomOptions extends CustomOptions, PluginControlOption
 Use Module Augmentation to ensure that both the core framework and the user's IDE recognize the new plugin key and offer autocompletion.
 
 ```typescript
-import type {} from "@testforge/vue-test-core"; // Enforces ESM module scope for the file
+import type {} from "@testforgejs/vue-test-core"; // Enforces ESM module scope for the file
 import type { VueTestCustomOptions } from "./types";
 
-declare module "@testforge/vue-test-core" {
+declare module "@testforgejs/vue-test-core" {
   interface PluginOptionsMap {
     // The 'custom' key is the exact property name the user will use in configuration
     custom: VueTestCustomOptions;
@@ -83,7 +83,7 @@ declare module "@testforge/vue-test-core" {
 Write a dedicated function to initialize the library instance. Leverage the core's built-in `createPluginInstance` helper. It automatically handles reusing cached singletons (`__meta.instance`) and firing the `expose` callback.
 
 ```typescript
-import { createPluginInstance } from "@testforge/vue-test-core";
+import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createCustomLibraryInstance } from "some-vue-library";
 
 import type { CustomInstance } from "some-vue-library";
@@ -107,7 +107,7 @@ import { createCustomPlugin } from "./createCustomPlugin.js";
 
 import type { CustomInstance } from "some-vue-library";
 import type { VueTestCustomOptions } from "../types/types";
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 
 export const customPlugin: PluginModule<CustomInstance, VueTestCustomOptions> = {
   getName: () => "custom", // Must match the key in PluginOptionsMap exactly

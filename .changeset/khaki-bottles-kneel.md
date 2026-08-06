@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-plugin-vuetify": minor
+"@testforgejs/vue-test-plugin-vuetify": minor
 ---
 
 feat: add initial Vuetify plugin implementation for TestForge

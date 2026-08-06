@@ -1,5 +1,5 @@
 import { expectType, expectAssignable, expectError } from "tsd";
-import { createTestFramework, captureInstance } from "@testforge/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { routerPlugin } from "../dist/index.js";
 import { defineComponent } from "vue";
 import { createMemoryHistory } from "vue-router";

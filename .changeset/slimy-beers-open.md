@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": major
+"@testforgejs/vue-test-core": major
 ---
 
 feat: removed support for `false` values in preset plugin defaults.

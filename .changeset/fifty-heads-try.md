@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": minor
+"@testforgejs/vue-test-core": minor
 ---
 
 feat: added support for install-based Vue plugins through the new `createVuePlugin()` helper

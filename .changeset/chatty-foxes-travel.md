@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": patch
+"@testforgejs/vue-test-core": patch
 ---
 
 fix: improve runtime validation when merging configuration objects.

@@ -2,13 +2,13 @@
   "mode": "pre",
   "tag": "beta",
   "initialVersions": {
-    "@testforge/vue-test-core": "0.1.0",
-    "@testforge/vue-test-plugin-i18n": "0.1.0",
-    "@testforge/vue-test-plugin-pinia": "0.1.0",
-    "@testforge/vue-test-plugin-primevue": "0.0.1",
-    "@testforge/vue-test-plugin-router": "0.1.0",
-    "@testforge/vue-test-plugin-vuetify": "0.0.1",
-    "@testforge/vue-test-preset-recommended": "0.1.0"
+    "@testforgejs/vue-test-core": "0.1.0",
+    "@testforgejs/vue-test-plugin-i18n": "0.1.0",
+    "@testforgejs/vue-test-plugin-pinia": "0.1.0",
+    "@testforgejs/vue-test-plugin-primevue": "0.0.1",
+    "@testforgejs/vue-test-plugin-router": "0.1.0",
+    "@testforgejs/vue-test-plugin-vuetify": "0.0.1",
+    "@testforgejs/vue-test-preset-recommended": "0.1.0"
   },
   "changesets": [
     "bumpy-files-vanish",

@@ -1,4 +1,4 @@
-import type {} from "@testforge/vue-test-core";
+import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions } from "./types";
 
 /**
@@ -10,7 +10,7 @@ import type { VueTestPrimeVueOptions } from "./types";
  *
  * @module Augmentation
  */
-declare module "@testforge/vue-test-core" {
+declare module "@testforgejs/vue-test-core" {
   /**
    * Global TestForge plugin configuration registry.
    */

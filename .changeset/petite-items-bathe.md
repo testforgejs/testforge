@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": patch
+"@testforgejs/vue-test-core": patch
 ---
 
 fix: merge attrs instead of replacing default attrs

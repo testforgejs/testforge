@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
+import path from "node:path";
 
 export default defineConfig({
   test: {
@@ -14,8 +14,8 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^@testforge\/(.*)$/,
-        replacement: path.resolve(__dirname, "packages/$1/src"),
+        find: /^@testforgejs\/(.*)$/,
+        replacement: path.resolve(import.meta.dirname, "packages/$1/src"),
       },
     ],
   },

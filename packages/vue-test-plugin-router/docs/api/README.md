@@ -1,6 +1,6 @@
-**@testforge/vue-test-plugin-router**
+**@testforgejs/vue-test-plugin-router**
 
-***
+---
 
 ## Interfaces
 

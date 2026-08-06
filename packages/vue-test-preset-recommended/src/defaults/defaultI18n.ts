@@ -1,4 +1,4 @@
-import type { VueTestI18nOptions } from "@testforge/vue-test-plugin-i18n";
+import type { VueTestI18nOptions } from "@testforgejs/vue-test-plugin-i18n";
 
 export const defaultI18n: VueTestI18nOptions = {
   legacy: false,

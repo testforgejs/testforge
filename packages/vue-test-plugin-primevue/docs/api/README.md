@@ -1,6 +1,6 @@
-**@testforge/vue-test-plugin-primevue**
+**@testforgejs/vue-test-plugin-primevue**
 
-***
+---
 
 ## Type Aliases
 

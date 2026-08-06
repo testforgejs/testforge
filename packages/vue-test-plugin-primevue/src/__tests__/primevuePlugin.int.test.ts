@@ -1,12 +1,12 @@
 /** @vitest-environment jsdom */
 
 import { describe, it, expect } from "vitest";
-import { createTestFramework } from "@testforge/vue-test-core";
+import { createTestFramework } from "@testforgejs/vue-test-core";
 import { primeVuePlugin } from "../index";
 import { h } from "vue";
 import { usePrimeVue } from "primevue/config";
 
-import type { TestFramework } from "@testforge/vue-test-core";
+import type { TestFramework } from "@testforgejs/vue-test-core";
 
 function createPrimeVueFramework(enabled: boolean) {
   return createTestFramework({

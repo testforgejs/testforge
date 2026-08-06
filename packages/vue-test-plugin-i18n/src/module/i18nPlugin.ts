@@ -2,7 +2,7 @@ import { createI18nPlugin } from "./createI18nPlugin";
 
 import type { I18n } from "vue-i18n";
 import type { VueTestI18nOptions } from "../types/types";
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 
 /**
  * Vue I18n plugin module definition for the TestForge framework.

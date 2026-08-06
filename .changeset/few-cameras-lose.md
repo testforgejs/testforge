@@ -1,6 +1,6 @@
 ---
-"@testforge/vue-test-core": minor
-"@testforge/vue-test-plugin-i18n": patch
+"@testforgejs/vue-test-core": minor
+"@testforgejs/vue-test-plugin-i18n": patch
 ---
 
 fix: refactored plugin typing architecture.

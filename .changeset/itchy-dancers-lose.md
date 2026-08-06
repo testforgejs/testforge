@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": major
+"@testforgejs/vue-test-core": major
 ---
 
 feat: replace the custom `useShallow` option with the standard Vue Test Utils `shallow` option.

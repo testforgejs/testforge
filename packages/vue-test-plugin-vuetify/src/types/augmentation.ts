@@ -1,4 +1,4 @@
-import type {} from "@testforge/vue-test-core";
+import type {} from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions } from "./types";
 
 /**
@@ -10,7 +10,7 @@ import type { VueTestVuetifyOptions } from "./types";
  *
  * @module Augmentation
  */
-declare module "@testforge/vue-test-core" {
+declare module "@testforgejs/vue-test-core" {
   /**
    * The global interface for TestForge plugin options.
    */

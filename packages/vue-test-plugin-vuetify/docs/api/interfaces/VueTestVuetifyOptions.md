@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-vuetify**](../README.md)
+[**@testforgejs/vue-test-plugin-vuetify**](../README.md)
 
-***
+---
 
 Defined in: packages/vue-test-plugin-vuetify/src/types/types.ts:28
 
@@ -11,10 +11,10 @@ with TestForge plugin control options such as `expose()`.
 
 ## See
 
- - VuetifyOptions from the `vuetify` package for theme,
-icon, component and directive configuration.
- - PluginControlOptions from `@testforge/vue-test-core`
-for instance interception and testing helpers.
+- VuetifyOptions from the `vuetify` package for theme,
+  icon, component and directive configuration.
+- PluginControlOptions from `@testforgejs/vue-test-core`
+  for instance interception and testing helpers.
 
 ## Extends
 
@@ -26,85 +26,85 @@ for instance interception and testing helpers.
 
 > `optional` **aliases?**: `Record`\<`string`, `any`\>
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2779
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2779
 
 #### Inherited from
 
 `VuetifyOptions.aliases`
 
-***
+---
 
 ### blueprint?
 
 > `optional` **blueprint?**: `Blueprint`
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2780
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2780
 
 #### Inherited from
 
 `VuetifyOptions.blueprint`
 
-***
+---
 
 ### components?
 
 > `optional` **components?**: `Record`\<`string`, `any`\>
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2781
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2781
 
 #### Inherited from
 
 `VuetifyOptions.components`
 
-***
+---
 
 ### date?
 
 > `optional` **date?**: `Partial`\<`InternalDateOptions`\>
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2782
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2782
 
 #### Inherited from
 
 `VuetifyOptions.date`
 
-***
+---
 
 ### defaults?
 
 > `optional` **defaults?**: `DefaultsOptions`
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2784
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2784
 
 #### Inherited from
 
 `VuetifyOptions.defaults`
 
-***
+---
 
 ### directives?
 
 > `optional` **directives?**: `Record`\<`string`, `any`\>
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2783
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2783
 
 #### Inherited from
 
 `VuetifyOptions.directives`
 
-***
+---
 
 ### display?
 
 > `optional` **display?**: `DisplayOptions`
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2785
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2785
 
 #### Inherited from
 
 `VuetifyOptions.display`
 
-***
+---
 
 ### expose?
 
@@ -392,61 +392,61 @@ Defined in: packages/vue-test-core/src/types.ts:140
 
 `PluginControlOptions.expose`
 
-***
+---
 
 ### goTo?
 
 > `optional` **goTo?**: `Partial`\<`InternalGoToOptions`\>
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2786
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2786
 
 #### Inherited from
 
 `VuetifyOptions.goTo`
 
-***
+---
 
 ### icons?
 
 > `optional` **icons?**: `Partial`\<`InternalIconOptions`\>
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2788
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2788
 
 #### Inherited from
 
 `VuetifyOptions.icons`
 
-***
+---
 
 ### locale?
 
 > `optional` **locale?**: `LocaleOptions` & `RtlOptions`
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2789
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2789
 
 #### Inherited from
 
 `VuetifyOptions.locale`
 
-***
+---
 
 ### ssr?
 
 > `optional` **ssr?**: `SSROptions`
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2790
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2790
 
 #### Inherited from
 
 `VuetifyOptions.ssr`
 
-***
+---
 
 ### theme?
 
 > `optional` **theme?**: `ThemeOptions`
 
-Defined in: node\_modules/.pnpm/vuetify@4.1.2\_typescript@6.0.3\_vue@3.5.32\_typescript@6.0.3\_/node\_modules/vuetify/lib/framework.d.ts:2787
+Defined in: node_modules/.pnpm/vuetify@4.1.2_typescript@6.0.3_vue@3.5.32_typescript@6.0.3_/node_modules/vuetify/lib/framework.d.ts:2787
 
 #### Inherited from
 

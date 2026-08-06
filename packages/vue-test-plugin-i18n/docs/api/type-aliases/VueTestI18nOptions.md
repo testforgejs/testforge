@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-i18n**](../README.md)
+[**@testforgejs/vue-test-plugin-i18n**](../README.md)
 
-***
+---
 
 > **VueTestI18nOptions** = `I18nOptions` & `PluginControlOptions`\<`I18n`\>
 
@@ -13,5 +13,5 @@ with TestForge test kernel control options.
 
 ## See
 
- - I18nOptions for configuring locales, fallback languages, and translation messages.
- - PluginControlOptions for instance capturing and exposure mechanisms.
+- I18nOptions for configuring locales, fallback languages, and translation messages.
+- PluginControlOptions for instance capturing and exposure mechanisms.

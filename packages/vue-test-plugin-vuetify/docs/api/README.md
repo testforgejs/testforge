@@ -1,6 +1,6 @@
-**@testforge/vue-test-plugin-vuetify**
+**@testforgejs/vue-test-plugin-vuetify**
 
-***
+---
 
 ## Interfaces
 

@@ -1,4 +1,4 @@
-# @testforge/vue-test-plugin-vuetify
+# @testforgejs/vue-test-plugin-vuetify
 
 ## 1.0.0-beta.0
 
@@ -43,4 +43,4 @@
 - Updated dependencies [40b3b25]
 - Updated dependencies [6c2d7b5]
 - Updated dependencies [e4e4934]
-  - @testforge/vue-test-core@1.0.0-beta.0
+  - @testforgejs/vue-test-core@1.0.0-beta.0

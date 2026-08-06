@@ -2304,21 +2304,21 @@ describe("testComponentFactory Integration (Universal)", () => {
       runner.clearAllMocks();
 
       // Mock the PUBLIC interfaces of the packages
-      runner.doMock("@testforge/vue-test-plugin-i18n", () => ({
+      runner.doMock("@testforgejs/vue-test-plugin-i18n", () => ({
         i18nPlugin: {
           getName: () => "i18n",
           getDefinition: () => ({ create: mockI18nCreate }),
         },
       }));
 
-      runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
+      runner.doMock("@testforgejs/vue-test-plugin-pinia", () => ({
         piniaPlugin: {
           getName: () => "pinia",
           getDefinition: () => ({ create: mockPiniaCreate }),
         },
       }));
 
-      runner.doMock("@testforge/vue-test-plugin-router", () => ({
+      runner.doMock("@testforgejs/vue-test-plugin-router", () => ({
         routerPlugin: {
           getName: () => "router",
           getDefinition: () => ({ create: mockRouterCreate }),
@@ -2456,7 +2456,7 @@ describe("testComponentFactory Integration (Universal)", () => {
       });
 
       it("should completely replace plugin configuration before invoking plugin factory", async () => {
-        runner.doMock("@testforge/vue-test-plugin-pinia", () => ({
+        runner.doMock("@testforgejs/vue-test-plugin-pinia", () => ({
           piniaPlugin: {
             getName: () => "pinia",
             getDefinition: () => ({ create: mockPiniaCreate }),
@@ -2816,9 +2816,9 @@ describe("testComponentFactory Integration (Universal)", () => {
 
   describe("Plugin Instances", () => {
     beforeEach(async () => {
-      runner.unmock("@testforge/vue-test-plugin-i18n");
-      runner.unmock("@testforge/vue-test-plugin-pinia");
-      runner.unmock("@testforge/vue-test-plugin-router");
+      runner.unmock("@testforgejs/vue-test-plugin-i18n");
+      runner.unmock("@testforgejs/vue-test-plugin-pinia");
+      runner.unmock("@testforgejs/vue-test-plugin-router");
 
       runner.resetModules();
       runner.clearAllMocks();

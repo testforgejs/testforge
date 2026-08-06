@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": minor
+"@testforgejs/vue-test-core": minor
 ---
 
 feat: add type-safe support for component data overrides

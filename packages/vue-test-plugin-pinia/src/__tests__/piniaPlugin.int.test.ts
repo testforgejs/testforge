@@ -1,12 +1,12 @@
 /** @vitest-environment jsdom */
 
 import { describe, beforeEach, it, expect } from "vitest";
-import { createTestFramework, captureInstance } from "@testforge/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { piniaPlugin } from "../index";
 import { h } from "vue";
 import { defineStore } from "pinia";
 
-import type { TestFramework } from "@testforge/vue-test-core";
+import type { TestFramework } from "@testforgejs/vue-test-core";
 import type { Pinia } from "pinia";
 
 // Creating a test store for integration testing

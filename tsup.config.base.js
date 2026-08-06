@@ -12,6 +12,6 @@ export default defineConfig({
     "vue-router",
     "@vue/test-utils",
     "@pinia/testing",
-    /^@testforge\/.*/,
+    /^@testforgejs\/.*/,
   ],
 });

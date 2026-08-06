@@ -1,4 +1,4 @@
-import { createPluginInstance } from "@testforge/vue-test-core";
+import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createRouter } from "vue-router";
 
 import type { Router } from "vue-router";

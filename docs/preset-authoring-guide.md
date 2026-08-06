@@ -2,7 +2,7 @@
 
 Presets in TestForge act as **Runtime Environment Profiles**. They declare which plugins are active for a specific project and define the global baseline configuration for those plugins.
 
-While TestForge provides a `@testforge/vue-test-preset-recommended` package, you will frequently need to create custom, project-specific presets right inside your local applications to tailor the test environment to your business requirements.
+While TestForge provides a `@testforgejs/vue-test-preset-recommended` package, you will frequently need to create custom, project-specific presets right inside your local applications to tailor the test environment to your business requirements.
 
 ## Architecture of a Preset
 
@@ -24,10 +24,10 @@ When declaring default options for plugins within your preset, use the TypeScrip
 Create a file named `src/tests/presets/myProjectPreset.ts` (or any location suited for your project):
 
 ```typescript
-import type { TestFrameworkPresets } from "@testforge/vue-test-core";
-import { piniaPlugin, type VueTestPiniaOptions } from "@testforge/vue-test-plugin-pinia";
-import { i18nPlugin, type VueTestI18nOptions } from "@testforge/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforge/vue-test-plugin-router";
+import type { TestFrameworkPresets } from "@testforgejs/vue-test-core";
+import { piniaPlugin, type VueTestPiniaOptions } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin, type VueTestI18nOptions } from "@testforgejs/vue-test-plugin-i18n";
+import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
 
 export const projectPresets = {
   // 'default' is the standard profile used by factories if no preset name is specified
@@ -97,7 +97,7 @@ Once your custom presets object is ready, pass it during the initialization of y
 
 ```typescript
 // src/tests/setup.ts
-import { createTestFramework } from "@testforge/vue-test-core";
+import { createTestFramework } from "@testforgejs/vue-test-core";
 import { projectPresets } from "./presets/myProjectPreset.js";
 
 // Initialize the blind core engine and inject your project capability graph

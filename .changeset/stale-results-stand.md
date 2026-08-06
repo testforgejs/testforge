@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": minor
+"@testforgejs/vue-test-core": minor
 ---
 
 feat: add plugin-aware validation and DX warnings for factory configuration objects

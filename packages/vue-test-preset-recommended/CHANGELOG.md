@@ -1,4 +1,4 @@
-# @testforge/vue-test-preset-recommended
+# @testforgejs/vue-test-preset-recommended
 
 ## 1.0.0-beta.0
 
@@ -32,10 +32,10 @@
 - Updated dependencies [40b3b25]
 - Updated dependencies [6c2d7b5]
 - Updated dependencies [e4e4934]
-  - @testforge/vue-test-core@1.0.0-beta.0
-  - @testforge/vue-test-plugin-pinia@1.0.0-beta.0
-  - @testforge/vue-test-plugin-i18n@1.0.0-beta.0
-  - @testforge/vue-test-plugin-router@1.0.0-beta.0
+  - @testforgejs/vue-test-core@1.0.0-beta.0
+  - @testforgejs/vue-test-plugin-pinia@1.0.0-beta.0
+  - @testforgejs/vue-test-plugin-i18n@1.0.0-beta.0
+  - @testforgejs/vue-test-plugin-router@1.0.0-beta.0
 
 ## 0.1.0
 
@@ -46,6 +46,6 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @testforge/vue-test-plugin-i18n@0.1.0
-  - @testforge/vue-test-plugin-pinia@0.1.0
-  - @testforge/vue-test-plugin-router@0.1.0
+  - @testforgejs/vue-test-plugin-i18n@0.1.0
+  - @testforgejs/vue-test-plugin-pinia@0.1.0
+  - @testforgejs/vue-test-plugin-router@0.1.0

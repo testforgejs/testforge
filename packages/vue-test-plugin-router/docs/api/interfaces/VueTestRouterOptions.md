@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-router**](../README.md)
+[**@testforgejs/vue-test-plugin-router**](../README.md)
 
-***
+---
 
 Defined in: packages/vue-test-plugin-router/src/types/types.ts:13
 
@@ -11,8 +11,8 @@ and TestForge test kernel control options (such as `expose`).
 
 ## See
 
- - RouterOptions from the `vue-router` package for configuring routes and history.
- - PluginControlOptions from the `@testforge/vue-test-core` package for instance interception.
+- RouterOptions from the `vue-router` package for configuring routes and history.
+- PluginControlOptions from the `@testforgejs/vue-test-core` package for instance interception.
 
 ## Extends
 
@@ -24,7 +24,7 @@ and TestForge test kernel control options (such as `expose`).
 
 > `optional` **end?**: `boolean`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:232
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:232
 
 Should the RegExp match until the end by appending a `$` to it.
 
@@ -40,7 +40,7 @@ this option will alsways be `true` in the future. Open a discussion in vuejs/rou
 
 `RouterOptions.end`
 
-***
+---
 
 ### expose?
 
@@ -62,13 +62,13 @@ Defined in: packages/vue-test-core/src/types.ts:130
 
 `PluginControlOptions.expose`
 
-***
+---
 
 ### history
 
 > **history**: `RouterHistory`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:1731
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:1731
 
 History implementation used by the router. Most web applications should use
 `createWebHistory` but it requires the server to be properly configured.
@@ -82,20 +82,20 @@ by search engines and does poorly on SEO.
 createRouter({
   history: createWebHistory(),
   // other options...
-})
+});
 ```
 
 #### Inherited from
 
 `RouterOptions.history`
 
-***
+---
 
 ### linkActiveClass?
 
 > `optional` **linkActiveClass?**: `string`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:1774
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:1774
 
 Default class applied to active RouterLink. If none is provided,
 `router-link-active` will be applied.
@@ -104,13 +104,13 @@ Default class applied to active RouterLink. If none is provided,
 
 `RouterOptions.linkActiveClass`
 
-***
+---
 
 ### linkExactActiveClass?
 
 > `optional` **linkExactActiveClass?**: `string`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:1779
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:1779
 
 Default class applied to exact active RouterLink. If none is provided,
 `router-link-exact-active` will be applied.
@@ -119,42 +119,43 @@ Default class applied to exact active RouterLink. If none is provided,
 
 `RouterOptions.linkExactActiveClass`
 
-***
+---
 
 ### parseQuery?
 
 > `optional` **parseQuery?**: `object`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:1764
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:1764
 
 Custom implementation to parse a query. See its counterpart,
-EXPERIMENTAL\_RouterOptions\_Base.stringifyQuery.
+EXPERIMENTAL_RouterOptions_Base.stringifyQuery.
 
 #### Example
 
 Let's say you want to use the [qs package](https://github.com/ljharb/qs)
 to parse queries, you can provide both `parseQuery` and `stringifyQuery`:
+
 ```js
-import qs from 'qs'
+import qs from "qs";
 
 createRouter({
   // other options...
   parseQuery: qs.parse,
   stringifyQuery: qs.stringify,
-})
+});
 ```
 
 #### Inherited from
 
 `RouterOptions.parseQuery`
 
-***
+---
 
 ### routes
 
 > **routes**: readonly `RouteRecordRaw`[]
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:2045
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:2045
 
 Initial list of routes that should be added to the router.
 
@@ -162,13 +163,13 @@ Initial list of routes that should be added to the router.
 
 `RouterOptions.routes`
 
-***
+---
 
 ### scrollBehavior?
 
 > `optional` **scrollBehavior?**: `RouterScrollBehavior`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:1746
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:1746
 
 Function to control scrolling when navigating between pages. Can return a
 Promise to delay scrolling.
@@ -190,13 +191,13 @@ function scrollBehavior(to, from, savedPosition) {
 
 `RouterOptions.scrollBehavior`
 
-***
+---
 
 ### sensitive?
 
 > `optional` **sensitive?**: `boolean`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:211
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:211
 
 Makes the RegExp case-sensitive.
 
@@ -208,13 +209,13 @@ Makes the RegExp case-sensitive.
 
 `RouterOptions.sensitive`
 
-***
+---
 
 ### strict?
 
 > `optional` **strict?**: `boolean`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:217
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:217
 
 Whether to disallow a trailing slash or not.
 
@@ -226,13 +227,13 @@ Whether to disallow a trailing slash or not.
 
 `RouterOptions.strict`
 
-***
+---
 
 ### stringifyQuery?
 
 > `optional` **stringifyQuery?**: `object`
 
-Defined in: node\_modules/.pnpm/vue-router@5.0.4\_@vue+compiler-sfc@3.5.32\_pinia@3.0.4\_typescript@6.0.3\_vue@3.5.32\_types\_4b35b78af17ef05763c29932b30c1bd3/node\_modules/vue-router/dist/index-BzEKChPW.d.ts:1769
+Defined in: node*modules/.pnpm/vue-router@5.0.4*@vue+compiler-sfc@3.5.32_pinia@3.0.4_typescript@6.0.3_vue@3.5.32_types_4b35b78af17ef05763c29932b30c1bd3/node_modules/vue-router/dist/index-BzEKChPW.d.ts:1769
 
 Custom implementation to stringify a query object. Should not prepend a leading `?`.
 [parseQuery](#parsequery) counterpart to handle query parsing.

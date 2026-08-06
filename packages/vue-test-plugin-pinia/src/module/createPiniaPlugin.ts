@@ -1,4 +1,4 @@
-import { createPluginInstance } from "@testforge/vue-test-core";
+import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createTestingPinia } from "@pinia/testing";
 
 import type { Pinia } from "pinia";

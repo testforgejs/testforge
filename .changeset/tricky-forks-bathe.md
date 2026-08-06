@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": patch
+"@testforgejs/vue-test-core": patch
 ---
 
 fix: fixed an issue where switching presets at runtime could fail if `defaultMountOptions.plugins`

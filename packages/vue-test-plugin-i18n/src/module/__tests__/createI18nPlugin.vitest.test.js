@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 
-vi.mock("@testforge/vue-test-core", () => ({
+vi.mock("@testforgejs/vue-test-core", () => ({
   createPluginInstance: vi.fn(),
 }));
 
-import { createPluginInstance } from "@testforge/vue-test-core";
+import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createI18nPlugin } from "../createI18nPlugin";
 
 describe("createI18nPlugin", () => {

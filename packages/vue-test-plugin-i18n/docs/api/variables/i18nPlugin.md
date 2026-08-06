@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-i18n**](../README.md)
+[**@testforgejs/vue-test-plugin-i18n**](../README.md)
 
-***
+---
 
 > `const` **i18nPlugin**: `PluginModule`\<`I18n`, [`VueTestI18nOptions`](../type-aliases/VueTestI18nOptions.md)\>
 

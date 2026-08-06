@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-primevue**](../README.md)
+[**@testforgejs/vue-test-plugin-primevue**](../README.md)
 
-***
+---
 
 > `const` **primeVuePlugin**: `PluginModule`\<[`PrimeVueMountPlugin`](../type-aliases/PrimeVueMountPlugin.md), [`VueTestPrimeVueOptions`](../type-aliases/VueTestPrimeVueOptions.md)\>
 

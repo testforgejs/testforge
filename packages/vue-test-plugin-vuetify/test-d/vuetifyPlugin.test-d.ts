@@ -1,5 +1,5 @@
 import { expectType, expectAssignable, expectError } from "tsd";
-import { createTestFramework } from "@testforge/vue-test-core";
+import { createTestFramework } from "@testforgejs/vue-test-core";
 import { vuetifyPlugin } from "../dist/index.js";
 import { defineComponent } from "vue";
 

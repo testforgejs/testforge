@@ -1,8 +1,8 @@
-[**@testforge/vue-test-plugin-vuetify**](../README.md)
+[**@testforgejs/vue-test-plugin-vuetify**](../README.md)
 
-***
+---
 
-> **VuetifyInstance** = `ReturnType`\<*typeof* `createVuetify`\>
+> **VuetifyInstance** = `ReturnType<typeof createVuetify>`
 
 Defined in: packages/vue-test-plugin-vuetify/src/types/types.ts:14
 

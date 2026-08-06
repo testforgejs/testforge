@@ -1,6 +1,6 @@
 import type { Pinia } from "pinia";
 import type { TestingOptions } from "@pinia/testing";
-import type { PluginControlOptions } from "@testforge/vue-test-core";
+import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
 /**
  * A callback function to mutate or configure Pinia stores immediately after they are created.

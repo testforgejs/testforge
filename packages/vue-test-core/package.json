@@ -1,8 +1,17 @@
 {
-  "name": "@testforge/vue-test-core",
+  "name": "@testforgejs/vue-test-core",
   "version": "1.0.0-beta.0",
   "type": "module",
   "description": "Core testing utilities and pipeline orchestration for the TestForge component testing framework",
+  "homepage": "https://github.com/testforgejs/testforge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/testforgejs/testforge.git",
+    "directory": "packages/vue-test-core"
+  },
+  "bugs": {
+    "url": "https://github.com/testforgejs/testforge/issues"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -44,9 +53,10 @@
     "vue": "^3.3.0"
   },
   "devDependencies": {
-    "vue-router": "^5.0.0",
-    "@testforge/vue-test-plugin-i18n": "workspace:*",
-    "@testforge/vue-test-plugin-pinia": "workspace:*"
+    "@testforgejs/vue-test-plugin-i18n": "workspace:*",
+    "@testforgejs/vue-test-plugin-pinia": "workspace:*",
+    "@testforgejs/vue-test-plugin-router": "workspace:*",
+    "vue-router": "~5.1.0"
   },
   "tsd": {
     "directory": "test-d"

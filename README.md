@@ -77,7 +77,7 @@ The fastest way to get started is to install the core framework along with the r
 
 ## Install Dependencies
 
-npm install -D @testforge/vue-test-core @testforge/vue-test-preset-recommended
+npm install -D @testforgejs/vue-test-core @testforgejs/vue-test-preset-recommended
 
 ## Initialize the Framework
 
@@ -85,8 +85,8 @@ Create a configuration file (e.g., `tests/setup.ts`) to initialize the framework
 
 ```typescript
 @/tests/setup.ts
-import { createTestFramework } from "@testforge/vue-test-core";
-import { presets } from "@testforge/vue-test-preset-recommended";
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { presets } from "@testforgejs/vue-test-preset-recommended";
 
 const { testComponentFactory } = createTestFramework({ presets });
 
@@ -141,7 +141,7 @@ TestForge documentation is organized into several focused guides.
 
 ## Package Documentation
 
-- [@testforge/vue-test-core](packages/vue-test-core/README.md)
+- [@testforgejs/vue-test-core](packages/vue-test-core/README.md)
 
 ---
 
@@ -170,7 +170,7 @@ Each framework owns its own:
 
 ```typescript
 // tests/app.ts
-import { createTestFramework } from "@testforge/vue-test-core";
+import { createTestFramework } from "@testforgejs/vue-test-core";
 import { appPresets } from "./presets/app";
 
 export const { testComponentFactory: appFactory } = createTestFramework({
@@ -180,7 +180,7 @@ export const { testComponentFactory: appFactory } = createTestFramework({
 
 ```typescript
 // tests/design-system.ts
-import { createTestFramework } from "@testforge/vue-test-core";
+import { createTestFramework } from "@testforgejs/vue-test-core";
 import { designSystemPresets } from "./presets/design-system";
 
 export const { testComponentFactory: dsFactory } = createTestFramework({
@@ -346,9 +346,9 @@ Each plugin:
 
 Examples provided by TestForge:
 
-- @testforge/vue-test-plugin-i18n
-- @testforge/vue-test-plugin-pinia
-- @testforge/vue-test-plugin-router
+- @testforgejs/vue-test-plugin-i18n
+- @testforgejs/vue-test-plugin-pinia
+- @testforgejs/vue-test-plugin-router
 
 Because of this, TestForge can:
 
@@ -400,7 +400,7 @@ Presets allow you to:
 
 TestForge provides:
 
-- @testforge/vue-test-preset-recommended
+- @testforgejs/vue-test-preset-recommended
 
 You can create your own presets for your organization or monorepo.
 

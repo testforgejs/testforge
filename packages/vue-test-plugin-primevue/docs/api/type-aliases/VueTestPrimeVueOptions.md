@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-primevue**](../README.md)
+[**@testforgejs/vue-test-plugin-primevue**](../README.md)
 
-***
+---
 
 > **VueTestPrimeVueOptions** = `PrimeVueConfiguration`
 

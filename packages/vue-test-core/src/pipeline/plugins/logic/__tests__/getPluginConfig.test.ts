@@ -2,11 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getPluginConfig } from "../getPluginConfig.js";
 import { createMockCtx } from "../../../__tests__/fixtures.js";
 
-import type {
-  PipelineContext,
-  RuntimeContext,
-  ComponentFactoryExtraOptions,
-} from "../../../../types";
+import type { RuntimeContext, ComponentFactoryExtraOptions } from "../../../../types";
 
 describe("getPluginConfig helper", () => {
   it("should return false when plugin is explicitly disabled in pipeline state and no extraOptions are provided", () => {

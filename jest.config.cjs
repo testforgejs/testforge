@@ -26,8 +26,8 @@ module.exports = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
 
-    "^@testforge/([^/]+)/(.*)$": "<rootDir>/packages/$1/$2",
-    "^@testforge/([^/]+)$": "<rootDir>/packages/$1/src/index",
+    "^@testforgejs/([^/]+)/(.*)$": "<rootDir>/packages/$1/$2",
+    "^@testforgejs/([^/]+)$": "<rootDir>/packages/$1/src/index",
 
     "^vue$": "@vue/runtime-dom",
     "^@vue/devtools-api$": "<rootDir>/__mocks__/vue-devtools-api.cjs",

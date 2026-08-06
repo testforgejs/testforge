@@ -1,8 +1,8 @@
-[**@testforge/vue-test-plugin-primevue**](../README.md)
+[**@testforgejs/vue-test-plugin-primevue**](../README.md)
 
-***
+---
 
-> **PrimeVueMountPlugin** = \[*typeof* `PrimeVue`, `PrimeVueConfiguration`\]
+> **PrimeVueMountPlugin** = \[_typeof_ `PrimeVue`, `PrimeVueConfiguration`\]
 
 Defined in: types/types.ts:14
 
@@ -13,5 +13,5 @@ through a standard `[plugin, options]` tuple instead of a runtime instance.
 
 ## See
 
- - PrimeVue
- - PrimeVueConfiguration
+- PrimeVue
+- PrimeVueConfiguration

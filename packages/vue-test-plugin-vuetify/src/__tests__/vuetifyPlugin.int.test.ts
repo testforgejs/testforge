@@ -1,11 +1,11 @@
 /** @vitest-environment jsdom */
 
 import { describe, beforeEach, it, expect } from "vitest";
-import { createTestFramework, captureInstance } from "@testforge/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { vuetifyPlugin } from "../index";
 import { h } from "vue";
 
-import type { TestFramework } from "@testforge/vue-test-core";
+import type { TestFramework } from "@testforgejs/vue-test-core";
 import type { VuetifyInstance } from "../index.js";
 
 const Component = {

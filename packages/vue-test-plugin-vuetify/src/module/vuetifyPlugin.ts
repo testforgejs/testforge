@@ -1,6 +1,6 @@
 import { createVuetifyPlugin } from "./createVuetifyPlugin.js";
 
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";
 
 /**

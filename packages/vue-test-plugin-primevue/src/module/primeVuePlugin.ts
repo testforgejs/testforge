@@ -1,6 +1,6 @@
 import { createPrimeVuePlugin } from "./createPrimeVuePlugin.js";
 
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types";
 
 /**

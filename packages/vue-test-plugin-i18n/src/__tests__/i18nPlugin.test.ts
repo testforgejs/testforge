@@ -1,14 +1,14 @@
 /** @vitest-environment jsdom */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestFramework, captureInstance } from "@testforge/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { i18nPlugin } from "../index";
 import { h } from "vue";
 import { useI18n } from "vue-i18n";
 
 import type { WritableComputedRef } from "vue";
 import type { Composer, I18n } from "vue-i18n";
-import type { TestFramework } from "@testforge/vue-test-core";
+import type { TestFramework } from "@testforgejs/vue-test-core";
 
 const Component = {
   setup() {

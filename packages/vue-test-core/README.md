@@ -1,8 +1,8 @@
-# @testforge/vue-test-core
+# @testforgejs/vue-test-core
 
 > Core runtime & declarative testing infrastructure for Vue 3
 
-`@testforge/vue-test-core` is the core runtime of **TestForge**. It provides the framework for creating reusable, type-safe component test factories and coordinating managed Vue ecosystem plugins.
+`@testforgejs/vue-test-core` is the core runtime of **TestForge**. It provides the framework for creating reusable, type-safe component test factories and coordinating managed Vue ecosystem plugins.
 
 The core package provides:
 
@@ -21,19 +21,19 @@ Choose your preferred package manager.
 ### pnpm
 
 ```bash
-pnpm add -D @testforge/vue-test-core
+pnpm add -D @testforgejs/vue-test-core
 ```
 
 ### npm
 
 ```bash
-npm install -D @testforge/vue-test-core
+npm install -D @testforgejs/vue-test-core
 ```
 
 ### Yarn
 
 ```bash
-yarn add -D @testforge/vue-test-core
+yarn add -D @testforgejs/vue-test-core
 ```
 
 ## Presets
@@ -45,7 +45,7 @@ The preset system separates the TestForge core from individual Vue ecosystem int
 TestForge provides an official recommended preset:
 
 ```bash
-pnpm add -D @testforge/vue-test-preset-recommended
+pnpm add -D @testforgejs/vue-test-preset-recommended
 ```
 
 The recommended preset provides commonly used integrations such as:
@@ -65,8 +65,8 @@ Additional integrations, such as Vuetify and PrimeVue, are available as separate
 
 ```typescript
 // tests/setup.ts (or any other initialization file in your project)
-import { createTestFramework } from "@testforge/vue-test-core";
-import { presets } from "@testforge/vue-test-preset-recommended";
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { presets } from "@testforgejs/vue-test-preset-recommended";
 
 const { testComponentFactory } = createTestFramework({
   presets,
@@ -109,12 +109,12 @@ This package is part of the **TestForge** monorepo.
 
 ## Related packages
 
-- `@testforge/vue-test-preset-recommended`
-- `@testforge/vue-test-plugin-router`
-- `@testforge/vue-test-plugin-pinia`
-- `@testforge/vue-test-plugin-i18n`
-- `@testforge/vue-test-plugin-vuetify`
-- `@testforge/vue-test-plugin-primevue`
+- `@testforgejs/vue-test-preset-recommended`
+- `@testforgejs/vue-test-plugin-router`
+- `@testforgejs/vue-test-plugin-pinia`
+- `@testforgejs/vue-test-plugin-i18n`
+- `@testforgejs/vue-test-plugin-vuetify`
+- `@testforgejs/vue-test-plugin-primevue`
 
 ## License
 

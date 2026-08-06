@@ -1,4 +1,4 @@
-import type {} from "@testforge/vue-test-core";
+import type {} from "@testforgejs/vue-test-core";
 import type { VueTestI18nOptions } from "./types";
 
 /**
@@ -9,7 +9,7 @@ import type { VueTestI18nOptions } from "./types";
  *
  * @module I18nAugmentation
  */
-declare module "@testforge/vue-test-core" {
+declare module "@testforgejs/vue-test-core" {
   /**
    * Global map for TestForge plugin configuration options.
    */

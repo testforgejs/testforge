@@ -1,4 +1,4 @@
-import type {} from "@testforge/vue-test-core";
+import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPiniaOptions } from "./types";
 
 /**
@@ -9,7 +9,7 @@ import type { VueTestPiniaOptions } from "./types";
  *
  * @module PiniaAugmentation
  */
-declare module "@testforge/vue-test-core" {
+declare module "@testforgejs/vue-test-core" {
   /**
    * The global interface for the TestForge kernel plugin options.
    */

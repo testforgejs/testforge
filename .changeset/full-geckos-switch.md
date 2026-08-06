@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": minor
+"@testforgejs/vue-test-core": minor
 ---
 
 feat: export TestFramework from the public API.

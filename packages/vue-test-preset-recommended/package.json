@@ -1,8 +1,17 @@
 {
-  "name": "@testforge/vue-test-preset-recommended",
+  "name": "@testforgejs/vue-test-preset-recommended",
   "version": "1.0.0-beta.0",
   "type": "module",
   "description": "Official recommended preset for getting started with the TestForge framework",
+  "homepage": "https://github.com/testforgejs/testforge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/testforgejs/testforge.git",
+    "directory": "packages/vue-test-preset-recommended"
+  },
+  "bugs": {
+    "url": "https://github.com/testforgejs/testforge/issues"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -35,16 +44,16 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "dependencies": {
-    "@testforge/vue-test-plugin-i18n": "workspace:*",
-    "@testforge/vue-test-plugin-pinia": "workspace:*",
-    "@testforge/vue-test-plugin-router": "workspace:*"
+    "@testforgejs/vue-test-plugin-i18n": "workspace:*",
+    "@testforgejs/vue-test-plugin-pinia": "workspace:*",
+    "@testforgejs/vue-test-plugin-router": "workspace:*"
   },
   "peerDependencies": {
-    "@testforge/vue-test-core": "workspace:*",
+    "@testforgejs/vue-test-core": "workspace:*",
     "vue-router": ">=4 <6"
   },
   "devDependencies": {
-    "@testforge/vue-test-core": "workspace:*",
-    "vue-router": "^5.0.0"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "vue-router": "~5.1.0"
   }
 }

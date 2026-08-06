@@ -1,10 +1,10 @@
-# @testforge/vue-test-plugin-primevue
+# @testforgejs/vue-test-plugin-primevue
 
 ## 1.0.0-beta.0
 
 ### Minor Changes
 
-- 15fec23: feat: added initial support for PrimeVue integration via `@testforge/vue-test-plugin-primevue`
+- 15fec23: feat: added initial support for PrimeVue integration via `@testforgejs/vue-test-plugin-primevue`
 
   The plugin supports install-based Vue plugins by producing
   Vue Test Utils compatible plugin tuples:
@@ -48,4 +48,4 @@
 - Updated dependencies [40b3b25]
 - Updated dependencies [6c2d7b5]
 - Updated dependencies [e4e4934]
-  - @testforge/vue-test-core@1.0.0-beta.0
+  - @testforgejs/vue-test-core@1.0.0-beta.0

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPiniaPlugin } from "../createPiniaPlugin.js";
-import { createPluginInstance } from "@testforge/vue-test-core";
+import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createTestingPinia } from "@pinia/testing";
 
 // Isolating external dependencies
-vi.mock("@testforge/vue-test-core", () => ({
+vi.mock("@testforgejs/vue-test-core", () => ({
   createPluginInstance: vi.fn(() => ({ id: "mocked-pinia" })),
 }));
 

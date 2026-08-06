@@ -1,6 +1,6 @@
 # 🏗️ Architectural Overview: The Plugin & Preset Matrix
 
-`@testforge/vue-test-core` implements a **strict microkernel architecture**. The core engine is completely blind: it has zero internal knowledge of Pinia, Vue Router, vue-i18n, or any other library. It contains no global registries or hardcoded plugin configurations.
+`@testforgejs/vue-test-core` implements a **strict microkernel architecture**. The core engine is completely blind: it has zero internal knowledge of Pinia, Vue Router, vue-i18n, or any other library. It contains no global registries or hardcoded plugin configurations.
 
 Instead, the entire testing environment is driven by **Presets** and a hierarchical **State Layering Pipeline**.
 

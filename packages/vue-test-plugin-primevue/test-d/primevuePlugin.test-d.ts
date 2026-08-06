@@ -1,5 +1,5 @@
 import { expectAssignable, expectError } from "tsd";
-import { createTestFramework } from "@testforge/vue-test-core";
+import { createTestFramework } from "@testforgejs/vue-test-core";
 import { primeVuePlugin } from "../dist/index.js";
 
 import type { VueTestPrimeVueOptions } from "../dist/index.js";

@@ -1,4 +1,4 @@
-# @testforge/vue-test-core
+# @testforgejs/vue-test-core
 
 ## 1.0.0-beta.0
 

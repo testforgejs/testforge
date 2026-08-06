@@ -1,8 +1,8 @@
 ---
-"@testforge/vue-test-plugin-primevue": minor
+"@testforgejs/vue-test-plugin-primevue": minor
 ---
 
-feat: added initial support for PrimeVue integration via `@testforge/vue-test-plugin-primevue`
+feat: added initial support for PrimeVue integration via `@testforgejs/vue-test-plugin-primevue`
 
 The plugin supports install-based Vue plugins by producing
 Vue Test Utils compatible plugin tuples:

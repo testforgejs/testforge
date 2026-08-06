@@ -9,7 +9,7 @@ By the end of this guide, you will have a shared `testComponentFactory` that can
 Install the TestForge core and the recommended preset:
 
 ```bash
-pnpm add -D @testforge/vue-test-core @testforge/vue-test-preset-recommended
+pnpm add -D @testforgejs/vue-test-core @testforgejs/vue-test-preset-recommended
 ```
 
 You can also use `npm` or `yarn` if they are used by your project.
@@ -33,7 +33,7 @@ The TestForge core does not automatically know about Vue ecosystem plugins. A pl
 For example, a preset can make Pinia, Vue Router, and Vue I18n available to your tests:
 
 ```typescript
-import { presets } from "@testforge/vue-test-preset-recommended";
+import { presets } from "@testforgejs/vue-test-preset-recommended";
 ```
 
 You can use the official recommended preset or create your own project-specific preset.
@@ -51,8 +51,8 @@ It is recommended to create a single TestForge configuration file, usually `test
 
 ```typescript
 // @/tests/setup.ts
-import { createTestFramework } from "@testforge/vue-test-core";
-import { presets } from "@testforge/vue-test-preset-recommended";
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { presets } from "@testforgejs/vue-test-preset-recommended";
 
 const { testComponentFactory } = createTestFramework({
   presets,
@@ -172,11 +172,11 @@ The exact options available depend on the managed plugin.
 
 See the documentation for the individual plugin packages for plugin-specific configuration:
 
-- [`@testforge/vue-test-plugin-pinia`](../packages/vue-test-plugin-pinia/docs/api/README.md)
-- [`@testforge/vue-test-plugin-router`](../packages/vue-test-plugin-router/docs/api/README.md)
-- [`@testforge/vue-test-plugin-i18n`](../packages/vue-test-plugin-i18n/docs/api/README.md)
-- [`@testforge/vue-test-plugin-vuetify`](../packages/vue-test-plugin-vuetify/docs/api/README.md)
-- [`@testforge/vue-test-plugin-primevue`](../packages/vue-test-plugin-primevue/docs/api/README.md)
+- [`@testforgejs/vue-test-plugin-pinia`](../packages/vue-test-plugin-pinia/docs/api/README.md)
+- [`@testforgejs/vue-test-plugin-router`](../packages/vue-test-plugin-router/docs/api/README.md)
+- [`@testforgejs/vue-test-plugin-i18n`](../packages/vue-test-plugin-i18n/docs/api/README.md)
+- [`@testforgejs/vue-test-plugin-vuetify`](../packages/vue-test-plugin-vuetify/docs/api/README.md)
+- [`@testforgejs/vue-test-plugin-primevue`](../packages/vue-test-plugin-primevue/docs/api/README.md)
 
 ---
 

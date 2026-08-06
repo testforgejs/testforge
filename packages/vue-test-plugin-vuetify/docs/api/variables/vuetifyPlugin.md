@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-vuetify**](../README.md)
+[**@testforgejs/vue-test-plugin-vuetify**](../README.md)
 
-***
+---
 
 > `const` **vuetifyPlugin**: `PluginModule`\<[`VuetifyInstance`](../type-aliases/VuetifyInstance.md), [`VueTestVuetifyOptions`](../interfaces/VueTestVuetifyOptions.md)\>
 

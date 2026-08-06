@@ -1,14 +1,14 @@
 /** @vitest-environment jsdom */
 
 import { describe, beforeEach, it, expect } from "vitest";
-import { createTestFramework, captureInstance } from "@testforge/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { routerPlugin } from "../index";
 import { h } from "vue";
 import { createMemoryHistory, RouterView, useRoute } from "vue-router";
 
 import type { ComponentPublicInstance } from "vue";
 import type { Router } from "vue-router";
-import type { TestFramework } from "@testforge/vue-test-core";
+import type { TestFramework } from "@testforgejs/vue-test-core";
 
 // A test component that displays the current path for router verification
 const Component = {

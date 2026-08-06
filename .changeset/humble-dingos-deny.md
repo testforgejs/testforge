@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": major
+"@testforgejs/vue-test-core": major
 ---
 
 feat: move plugin overrides under `extraOptions.plugins`.

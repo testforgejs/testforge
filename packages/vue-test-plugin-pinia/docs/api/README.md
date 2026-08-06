@@ -1,6 +1,6 @@
-**@testforge/vue-test-plugin-pinia**
+**@testforgejs/vue-test-plugin-pinia**
 
-***
+---
 
 ## Interfaces
 

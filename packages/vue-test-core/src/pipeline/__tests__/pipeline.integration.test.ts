@@ -3,9 +3,9 @@ import { createPipelineContext } from "../core/createPipelineContext.js";
 import { createPipeline } from "../core/createPipeline.js";
 import { createMountPipeline } from "../mount/createMountPipeline.js";
 import { presets } from "../../__tests__/utils/presets/mockPresets.js";
-import { piniaPlugin } from "@testforge/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforge/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforge/vue-test-plugin-router";
+import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
 import type { RuntimePluginConfig, TestFrameworkPresets } from "../../types";

@@ -1,4 +1,4 @@
-import { createPluginInstance } from "@testforge/vue-test-core";
+import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createI18n } from "vue-i18n";
 
 import type { I18n } from "vue-i18n";

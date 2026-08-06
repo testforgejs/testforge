@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-router**](../README.md)
+[**@testforgejs/vue-test-plugin-router**](../README.md)
 
-***
+---
 
 > `const` **routerPlugin**: `PluginModule`\<`Router`, [`VueTestRouterOptions`](../interfaces/VueTestRouterOptions.md)\>
 

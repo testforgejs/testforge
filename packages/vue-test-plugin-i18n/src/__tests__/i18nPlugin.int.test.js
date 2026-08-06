@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 /** @vitest-environment jsdom */
 
-import { createTestFramework, captureInstance } from "@testforge/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { i18nPlugin } from "../index";
 import { h } from "vue";
 import { useI18n } from "vue-i18n";

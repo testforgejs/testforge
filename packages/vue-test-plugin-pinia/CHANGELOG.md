@@ -1,12 +1,12 @@
-# @testforge/vue-test-plugin-pinia
+# @testforgejs/vue-test-plugin-pinia
 
 ## 1.0.0-beta.0
 
 ### Minor Changes
 
-- f177d3a: feat: migrated `@testforge/vue-test-plugin-pinia` to TypeScript.
+- f177d3a: feat: migrated `@testforgejs/vue-test-plugin-pinia` to TypeScript.
 
-  The package now provides stronger typings for plugin options and Pinia instances, and fully supports the new generic plugin runtime system introduced in `@testforge/vue-test-core`.
+  The package now provides stronger typings for plugin options and Pinia instances, and fully supports the new generic plugin runtime system introduced in `@testforgejs/vue-test-core`.
 
 ### Patch Changes
 
@@ -36,7 +36,7 @@
 - Updated dependencies [40b3b25]
 - Updated dependencies [6c2d7b5]
 - Updated dependencies [e4e4934]
-  - @testforge/vue-test-core@1.0.0-beta.0
+  - @testforgejs/vue-test-core@1.0.0-beta.0
 
 ## 0.1.0
 

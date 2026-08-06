@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { createPrimeVuePlugin } from "../createPrimeVuePlugin.js";
-import { createVuePlugin } from "@testforge/vue-test-core";
+import { createVuePlugin } from "@testforgejs/vue-test-core";
 import PrimeVue from "primevue/config";
 
-vi.mock("@testforge/vue-test-core", () => ({
+vi.mock("@testforgejs/vue-test-core", () => ({
   createVuePlugin: vi.fn(() => ["mock-plugin", {}]),
 }));
 

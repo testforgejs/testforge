@@ -1,6 +1,6 @@
 import { createVuetify } from "vuetify";
 
-import type { PluginControlOptions } from "@testforge/vue-test-core";
+import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 import type { VuetifyOptions } from "vuetify";
 
 /**
@@ -22,7 +22,7 @@ export type VuetifyInstance = ReturnType<typeof createVuetify>;
  * @see {@link VuetifyOptions} from the `vuetify` package for theme,
  * icon, component and directive configuration.
  *
- * @see {@link PluginControlOptions} from `@testforge/vue-test-core`
+ * @see {@link PluginControlOptions} from `@testforgejs/vue-test-core`
  * for instance interception and testing helpers.
  */
 export interface VueTestVuetifyOptions

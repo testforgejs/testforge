@@ -1,6 +1,6 @@
-**@testforge/vue-test-plugin-i18n**
+**@testforgejs/vue-test-plugin-i18n**
 
-***
+---
 
 ## Type Aliases
 

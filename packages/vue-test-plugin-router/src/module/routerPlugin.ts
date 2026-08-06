@@ -2,7 +2,7 @@ import { createRouterPlugin } from "./createRouterPlugin.js";
 
 import type { Router } from "vue-router";
 import type { VueTestRouterOptions } from "../types/types";
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 
 /**
  * A Vue Router plugin module for the TestForge testing framework.

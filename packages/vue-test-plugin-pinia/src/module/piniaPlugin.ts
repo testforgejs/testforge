@@ -3,7 +3,7 @@ import { setActivePinia } from "pinia";
 
 import type { Pinia } from "pinia";
 import type { VueTestPiniaOptions } from "../types/types";
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 
 export const piniaPlugin: PluginModule<Pinia, VueTestPiniaOptions> = {
   getName: () => "pinia",

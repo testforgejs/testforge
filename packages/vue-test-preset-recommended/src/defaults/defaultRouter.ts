@@ -1,4 +1,4 @@
-import type { VueTestRouterOptions } from "@testforge/vue-test-plugin-router";
+import type { VueTestRouterOptions } from "@testforgejs/vue-test-plugin-router";
 
 import { createMemoryHistory, createWebHistory } from "vue-router";
 

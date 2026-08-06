@@ -39,7 +39,7 @@ console.log(`🚀 Scaffolding new TestForge plugin: vue-test-plugin-${kebabName}
 writeFile(
   "package.json",
   `{
-  "name": "@testforge/vue-test-plugin-${kebabName}",
+  "name": "@testforgejs/vue-test-plugin-${kebabName}",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -60,7 +60,7 @@ writeFile(
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@testforge/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*"
   },
   "peerDependencies": {
     // Add library-specific peerDependencies manually if required
@@ -82,7 +82,7 @@ export default defineConfig({
 // 3. src/types/types.ts
 writeFile(
   "src/types/types.ts",
-  `import type { PluginControlOptions } from "@testforge/vue-test-core";
+  `import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
 // TODO: Replace 'any' with original library types (e.g., CustomOptions, CustomInstance)
 export interface VueTest${pascalName}Options extends Record<string, any>, PluginControlOptions<any> {
@@ -95,10 +95,10 @@ export interface VueTest${pascalName}Options extends Record<string, any>, Plugin
 // 4. src/types/augmentation.ts
 writeFile(
   "src/types/augmentation.ts",
-  `import type {} from "@testforge/vue-test-core";
+  `import type {} from "@testforgejs/vue-test-core";
 import type { VueTest${pascalName}Options } from "./types";
 
-declare module "@testforge/vue-test-core" {
+declare module "@testforgejs/vue-test-core" {
   interface PluginOptionsMap {
     ${camelName}: VueTest${pascalName}Options;
   }
@@ -109,7 +109,7 @@ declare module "@testforge/vue-test-core" {
 // 5. src/module/create{Name}Plugin.ts
 writeFile(
   `src/module/create${pascalName}Plugin.ts`,
-  `import { createPluginInstance } from "@testforge/vue-test-core";
+  `import { createPluginInstance } from "@testforgejs/vue-test-core";
 
 import type { VueTest${pascalName}Options } from "../types/types";
 
@@ -142,7 +142,7 @@ writeFile(
   `src/module/${camelName}Plugin.ts`,
   `import { create${pascalName}Plugin } from "./create${pascalName}Plugin.js";
 
-import type { PluginModule } from "@testforge/vue-test-core";
+import type { PluginModule } from "@testforgejs/vue-test-core";
 import type { VueTest${pascalName}Options } from "../types/types";
 
 export const ${camelName}Plugin: PluginModule<any, VueTest${pascalName}Options> = {
@@ -167,6 +167,6 @@ export * from "./types/types";
 `,
 );
 
-console.log(`✅ Success! Created @testforge/vue-test-plugin-${kebabName}`);
+console.log(`✅ Success! Created @testforgejs/vue-test-plugin-${kebabName}`);
 console.log(`👉 Location: packages/vue-test-plugin-${kebabName}`);
 console.log(`💡 Don't forget to run pnpm install to link workspace dependencies.`);

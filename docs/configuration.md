@@ -292,8 +292,8 @@ The effective configuration keeps `attachTo` from the factory defaults while the
 The framework also provides a global `shallowByDefault` option:
 
 ```typescript
-import { createTestFramework } from "@testforge/vue-test-core";
-import { presets } from "@testforge/vue-test-preset-recommended";
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { presets } from "@testforgejs/vue-test-preset-recommended";
 
 export const { testComponentFactory } = createTestFramework({
   presets,

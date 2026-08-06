@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": minor
+"@testforgejs/vue-test-core": minor
 ---
 
 fix: improve TypeScript support for `testComponentFactory()` by inferring prop types from Vue component definitions

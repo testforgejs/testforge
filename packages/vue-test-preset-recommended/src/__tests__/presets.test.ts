@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { presets } from "../presets.js";
-import { validatePresets } from "@testforge/vue-test-core";
+import { validatePresets } from "@testforgejs/vue-test-core";
 
 describe("presets", () => {
   describe("validation", () => {

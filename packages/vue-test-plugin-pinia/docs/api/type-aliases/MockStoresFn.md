@@ -1,6 +1,6 @@
-[**@testforge/vue-test-plugin-pinia**](../README.md)
+[**@testforgejs/vue-test-plugin-pinia**](../README.md)
 
-***
+---
 
 > **MockStoresFn** = (`pinia`) => `void`
 

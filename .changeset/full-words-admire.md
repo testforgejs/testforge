@@ -1,5 +1,5 @@
 ---
-"@testforge/vue-test-core": major
+"@testforgejs/vue-test-core": major
 ---
 
 fix: validate `extraOptions.plugins` against the active preset plugin whitelist
