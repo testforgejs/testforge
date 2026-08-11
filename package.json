@@ -27,7 +27,8 @@
     "plugin:generate": "node scripts/scaffold-plugin.js",
     "docs:plugin": "node scripts/docs-plugins.js",
     "docs:all": "typedoc --options typedoc.workspace.json",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "release": "changeset publish"
   },
   "keywords": [
     "testforge",
