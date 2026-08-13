@@ -59,7 +59,7 @@ Additional integrations, such as Vuetify and PrimeVue, are available as separate
 > [!TIP]
 > The recommended preset is optional. If your project requires a different set of plugins or configurations, you can create a custom preset.
 
-👉 See the [Getting Started Guide](../../docs/getting-started.md) for the recommended setup and the [Preset Authoring Guide](../../docs/preset-authoring-guide.md) for custom presets.
+👉 See the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md) for the recommended setup and the [Preset Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/preset-authoring-guide.md) for custom presets.
 
 ## Quick Usage
 
@@ -91,20 +91,20 @@ test("renders correctly", () => {
 });
 ```
 
-👉 For a complete walkthrough, continue with the [Getting Started Guide](../../docs/getting-started.md).
+👉 For a complete walkthrough, continue with the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md).
 
 ## Documentation
 
-- [Getting Started Guide](../../docs/getting-started.md) — Set up TestForge in a project and create reusable component test factories.
-- [Configuration & Advanced Usage](../../docs/configuration.md) — Learn about configuration layers, merge strategies, execution flags, and plugin lifecycle behavior.
-- [Plugin Authoring Guide](../../docs/plugin-authoring-guide.md) — Create custom TestForge plugins.
-- [Preset Authoring Guide](../../docs/preset-authoring-guide.md) — Create custom presets for your project or organization.
+- [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md) — Set up TestForge in a project and create reusable component test factories.
+- [Configuration & Advanced Usage](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md) — Learn about configuration layers, merge strategies, execution flags, and plugin lifecycle behavior.
+- [Plugin Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/plugin-authoring-guide.md) — Create custom TestForge plugins.
+- [Preset Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/preset-authoring-guide.md) — Create custom presets for your project or organization.
 
 ## Project
 
 This package is part of the **TestForge** monorepo.
 
-- **[TestForge Project Overview](../../README.md)** — project overview, package ecosystem, roadmap and repository information.
+- **[TestForge Project Overview](https://github.com/testforgejs/testforge#readme)** — project overview, package ecosystem, roadmap and repository information.
 - **Repository:** https://github.com/testforgejs/testforge
 
 ## Related packages
