@@ -50,11 +50,11 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
-    "vue-router": ">=4 <6",
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "vue-router": ">=4.0.0 <6.0.0"
   },
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
-    "vue-router": "~5.1.0"
+    "vue-router": "^5.0.0"
   }
 }

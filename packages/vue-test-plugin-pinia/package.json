@@ -49,13 +49,13 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
-    "pinia": ">=3 <4",
-    "@pinia/testing": ">=1 <2",
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "pinia": ">=3.0.0 <5.0.0",
+    "@pinia/testing": ">=1.0.0 <3.0.0"
   },
   "devDependencies": {
-    "pinia": "^3.0.0",
-    "@pinia/testing": "^1.0.0",
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "pinia": "^4.0.0",
+    "@pinia/testing": "^2.0.0"
   }
 }

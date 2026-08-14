@@ -13,14 +13,14 @@
     "url": "https://github.com/testforgejs/testforge/issues"
   },
   "scripts": {
-    "build": "pnpm --filter \"./packages/**\" run build",
-    "dev": "pnpm --filter \"./packages/**\" --parallel run dev",
+    "build": "pnpm -r run build",
+    "dev": "pnpm -r --parallel run dev",
     "test": "vitest run",
     "test:jest": "jest",
     "typecheck": "tsc --noEmit",
     "test:types": "pnpm --filter \"./packages/**\" --if-present test:types",
     "test:type-spec": "vitest --typecheck.only run",
-    "check": "pnpm run test && pnpm run test:jest && pnpm run typecheck && pnpm run test:types && pnpm run test:type-spec",
+    "check": "pnpm run build && pnpm run test && pnpm run test:jest && pnpm run typecheck && pnpm run test:types && pnpm run test:type-spec",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
@@ -28,7 +28,7 @@
     "docs:plugin": "node scripts/docs-plugins.js",
     "docs:all": "typedoc --options typedoc.workspace.json",
     "preinstall": "npx only-allow pnpm",
-    "release": "changeset publish"
+    "release": "pnpm run build && changeset publish"
   },
   "keywords": [
     "testforge",
@@ -56,6 +56,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.9.0",
     "globals": "^17.5.0",
+    "happy-dom": "^20.11.2",
     "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
@@ -70,9 +71,6 @@
     "typescript-eslint": "^8.58.2",
     "vitest": "4.1.4",
     "vue": "^3.5.32"
-  },
-  "dependencies": {
-    "happy-dom": "^20.9.0"
   },
   "lint-staged": {
     "*.{js,mjs,ts}": [

@@ -47,11 +47,11 @@
   "license": "MIT",
   "author": "Roman Levchenko",
   "peerDependencies": {
-    "primevue": "^3.0.0 || ^4.0.0",
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "primevue": "^3.0.0 || ^4.0.0"
   },
   "devDependencies": {
-    "primevue": "^4.0.0",
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "primevue": "^4.0.0"
   }
 }
