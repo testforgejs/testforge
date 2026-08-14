@@ -20,7 +20,7 @@ module.exports = {
   },
 
   transformIgnorePatterns: [
-    "/node_modules/(?!(vue|@vue|pinia|@pinia|@vue/test-utils|vue-i18n|vue-router|perfect-debounce)/)",
+    "[/\\\\]node_modules[/\\\\](?!\\.pnpm[/\\\\])(?!(pinia|@pinia|nostics)[/\\\\])",
   ],
 
   moduleNameMapper: {
