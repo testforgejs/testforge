@@ -4,6 +4,7 @@ export const EXPECTED_EXPORTS = [
   "createPluginInstance",
   "createTestFramework",
   "createVuePlugin",
+  "extendPreset",
   "validatePreset",
   "validatePresets",
 ];

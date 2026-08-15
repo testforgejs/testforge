@@ -210,6 +210,11 @@ export interface PresetDefinition {
 
 export type TestFrameworkPresets = Record<string, PresetDefinition>;
 
+export interface PresetExtension {
+  manifest?: PluginManifestEntry<any, any>[];
+  defaults?: PluginConfigDefaults;
+}
+
 // === 6. Pipeline Types ===
 
 export interface CreatePipelineContextParams {
