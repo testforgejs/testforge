@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getActivePreset } from "../getActivePreset.js";
-import * as validateModule from "../../validators/validatePreset.js";
+import { getActivePreset } from "../../presets/getActivePreset.js";
+import * as validateModule from "../../presets/validators/validatePreset.js";
 import { DEFAULT_PRESET_NAME } from "../../constants/constants.js";
 
 vi.spyOn(validateModule, "validatePreset").mockImplementation(() => {});

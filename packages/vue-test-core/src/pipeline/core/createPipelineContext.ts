@@ -1,6 +1,6 @@
 import type { PipelineContext, CreatePipelineContextParams } from "../../types";
 
-import { getActivePreset } from "../../utils/getActivePreset.js";
+import { getActivePreset } from "../../presets/getActivePreset.js";
 import { createSupportedPluginsState } from "../../utils/createSupportedPluginsState.js";
 
 /*

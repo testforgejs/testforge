@@ -1,6 +1,6 @@
-import { ERROR_PREFIX } from "../constants/constants.js";
+import { ERROR_PREFIX } from "../../constants/constants.js";
 
-import type { PresetDefinition, PluginName, PluginManifestEntry } from "../types";
+import type { PresetDefinition, PluginName, PluginManifestEntry } from "../../types.js";
 
 /*
  * Validates preset integrity and plugin configuration consistency.

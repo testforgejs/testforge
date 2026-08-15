@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../utils/getActivePreset.js", () => ({
+vi.mock("../../../presets/getActivePreset.js", () => ({
   getActivePreset: vi.fn(),
 }));
 
@@ -8,7 +8,7 @@ vi.mock("../../../utils/createSupportedPluginsState.js", () => ({
   createSupportedPluginsState: vi.fn(),
 }));
 
-import { getActivePreset } from "../../../utils/getActivePreset.js";
+import { getActivePreset } from "../../../presets/getActivePreset.js";
 import { createSupportedPluginsState } from "../../../utils/createSupportedPluginsState.js";
 import { createPipelineContext } from "../createPipelineContext.js";
 

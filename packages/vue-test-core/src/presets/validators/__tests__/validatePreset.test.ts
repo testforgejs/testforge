@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { validatePreset } from "../validatePreset.js";
-import { DEFAULT_PRESET_NAME } from "../../constants/constants.js";
+import { DEFAULT_PRESET_NAME } from "../../../constants/constants.js";
 
-import type { PresetDefinition, RuntimePluginConfig } from "../../types";
+import type { PresetDefinition, RuntimePluginConfig } from "../../../types";
 
 describe("validatePreset", () => {
   // Helpers for creating mock modules

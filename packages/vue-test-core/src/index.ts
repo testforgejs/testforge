@@ -4,8 +4,8 @@ export { createPluginInstance } from "./pluginsRegistry/factory/createPluginInst
 export { createVuePlugin } from "./pluginsRegistry/factory/createVuePlugin.js";
 export { captureInstance } from "./utils/captureInstance.js";
 export { extendPreset } from "./presets/extendPreset.js";
-export { validatePreset } from "./validators/validatePreset.js";
-export { validatePresets } from "./validators/validatePresets.js";
+export { validatePreset } from "./presets/validators/validatePreset.js";
+export { validatePresets } from "./presets/validators/validatePresets.js";
 
 // Public types
 export type {

@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { validateCreateTestFrameworkOptions } from "../validateCreateTestFrameworkOptions.js";
-import { validatePresets } from "../validatePresets.js";
+import { validatePresets } from "../../presets/validators/validatePresets.js";
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
-vi.mock("../validatePresets.js", () => ({
+vi.mock("../../presets/validators/validatePresets.js", () => ({
   validatePresets: vi.fn(),
 }));
 

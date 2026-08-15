@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from "vitest";
 import { validatePresets } from "../validatePresets.js";
-import { ERROR_PREFIX } from "../../constants/constants.js";
+import { ERROR_PREFIX } from "../../../constants/constants.js";
 
 describe("validatePresets", () => {
   const mockAuthInstance = vi.fn();

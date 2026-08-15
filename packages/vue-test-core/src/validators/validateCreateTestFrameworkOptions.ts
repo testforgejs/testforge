@@ -1,4 +1,4 @@
-import { validatePresets } from "./validatePresets.js";
+import { validatePresets } from "../presets/validators/validatePresets.js";
 import { assertIsPlainObject } from "../assertions/assertIsPlainObject.js";
 import { ERROR_PREFIX } from "../constants/constants.js";
 
