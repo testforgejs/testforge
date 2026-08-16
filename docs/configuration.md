@@ -788,7 +788,209 @@ If a managed plugin is not part of the active preset manifest, TestForge will st
 
 ---
 
-### 5.2. Configuration Validation
+### 5.2. Extending Presets
+
+TestForge provides `extendPreset()` for creating a project-specific preset from an existing preset.
+
+This is useful when a project wants to reuse the standard configuration provided by `@testforgejs/vue-test-preset-recommended` while customizing plugin configuration for its own test environment.
+
+For example, Vitest and Jest expose different spy implementations. The recommended preset can provide the common Pinia configuration, while the project-specific preset supplies the appropriate `createSpy` implementation.
+
+#### Extending the Recommended Preset
+
+```typescript
+import { vi } from "vitest";
+import { extendPreset } from "@testforgejs/vue-test-core";
+import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+
+const presets = {
+  default: extendPreset(recommendedPresets.default, {
+    defaults: {
+      pinia: {
+        ...recommendedPresets.default.defaults.pinia,
+        createSpy: vi.fn,
+      },
+    },
+  }),
+};
+```
+
+The resulting preset inherits the manifest and default configuration from the recommended preset while explicitly replacing the `pinia` configuration with the project-specific configuration.
+
+This keeps the project-specific setup small while avoiding the need to copy the entire recommended preset.
+
+#### Manifest Extensions
+
+An extension can also add new managed plugins to the base preset.
+
+```typescript
+const extendedPreset = extendPreset(basePreset, {
+  manifest: [
+    {
+      module: customPlugin,
+      enabled: true,
+    },
+  ],
+  defaults: {
+    customPlugin: {/* plugin-specific options */},
+  },
+});
+```
+
+When a plugin is added to the manifest, its `enabled` state must be explicitly specified and its default configuration must be provided.
+
+The extension can also override the `enabled` state of an existing plugin:
+
+```typescript
+const extendedPreset = extendPreset(basePreset, {
+  manifest: [
+    {
+      module: routerPlugin,
+      enabled: false,
+    },
+  ],
+});
+```
+
+This changes the plugin's default enabled state without requiring the entire base manifest to be redeclared.
+
+#### Plugin Configuration Replacement
+
+Plugin configurations in an extension use **replacement semantics**, not deep merging.
+
+If an extension provides configuration for an existing plugin, that plugin's configuration is replaced as a whole.
+
+For example, if the base preset contains:
+
+```typescript
+defaults: {
+  pinia: {
+    initialState: {
+      user: {
+        id: 1,
+      },
+    },
+    stubActions: true,
+  },
+}
+```
+
+and the extension provides:
+
+```typescript
+defaults: {
+  pinia: {
+    createSpy: vi.fn,
+  },
+}
+```
+
+the resulting configuration contains only the extension's `pinia` configuration:
+
+```typescript
+defaults: {
+  pinia: {
+    createSpy: vi.fn,
+  },
+}
+```
+
+The inherited `initialState` and `stubActions` are not automatically retained.
+
+This behavior is intentional. Once a project explicitly defines a plugin's configuration, the resulting configuration should be predictable and should not silently acquire additional options from the base preset.
+
+If selected base options should be retained, they must be copied explicitly:
+
+```typescript
+const presets = {
+  default: extendPreset(recommendedPresets.default, {
+    defaults: {
+      pinia: {
+        ...recommendedPresets.default.defaults.pinia,
+        createSpy: vi.fn,
+      },
+    },
+  }),
+};
+```
+
+#### Extension Validation
+
+`extendPreset()` validates the extension before applying it.
+
+The following rules apply:
+
+- A new plugin added to `manifest` must explicitly define `enabled`.
+- A new plugin added to `manifest` must have a corresponding entry in `defaults`.
+- `defaults` may only contain plugins declared in the base preset or in the extension's `manifest`.
+- Plugin defaults must be plain configuration objects.
+- `false` is not allowed in preset defaults. To disable a plugin, use `enabled: false` in the manifest or pass `false` through runtime plugin configuration.
+- Duplicate plugin entries inside the extension manifest are rejected.
+
+For example, this is invalid:
+
+```typescript
+extendPreset(basePreset, {
+  manifest: [
+    {
+      module: customPlugin,
+      enabled: true,
+    },
+  ],
+});
+```
+
+because the new plugin does not have a corresponding default configuration.
+
+The correct form is:
+
+```typescript
+extendPreset(basePreset, {
+  manifest: [
+    {
+      module: customPlugin,
+      enabled: true,
+    },
+  ],
+  defaults: {
+    customPlugin: {},
+  },
+});
+```
+
+> [!IMPORTANT]
+> `extendPreset()` is intended for **preset composition**, not runtime plugin configuration.
+>
+> Use `extendPreset()` when defining a project-specific preset based on an existing preset.
+>
+> Use `mountOptions.plugins` or `extraOptions.plugins` when changing plugin configuration for an individual test.
+
+#### Using the Extended Preset
+
+The resulting preset can be passed to `createTestFramework()` like any other preset:
+
+```typescript
+import { createTestFramework } from "@testforgejs/vue-test-core";
+
+const { testComponentFactory } = createTestFramework({
+  presets: {
+    default: extendPreset(recommendedPresets.default, {
+      defaults: {
+        pinia: {
+          ...recommendedPresets.default.defaults.pinia,
+          createSpy: vi.fn,
+        },
+      },
+    }),
+  },
+});
+```
+
+This approach allows the recommended preset to provide a common baseline while keeping test-runner-specific configuration in the consuming project.
+
+---
+
+### 5.3. Configuration Validation
 
 TestForge validates managed plugin configuration against the active preset.
 
@@ -869,7 +1071,7 @@ This keeps TestForge-managed plugin configuration separate from raw Vue Test Uti
 
 ---
 
-### 5.3. Practical Examples
+### 5.4. Practical Examples
 
 A plugin declared in a preset manifest can be dynamically enabled or disabled depending on your test requirements.
 
