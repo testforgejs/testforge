@@ -1,13 +1,13 @@
 {
-  "name": "@testforgejs/vue-test-preset-recommended",
+  "name": "@testforgejs/vue-test-preset-recommended-jest",
   "version": "1.0.0-beta.0",
   "type": "module",
-  "description": "Official recommended preset for getting started with the TestForge framework",
+  "description": "Official recommended preset for projects using Jest with the TestForge framework",
   "homepage": "https://github.com/testforgejs/testforge#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/testforgejs/testforge.git",
-    "directory": "packages/vue-test-preset-recommended"
+    "directory": "packages/vue-test-preset-recommended-jest"
   },
   "bugs": {
     "url": "https://github.com/testforgejs/testforge/issues"
@@ -40,8 +40,7 @@
     "vue-test-utils",
     "preset",
     "configuration",
-    "recommended",
-    "vitest",
+    "jest",
     "testforge",
     "testforge-preset"
   ],
@@ -55,11 +54,13 @@
   "peerDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "@testforgejs/vue-test-preset-base": "workspace:*",
-    "vitest": "^3.0.0 || ^4.0.0"
+    "@jest/globals": "^30.0.0",
+    "jest": "^30.0.0"
   },
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "@testforgejs/vue-test-preset-base": "workspace:*",
-    "vitest": "^3.0.0 || ^4.0.0"
+    "@jest/globals": "^30.0.0",
+    "jest": "^30.0.0"
   }
 }

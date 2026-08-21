@@ -1,6 +1,6 @@
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
-import { vi } from "vitest";
+import { jest } from "@jest/globals";
 import type { TestFrameworkPresets } from "@testforgejs/vue-test-core";
 
 export const presets = {
@@ -8,7 +8,7 @@ export const presets = {
     defaults: {
       pinia: {
         ...basePresets.default.defaults.pinia,
-        createSpy: vi.fn,
+        createSpy: jest.fn,
       },
     },
   }),
@@ -17,7 +17,7 @@ export const presets = {
     defaults: {
       pinia: {
         ...basePresets.piniaPreset.defaults.pinia,
-        createSpy: vi.fn,
+        createSpy: jest.fn,
       },
     },
   }),

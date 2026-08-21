@@ -8,7 +8,21 @@
 > **The Problem**: **Vue Test Utils** is excellent, but configuring Pinia, Router, i18n and other plugins repeatedly across test suites quickly becomes repetitive and error-prone.
 
 > [!NOTE]
+>
 > **The Solution**: **TestForge** provides a preset-driven runtime that keeps plugin configuration consistent while preserving full Vue Test Utils compatibility.
+>
+> Presets can be composed, allowing shared Vue plugin configuration to live in a common base preset while runner-specific presets add behavior required by tools such as Vitest or Jest.
+
+> [!NOTE]
+>
+> **TestForge architecture**
+>
+> - **Core** defines the runtime.
+> - **Plugins** define Vue ecosystem integrations.
+> - **Base presets** define shared test environments.
+> - **Runner-specific recommended presets** add behavior required by a particular test runner.
+>
+> This separation allows shared Vue testing configuration to be reused across different test runners without duplicating plugin configuration.
 
 ---
 
@@ -16,6 +30,7 @@
 
 - [The problem every Vue project eventually hits](#the-problem)
 - [Quick Start](#quick-start)
+- [Why TestForge?](#why-testforge)
 - [Documentation](#documentation)
 - [Multiple Test Environments](#multiple-test-environments)
 - [The Idea: Context-Aware Overrides](#context-aware-overrides)
@@ -73,53 +88,103 @@ They describe **how to rebuild your entire enterprise Vue stack** from scratch.
 
 # Quick Start
 
-The fastest way to get started is to install the core framework along with the recommended preset. The preset automatically includes official plugins for **Pinia**, **Vue Router**, and **vue-i18n**.
+The quickest way to get started is to use TestForge with **Vitest** and the official recommended Vitest preset.
+
+The recommended preset builds on the shared TestForge base presets and provides Vitest-specific defaults where required.
 
 ## Install Dependencies
 
-npm install -D @testforgejs/vue-test-core @testforgejs/vue-test-preset-recommended
-
-## Initialize the Framework
-
-Create a configuration file (e.g., `tests/setup.ts`) to initialize the framework with the recommended preset and export your testing factory:
-
-```typescript
-@/tests/setup.ts
-import { createTestFramework } from "@testforgejs/vue-test-core";
-import { presets } from "@testforgejs/vue-test-preset-recommended";
-
-const { testComponentFactory } = createTestFramework({ presets });
-
-export testComponentFactory;
+```bash
+pnpm add -D \
+  @testforgejs/vue-test-core \
+  @testforgejs/vue-test-preset-recommended
 ```
 
-## Write Your First Test
+TestForge requires Vue 3 and Vue Test Utils:
 
-Now you can import your custom factory inside your `*.test.ts` or `*.spec.ts` files to easily mount and test your Vue components:
+```bash
+pnpm add -D vue@^3.3.0 @vue/test-utils@^2.0.0
+```
+
+> [!NOTE]
+>
+> This example assumes that Vitest is already installed and configured with a DOM-like environment such as `happy-dom` or `jsdom`.
+>
+> TestForge mounts Vue components through Vue Test Utils, so component tests require a browser-like test environment.
+
+For example:
 
 ```typescript
-import { testComponentFactory } from "./setup";
-import MyComponent from "@/components/MyComponent.vue";
+// vitest.config.ts
 
-// Create a configured factory for the component
-const factory = testComponentFactory(MyComponent);
+import { defineConfig } from "vitest/config";
 
-test("renders correctly", () => {
-  // Mount the component with presets automatically applied
-  const wrapper = factory();
-
-  // Your Vitest assertions here
-  expect(wrapper.exists()).toBe(true);
+export default defineConfig({
+  test: {
+    environment: "happy-dom",
+  },
 });
 ```
 
-## Why TestForge?
+If your project uses Jest instead of Vitest, use `@testforgejs/vue-test-preset-recommended-jest`.
 
-- **Zero boilerplate** — tests describe _what_ is being tested, not _how_ to set up the entire stack
-- **Consistent environments** via presets
-- **Safe overrides** with a clear hierarchy (Preset → Factory → Test)
-- **Full VTU compatibility** — painless two-step migration
-- **Type safety** out of the box
+## Initialize the Framework
+
+Create a configuration file, for example `tests/setup.ts`, and initialize TestForge with the recommended preset:
+
+```typescript
+// @/tests/setup.ts
+
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { presets } from "@testforgejs/vue-test-preset-recommended";
+
+const { testComponentFactory } = createTestFramework({
+  presets,
+});
+
+export { testComponentFactory };
+```
+
+The preset registry defines the managed Vue plugins available to your tests and their default configuration.
+
+## Write Your First Test
+
+You can now import the configured factory into your component tests:
+
+```typescript
+import { describe, expect, it } from "vitest";
+
+import { testComponentFactory } from "@/tests/setup";
+import MyComponent from "@/components/MyComponent.vue";
+
+const factory = testComponentFactory(MyComponent);
+
+describe("MyComponent.vue", () => {
+  it("renders correctly", () => {
+    const wrapper = factory();
+
+    expect(wrapper.exists()).toBe(true);
+  });
+});
+```
+
+---
+
+<a id="why-testforge"></a>
+
+# Why TestForge?
+
+- **Less boilerplate** — tests describe _what_ is being tested instead of repeatedly rebuilding application infrastructure.
+
+- **Consistent environments** — presets provide a shared baseline for managed Vue ecosystem plugins.
+
+- **Safe overrides** — configuration follows a clear hierarchy from project defaults to individual test configuration.
+
+- **Composable presets** — shared plugin configuration can be reused across projects and extended with runner-specific behavior.
+
+- **Vue Test Utils compatibility** — existing VTU configuration can be adopted incrementally.
+
+- **Type safety** — component and plugin configuration remains strongly typed.
 
 ---
 
@@ -346,9 +411,11 @@ Each plugin:
 
 Examples provided by TestForge:
 
-- @testforgejs/vue-test-plugin-i18n
-- @testforgejs/vue-test-plugin-pinia
-- @testforgejs/vue-test-plugin-router
+- `@testforgejs/vue-test-plugin-pinia`
+- `@testforgejs/vue-test-plugin-i18n`
+- `@testforgejs/vue-test-plugin-router`
+- `@testforgejs/vue-test-plugin-vuetify`
+- `@testforgejs/vue-test-plugin-primevue`
 
 Because of this, TestForge can:
 
@@ -363,18 +430,17 @@ Because of this, TestForge can:
 
 ## Presets
 
-A preset is a declarative description of a test environment.
+A preset is a declarative description of a TestForge runtime environment.
 
 It defines:
 
-- which plugins exist
-- which are enabled by default
-- their default options
+- which managed plugins are available;
+- which plugins are enabled by default;
+- the default configuration for those plugins.
 
-Example idea:
+For example:
 
 ```typescript
-// Example:
 const presets = {
   default: {
     manifest: [
@@ -382,10 +448,14 @@ const presets = {
       { module: i18nPlugin, enabled: true },
       { module: routerPlugin, enabled: false },
     ],
+
     defaults: {
-      i18n: { locale: "en" },
+      i18n: {
+        locale: "en",
+      },
+
       pinia: {
-        /* initial state */
+        initialState: {},
       },
     },
   },
@@ -394,15 +464,42 @@ const presets = {
 
 Presets allow you to:
 
-- share environment rules across the project
-- switch environment in one line
-- create lightweight or specialized test setups
+- share test environment configuration across a project;
+- define lightweight or specialized test environments;
+- switch the active preset for an individual factory call;
+- compose presets instead of duplicating shared configuration.
+
+### Preset Composition
+
+TestForge's official presets are organized in layers:
+
+```text
+@testforgejs/vue-test-preset-base
+            │
+            ├── @testforgejs/vue-test-preset-recommended
+            │       Vitest defaults
+            │
+            └── @testforgejs/vue-test-preset-recommended-jest
+                    Jest defaults
+```
+
+The base preset package contains shared Vue plugin configuration.
+
+Runner-specific recommended presets build on top of the base presets and add configuration required by their respective test runners.
+
+For example, the recommended Vitest preset provides `vi.fn` as the Pinia `createSpy` implementation, while the Jest preset provides the corresponding Jest implementation.
+
+### Official Preset Packages
 
 TestForge provides:
 
-- @testforgejs/vue-test-preset-recommended
+- `@testforgejs/vue-test-preset-base` — shared baseline presets for Vue ecosystem plugins;
+- `@testforgejs/vue-test-preset-recommended` — recommended presets for Vitest;
+- `@testforgejs/vue-test-preset-recommended-jest` — recommended presets for Jest.
 
-You can create your own presets for your organization or monorepo.
+You can also create and compose your own presets for a project, organization, or monorepo.
+
+See the [Preset Authoring Guide](./docs/preset-authoring-guide.md) for more information.
 
 ---
 

@@ -1,10 +1,10 @@
-# @testforgejs/vue-test-preset-recommended
+# @testforgejs/vue-test-preset-recommended-jest
 
-Recommended **Vitest** presets for the [TestForge](https://github.com/testforgejs/testforge) Vue 3 component testing framework.
+Recommended **Jest** presets for the [TestForge](https://github.com/testforgejs/testforge) Vue 3 component testing framework.
 
-This package builds on [`@testforgejs/vue-test-preset-base`](https://www.npmjs.com/package/@testforgejs/vue-test-preset-base) and provides recommended defaults for projects using **Vitest**.
+This package builds on [`@testforgejs/vue-test-preset-base`](https://www.npmjs.com/package/@testforgejs/vue-test-preset-base) and provides recommended defaults for projects using **Jest**.
 
-The main difference from the base presets is the Pinia configuration: the recommended presets configure Pinia to use Vitest's `vi.fn` as its spy factory.
+The main difference from the base presets is the Pinia configuration: the recommended presets configure Pinia to use Jest's `jest.fn` as its spy factory.
 
 ## Installation
 
@@ -13,19 +13,19 @@ Choose your preferred package manager.
 ### pnpm
 
 ```bash
-pnpm add -D @testforgejs/vue-test-preset-recommended@beta
+pnpm add -D @testforgejs/vue-test-preset-recommended-jest@beta
 ```
 
 ### npm
 
 ```bash
-npm install -D @testforgejs/vue-test-preset-recommended@beta
+npm install -D @testforgejs/vue-test-preset-recommended-jest@beta
 ```
 
 ### Yarn
 
 ```bash
-yarn add -D @testforgejs/vue-test-preset-recommended@beta
+yarn add -D @testforgejs/vue-test-preset-recommended-jest@beta
 ```
 
 > `@testforgejs/vue-test-core` and `@testforgejs/vue-test-preset-base` are required dependencies.
@@ -37,7 +37,7 @@ Import the `presets` object and pass it to `createTestFramework()`:
 ```typescript
 // tests/setup.ts
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { presets } from "@testforgejs/vue-test-preset-recommended";
+import { presets } from "@testforgejs/vue-test-preset-recommended-jest";
 
 const { testComponentFactory } = createTestFramework({
   presets,
@@ -49,7 +49,7 @@ export { testComponentFactory };
 You can then use `testComponentFactory` in your component tests:
 
 ```typescript
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@jest/globals";
 import { testComponentFactory } from "./setup";
 import MyComponent from "./MyComponent.vue";
 
@@ -76,7 +76,7 @@ The presets are based on the corresponding presets from `@testforgejs/vue-test-p
 
 ### `presets.default`
 
-The default recommended preset enables:
+The default recommended Jest preset enables:
 
 - Pinia
 - Vue I18n
@@ -84,7 +84,7 @@ The default recommended preset enables:
 
 It also provides the default configuration for these plugins.
 
-For Pinia, the recommended preset additionally configures Vitest's `vi.fn` as the `createSpy` implementation.
+For Pinia, the recommended preset additionally configures Jest's `jest.fn` as the `createSpy` implementation.
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
@@ -94,13 +94,13 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-This is the preset intended for most Vitest-based TestForge projects.
+This is the preset intended for most Jest-based TestForge projects.
 
 ### `presets.piniaPreset`
 
 A minimal preset for tests that require Pinia.
 
-It enables Pinia and configures its spy factory to use Vitest:
+It enables Pinia and configures its spy factory to use Jest:
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
@@ -114,11 +114,11 @@ The Pinia configuration is based on the base preset and adds:
 
 ```typescript
 {
-  createSpy: vi.fn,
+  createSpy: jest.fn,
 }
 ```
 
-This makes the preset immediately usable with `@pinia/testing` under Vitest.
+This makes the preset immediately usable with `@pinia/testing` under Jest.
 
 ### `presets.i18nPreset`
 
@@ -158,9 +158,9 @@ The router preset provides a test-oriented router configuration suitable for iso
 
 ## Recommended vs Base Presets
 
-`@testforgejs/vue-test-preset-base` provides framework-neutral preset definitions.
+`@testforgejs/vue-test-preset-base` provides runner-neutral preset definitions.
 
-`@testforgejs/vue-test-preset-recommended` builds on those presets and adds Vitest-specific configuration where necessary.
+`@testforgejs/vue-test-preset-recommended-jest` builds on those presets and adds Jest-specific configuration where necessary.
 
 In particular:
 
@@ -173,10 +173,10 @@ In particular:
         └── routerPreset
                 │
                 ▼
-@testforgejs/vue-test-preset-recommended
+@testforgejs/vue-test-preset-recommended-jest
         │
-        ├── default       → adds Vitest vi.fn to Pinia
-        ├── piniaPreset   → adds Vitest vi.fn to Pinia
+        ├── default       → adds Jest jest.fn to Pinia
+        ├── piniaPreset   → adds Jest jest.fn to Pinia
         ├── i18nPreset    → inherited from base
         └── routerPreset  → inherited from base
 ```
@@ -225,7 +225,7 @@ For example, a project can create its own preset from the recommended default:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended-jest";
 
 const projectPresets = {
   default: extendPreset(recommendedPresets.default, {
@@ -260,6 +260,7 @@ The preset provides the runtime plugin baseline, while individual factories and 
 
 - [`@testforgejs/vue-test-core`](https://www.npmjs.com/package/@testforgejs/vue-test-core) — TestForge core framework
 - [`@testforgejs/vue-test-preset-base`](https://www.npmjs.com/package/@testforgejs/vue-test-preset-base) — base, runner-neutral presets
+- [`@testforgejs/vue-test-preset-recommended`](https://www.npmjs.com/package/@testforgejs/vue-test-preset-recommended) — recommended Vitest presets
 - [`@testforgejs/vue-test-plugin-pinia`](https://www.npmjs.com/package/@testforgejs/vue-test-plugin-pinia) — Pinia integration
 - [`@testforgejs/vue-test-plugin-i18n`](https://www.npmjs.com/package/@testforgejs/vue-test-plugin-i18n) — Vue I18n integration
 - [`@testforgejs/vue-test-plugin-router`](https://www.npmjs.com/package/@testforgejs/vue-test-plugin-router) — Vue Router integration

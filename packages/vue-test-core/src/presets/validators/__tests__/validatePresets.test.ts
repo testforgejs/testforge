@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { validatePresets } from "../validatePresets.js";
 import { ERROR_PREFIX } from "../../../constants/constants.js";
 
@@ -7,11 +7,11 @@ describe("validatePresets", () => {
   const mockLoggerInstance = vi.fn();
 
   describe("valid cases", () => {
-    test("should accept an empty object", () => {
+    it("should accept an empty object", () => {
       expect(() => validatePresets({})).not.toThrow();
     });
 
-    test("should accept valid presets with different configurations", () => {
+    it("should accept valid presets with different configurations", () => {
       const validPresets = {
         default: {
           manifest: [],
@@ -54,7 +54,7 @@ describe("validatePresets", () => {
   });
 
   describe("top-level validation", () => {
-    test.each([
+    it.each([
       { value: null, description: "null", expectedError: "Presets must be a plain object." },
       { value: [], description: "array", expectedError: "Presets must be a plain object." },
       { value: 123, description: "number", expectedError: "Presets must be a plain object." },
@@ -65,7 +65,7 @@ describe("validatePresets", () => {
   });
 
   describe("preset-level validation", () => {
-    test("should reject preset that is null or undefined", () => {
+    it("should reject preset that is null or undefined", () => {
       expect(() =>
         validatePresets({
           // @ts-expect-error - intentionally passing invalid preset type
@@ -81,7 +81,7 @@ describe("validatePresets", () => {
       ).toThrow(`${ERROR_PREFIX} Preset "bad" is null or undefined.`);
     });
 
-    test("should reject preset without manifest array", () => {
+    it("should reject preset without manifest array", () => {
       expect(() =>
         validatePresets({
           default: {
@@ -92,7 +92,7 @@ describe("validatePresets", () => {
       ).toThrow(`${ERROR_PREFIX} Preset "default" must have a "manifest" array.`);
     });
 
-    test("should stop at the first invalid preset", () => {
+    it("should stop at the first invalid preset", () => {
       expect(() =>
         validatePresets({
           valid: { manifest: [], defaults: {} },
@@ -105,7 +105,7 @@ describe("validatePresets", () => {
   });
 
   describe("manifest validation", () => {
-    test("should reject duplicate plugins in manifest", () => {
+    it("should reject duplicate plugins in manifest", () => {
       expect(() =>
         validatePresets({
           badPreset: {
@@ -137,7 +137,7 @@ describe("validatePresets", () => {
   });
 
   describe("defaults validation", () => {
-    test("should reject defaults for plugin not declared in manifest", () => {
+    it("should reject defaults for plugin not declared in manifest", () => {
       expect(() =>
         validatePresets({
           badDefaults: {
@@ -161,7 +161,7 @@ describe("validatePresets", () => {
       ).toThrow(/contains defaults for unknown plugin "database"/);
     });
 
-    test("should reject non-object default configurations", () => {
+    it("should reject non-object default configurations", () => {
       expect(() =>
         validatePresets({
           badConfig: {
