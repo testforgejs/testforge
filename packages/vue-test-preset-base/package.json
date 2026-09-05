@@ -52,9 +52,11 @@
     "@testforgejs/vue-test-plugin-router": "workspace:*"
   },
   "peerDependencies": {
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "vue-router": ">=4.0.0 <6.0.0"
   },
   "devDependencies": {
-    "@testforgejs/vue-test-core": "workspace:*"
+    "@testforgejs/vue-test-core": "workspace:*",
+    "vue-router": "^5.0.0"
   }
 }

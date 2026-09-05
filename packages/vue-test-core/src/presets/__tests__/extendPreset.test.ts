@@ -29,12 +29,12 @@ describe("extendPreset", () => {
       },
     ],
     defaults: {
-      pinia: {
+      pinia: () => ({
         initialState: {
           user: { id: 1 },
         },
         stubActions: false,
-      },
+      }),
     },
   };
 
@@ -45,13 +45,13 @@ describe("extendPreset", () => {
     it("should fully replace defaults when plugin already exists", () => {
       const result = extendPreset(base, {
         defaults: {
-          pinia: {
+          pinia: () => ({
             createSpy: vi.fn,
-          },
+          }),
         },
       });
 
-      expect(result.defaults.pinia).toEqual({
+      expect(result.defaults.pinia()).toEqual({
         createSpy: expect.any(Function),
       });
     });
@@ -59,21 +59,21 @@ describe("extendPreset", () => {
     it("should not deep-merge nested objects", () => {
       const result = extendPreset(base, {
         defaults: {
-          pinia: {
+          pinia: () => ({
             initialState: {
               cart: { items: [] },
             },
-          },
+          }),
         },
       });
 
-      // original `user` is gone — full replace
-      expect(result.defaults.pinia).toEqual({
+      // The original `user` state is gone — full replacement
+      expect(result.defaults.pinia()).toEqual({
         initialState: {
           cart: { items: [] },
         },
       });
-      expect(result.defaults.pinia).not.toHaveProperty("stubActions");
+      expect(result.defaults.pinia()).not.toHaveProperty("stubActions");
     });
   });
 
@@ -128,18 +128,18 @@ describe("extendPreset", () => {
           },
         ],
         defaults: {
-          router: {
+          router: () => ({
             routes: [],
-          },
+          }),
         },
       });
 
       expect(result.manifest).toHaveLength(2);
       expect(result.manifest.some(({ module }) => module === mockRouterPlugin)).toBe(true);
-      expect(result.defaults.router).toEqual({ routes: [] });
+      expect(result.defaults.router()).toEqual({ routes: [] });
     });
 
-    it("should keep original plugins and only append the new one", () => {
+    it("should preserve existing manifest entries and append the new plugin", () => {
       const result = extendPreset(base, {
         manifest: [
           {
@@ -148,7 +148,7 @@ describe("extendPreset", () => {
           },
         ],
         defaults: {
-          router: { routes: [] },
+          router: () => ({ routes: [] }),
         },
       });
 
@@ -175,21 +175,20 @@ describe("extendPreset", () => {
       ).toThrow(/without defining its defaults/);
     });
 
-    it("should throw when defaults contain false", () => {
+    it("should throw when a plugin default is not a plugin options factory", () => {
       expect(() =>
         extendPreset(base, {
-          defaults: {
-            pinia: false as any,
-          },
+          // @ts-expect-error: Deliberately pass `false` instead of a function factory to check for runtime validation
+          defaults: { pinia: false },
         }),
-      ).toThrow(/Preset defaults must be a plain object/);
+      ).toThrow(/Preset defaults must be provided as a plugin options factory function/);
     });
 
     it("should throw when defaults reference an unknown plugin", () => {
       expect(() =>
         extendPreset(base, {
           defaults: {
-            unknown: {} as any,
+            unknown: () => ({}),
           },
         }),
       ).toThrow(/unknown plugin/);
@@ -211,7 +210,9 @@ describe("extendPreset", () => {
   // ─────────────────────────────────────────────
   describe("when checking immutability", () => {
     it("should not mutate the original base preset", () => {
-      const originalDefaults = structuredClone(base.defaults);
+      const originalDefaults = base.defaults;
+      const originalPiniaFactory = base.defaults.pinia;
+      const originalPiniaDefaults = base.defaults.pinia();
       const originalManifest = base.manifest.map((e) => ({ ...e }));
 
       extendPreset(base, {
@@ -226,21 +227,21 @@ describe("extendPreset", () => {
           },
         ],
         defaults: {
-          pinia: { createSpy: vi.fn },
-          router: { routes: [] },
+          pinia: () => ({
+            createSpy: vi.fn,
+          }),
+          router: () => ({
+            routes: [],
+          }),
         },
       });
 
-      // defaults не изменились
-      expect(base.defaults).toEqual(originalDefaults);
-      expect(base.defaults.pinia).toEqual({
-        initialState: {
-          user: { id: 1 },
-        },
-        stubActions: false,
-      });
+      // The original `defaults` remain unchanged
+      expect(base.defaults).toBe(originalDefaults);
+      expect(base.defaults.pinia).toBe(originalPiniaFactory);
+      expect(base.defaults.pinia()).toEqual(originalPiniaDefaults);
 
-      // manifest не изменился
+      // The original `manifest` remains unchanged
       expect(base.manifest).toEqual(originalManifest);
       expect(base.manifest[0].enabled).toBe(true);
     });
@@ -248,13 +249,14 @@ describe("extendPreset", () => {
     it("should return a new object reference", () => {
       const result = extendPreset(base, {
         defaults: {
-          pinia: { createSpy: vi.fn },
+          pinia: () => ({ createSpy: vi.fn }),
         },
       });
 
       expect(result).not.toBe(base);
       expect(result.manifest).not.toBe(base.manifest);
       expect(result.defaults).not.toBe(base.defaults);
+      expect(result.manifest[0]).not.toBe(base.manifest[0]);
     });
   });
 
@@ -275,12 +277,12 @@ describe("extendPreset", () => {
           },
         ],
         defaults: {
-          pinia: {
+          pinia: () => ({
             createSpy: vi.fn,
-          },
-          i18n: {
+          }),
+          i18n: () => ({
             locale: "ru",
-          },
+          }),
         },
       });
 
@@ -292,91 +294,8 @@ describe("extendPreset", () => {
       expect(piniaEntry?.enabled).toBe(false);
       expect(i18nEntry?.enabled).toBe(true);
 
-      expect(result.defaults.pinia).toEqual({ createSpy: expect.any(Function) });
-      expect(result.defaults.i18n).toEqual({ locale: "ru" });
+      expect(result.defaults.pinia()).toEqual({ createSpy: expect.any(Function) });
+      expect(result.defaults.i18n()).toEqual({ locale: "ru" });
     });
   });
 });
-
-/*import { describe, it, expect, vi } from "vitest";
-import { extendPreset } from "../extendPreset.js";
-
-describe("extendPreset", () => {
-  const mockPinia = {};
-  const mockRouter = {};
-  const mockPiniaPlugin = {
-    getName: () => "pinia",
-    getDefinition: () => ({ create: () => mockPinia }),
-  };
-  const mockRouterPlugin = {
-    getName: () => "router",
-    getDefinition: () => ({ create: () => mockRouter }),
-  };
-
-  const base = {
-    manifest: [
-      {
-        module: mockPiniaPlugin,
-        enabled: true,
-      },
-    ],
-    defaults: {
-      pinia: {
-        initialState: {
-          user: { id: 1 },
-        },
-        stubActions: false,
-      },
-    },
-  };
-
-  it("should replace defaults when plugin exists", () => {
-    const result = extendPreset(base, {
-      defaults: {
-        pinia: {
-          createSpy: vi.fn,
-        },
-      },
-    });
-
-    expect(result.defaults.pinia).toEqual({
-      createSpy: expect.any(Function),
-    });
-  });
-
-  it("should override enabled state when plugin exists", () => {
-    const result = extendPreset(base, {
-      manifest: [
-        {
-          module: mockPiniaPlugin,
-          enabled: false,
-        },
-      ],
-    });
-
-    expect(result.manifest[0].enabled).toBe(false);
-  });
-
-  it("should add a new plugin when defaults are provided", () => {
-    const result = extendPreset(base, {
-      manifest: [
-        {
-          module: mockRouterPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        router: {
-          routes: [],
-        },
-      },
-    });
-
-    expect(result.manifest.some(({ module }) => module.getName() === "router")).toBe(true);
-
-    expect(result.defaults.router).toEqual({
-      routes: [],
-    });
-  });
-});
-*/

@@ -1,6 +1,6 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
-import type { PresetDefinition, PluginName, PluginManifestEntry } from "../../types.js";
+import type { PresetDefinition, PluginName, PluginManifestEntry } from "../../types";
 
 /*
  * Validates preset integrity and plugin configuration consistency.
@@ -9,7 +9,7 @@ import type { PresetDefinition, PluginName, PluginManifestEntry } from "../../ty
  * - manifest must contain unique plugin entries
  * - every plugin entry must define a valid module and enabled flag
  * - preset defaults may only target plugins declared in the manifest
- * - plugin defaults must be plain configuration objects
+ * - plugin defaults must be option factory functions
  */
 export function validatePreset(name: PluginName, preset: PresetDefinition): void {
   if (!preset) {
@@ -59,12 +59,11 @@ export function validatePreset(name: PluginName, preset: PresetDefinition): void
       }
 
       const value = preset.defaults[key];
-      const isObject = value !== null && typeof value === "object" && !Array.isArray(value);
 
-      if (!isObject) {
+      if (typeof value !== "function") {
         throw new Error(
           `${ERROR_PREFIX} Invalid default configuration for plugin "${key}" in preset "${name}". ` +
-            `Expected Object, but received ${typeof value}.`,
+            `Expected a plugin options factory function, but received ${typeof value}.`,
         );
       }
     });

@@ -98,6 +98,10 @@ Each layer represents a different configuration scope and is designed for a diff
 
 Preset defaults provide the project-wide baseline configuration for managed plugins.
 
+Each default is defined as a `PluginOptionsFactory`. TestForge invokes the factory when resolving the active preset configuration.
+
+Preset defaults are factories that produce the baseline plugin configuration.
+
 ```typescript
 const { testComponentFactory } = createTestFramework({
   presets: {
@@ -109,16 +113,46 @@ const { testComponentFactory } = createTestFramework({
         },
       ],
       defaults: {
-        pinia: {
+        pinia: () => ({
+          initialState: {},
           stubActions: true,
-        },
+        }),
       },
     },
   },
 });
 ```
 
-Preset defaults are used as the starting point for resolving managed plugin configuration.
+Using a factory ensures that plugin options are created for the current pipeline context rather than shared as one mutable configuration object.
+
+For example:
+
+```typescript
+const defaultPinia = () => ({
+  initialState: {},
+  stubActions: true,
+});
+
+const first = defaultPinia();
+const second = defaultPinia();
+
+first !== second; // true
+```
+
+This is particularly important for plugins with nested or mutable configuration such as Pinia state, Vue Router routes and history configuration, and Vue I18n messages.
+
+When extending a preset, invoke the base factory if the existing options should be preserved:
+
+```typescript
+defaults: {
+  pinia: () => ({
+    ...basePreset.defaults.pinia(),
+    createSpy: vi.fn,
+  }),
+}
+```
+
+The extension replaces the plugin's default factory as a whole. Calling the base factory and spreading its result is an explicit decision to preserve the base options.
 
 Managed plugins must be declared in the active preset manifest before they can be configured through TestForge's managed `plugins` API.
 
@@ -760,7 +794,7 @@ const { testComponentFactory } = createTestFramework({
         },
       ],
       defaults: {
-        pinia: {},
+        pinia: () => ({}),
       },
     },
   },
@@ -792,11 +826,17 @@ If a managed plugin is not part of the active preset manifest, TestForge will st
 
 TestForge provides `extendPreset()` for creating a project-specific preset from an existing preset.
 
-This is useful when a project wants to reuse the standard configuration provided by `@testforgejs/vue-test-preset-recommended` while customizing plugin configuration for its own test environment.
+This is useful when a project wants to reuse the standard configuration provided by `@testforgejs/vue-test-preset-recommended` while customizing the runtime environment for its own test runner or application.
 
-For example, Vitest and Jest expose different spy implementations. The recommended preset can provide the common Pinia configuration, while the project-specific preset supplies the appropriate `createSpy` implementation.
+Preset extension is a **composition mechanism**. It creates a new complete preset by combining an existing preset with explicitly provided manifest and default configuration changes.
+
+It does not introduce inheritance between runtime configuration layers.
 
 #### Extending the Recommended Preset
+
+A common use case is adapting the recommended preset to a specific test runner.
+
+For example, Vitest and Jest use different spy implementations. The recommended preset can provide the common Pinia configuration, while the project-specific preset replaces the Pinia default factory to provide the appropriate `createSpy` implementation.
 
 ```typescript
 import { vi } from "vitest";
@@ -806,22 +846,24 @@ import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-reco
 const presets = {
   default: extendPreset(recommendedPresets.default, {
     defaults: {
-      pinia: {
-        ...recommendedPresets.default.defaults.pinia,
+      pinia: () => ({
+        ...recommendedPresets.default.defaults.pinia(),
         createSpy: vi.fn,
-      },
+      }),
     },
   }),
 };
 ```
 
-The resulting preset inherits the manifest and default configuration from the recommended preset while explicitly replacing the `pinia` configuration with the project-specific configuration.
+Because preset plugin defaults are `PluginOptionsFactory` functions, the base factory must be explicitly invoked when its returned options should be preserved.
 
-This keeps the project-specific setup small while avoiding the need to copy the entire recommended preset.
+The extension replaces the `pinia` default factory with the new factory. It does not automatically merge the options returned by the original factory.
+
+This keeps the project-specific setup small while making the resulting plugin configuration explicit and predictable.
 
 #### Manifest Extensions
 
-An extension can also add new managed plugins to the base preset.
+An extension can also add managed plugins to the base preset.
 
 ```typescript
 const extendedPreset = extendPreset(basePreset, {
@@ -832,14 +874,16 @@ const extendedPreset = extendPreset(basePreset, {
     },
   ],
   defaults: {
-    customPlugin: {/* plugin-specific options */},
+    customPlugin: () => ({
+      // plugin-specific defaults
+    }),
   },
 });
 ```
 
-When a plugin is added to the manifest, its `enabled` state must be explicitly specified and its default configuration must be provided.
+When a plugin is added to the manifest, its `enabled` state must be explicitly specified and its default options factory must be provided.
 
-The extension can also override the `enabled` state of an existing plugin:
+An extension may also change the `enabled` state of a plugin already declared in the base manifest:
 
 ```typescript
 const extendedPreset = extendPreset(basePreset, {
@@ -852,26 +896,26 @@ const extendedPreset = extendPreset(basePreset, {
 });
 ```
 
-This changes the plugin's default enabled state without requiring the entire base manifest to be redeclared.
+This changes the plugin's default activation state without requiring the entire base manifest to be redeclared.
 
-#### Plugin Configuration Replacement
+#### Plugin Default Replacement
 
-Plugin configurations in an extension use **replacement semantics**, not deep merging.
+Plugin defaults provided by an extension use **replacement semantics**, not deep merging.
 
-If an extension provides configuration for an existing plugin, that plugin's configuration is replaced as a whole.
+If an extension provides a default factory for an existing plugin, that factory replaces the corresponding factory from the base preset.
 
 For example, if the base preset contains:
 
 ```typescript
 defaults: {
-  pinia: {
+  pinia: () => ({
     initialState: {
       user: {
         id: 1,
       },
     },
     stubActions: true,
-  },
+  }),
 }
 ```
 
@@ -879,40 +923,44 @@ and the extension provides:
 
 ```typescript
 defaults: {
-  pinia: {
+  pinia: () => ({
     createSpy: vi.fn,
-  },
+  }),
 }
 ```
 
-the resulting configuration contains only the extension's `pinia` configuration:
+the resulting preset uses the explicitly supplied factory:
 
 ```typescript
 defaults: {
-  pinia: {
+  pinia: () => ({
     createSpy: vi.fn,
-  },
+  }),
 }
 ```
 
-The inherited `initialState` and `stubActions` are not automatically retained.
+The `initialState` and `stubActions` values returned by the base factory are not automatically inherited.
 
-This behavior is intentional. Once a project explicitly defines a plugin's configuration, the resulting configuration should be predictable and should not silently acquire additional options from the base preset.
+This replacement semantics is intentional. Once a project explicitly replaces a plugin's default factory, the resulting configuration should not silently acquire additional options from the base preset.
 
-If selected base options should be retained, they must be copied explicitly:
+If selected base options should be preserved, invoke the base factory explicitly:
 
 ```typescript
-const presets = {
-  default: extendPreset(recommendedPresets.default, {
-    defaults: {
-      pinia: {
-        ...recommendedPresets.default.defaults.pinia,
-        createSpy: vi.fn,
-      },
-    },
+defaults: {
+  pinia: () => ({
+    ...recommendedPresets.default.defaults.pinia(),
+    createSpy: vi.fn,
   }),
-};
+}
 ```
+
+The base factory returns a fresh options object, which can then be extended with project-specific values.
+
+> [!NOTE]
+>
+> `extendPreset()` replaces plugin default factories; it does not merge the objects returned by those factories.
+>
+> If the base plugin configuration should be preserved, invoke the base factory explicitly and extend its returned options.
 
 #### Extension Validation
 
@@ -922,8 +970,8 @@ The following rules apply:
 
 - A new plugin added to `manifest` must explicitly define `enabled`.
 - A new plugin added to `manifest` must have a corresponding entry in `defaults`.
-- `defaults` may only contain plugins declared in the base preset or in the extension's `manifest`.
-- Plugin defaults must be plain configuration objects.
+- `defaults` may only contain plugins declared in the resulting manifest.
+- Plugin defaults must be `PluginOptionsFactory` functions that return valid plugin options.
 - `false` is not allowed in preset defaults. To disable a plugin, use `enabled: false` in the manifest or pass `false` through runtime plugin configuration.
 - Duplicate plugin entries inside the extension manifest are rejected.
 
@@ -940,7 +988,7 @@ extendPreset(basePreset, {
 });
 ```
 
-because the new plugin does not have a corresponding default configuration.
+because the new plugin does not have a corresponding default options factory.
 
 The correct form is:
 
@@ -953,12 +1001,15 @@ extendPreset(basePreset, {
     },
   ],
   defaults: {
-    customPlugin: {},
+    customPlugin: () => ({
+      // plugin-specific defaults
+    }),
   },
 });
 ```
 
 > [!IMPORTANT]
+>
 > `extendPreset()` is intended for **preset composition**, not runtime plugin configuration.
 >
 > Use `extendPreset()` when defining a project-specific preset based on an existing preset.
@@ -976,10 +1027,10 @@ const { testComponentFactory } = createTestFramework({
   presets: {
     default: extendPreset(recommendedPresets.default, {
       defaults: {
-        pinia: {
-          ...recommendedPresets.default.defaults.pinia,
+        pinia: () => ({
+          ...recommendedPresets.default.defaults.pinia(),
           createSpy: vi.fn,
-        },
+        }),
       },
     }),
   },
@@ -996,12 +1047,12 @@ TestForge validates managed plugin configuration against the active preset.
 
 #### Manifest Binding
 
-Plugin keys passed into TestForge configuration points must explicitly correspond to plugins declared in the active preset manifest:
+Plugin keys passed into TestForge configuration points must correspond to plugins declared in the active preset manifest:
 
-- preset `defaults`
-- `defaultMountOptions.plugins`
-- `mountOptions.plugins`
-- `extraOptions.plugins`
+- preset `defaults`;
+- `defaultMountOptions.plugins`;
+- `mountOptions.plugins`;
+- `extraOptions.plugins`.
 
 For example, if the manifest contains:
 
@@ -1026,6 +1077,8 @@ the following configuration is valid:
 
 Any unknown plugin key is rejected.
 
+The manifest therefore acts as the capability boundary for managed plugin configuration.
+
 ---
 
 #### Plugin Configuration Values
@@ -1033,9 +1086,9 @@ Any unknown plugin key is rejected.
 Managed plugin configuration values must follow strict constraints and can only be:
 
 - an options object;
-- `false` (explicitly disables the plugin for the current mount).
+- `false`, to explicitly disable the plugin for the current mount.
 
-For example, to turn off a plugin completely:
+For example, to disable a managed plugin for one test:
 
 ```typescript
 factory(
@@ -1047,6 +1100,10 @@ factory(
   },
 );
 ```
+
+Preset defaults follow a different rule: they are always defined as `PluginOptionsFactory` functions and cannot use `false`.
+
+To make a managed plugin available but disabled by default, use `enabled: false` in the preset manifest and enable it through runtime configuration when needed.
 
 ---
 
@@ -1068,6 +1125,8 @@ factory(
 ```
 
 This keeps TestForge-managed plugin configuration separate from raw Vue Test Utils plugin registration.
+
+Managed plugins participate in TestForge's preset, validation, and lifecycle pipeline. Unmanaged plugins bypass that pipeline and are passed directly to Vue Test Utils.
 
 ---
 

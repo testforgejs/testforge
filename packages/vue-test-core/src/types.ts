@@ -62,7 +62,9 @@ export type RuntimePluginOption = RuntimePluginConfig | false;
 
 export type ResolvedPluginOptions = Record<PluginName, RuntimePluginOption>;
 
-export type PluginConfigDefaults = Record<PluginName, RuntimePluginConfig>;
+export type PluginConfigDefaults = Record<PluginName, PluginOptionsFactory<RuntimePluginConfig>>;
+
+export type ResolvedPluginDefaults = Record<PluginName, RuntimePluginConfig>;
 
 export type ResolvedPluginConfig = RuntimePluginConfig & {
   __meta?: PluginMeta;
@@ -215,6 +217,8 @@ export interface PresetExtension {
   defaults?: PluginConfigDefaults;
 }
 
+export type PluginOptionsFactory<TOptions> = () => TOptions;
+
 // === 6. Pipeline Types ===
 
 export interface CreatePipelineContextParams {
@@ -258,7 +262,7 @@ type MountOptionsState = Partial<MountingOptions<any, any>>;
 export interface PipelineContextResult {
   mountOptions: MountOptionsState;
   global: NonNullable<MountingOptions<any, any>["global"]>;
-  pluginDefaultsState: PluginConfigDefaults;
+  pluginDefaultsState: ResolvedPluginDefaults;
   plugins: ResolvedPluginOptions;
 }
 

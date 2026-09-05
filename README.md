@@ -5,11 +5,12 @@
 > A test framework layer on top of [@vue/test-utils](https://test-utils.vuejs.org/) that eliminates mount boilerplate and scales Vue test architecture.
 
 > [!IMPORTANT]
+>
 > **The Problem**: **Vue Test Utils** is excellent, but configuring Pinia, Router, i18n and other plugins repeatedly across test suites quickly becomes repetitive and error-prone.
 
 > [!NOTE]
 >
-> **The Solution**: **TestForge** provides a preset-driven runtime that keeps plugin configuration consistent while preserving full Vue Test Utils compatibility.
+> **The Solution**: **TestForge** provides a preset-driven runtime that keeps plugin configuration consistent while preserving Vue Test Utils compatibility.
 >
 > Presets can be composed, allowing shared Vue plugin configuration to live in a common base preset while runner-specific presets add behavior required by tools such as Vitest or Jest.
 
@@ -21,6 +22,7 @@
 > - **Plugins** define Vue ecosystem integrations.
 > - **Base presets** define shared test environments.
 > - **Runner-specific recommended presets** add behavior required by a particular test runner.
+> - **The host application** provides Vue ecosystem dependencies.
 >
 > This separation allows shared Vue testing configuration to be reused across different test runners without duplicating plugin configuration.
 
@@ -70,17 +72,19 @@ To test different behaviors of the _same_ component, you need slightly different
 - Test C needs i18n set to `fr` instead of `en`.
 - Test D needs the router to start on a specific protected path.
 
-> Vue Test Utils forces you to maintain dozens of massive, slightly different configuration objects.
+> Vue Test Utils gives you the flexibility to configure all of this, but the test suite can end up maintaining dozens of large, slightly different configuration objects.
+
 > You end up copy-pasting 30 lines of `mount()` boilerplate just to change a single boolean flag or locale string.
 
-Now multiply this by 200+ tests. Your test suite becomes a nightmare to maintain:
+Now multiply this by 200+ tests. Your test suite becomes difficult to maintain:
 
-- **Fragile Setup**: Changing a global dependency breaks 50 tests in unrelated files.
-- **Hidden Intent**: The actual test logic is buried under a mountain of infrastructure wiring.
+- **Fragile Setup**: Changing shared infrastructure can affect many unrelated tests.
+- **Hidden Intent**: The actual test logic is buried under infrastructure wiring.
 - **Maintenance Tax**: A simple refactor requires updating hundreds of boilerplate lines.
 
-Your tests no longer describe what a component _does_.  
-They describe **how to rebuild your entire enterprise Vue stack** from scratch.
+Your tests no longer describe what a component _does_.
+
+They describe **how to rebuild your entire Vue test environment** from scratch.
 
 ---
 
@@ -133,7 +137,7 @@ If your project uses Jest instead of Vitest, use `@testforgejs/vue-test-preset-r
 Create a configuration file, for example `tests/setup.ts`, and initialize TestForge with the recommended preset:
 
 ```typescript
-// @/tests/setup.ts
+// tests/setup.ts
 
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { presets } from "@testforgejs/vue-test-preset-recommended";
@@ -149,11 +153,10 @@ The preset registry defines the managed Vue plugins available to your tests and 
 
 ## Write Your First Test
 
-You can now import the configured factory into your component tests:
+You can now create a reusable component factory:
 
 ```typescript
 import { describe, expect, it } from "vitest";
-
 import { testComponentFactory } from "@/tests/setup";
 import MyComponent from "@/components/MyComponent.vue";
 
@@ -175,16 +178,12 @@ describe("MyComponent.vue", () => {
 # Why TestForge?
 
 - **Less boilerplate** — tests describe _what_ is being tested instead of repeatedly rebuilding application infrastructure.
-
 - **Consistent environments** — presets provide a shared baseline for managed Vue ecosystem plugins.
-
 - **Safe overrides** — configuration follows a clear hierarchy from project defaults to individual test configuration.
-
 - **Composable presets** — shared plugin configuration can be reused across projects and extended with runner-specific behavior.
-
 - **Vue Test Utils compatibility** — existing VTU configuration can be adopted incrementally.
-
 - **Type safety** — component and plugin configuration remains strongly typed.
+- **Isolated configuration** — plugin option factories produce fresh options for independent pipeline contexts, while component factory invocations create independent runtime environments.
 
 ---
 
@@ -207,6 +206,9 @@ TestForge documentation is organized into several focused guides.
 ## Package Documentation
 
 - [@testforgejs/vue-test-core](packages/vue-test-core/README.md)
+- [@testforgejs/vue-test-preset-base](packages/vue-test-preset-base/README.md)
+- [@testforgejs/vue-test-preset-recommended](packages/vue-test-preset-recommended/README.md)
+- [@testforgejs/vue-test-preset-recommended-jest](packages/vue-test-preset-recommended-jest/README.md)
 
 ---
 
@@ -218,23 +220,24 @@ Large applications often contain several independent testing contexts.
 
 For example:
 
-- application components that use the full application stack
-- isolated UI components that don't need Vue Router
-- design-system components using only PrimeVue or Vuetify
-- admin modules with additional plugins
-- package-level tests inside a monorepo
+- application components that use the full application stack;
+- isolated UI components that don't need Vue Router;
+- design-system components using only PrimeVue or Vuetify;
+- admin modules with additional plugins;
+- package-level tests inside a monorepo.
 
 Instead of forcing every test to use one global configuration, TestForge allows you to create multiple independent framework instances.
 
 Each framework owns its own:
 
-- preset registry
-- managed plugin graph
-- default plugin configuration
-- mounting pipeline
+- preset registry;
+- managed plugin graph;
+- default plugin configuration;
+- mounting pipeline.
 
 ```typescript
 // tests/app.ts
+
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { appPresets } from "./presets/app";
 
@@ -245,6 +248,7 @@ export const { testComponentFactory: appFactory } = createTestFramework({
 
 ```typescript
 // tests/design-system.ts
+
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { designSystemPresets } from "./presets/design-system";
 
@@ -253,7 +257,7 @@ export const { testComponentFactory: dsFactory } = createTestFramework({
 });
 ```
 
-Tests simply import the factory that matches their environment:
+Tests simply import the component factory that matches their environment:
 
 ```typescript
 import { appFactory } from "@/tests/app";
@@ -267,9 +271,10 @@ import { dsFactory } from "@/tests/design-system";
 const factory = dsFactory(Button);
 ```
 
-Because every framework instance is isolated, changing presets or plugin defaults in one environment never affects another.
+Because every framework instance is isolated, changing presets or plugin defaults in one environment does not affect another.
 
 > [!TIP]
+>
 > Most projects only need a single framework instance. Multiple environments become useful for large applications, monorepos, shared UI libraries, or projects that require different managed plugin sets.
 
 ---
@@ -282,7 +287,11 @@ TestForge introduces one simple shift in perspective:
 
 > Separate the environment baseline from the specific test delta.
 
-You define the infrastructure baseline **once** in a centralized factory. Individual tests never touch `global.plugins`. Instead, they pass lightweight, context-aware overrides that TestForge safely merges via its deterministic pipeline.
+You define the infrastructure baseline **once** in a centralized preset and reusable component factory. Individual tests then provide only the configuration they need to change.
+
+Managed plugin configuration is expressed through TestForge's `plugins` API rather than repeatedly rebuilding `global.plugins`.
+
+This keeps test configuration focused on intent while the Mount Pipeline handles the resulting runtime configuration.
 
 ---
 
@@ -296,26 +305,36 @@ Look how much boilerplate you copy-paste across tests just to adjust _one_ tiny 
 
 ```typescript
 // Test 1: Testing English locale
+
 it("renders English greeting", () => {
   const wrapper = mount(MyComponent, {
     global: {
       plugins: [
         createI18n({ locale: "en", messages }),
-        createTestingPinia({ initialState: { user: { loggedIn: true } } }),
-        createRouter({ history: createMemoryHistory() }),
+        createTestingPinia({
+          initialState: { user: { loggedIn: true } },
+        }),
+        createRouter({
+          history: createMemoryHistory(),
+        }),
       ],
     },
   });
 });
 
-// Test 2: Testing French locale (30 lines copied just to change 'en' to 'fr')
+// Test 2: Testing French locale
+
 it("renders French greeting", () => {
   const wrapper = mount(MyComponent, {
     global: {
       plugins: [
-        createI18n({ locale: "fr", messages }), // 👈 The only changed line!
-        createTestingPinia({ initialState: { user: { loggedIn: true } } }),
-        createRouter({ history: createMemoryHistory() }),
+        createI18n({ locale: "fr", messages }),
+        createTestingPinia({
+          initialState: { user: { loggedIn: true } },
+        }),
+        createRouter({
+          history: createMemoryHistory(),
+        }),
       ],
     },
   });
@@ -324,30 +343,62 @@ it("renders French greeting", () => {
 
 ## ✅ The TestForge Way (Clean Deltas)
 
-You initialize a **reusable test factory** for the component. It pre-configures your standard Pinia, Router, and i18n via presets:
+You initialize a **reusable component factory** for the component. The selected preset provides the managed plugin baseline:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
 ```
 
-Now, your tests only declare **what changes**, keeping the setup purely declarative and laser-focused:
+Tests can then provide only the configuration that changes:
 
 ```typescript
 // Test 1: Uses project defaults automatically
+
 it("renders English greeting", () => {
   const wrapper = factory();
 });
 
-// Test 2: Safely overrides ONLY the i18n locale layer
-it("renders French greeting", () => {
-  const wrapper = factory({}, { i18n: { locale: "fr" } }); // 👈 Pure intent
-});
+// Test 2: Replaces the managed i18n configuration for this test
 
-// Test 3: Mutates only the required Pinia state block
-it("renders guest view", () => {
-  const wrapper = factory({}, { pinia: { initialState: { user: { loggedIn: false } } } });
+it("renders French greeting", () => {
+  const wrapper = factory(
+    {},
+    {
+      plugins: {
+        i18n: {
+          locale: "fr",
+        },
+      },
+    },
+  );
 });
 ```
+
+For a targeted adjustment that should preserve the already resolved managed plugin configuration, use the fourth `extraOptions` argument:
+
+```typescript
+// Adjust only the resolved Pinia configuration
+
+it("renders guest view", () => {
+  const wrapper = factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        pinia: {
+          stubActions: true,
+        },
+      },
+    },
+  );
+});
+```
+
+The distinction is important:
+
+- `mountOptions.plugins` **replaces** the corresponding managed plugin configuration at the test layer.
+- `extraOptions.plugins` applies a **shallow overlay** to the already resolved managed plugin configuration.
 
 ---
 
@@ -355,8 +406,9 @@ it("renders guest view", () => {
 
 # Core Concepts
 
-TestForge is built around a few ideas that work together.  
-Individually they are simple. Together they remove almost all test setup noise.
+TestForge is built around a few ideas that work together.
+
+Individually they are simple. Together they remove most test setup noise.
 
 ---
 
@@ -366,8 +418,7 @@ Individually they are simple. Together they remove almost all test setup noise.
 
 The **Test Component Factory** is the entry point you use in tests.
 
-You don’t call `mount` from [@vue/test-utils](https://test-utils.vuejs.org/) directly anymore.  
-You create a factory once and reuse it.
+Instead of repeatedly calling `mount()` with a large configuration object, you create a reusable component factory once:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
@@ -376,21 +427,38 @@ const factory = testComponentFactory(MyComponent);
 Then in tests:
 
 ```typescript
-factory({ title: "Hello" });
+factory({
+  title: "Hello",
+});
 ```
 
-The factory:
+The component factory:
 
-- merges props
-- applies presets
-- activates plugins
-- builds `global` config
-- chooses `mount` / `shallowMount`
-- runs the **Mount Pipeline**
+- accepts test-specific props;
+- resolves the selected preset;
+- resolves managed plugin configuration;
+- builds the Vue Test Utils `global` configuration;
+- chooses `mount()` or `shallowMount()`;
+- runs the **Mount Pipeline**.
 
-All without the test knowing how.
+The test only describes what it wants, not how to assemble the Vue runtime.
 
-> The test only describes what it wants, not how to assemble Vue.
+### Component Factory Invocations
+
+A component factory can be invoked multiple times:
+
+```typescript
+const factory = testComponentFactory(MyComponent);
+
+const first = factory();
+const second = factory();
+```
+
+Each invocation creates its own runtime environment. Mutable plugin runtime state should not be shared between these invocations unless the test explicitly registers a shared instance through the appropriate Vue Test Utils mechanism.
+
+This is **component factory invocation isolation**.
+
+It is different from plugin options factory isolation described below.
 
 ---
 
@@ -398,31 +466,34 @@ All without the test knowing how.
 
 ## Plugin System
 
-TestForge treats i18n, Pinia, Router and any future integration as **plugins**.
+TestForge treats i18n, Pinia, Router and other integrations as **plugins**.
 
-A plugin is not a Vue plugin.  
-It is a **test-environment builder**.
+A plugin is not simply a Vue plugin.
+
+It is a **test-environment builder** that participates in the TestForge runtime.
 
 Each plugin:
 
-- has a name
-- knows how to create its Vue instance
-- participates in the **Mount Pipeline**
+- has a name;
+- defines how its runtime is created;
+- participates in the **Mount Pipeline**;
+- can validate and resolve its configuration.
 
-Examples provided by TestForge:
+Examples provided by TestForge include:
 
-- `@testforgejs/vue-test-plugin-pinia`
-- `@testforgejs/vue-test-plugin-i18n`
-- `@testforgejs/vue-test-plugin-router`
-- `@testforgejs/vue-test-plugin-vuetify`
-- `@testforgejs/vue-test-plugin-primevue`
+- `@testforgejs/vue-test-plugin-pinia`;
+- `@testforgejs/vue-test-plugin-i18n`;
+- `@testforgejs/vue-test-plugin-router`;
+- `@testforgejs/vue-test-plugin-vuetify`;
+- `@testforgejs/vue-test-plugin-primevue`.
 
 Because of this, TestForge can:
 
-- validate plugin options
-- control activation
-- merge configs safely
-- allow overrides without breaking defaults
+- validate plugin options;
+- control activation;
+- resolve plugin configuration;
+- create isolated plugin runtime instances;
+- allow explicit overrides without rebuilding the entire environment.
 
 ---
 
@@ -436,7 +507,9 @@ It defines:
 
 - which managed plugins are available;
 - which plugins are enabled by default;
-- the default configuration for those plugins.
+- the baseline configuration for those plugins.
+
+Plugin defaults are represented by **plugin options factories**, not shared configuration objects.
 
 For example:
 
@@ -450,23 +523,27 @@ const presets = {
     ],
 
     defaults: {
-      i18n: {
-        locale: "en",
-      },
-
-      pinia: {
+      pinia: () => ({
         initialState: {},
-      },
+      }),
+
+      i18n: () => ({
+        locale: "en",
+      }),
     },
   },
 };
 ```
 
+When a plugin options factory is invoked, it produces fresh options for the current pipeline context.
+
+This prevents mutable configuration objects from being reused accidentally across independent pipeline executions.
+
 Presets allow you to:
 
 - share test environment configuration across a project;
 - define lightweight or specialized test environments;
-- switch the active preset for an individual factory call;
+- switch the active preset for an individual component factory invocation;
 - compose presets instead of duplicating shared configuration.
 
 ### Preset Composition
@@ -507,22 +584,23 @@ See the [Preset Authoring Guide](./docs/preset-authoring-guide.md) for more info
 
 ## Mount Pipeline
 
-The **Mount Pipeline** is the internal engine that prepares the final mount options.
+The **Mount Pipeline** is the internal engine that prepares the final Vue Test Utils mount configuration.
 
 It is a deterministic sequence of middleware that:
 
-1. Selects preset
-2. Validates plugins
-3. Resolves activation rules
-4. Merges defaults, overrides, and extra options
-5. Builds `global.plugins`, `global.stubs`, `global.mocks`
-6. Produces clean options for `mount`
+1. selects the active preset;
+2. validates plugins and configuration;
+3. resolves activation rules;
+4. resolves plugin options factories;
+5. merges defaults, overrides, and extra options according to their defined strategies;
+6. builds `global.plugins`, `global.stubs`, and `global.mocks`;
+7. produces the final options for `mount()` or `shallowMount()`.
 
 Because this is centralized:
 
-- merge logic is predictable
-- overrides behave consistently
-- edge cases are tested once in TestForge, not in every project
+- merge logic is predictable;
+- overrides behave consistently;
+- edge cases are tested once in TestForge rather than independently in every project.
 
 ---
 
@@ -532,17 +610,18 @@ Because this is centralized:
 
 TestForge follows a strict rule:
 
-> Defaults should work for 90% of tests. Overrides should be explicit and safe.
+> Defaults should work for most tests. Overrides should be explicit and predictable.
 
 This means:
 
-- Empty options do something meaningful
-- Providing an object can **override**, **extend**, or **reset** behavior depending on context
-- Extra options can re-enable or reconfigure plugins safely
-- Tests don’t need to know preset internals
+- empty options should produce a useful default environment;
+- local configuration can override the appropriate layer;
+- managed plugin configuration uses explicit replacement or overlay semantics;
+- tests don't need to know how the runtime environment is assembled.
 
-You don’t fight the framework.  
-You ask for what you need, and TestForge merges it correctly.
+You don't fight the framework.
+
+You describe the configuration you need, and TestForge resolves it through the Mount Pipeline.
 
 ---
 
@@ -550,80 +629,91 @@ You ask for what you need, and TestForge merges it correctly.
 
 # Incremental Migration from Vue Test Utils
 
-TestForge is intentionally engineered as a **drop-in architecture extension**, not a destructive replacement. It features 100% backward compatibility with standard [Vue Test Utils (VTU)](https://vuejs.org) configuration formats.
+TestForge is designed as an **architecture extension** rather than a destructive replacement.
 
-You can migrate your existing test suites in two effortless, risk-free stages.
+It preserves standard Vue Test Utils configuration patterns where possible, while adding TestForge-specific preset and managed-plugin behavior.
+
+You can migrate an existing test suite incrementally.
 
 ---
 
-## Stage 1: Zero-Refactor Integration (1:1 Translation)
+## Stage 1: Minimal-Change Integration
 
-In the first stage, you don't need to change your existing setup objects. TestForge treats raw VTU configuration objects as valid input and processes them identically to `mount()`.
+In the first stage, you can keep most of your existing Vue Test Utils mount configuration.
 
-If your legacy VTU test looks like this:
+If your existing VTU test looks like this:
 
 ```typescript
 import { mount } from "@vue/test-utils";
 import MyComponent from "./MyComponent.vue";
 
 const VTUConfig = {
-  props: { title: "Hello" },
+  props: {
+    title: "Hello",
+  },
+
   global: {
-    mocks: { $t: (msg) => msg },
+    mocks: {
+      $t: (msg) => msg,
+    },
   },
 };
 
 const wrapper = mount(MyComponent, VTUConfig);
 ```
 
-The immediate TestForge equivalent is exactly the same, routed through a reusable factory:
+The TestForge equivalent can route the same VTU-style options through a reusable component factory:
 
 ```typescript
-import { testComponentFactory } from "@/tests/setup"; // Your bootstrapped factory
+import { testComponentFactory } from "@/tests/setup";
 import MyComponent from "./MyComponent.vue";
 
 const factory = testComponentFactory(MyComponent);
 
-// Pass an empty object as the 1st argument (props) to let TestForge
-// safely process the props directly out of your legacy VTUConfig block.
 const wrapper = factory({}, VTUConfig);
 ```
 
-At this stage, your tests will continue to pass exactly as they did before, with zero rewrite tax.
+At this stage, the goal is simply to introduce the TestForge runtime without immediately redesigning every test.
 
 ---
 
-## Stage 2: Extracting the Baseline (Unlocking TestForge)
+## Stage 2: Extracting the Baseline
 
-Once your tests run safely on the TestForge engine, you can incrementally refactor them to destroy boilerplate. You do this by extracting shared infrastructure into the factory creation level and leaving only the precise changes (deltas) in the individual tests.
+Once your tests run safely through TestForge, you can incrementally refactor them to remove repeated infrastructure.
 
-### 1. Move global configurations to the Factory level:
+Move shared configuration into the component factory or, where appropriate, into a preset.
+
+For example:
 
 ```typescript
-// Do this once per test file (or move plugins to your global project Preset)
 const factory = testComponentFactory(
   MyComponent,
   {},
   {
     global: {
-      mocks: { $t: (msg) => msg }, // Unified baseline
+      mocks: {
+        $t: (msg) => msg,
+      },
     },
   },
 );
 ```
 
-### 2. Clean up individual test invocations:
+Individual tests can then focus on their specific inputs:
 
 ```typescript
-// Now your tests only declare direct, meaningful state definitions
-const wrapper = factory({ title: "Hello" });
+const wrapper = factory({
+  title: "Hello",
+});
 ```
 
-By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy infrastructure-building machine down to a **one-line declarative intent**.
+For shared managed plugin configuration, prefer preset defaults or `defaultMountOptions.plugins`.
 
-> ## Behavior parity with Vue Test Utils
+By transitioning from Stage 1 to Stage 2, tests can shrink from infrastructure-heavy mount calls to concise declarative component factory invocations.
+
+> [!NOTE]
 >
-> TestForge intentionally maintains compatibility with Vue Test Utils behavior and types to simplify migration and enable incremental adoption.
+> TestForge intentionally maintains compatibility with Vue Test Utils behavior and types where the corresponding configuration is part of the standard VTU API.
 
 ---
 
@@ -631,21 +721,45 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 # Principles
 
-> ## Behavior parity with Vue Test Utils
->
-> TestForge intentionally preserves Vue Test Utils behavior and typing semantics to simplify migration. Existing VTU configurations should continue to work unchanged, allowing TestForge features to be adopted incrementally.
+## Behavior parity with Vue Test Utils
 
-> ## Plugin-first architecture
->
-> Plugins are first-class citizens and can contribute runtime behavior, configuration, and type augmentation.
+TestForge intentionally preserves Vue Test Utils behavior and typing semantics where possible to simplify migration. Existing VTU configurations can be adopted incrementally.
 
-> ## Strong typing
->
-> TypeScript types are inferred from components and plugins whenever possible.
+## Plugin-first architecture
 
-> ## Opt-in abstractions
->
-> TestForge extends Vue Test Utils rather than replacing it. Users can adopt additional abstractions only when they provide value.
+Plugins are first-class citizens and can contribute runtime behavior, configuration, and type augmentation.
+
+## Preset-driven environments
+
+Presets define complete managed-plugin runtime environments rather than partial configuration overlays.
+
+The active preset determines the managed plugin capability boundary for the current component factory invocation.
+
+## Plugin Options Factories
+
+Preset `defaults` stores **plugin options factories**, not shared plugin configuration objects.
+
+A plugin options factory is invoked for a pipeline context and produces fresh plugin options for that context.
+
+This is **plugin options factory isolation**.
+
+It should not be confused with component factory invocation isolation.
+
+## Component Factory Invocation Isolation
+
+A **component factory** is created by `testComponentFactory(Component)` and can be invoked repeatedly to mount the component.
+
+Each component factory invocation creates an independent runtime environment.
+
+This is **component factory invocation isolation**, and it is separate from the isolation of plugin options factories.
+
+## Strong typing
+
+TypeScript types are inferred from components and plugins whenever possible.
+
+## Opt-in abstractions
+
+TestForge extends Vue Test Utils rather than replacing it. Users can adopt additional abstractions only when they provide value.
 
 ---
 
@@ -653,7 +767,7 @@ By transitioning from Stage 1 to Stage 2, your test block shrinks from a heavy i
 
 # FAQ
 
-## Literal types inside data()
+## Literal types inside `data()`
 
 When using union literal types in component state:
 
@@ -665,7 +779,7 @@ data() {
 }
 ```
 
-TypeScript may widen string literals when overriding data():
+TypeScript may widen string literals when overriding `data()`:
 
 ```typescript
 testComponentFactory(
@@ -681,16 +795,16 @@ testComponentFactory(
 );
 ```
 
-which produces:
+which can produce:
 
-```log
+```text
 Type 'string' is not assignable to
 'idle' | 'loading' | 'success'
 ```
 
-This behavior is inherited from Vue Test Utils and TypeScript itself.
+This behavior comes from Vue Test Utils and TypeScript's type inference.
 
-To preserve literal types, use:
+To preserve the literal type, use:
 
 ```typescript
 data() {

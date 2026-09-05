@@ -1,21 +1,19 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
-import { isPlainObject } from "../../guards/isPlainObject.js";
 
 /**
- * Validates the default configuration for a plugin.
+ * Validates the default options factory for a plugin.
  *
- * Plugin defaults must be plain objects. Primitive values, arrays,
- * class instances, and other non-plain objects are rejected.
+ * Plugin preset defaults must be provided as factory functions.
  *
  * @param pluginName - The name of the plugin being validated.
- * @param value - The plugin's default configuration.
- * @throws {Error} If the value is not a plain object.
+ * @param value - The plugin's default options factory.
+ * @throws {Error} If the value is not a function.
  */
 export function validatePluginDefaults(pluginName: string, value: unknown): void {
-  if (!isPlainObject(value)) {
+  if (typeof value !== "function") {
     throw new Error(
       `${ERROR_PREFIX} Invalid defaults for plugin "${pluginName}". ` +
-        `Preset defaults must be a plain object.`,
+        `Preset defaults must be provided as a plugin options factory function.`,
     );
   }
 }

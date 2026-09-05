@@ -41,10 +41,10 @@ const framework = createTestFramework({
         },
       ],
       defaults: {
-        router: {
+        router: () => ({
           history: createMemoryHistory(),
           routes: [],
-        },
+        }),
       },
     },
   },

@@ -30,7 +30,7 @@ describe("validatePresets", () => {
             },
           ],
           defaults: {
-            auth: { timeout: 5000 },
+            auth: () => ({ timeout: 5000 }),
           },
         },
         minimal: {
@@ -153,8 +153,8 @@ describe("validatePresets", () => {
               },
             ],
             defaults: {
-              auth: { timeout: 1000 },
-              database: { host: "localhost" }, // unknown
+              auth: () => ({ timeout: 1000 }),
+              database: () => ({ host: "localhost" }), // unknown
             },
           },
         }),
@@ -178,7 +178,7 @@ describe("validatePresets", () => {
             ],
             defaults: {
               // @ts-expect-error - intentionally passing invalid preset type
-              auth: "not-an-object",
+              auth: "not-an-function",
             },
           },
         }),

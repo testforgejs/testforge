@@ -25,27 +25,22 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected Pinia defaults", () => {
-      expect(presets.default.defaults.pinia).toMatchObject({
+    it("should create the expected Pinia default options", () => {
+      expect(presets.default.defaults.pinia()).toMatchObject({
         initialState: {},
         stubActions: false,
       });
-      /*expect(presets.default.defaults.pinia).toEqual({
-        initialState: {},
-        stubActions: false,
-        createSpy: jest.fn,
-      });*/
     });
 
     it("should configure Pinia to use Jest spies", () => {
-      const createSpy = presets.default.defaults.pinia.createSpy;
+      const createSpy = presets.default.defaults.pinia().createSpy;
       const spy = createSpy();
 
       expect(jest.isMockFunction(spy)).toBe(true);
     });
 
-    it("should contain the expected i18n defaults", () => {
-      expect(presets.default.defaults.i18n).toEqual({
+    it("should create the expected i18n default options", () => {
+      expect(presets.default.defaults.i18n()).toEqual({
         legacy: false,
         locale: "en",
         fallbackLocale: "en",
@@ -55,8 +50,8 @@ describe("jest presets configuration", () => {
       });
     });
 
-    it("should contain the expected Router defaults", () => {
-      expect(presets.default.defaults.router).toMatchObject({
+    it("should create the expected Router default options", () => {
+      expect(presets.default.defaults.router()).toMatchObject({
         routes: [
           {
             path: "/",
@@ -65,7 +60,7 @@ describe("jest presets configuration", () => {
         ],
       });
 
-      expect(presets.default.defaults.router.history).toBeDefined();
+      expect(presets.default.defaults.router().history).toBeDefined();
     });
   });
 
@@ -79,15 +74,15 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected Pinia defaults for piniaPreset", () => {
-      expect(presets.default.defaults.pinia).toMatchObject({
+    it("should create the expected Pinia default options for piniaPreset", () => {
+      expect(presets.default.defaults.pinia()).toMatchObject({
         initialState: {},
         stubActions: false,
       });
     });
 
     it("should configure Pinia for piniaPreset to use Jest spies", () => {
-      const createSpy = presets.default.defaults.pinia.createSpy;
+      const createSpy = presets.default.defaults.pinia().createSpy;
       const spy = createSpy();
 
       expect(jest.isMockFunction(spy)).toBe(true);
@@ -104,8 +99,8 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected i18n defaults for i18nPreset", () => {
-      expect(presets.i18nPreset.defaults.i18n).toEqual({
+    it("should create the expected i18n default options for i18nPreset", () => {
+      expect(presets.i18nPreset.defaults.i18n()).toEqual({
         legacy: false,
         locale: "en",
         fallbackLocale: "en",
@@ -126,8 +121,8 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected Router defaults for routerPreset", () => {
-      expect(presets.routerPreset.defaults.router).toMatchObject({
+    it("should create the expected Router default options for routerPreset", () => {
+      expect(presets.routerPreset.defaults.router()).toMatchObject({
         routes: [
           {
             path: "/",
@@ -136,7 +131,7 @@ describe("jest presets configuration", () => {
         ],
       });
 
-      expect(presets.routerPreset.defaults.router.history).toBeDefined();
+      expect(presets.routerPreset.defaults.router().history).toBeDefined();
     });
   });
 

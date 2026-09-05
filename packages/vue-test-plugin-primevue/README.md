@@ -30,7 +30,7 @@ yarn add -D @testforgejs/vue-test-plugin-primevue@beta
 
 Register `primeVuePlugin` in the TestForge plugin manifest.
 
-```ts
+```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue";
 
@@ -43,6 +43,13 @@ const framework = createTestFramework({
           enabled: true,
         },
       ],
+      defaults: {
+        primevue: () => ({
+          theme: {
+            preset: Aura,
+          },
+        }),
+      },
     },
   },
 });
@@ -51,6 +58,8 @@ const factory = framework.testComponentFactory(MyComponent);
 
 const wrapper = factory();
 ```
+
+`defaults.primevue` is an options factory. Each invocation produces a fresh PrimeVue options object for the current pipeline context.
 
 The plugin provides PrimeVue integration for components mounted through TestForge.
 

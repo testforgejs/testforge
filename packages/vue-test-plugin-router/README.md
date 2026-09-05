@@ -30,7 +30,7 @@ yarn add -D @testforgejs/vue-test-plugin-router@beta
 
 Register `routerPlugin` in the TestForge plugin manifest.
 
-```ts
+```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
 
@@ -43,6 +43,16 @@ const framework = createTestFramework({
           enabled: true,
         },
       ],
+      defaults: {
+        router: () => ({
+          routes: [
+            {
+              path: "/",
+              component: { render: () => null },
+            },
+          ],
+        }),
+      },
     },
   },
 });
@@ -51,6 +61,12 @@ const factory = framework.testComponentFactory(MyComponent);
 
 const wrapper = factory();
 ```
+
+`defaults.router` is an options factory. Each invocation produces a fresh Vue Router options object for the current pipeline context.
+
+The default configuration provides a minimal `/` route so that Vue Router is ready to use without requiring application-specific routes.
+
+For tests that depend on application routes, [create a project-specific preset](https://github.com/testforgejs/testforge/blob/main/docs/preset-authoring-guide.md) that provides the router configuration required by the application.
 
 The plugin provides Vue Router integration for components mounted through TestForge.
 

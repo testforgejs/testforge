@@ -23,7 +23,10 @@ describe("createPlugins", () => {
     it("should create plugins only when present in both manifest and options", () => {
       const mockPinia = createMockPlugin("pinia");
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mockPinia, enabled: true }], defaults: { pinia: {} } },
+        preset: {
+          manifest: [{ module: mockPinia, enabled: true }],
+          defaults: { pinia: () => ({}) },
+        },
       });
       const result = createPlugins({ pinia: {} }, ctx);
 
@@ -33,7 +36,7 @@ describe("createPlugins", () => {
     it("should skip plugins when they are set to false in options", () => {
       const mockI18n = createMockPlugin("i18n");
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mockI18n, enabled: true }], defaults: { i18n: {} } },
+        preset: { manifest: [{ module: mockI18n, enabled: true }], defaults: { i18n: () => ({}) } },
       });
       const result = createPlugins({ i18n: false }, ctx);
 
@@ -44,7 +47,10 @@ describe("createPlugins", () => {
     it("should ignore options when plugins are not present in the manifest", () => {
       const mockPinia = createMockPlugin("pinia");
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mockPinia, enabled: true }], defaults: { pinia: {} } },
+        preset: {
+          manifest: [{ module: mockPinia, enabled: true }],
+          defaults: { pinia: () => ({}) },
+        },
       });
       const result = createPlugins({ pinia: {}, router: {} }, ctx);
 
@@ -54,7 +60,10 @@ describe("createPlugins", () => {
     it("should skip plugin when options are missing for that plugin", () => {
       const mockPinia = createMockPlugin("pinia");
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mockPinia, enabled: false }], defaults: { pinia: {} } },
+        preset: {
+          manifest: [{ module: mockPinia, enabled: true }],
+          defaults: { pinia: () => ({}) },
+        },
       });
       const result = createPlugins({}, ctx);
 
@@ -66,10 +75,13 @@ describe("createPlugins", () => {
   // Plugin lifecycle (beforeCreate → create → afterCreate)
   // ---------------------------------------------------------------------------
   describe("plugin lifecycle hooks", () => {
-    it("should run beforeCreate, create and afterCreate in correct order", () => {
+    it("should run beforeCreate, create and afterCreate with the expected arguments", () => {
       const mockPinia = createMockPlugin("pinia");
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mockPinia, enabled: true }], defaults: { pinia: {} } },
+        preset: {
+          manifest: [{ module: mockPinia, enabled: true }],
+          defaults: { pinia: () => ({}) },
+        },
       });
       const options = { pinia: { some: "opt" } };
       const result = createPlugins(options, ctx);
@@ -84,6 +96,49 @@ describe("createPlugins", () => {
       expect(def.afterCreate).toHaveBeenCalledWith(result[0], ctx);
     });
 
+    it("should run lifecycle hooks in the correct order", () => {
+      const calls: string[] = [];
+
+      const definition = {
+        beforeCreate: vi.fn((ctx, opts) => {
+          calls.push("beforeCreate");
+
+          return {
+            ...opts,
+            modified: true,
+          };
+        }),
+
+        create: vi.fn((opts) => {
+          calls.push("create");
+
+          return { instance: true, opts };
+        }),
+
+        afterCreate: vi.fn(() => {
+          calls.push("afterCreate");
+        }),
+      };
+
+      const mockPinia = {
+        getName: () => "pinia",
+        getDefinition: () => definition,
+      };
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [{ module: mockPinia, enabled: true }],
+          defaults: {
+            pinia: () => ({}),
+          },
+        },
+      });
+
+      createPlugins({ pinia: { some: "opt" } }, ctx);
+
+      expect(calls).toEqual(["beforeCreate", "create", "afterCreate"]);
+    });
+
     it("should pass original options to create when beforeCreate is missing", () => {
       const definition = { create: vi.fn(() => ({})) };
       const plugin = {
@@ -92,7 +147,10 @@ describe("createPlugins", () => {
       };
 
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: plugin, enabled: true }], defaults: { noBefore: {} } },
+        preset: {
+          manifest: [{ module: plugin, enabled: true }],
+          defaults: { noBefore: () => ({}) },
+        },
       });
       createPlugins({ noBefore: { x: 1 } }, ctx);
 
@@ -108,7 +166,10 @@ describe("createPlugins", () => {
       };
 
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: simplePlugin, enabled: true }], defaults: { simple: {} } },
+        preset: {
+          manifest: [{ module: simplePlugin, enabled: true }],
+          defaults: { simple: () => ({}) },
+        },
       });
       const result = createPlugins({ simple: {} }, ctx);
 
@@ -123,7 +184,7 @@ describe("createPlugins", () => {
     it("should not mutate original options object", () => {
       const mock = createMockPlugin("pinia");
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mock, enabled: true }], defaults: { pinia: {} } },
+        preset: { manifest: [{ module: mock, enabled: true }], defaults: { pinia: () => ({}) } },
       });
       const options = { pinia: { a: 1 } };
       const snapshot = structuredClone(options);
@@ -152,7 +213,7 @@ describe("createPlugins", () => {
             { module: make("A"), enabled: true },
             { module: make("B"), enabled: true },
           ],
-          defaults: { A: {}, B: {} },
+          defaults: { A: () => ({}), B: () => ({}) },
         },
       });
       createPlugins({ A: {}, B: {} }, ctx);
@@ -160,7 +221,14 @@ describe("createPlugins", () => {
       expect(calls).toEqual(["A", "B"]);
     });
 
-    it("should fail fast when plugin create throws", () => {
+    it("should stop plugin creation when plugin create throws", () => {
+      const followingPlugin = {
+        getName: () => "following",
+        getDefinition: () => ({
+          create: vi.fn(() => ({})),
+        }),
+      };
+
       const badPlugin = {
         getName: () => "bad",
         getDefinition: () => ({
@@ -171,9 +239,29 @@ describe("createPlugins", () => {
       };
 
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: badPlugin, enabled: true }], defaults: { bad: {} } },
+        preset: {
+          manifest: [
+            { module: badPlugin, enabled: true },
+            { module: followingPlugin, enabled: true },
+          ],
+          defaults: {
+            bad: () => ({}),
+            following: () => ({}),
+          },
+        },
       });
-      expect(() => createPlugins({ bad: {} }, ctx)).toThrow("boom");
+
+      expect(() =>
+        createPlugins(
+          {
+            bad: {},
+            following: {},
+          },
+          ctx,
+        ),
+      ).toThrow("boom");
+
+      expect(followingPlugin.getDefinition().create).not.toHaveBeenCalled();
     });
   });
 });

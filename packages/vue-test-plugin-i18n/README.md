@@ -41,10 +41,18 @@ const framework = createTestFramework({
           enabled: true,
         },
       ],
+      defaults: {
+        i18n: () => ({
+          legacy: false,
+          locale: "en",
+        }),
+      },
     },
   },
 });
 ```
+
+`defaults.i18n` is an options factory. Each invocation produces a fresh Vue I18n options object for the current pipeline context.
 
 ## Supported versions
 

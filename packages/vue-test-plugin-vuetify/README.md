@@ -30,7 +30,7 @@ yarn add -D @testforgejs/vue-test-plugin-vuetify@beta
 
 Register `vuetifyPlugin` in the TestForge plugin manifest.
 
-```ts
+```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { vuetifyPlugin } from "@testforgejs/vue-test-plugin-vuetify";
 
@@ -43,6 +43,15 @@ const framework = createTestFramework({
           enabled: true,
         },
       ],
+      defaults: {
+        vuetify: () => ({
+          defaults: {
+            VBtn: {
+              variant: "text",
+            },
+          },
+        }),
+      },
     },
   },
 });
@@ -51,6 +60,8 @@ const factory = framework.testComponentFactory(MyComponent);
 
 const wrapper = factory();
 ```
+
+`defaults.vuetify` is an options factory. Each invocation produces a fresh Vuetify options object for the current pipeline context.
 
 The plugin provides Vuetify integration for components mounted through TestForge.
 

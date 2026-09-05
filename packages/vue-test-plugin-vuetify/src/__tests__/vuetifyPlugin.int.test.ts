@@ -23,7 +23,7 @@ describe("vuetifyPlugin integration", () => {
         default: {
           manifest: [{ module: vuetifyPlugin, enabled: true }],
           defaults: {
-            vuetify: {},
+            vuetify: () => ({}),
           },
         },
       },

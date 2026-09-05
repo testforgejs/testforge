@@ -43,19 +43,21 @@ export const presets = {
     ],
 
     defaults: {
-      pinia: {
-        initialState: {},
-        stubActions: false,
-      } satisfies VueTestPiniaOptions,
+      pinia: () =>
+        ({
+          initialState: {},
+          stubActions: false,
+        }) satisfies VueTestPiniaOptions,
 
-      i18n: {
-        legacy: false,
-        locale: "en",
-        fallbackLocale: "en",
-        messages: {},
-        fallbackWarn: false,
-        missingWarn: false,
-      } satisfies VueTestI18nOptions,
+      i18n: () =>
+        ({
+          legacy: false,
+          locale: "en",
+          fallbackLocale: "en",
+          messages: {},
+          fallbackWarn: false,
+          missingWarn: false,
+        }) satisfies VueTestI18nOptions,
     },
   },
 } satisfies TestFrameworkPresets;
@@ -126,40 +128,63 @@ The plugin can subsequently be enabled through the appropriate runtime configura
 
 ## 3. The `defaults`
 
-The `defaults` object defines the baseline configuration for managed plugins.
+The `defaults` object defines baseline configuration factories for managed plugins.
 
-For example:
+Each plugin default must be provided as a function that returns a fresh plugin options object:
 
 ```typescript
 defaults: {
-  pinia: {
+  pinia: () => ({
     initialState: {},
     stubActions: false,
-  },
+  }),
 
-  i18n: {
+  i18n: () => ({
     legacy: false,
     locale: "en",
     fallbackLocale: "en",
     messages: {},
-  },
+  }),
 },
+```
+
+TestForge invokes the factory when resolving the active preset configuration.
+
+This ensures that each pipeline context receives its own plugin options object instead of sharing a mutable configuration object across component mounts.
+
+For example:
+
+```typescript
+const defaultPinia = () => ({
+  initialState: {},
+  stubActions: false,
+});
+```
+
+Each invocation returns a new configuration object:
+
+```typescript
+const first = defaultPinia();
+const second = defaultPinia();
+
+first !== second; // true
+```
+
+This is particularly important for nested configuration such as Pinia state, Vue Router history configuration, or Vue I18n messages.
+
+Plugin-specific option types should be applied to the object returned by the factory:
+
+```typescript
+pinia: () =>
+  ({
+    initialState: {},
+    stubActions: false,
+  }) satisfies VueTestPiniaOptions,
 ```
 
 Plugin configuration should be kept small and predictable.
 
 Application-specific test data should generally not be placed into global preset defaults. Scenario-specific state belongs in factory or test-level configuration.
-
-Plugin-specific option types should be used when authoring presets:
-
-```typescript
-pinia: {
-  initialState: {},
-  stubActions: false,
-} satisfies VueTestPiniaOptions,
-```
-
-This catches invalid plugin options while keeping the preset easy to read.
 
 ---
 
@@ -230,6 +255,8 @@ i18nPreset: {
 },
 ```
 
+> `defaultI18n` is a plugin options factory, allowing each pipeline context to receive a fresh I18n configuration object.
+
 This is different from disabling Pinia and Router in the default preset.
 
 An `i18nPreset` does not merely disable unrelated plugins. They are outside the runtime capability boundary altogether.
@@ -248,14 +275,16 @@ import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      i18n: {
-        ...basePresets.default.defaults.i18n,
+      i18n: () => ({
+        ...basePresets.default.defaults.i18n(),
         locale: "uk",
-      },
+      }),
     },
   }),
 } satisfies TestFrameworkPresets;
 ```
+
+> Because preset defaults are factories, extending an existing plugin configuration requires invoking the base factory inside the replacement factory.
 
 The resulting preset is a new, independent preset definition.
 
@@ -269,10 +298,10 @@ For example, suppose the base preset contains:
 
 ```typescript
 defaults: {
-  pinia: {
+  pinia: () => ({
     initialState: {},
     stubActions: false,
-  },
+  }),
 },
 ```
 
@@ -281,9 +310,9 @@ This extension:
 ```typescript
 extendPreset(basePreset, {
   defaults: {
-    pinia: {
+    pinia: () => ({
       createSpy: vi.fn,
-    },
+    }),
   },
 });
 ```
@@ -309,15 +338,17 @@ If existing options should be preserved, copy them explicitly:
 ```typescript
 extendPreset(basePreset, {
   defaults: {
-    pinia: {
-      ...basePreset.defaults.pinia,
+    pinia: () => ({
+      ...basePreset.defaults.pinia(),
       createSpy: vi.fn,
-    },
+    }),
   },
 });
 ```
 
 This replacement semantics makes preset composition predictable and prevents configuration from being inherited implicitly.
+
+> Calling the base factory inside the new factory creates a fresh copy of the base options before applying the extension.
 
 ---
 
@@ -348,19 +379,19 @@ import { vi } from "vitest";
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: {
-        ...basePresets.default.defaults.pinia,
+      pinia: () => ({
+        ...basePresets.default.defaults.pinia(),
         createSpy: vi.fn,
-      },
+      }),
     },
   }),
 
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: {
-        ...basePresets.piniaPreset.defaults.pinia,
+      pinia: () => ({
+        ...basePresets.piniaPreset.defaults.pinia(),
         createSpy: vi.fn,
-      },
+      }),
     },
   }),
 
@@ -545,8 +576,8 @@ import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
 export const projectPresets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      i18n: {
-        ...basePresets.default.defaults.i18n,
+      i18n: () => ({
+        ...basePresets.default.defaults.i18n(),
         locale: "uk",
         fallbackLocale: "uk",
         messages: {
@@ -554,15 +585,37 @@ export const projectPresets = {
             welcome: "Вітаємо",
           },
         },
-      },
+      }),
 
-      pinia: {
-        ...basePresets.default.defaults.pinia,
+      pinia: () => ({
+        ...basePresets.default.defaults.pinia(),
         initialState: {},
-      },
+      }),
     },
   }),
 };
+```
+
+### 10.1. Project-Specific Router Configuration
+
+```typescript
+defaults: {
+  // existing project defaults
+
+  router: () => ({
+    history: createMemoryHistory(),
+    routes: [
+      {
+        path: "/",
+        component: HomePage,
+      },
+      {
+        path: "/users",
+        component: UsersPage,
+      },
+    ],
+  }),
+},
 ```
 
 Then pass the project registry to the framework:
@@ -601,11 +654,13 @@ When extending an existing plugin configuration, providing a new configuration r
 Preserve selected base options explicitly:
 
 ```typescript
-pinia: {
-  ...basePresets.default.defaults.pinia,
+pinia: () => ({
+  ...basePresets.default.defaults.pinia(),
   createSpy: vi.fn,
-},
+}),
 ```
+
+> The extension still replaces the plugin defaults factory as a whole. Invoking the base factory and spreading its returned options is an explicit choice to preserve the base configuration.
 
 ### 11.4. Keep defaults minimal
 
@@ -685,16 +740,17 @@ A TestForge preset defines a complete runtime environment for managed plugins.
 The key principles are:
 
 - `manifest` defines the plugin capability boundary;
-- `defaults` defines the baseline plugin configuration;
+- `defaults` defines baseline plugin options as factories rather than shared configuration objects;
+- each plugin options factory invocation produces fresh plugin options for the current pipeline context;
 - `default` should represent the normal project environment;
 - specialized presets provide isolated runtime profiles;
 - `extendPreset()` composes reusable preset definitions;
 - plugin configuration supplied to `extendPreset()` replaces that plugin's configuration as a whole;
-- `extraOptions.preset` selects a complete preset for a factory invocation;
+- `extraOptions.preset` selects a complete preset for a component factory invocation;
 - `mountOptions.plugins` replaces managed plugin configuration at a more local scope;
 - `extraOptions.plugins` provides a targeted shallow overlay;
 - runner-specific behavior belongs in runner-specific presets;
-- mutable plugin runtime state must remain isolated between factory invocations.
+- mutable plugin runtime state must remain isolated between component factory invocations.
 
 For most projects, the recommended workflow is:
 

@@ -34,14 +34,14 @@ describe("routerPlugin integration", () => {
         default: {
           manifest: [{ module: routerPlugin, enabled: true }],
           defaults: {
-            router: {
+            router: () => ({
               // Using memory history for the jsdom testing environment
               history: createMemoryHistory(),
               routes: [
                 { path: "/", component: Component },
                 { path: "/about", component: Component },
               ],
-            },
+            }),
           },
         },
       },

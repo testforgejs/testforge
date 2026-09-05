@@ -4,7 +4,7 @@ Recommended **Jest** presets for the [TestForge](https://github.com/testforgejs/
 
 This package builds on [`@testforgejs/vue-test-preset-base`](https://www.npmjs.com/package/@testforgejs/vue-test-preset-base) and provides recommended defaults for projects using **Jest**.
 
-The main difference from the base presets is the Pinia configuration: the recommended presets configure Pinia to use Jest's `jest.fn` as its spy factory.
+The main difference from the base presets is the Pinia configuration: the recommended presets configure Pinia to use Jest's `jest.fn` as its `createSpy` implementation.
 
 ## Installation
 
@@ -36,6 +36,7 @@ Import the `presets` object and pass it to `createTestFramework()`:
 
 ```typescript
 // tests/setup.ts
+
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { presets } from "@testforgejs/vue-test-preset-recommended-jest";
 
@@ -78,11 +79,11 @@ The presets are based on the corresponding presets from `@testforgejs/vue-test-p
 
 The default recommended Jest preset enables:
 
-- Pinia
-- Vue I18n
-- Vue Router — disabled by default
+- Pinia;
+- Vue I18n;
+- Vue Router — disabled by default.
 
-It also provides the default configuration for these plugins.
+It also provides default option factories for these managed plugins.
 
 For Pinia, the recommended preset additionally configures Jest's `jest.fn` as the `createSpy` implementation.
 
@@ -110,15 +111,16 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The Pinia configuration is based on the base preset and adds:
+The Pinia option factory is based on the base preset and adds Jest's `jest.fn`:
 
 ```typescript
-{
+pinia: () => ({
+  ...basePiniaOptions,
   createSpy: jest.fn,
-}
+});
 ```
 
-This makes the preset immediately usable with `@pinia/testing` under Jest.
+This makes the Pinia preset immediately usable in Jest-based TestForge projects.
 
 ### `presets.i18nPreset`
 
@@ -131,6 +133,8 @@ It enables Vue I18n using the base preset's default configuration:
 - English fallback locale;
 - empty messages;
 - disabled missing-translation warnings.
+
+The plugin defaults are provided through a plugin options factory, so each pipeline context receives fresh plugin options.
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
@@ -155,6 +159,8 @@ const { testComponentFactory } = createTestFramework({
 ```
 
 The router preset provides a test-oriented router configuration suitable for isolated component tests.
+
+Its plugin defaults are provided through a plugin options factory, which produces fresh options for each pipeline context.
 
 ## Recommended vs Base Presets
 
@@ -181,11 +187,22 @@ In particular:
         └── routerPreset  → inherited from base
 ```
 
-This separation keeps the base preset independent from a particular test runner while allowing the recommended preset to provide runner-specific defaults.
+This separation keeps the base preset independent from a particular test runner while allowing the recommended Jest preset to provide runner-specific defaults.
+
+The Jest-specific Pinia defaults are implemented as a **plugin options factory**. The factory invokes the base Pinia options factory and adds `createSpy`:
+
+```typescript
+const defaultJestPinia = (() => ({
+  ...defaultPinia(),
+  createSpy: jest.fn,
+})) satisfies PluginOptionsFactory<VueTestPiniaOptions>;
+```
+
+The resulting factory can be reused by both the `default` and `piniaPreset` profiles.
 
 ## Switching Presets at Runtime
 
-A preset can be selected for an individual factory invocation using the fourth `extraOptions` argument:
+A **component factory invocation** can select a different registered preset using the fourth `extraOptions` argument:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
@@ -200,7 +217,9 @@ factory(
 );
 ```
 
-This allows the same test framework to use different runtime environments without creating a separate framework instance.
+The selected preset defines the complete managed plugin runtime for that component factory invocation.
+
+This allows the same TestForge framework instance to use different runtime environments without creating a separate framework instance.
 
 For example:
 
@@ -230,14 +249,16 @@ import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-reco
 const projectPresets = {
   default: extendPreset(recommendedPresets.default, {
     defaults: {
-      pinia: {
-        ...recommendedPresets.default.defaults.pinia,
+      pinia: () => ({
+        ...recommendedPresets.default.defaults.pinia(),
         // project-specific options
-      },
+      }),
     },
   }),
 };
 ```
+
+Because `defaults.pinia` is a plugin options factory, the base Pinia options are obtained by invoking the factory.
 
 When extending a preset, explicitly preserve any base plugin options that should remain enabled. Managed plugin configuration is intentionally replaced when an extension provides configuration for that plugin.
 
@@ -254,7 +275,17 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The preset provides the runtime plugin baseline, while individual factories and tests can override configuration when needed.
+The preset provides the runtime plugin baseline, while individual component factory invocations and tests can override configuration when needed.
+
+## Plugin Options Factory Isolation
+
+The `defaults` values in the presets are **plugin options factories**, not shared plugin configuration objects.
+
+When a plugin options factory is invoked, it produces fresh plugin options for the current pipeline context.
+
+This keeps mutable configuration isolated between independent pipeline contexts.
+
+This is separate from component factory isolation: `testComponentFactory()` creates a reusable function for mounting a component, while each invocation of that component factory establishes its own runtime environment.
 
 ## Related Packages
 

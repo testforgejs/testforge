@@ -14,6 +14,7 @@ export type {
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   MountPlugin,
+  PluginOptionsFactory,
   PluginOptionsMap,
   PluginOptionsInput,
   PluginOverridesInput,

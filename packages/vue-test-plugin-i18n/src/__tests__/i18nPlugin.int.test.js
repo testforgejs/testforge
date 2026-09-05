@@ -23,11 +23,11 @@ describe("i18nPlugin integration", () => {
         default: {
           manifest: [{ module: i18nPlugin, enabled: true }],
           defaults: {
-            i18n: {
+            i18n: () => ({
               legacy: false,
               locale: "en",
               messages: {},
-            },
+            }),
           },
         },
       },

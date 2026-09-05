@@ -32,8 +32,8 @@ describe("createSupportedPluginsState", () => {
           { module: mockI18n, enabled: false },
         ],
         defaults: {
-          pinia: {},
-          i18n: {},
+          pinia: () => ({}),
+          i18n: () => ({}),
         },
       };
 
@@ -55,8 +55,8 @@ describe("createSupportedPluginsState", () => {
           { module: pluginModuleB, enabled: true },
         ],
         defaults: {
-          a: {},
-          b: {},
+          a: () => ({}),
+          b: () => ({}),
         },
       };
 
@@ -133,17 +133,18 @@ describe("createSupportedPluginsState", () => {
     });
 
     it("should throw when plugin enabled flag is not a boolean", () => {
-      const preset = {
+      const preset: PresetDefinition = {
         manifest: [
           {
             module: createMockPluginModule("test"),
+            // @ts-expect-error: Deliberately passing an incorrect value for `enabled` to test runtime validation
             enabled: undefined,
           },
         ],
         defaults: {
-          test: {},
+          test: () => ({}),
         },
-      } as unknown as PresetDefinition;
+      };
 
       expect(() => createSupportedPluginsState(preset)).toThrow(
         '[TestForge] Plugin "test" has invalid "enabled" value: undefined. Expected boolean.',
@@ -158,7 +159,7 @@ describe("createSupportedPluginsState", () => {
           { module: createMockPluginModule("router"), enabled: true },
         ],
         defaults: {
-          router: {},
+          router: () => ({}),
         },
       };
 

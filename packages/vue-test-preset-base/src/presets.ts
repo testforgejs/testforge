@@ -2,7 +2,7 @@ import type { TestFrameworkPresets } from "@testforgejs/vue-test-core";
 
 import { defaultI18n } from "./defaults/defaultI18n.js";
 import { defaultPinia } from "./defaults/defaultPinia.js";
-import { getDefaultRouter } from "./defaults/defaultRouter.js";
+import { defaultRouter } from "./defaults/defaultRouter.js";
 import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
 import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
@@ -17,7 +17,7 @@ export const presets = {
     defaults: {
       i18n: defaultI18n,
       pinia: defaultPinia,
-      router: getDefaultRouter(),
+      router: defaultRouter,
     },
   },
 
@@ -38,7 +38,7 @@ export const presets = {
   routerPreset: {
     manifest: [{ module: routerPlugin, enabled: true }],
     defaults: {
-      router: getDefaultRouter(),
+      router: defaultRouter,
     },
   },
 } satisfies TestFrameworkPresets;

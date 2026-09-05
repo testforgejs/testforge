@@ -38,6 +38,7 @@ Import the `presets` object and pass it to `createTestFramework()`:
 
 ```typescript
 // tests/setup.ts
+
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { presets } from "@testforgejs/vue-test-preset-base";
 
@@ -86,7 +87,7 @@ The default base preset provides the common Vue testing environment:
 - Vue I18n — enabled;
 - Vue Router — declared but disabled.
 
-It also provides default configuration for all three integrations.
+It also provides default configuration factories for the managed integrations.
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
@@ -98,14 +99,16 @@ const { testComponentFactory } = createTestFramework({
 
 The Pinia configuration intentionally does not define `createSpy`.
 
-For example, the base preset contains:
+The base preset provides Pinia options through a factory:
 
 ```typescript
-{
+pinia: () => ({
   initialState: {},
   stubActions: false,
-}
+});
 ```
+
+The factory is invoked when TestForge resolves the preset configuration, producing a fresh options object for the current pipeline context.
 
 A runner-specific preset can extend this configuration and provide its own spy implementation.
 
@@ -148,6 +151,8 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
+The I18n defaults are provided through a plugin options factory, so each pipeline context receives its own options object.
+
 ### `presets.routerPreset`
 
 A minimal preset containing only Vue Router.
@@ -166,7 +171,9 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The router history is created by `getDefaultRouter()`, so each preset construction receives a new router configuration.
+The router configuration is provided through a plugin options factory. The factory creates a new history instance when the plugin configuration is resolved for a pipeline context.
+
+This prevents router history state from being shared between independent component factory invocations.
 
 ## Runner-Specific Presets
 
@@ -182,14 +189,16 @@ import { vi } from "vitest";
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: {
-        ...basePresets.default.defaults.pinia,
+      pinia: () => ({
+        ...basePresets.default.defaults.pinia(),
         createSpy: vi.fn,
-      },
+      }),
     },
   }),
 };
 ```
+
+The important detail is that `basePresets.default.defaults.pinia` is a **plugin options factory**. To preserve its options, invoke the factory and extend the returned object.
 
 The same approach can be used for the dedicated Pinia preset:
 
@@ -197,10 +206,10 @@ The same approach can be used for the dedicated Pinia preset:
 export const presets = {
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: {
-        ...basePresets.piniaPreset.defaults.pinia,
+      pinia: () => ({
+        ...basePresets.piniaPreset.defaults.pinia(),
         createSpy: vi.fn,
-      },
+      }),
     },
   }),
 };
@@ -217,9 +226,42 @@ export const presets = {
 
 This keeps runner-specific concerns outside the base package.
 
+### Replacing Plugin Defaults
+
+Providing a new plugin defaults factory replaces the corresponding factory from the base preset.
+
+For example:
+
+```typescript
+extendPreset(basePresets.default, {
+  defaults: {
+    pinia: () => ({
+      createSpy: vi.fn,
+    }),
+  },
+});
+```
+
+The resulting Pinia configuration contains only the options returned by the replacement factory.
+
+If the base configuration should be preserved, invoke the base factory explicitly:
+
+```typescript
+extendPreset(basePresets.default, {
+  defaults: {
+    pinia: () => ({
+      ...basePresets.default.defaults.pinia(),
+      createSpy: vi.fn,
+    }),
+  },
+});
+```
+
+This explicit invocation makes the replacement semantics predictable and avoids implicitly sharing or merging configuration objects.
+
 ## Preset Selection at Runtime
 
-A factory can switch between registered presets for an individual invocation using the fourth `extraOptions` argument:
+A component factory can switch between registered presets for an individual invocation using the fourth `extraOptions` argument:
 
 ```typescript
 factory(
@@ -235,6 +277,8 @@ factory(
 The selected preset defines the complete managed plugin runtime for that invocation.
 
 For example, switching to `i18nPreset` enables Vue I18n without automatically creating the Pinia or Router integrations.
+
+The `preset` option selects the runtime profile for a **component factory invocation**. This is distinct from invoking a **plugin options factory**, which produces the configuration object used within that runtime profile.
 
 ## Preset Isolation
 
@@ -262,6 +306,39 @@ factory(
 The active preset declares only Vue I18n, so the Pinia configuration is rejected during validation.
 
 This isolation is intentional: presets are runtime environment profiles rather than partial configuration overlays.
+
+### Fresh Plugin Configuration
+
+Plugin defaults are represented by plugin options factories rather than shared configuration objects:
+
+```typescript
+defaults: {
+  pinia: () => ({
+    initialState: {},
+    stubActions: false,
+  }),
+}
+```
+
+TestForge invokes the plugin options factory while resolving the preset configuration for a pipeline context.
+
+Each invocation produces a fresh options object:
+
+```typescript
+const first = presets.default.defaults.pinia();
+const second = presets.default.defaults.pinia();
+
+first !== second; // true
+```
+
+This prevents mutable plugin configuration from being shared between independent pipeline contexts.
+
+This distinction is important:
+
+- a **plugin options factory** creates plugin configuration;
+- a **component factory** created by `testComponentFactory()` creates component test mounts.
+
+Both participate in isolation, but they operate at different levels of the TestForge architecture.
 
 ## Related Packages
 

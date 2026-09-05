@@ -15,9 +15,9 @@ const createBasePreset = (): PresetDefinition => ({
     },
   ],
   defaults: {
-    pinia: {
+    pinia: () => ({
       stubActions: false,
-    },
+    }),
   },
 });
 
@@ -64,7 +64,7 @@ describe("validatePresetExtension", () => {
           },
         ],
         defaults: {
-          router: {},
+          router: () => ({}),
         },
       };
 
@@ -98,9 +98,9 @@ describe("validatePresetExtension", () => {
           },
         ],
         defaults: {
-          router: {
+          router: () => ({
             routes: [],
-          },
+          }),
         },
       };
 
@@ -116,7 +116,7 @@ describe("validatePresetExtension", () => {
           },
         ],
         defaults: {
-          router: {},
+          router: () => ({}),
         },
       };
 
@@ -128,7 +128,7 @@ describe("validatePresetExtension", () => {
   // Defaults validation
   // ─────────────────────────────────────────────
   describe("when validating defaults", () => {
-    it("should throw when defaults contain false", () => {
+    it("should throw when a plugin default is not a plugin options factory", () => {
       const extension = {
         defaults: {
           pinia: false,
@@ -136,14 +136,15 @@ describe("validatePresetExtension", () => {
       } as unknown as PresetExtension;
 
       expect(() => validatePresetExtension(createBasePreset(), extension)).toThrow(
-        '[TestForge] Invalid defaults for plugin "pinia". Preset defaults must be a plain object.',
+        '[TestForge] Invalid defaults for plugin "pinia". ' +
+          "Preset defaults must be provided as a plugin options factory function.",
       );
     });
 
     it("should throw when defaults reference an unknown plugin", () => {
       const extension: PresetExtension = {
         defaults: {
-          router: {},
+          router: () => ({}),
         },
       };
 
@@ -155,9 +156,9 @@ describe("validatePresetExtension", () => {
     it("should accept defaults for a plugin from the base preset", () => {
       const extension: PresetExtension = {
         defaults: {
-          pinia: {
+          pinia: () => ({
             stubActions: true,
-          },
+          }),
         },
       };
 
@@ -182,7 +183,7 @@ describe("validatePresetExtension", () => {
           },
         ],
         defaults: {
-          router: {},
+          router: () => ({}),
         },
       };
 
@@ -205,9 +206,9 @@ describe("validatePresetExtension", () => {
           },
         ],
         defaults: {
-          pinia: {
+          pinia: () => ({
             stubActions: true,
-          },
+          }),
         },
       };
 
@@ -240,9 +241,9 @@ describe("validatePresetExtension", () => {
           },
         ],
         defaults: {
-          pinia: {
+          pinia: () => ({
             stubActions: true,
-          },
+          }),
         },
       };
 

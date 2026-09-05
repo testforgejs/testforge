@@ -1,24 +1,24 @@
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
+import type { TestFrameworkPresets, PluginOptionsFactory } from "@testforgejs/vue-test-core";
+import { defaultPinia, presets as basePresets } from "@testforgejs/vue-test-preset-base";
+import type { VueTestPiniaOptions } from "@testforgejs/vue-test-plugin-pinia";
 import { jest } from "@jest/globals";
-import type { TestFrameworkPresets } from "@testforgejs/vue-test-core";
+
+const defaultJestPinia = (() => ({
+  ...defaultPinia(),
+  createSpy: jest.fn,
+})) satisfies PluginOptionsFactory<VueTestPiniaOptions>;
 
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: {
-        ...basePresets.default.defaults.pinia,
-        createSpy: jest.fn,
-      },
+      pinia: defaultJestPinia,
     },
   }),
 
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: {
-        ...basePresets.piniaPreset.defaults.pinia,
-        createSpy: jest.fn,
-      },
+      pinia: defaultJestPinia,
     },
   }),
 

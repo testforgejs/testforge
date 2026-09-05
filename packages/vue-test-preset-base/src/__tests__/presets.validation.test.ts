@@ -5,7 +5,7 @@ import { validatePresets } from "@testforgejs/vue-test-core";
 describe("presets", () => {
   describe("validation", () => {
     it("should pass preset validation", () => {
-      validatePresets(presets);
+      expect(() => validatePresets(presets)).not.toThrow();
     });
   });
 });

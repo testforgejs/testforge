@@ -184,6 +184,9 @@ importers:
       '@testforgejs/vue-test-core':
         specifier: workspace:*
         version: link:../vue-test-core
+      vue-router:
+        specifier: ^5.0.0
+        version: 5.2.0(@vue/compiler-sfc@3.5.41)(esbuild@0.27.7)(pinia@4.0.3(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@25.9.5)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
 
   packages/vue-test-preset-recommended:
     dependencies:

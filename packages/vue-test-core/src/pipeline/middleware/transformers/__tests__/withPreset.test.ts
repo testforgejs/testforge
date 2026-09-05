@@ -37,25 +37,37 @@ describe("withPreset middleware", () => {
   });
 
   it("should call patchResultState with pluginDefaultsState when preset.defaults exists", () => {
-    const pluginDefaultsState = {
-      pinia: { app: { isLoaded: true } },
-      i18n: { language: "en" },
+    const pluginDefaults = {
+      pinia: () => ({ app: { isLoaded: true } }),
+      i18n: () => ({ language: "en" }),
     };
     const ctx = createMockCtx<RuntimeContext>({
       preset: {
         manifest: [],
-        defaults: pluginDefaultsState,
+        defaults: pluginDefaults,
       },
     });
     const result = withPreset(ctx);
 
     expect(mockPatchResultState).toHaveBeenCalledTimes(1);
-    expect(mockPatchResultState).toHaveBeenCalledWith(ctx, { pluginDefaultsState });
+    expect(mockPatchResultState).toHaveBeenCalledWith(ctx, {
+      pluginDefaultsState: {
+        pinia: { app: { isLoaded: true } },
+        i18n: { language: "en" },
+      },
+    });
     expect(result).toBe(ctx);
   });
 
-  it("should shallow-copy preset.defaults to protect the original reference from direct root mutation", () => {
-    const defaults = { pinia: { app: { isLoaded: true } } };
+  it("should resolve preset default factories into pluginDefaultsState", () => {
+    const defaults = {
+      pinia: () => ({
+        app: {
+          isLoaded: true,
+        },
+      }),
+    };
+
     const ctx = createMockCtx<RuntimeContext>({
       preset: { manifest: [], defaults },
     });
@@ -64,7 +76,47 @@ describe("withPreset middleware", () => {
 
     const [, payload] = mockPatchResultState.mock.calls[0];
 
-    expect(payload.pluginDefaultsState).not.toBe(defaults);
-    expect(payload.pluginDefaultsState).toEqual(defaults);
+    expect(payload.pluginDefaultsState).toEqual({
+      pinia: {
+        app: {
+          isLoaded: true,
+        },
+      },
+    });
+  });
+
+  it("should create independent plugin default options for each pipeline context", () => {
+    const defaults = {
+      pinia: () => ({
+        app: {
+          isLoaded: true,
+        },
+      }),
+    };
+
+    const firstCtx = createMockCtx<RuntimeContext>({
+      preset: { manifest: [], defaults },
+    });
+
+    const secondCtx = createMockCtx<RuntimeContext>({
+      preset: { manifest: [], defaults },
+    });
+
+    withPreset(firstCtx);
+    withPreset(secondCtx);
+
+    const [, firstPayload] = mockPatchResultState.mock.calls[0];
+    const [, secondPayload] = mockPatchResultState.mock.calls[1];
+
+    const firstPluginDefaults = firstPayload.pluginDefaultsState;
+    const secondPluginDefaults = secondPayload.pluginDefaultsState;
+
+    if (!firstPluginDefaults || !secondPluginDefaults) {
+      throw new Error("Expected pluginDefaultsState to be defined.");
+    }
+
+    expect(firstPluginDefaults).toEqual(secondPluginDefaults);
+
+    expect(firstPluginDefaults.pinia).not.toBe(secondPluginDefaults.pinia);
   });
 });

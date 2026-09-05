@@ -3,31 +3,32 @@ import { validatePluginDefaults } from "../validatePluginDefaults";
 
 describe("validatePluginDefaults", () => {
   const pluginName = "pinia";
+
   const expectedError =
-    '[TestForge] Invalid defaults for plugin "pinia". Preset defaults must be a plain object.';
+    '[TestForge] Invalid defaults for plugin "pinia". ' +
+    "Preset defaults must be provided as a plugin options factory function.";
 
-  it("should accept a plain object", () => {
-    expect(() => validatePluginDefaults("pinia", {})).not.toThrow();
-  });
-
-  it("should accept a plain object with configuration", () => {
-    expect(() =>
-      validatePluginDefaults("pinia", {
-        initialState: {},
-        stubActions: false,
-      }),
-    ).not.toThrow();
+  it("should accept a plugin options factory function", () => {
+    expect(() => validatePluginDefaults(pluginName, () => ({}))).not.toThrow();
   });
 
   it.each([
     ["null", null],
     ["undefined", undefined],
+    ["plain object", {}],
+    [
+      "configuration object",
+      {
+        initialState: {},
+        stubActions: false,
+      },
+    ],
     ["string", "options"],
     ["number", 123],
     ["boolean", false],
     ["array", []],
     ["class instance", new (class PluginOptions {})()],
-  ])("throws for %s", (_, value) => {
+  ])("should throw for %s", (_, value) => {
     expect(() => validatePluginDefaults(pluginName, value)).toThrow(expectedError);
   });
 });

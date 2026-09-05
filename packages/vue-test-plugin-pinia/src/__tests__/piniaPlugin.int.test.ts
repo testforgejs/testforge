@@ -36,11 +36,11 @@ describe("piniaPlugin integration", () => {
         default: {
           manifest: [{ module: piniaPlugin, enabled: true }],
           defaults: {
-            pinia: {
+            pinia: () => ({
               // By default, @pinia/testing stubs (replaces with placeholders) all actions.
               // Turn this off to test how the action actually behaves.
               stubActions: false,
-            },
+            }),
           },
         },
       },

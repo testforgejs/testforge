@@ -40,10 +40,10 @@ const framework = createTestFramework({
         },
       ],
       defaults: {
-        i18n: {
+        i18n: () => ({
           locale: "en",
           messages: {},
-        },
+        }),
       },
     },
   },

@@ -2,7 +2,7 @@ import { validatePreset } from "./validatePreset.js";
 import { isPlainObject } from "../../guards/isPlainObject.js";
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
-import type { TestFrameworkPresets } from "../../types.js";
+import type { TestFrameworkPresets } from "../../types";
 
 /*
  * Validates the preset registry.

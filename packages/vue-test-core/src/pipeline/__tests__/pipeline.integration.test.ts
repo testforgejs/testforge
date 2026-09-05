@@ -537,7 +537,7 @@ describe("Mount Pipeline Integration", () => {
         default: {
           manifest: [{ module: piniaPlugin, enabled: true }],
           defaults: {
-            pinia: {},
+            pinia: () => ({}),
           },
         },
       };
@@ -561,10 +561,13 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, baseMountOptions, mountOptions);
 
-      // Should be returned object with default values (since {} allowed activation)
+      // Should be returned object with default values
       expect(result.plugins.pinia).toEqual(
         expect.objectContaining({
-          initialState: {},
+          initialState: {
+            counter: { n: 20 },
+            user: { name: "Alice" },
+          },
           stubActions: false,
         }),
       );
@@ -618,7 +621,10 @@ describe("Mount Pipeline Integration", () => {
 
       expect(result.plugins.pinia).toEqual(
         expect.objectContaining({
-          initialState: {},
+          initialState: {
+            counter: { n: 20 },
+            user: { name: "Alice" },
+          },
           stubActions: false,
         }),
       );
@@ -740,7 +746,10 @@ describe("Mount Pipeline Integration", () => {
       // All specific default settings have been cleared (replaced with {}),
       // Only framework's global defaults remain (pluginDefaultsState.pinia)
       expect(piniaConfig.stubActions).toBe(false);
-      expect(piniaConfig.initialState).toEqual({});
+      expect(piniaConfig.initialState).toEqual({
+        counter: { n: 20 },
+        user: { name: "Alice" },
+      });
     });
 
     it("should act as a NOOP when mountOptions.plugins provides an empty object", () => {
@@ -847,15 +856,15 @@ describe("Mount Pipeline Integration", () => {
           { module: routerPlugin, enabled: false },
         ],
         defaults: {
-          i18n: { locale: "en", legacy: false },
-          pinia: { stubActions: false },
-          router: { routes: [{ path: "/", component: {} }] },
+          i18n: () => ({ locale: "en", legacy: false }),
+          pinia: () => ({ stubActions: false }),
+          router: () => ({ routes: [{ path: "/", component: {} }] }),
         },
       },
       custom: {
         manifest: [{ module: i18nPlugin, enabled: true }],
         defaults: {
-          i18n: { locale: "fr" },
+          i18n: () => ({ locale: "fr" }),
         },
       },
     };
@@ -863,8 +872,8 @@ describe("Mount Pipeline Integration", () => {
     it("should use options from default preset when plugin config is missing", () => {
       const result = run(defaultPresets);
 
-      expect(result.plugins.i18n).toEqual(defaultPresets.default.defaults.i18n);
-      expect(result.plugins.pinia).toEqual(defaultPresets.default.defaults.pinia);
+      expect(result.plugins.i18n).toEqual(defaultPresets.default.defaults.i18n());
+      expect(result.plugins.pinia).toEqual(defaultPresets.default.defaults.pinia());
     });
 
     it("should use options from default preset when plugin config is an empty object", () => {
@@ -876,7 +885,7 @@ describe("Mount Pipeline Integration", () => {
       const result = run(defaultPresets, {}, mountOptions);
 
       // It should be pulled up from the preset
-      expect(result.plugins.router).toEqual(defaultPresets.default.defaults.router);
+      expect(result.plugins.router).toEqual(defaultPresets.default.defaults.router());
     });
 
     it("should fill missing keys from preset when user provides partial config", () => {

@@ -30,7 +30,7 @@ const framework = createTestFramework({
         },
       ],
       defaults: {
-        vuetify: {},
+        vuetify: () => ({}),
       },
     },
   },

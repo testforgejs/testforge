@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@jest/globals";
 import { presets } from "../presets.js";
 import { validatePresets } from "@testforgejs/vue-test-core";
 

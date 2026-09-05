@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { validatePreset } from "../validatePreset.js";
 import { DEFAULT_PRESET_NAME } from "../../../constants/constants.js";
 
-import type { PresetDefinition, RuntimePluginConfig } from "../../../types";
+import type { PresetDefinition } from "../../../types";
 
 describe("validatePreset", () => {
   // Helpers for creating mock modules
@@ -22,8 +22,8 @@ describe("validatePreset", () => {
           { module: mockI18n, enabled: false },
         ],
         defaults: {
-          pinia: { store: {} },
-          i18n: {},
+          pinia: () => ({ store: {} }),
+          i18n: () => ({}),
         },
       };
 
@@ -33,7 +33,7 @@ describe("validatePreset", () => {
     it("should pass even when defaults are missing (optional field)", () => {
       const presetWithoutDefaults: PresetDefinition = {
         manifest: [{ module: mockPinia, enabled: true }],
-        defaults: { pinia: {} },
+        defaults: { pinia: () => ({}) },
       };
       expect(() => validatePreset("minimal", presetWithoutDefaults)).not.toThrow();
     });
@@ -83,7 +83,7 @@ describe("validatePreset", () => {
           { module: mockPinia, enabled: true },
           { module: mockPinia, enabled: false },
         ],
-        defaults: { pinia: {} },
+        defaults: { pinia: () => ({}) },
       };
       expect(() => validatePreset("dupe-test", duplicate)).toThrow(/Duplicate plugin "pinia"/);
     });
@@ -91,7 +91,7 @@ describe("validatePreset", () => {
     it("should throw when enabled flag is not a boolean", () => {
       const invalid = {
         manifest: [{ module: mockPinia, enabled: "yes" }],
-        defaults: { pinia: {} },
+        defaults: { pinia: () => ({}) },
       };
       expect(() => validatePreset("bad-enabled", invalid as unknown as PresetDefinition)).toThrow(
         /must have a boolean "enabled" flag/,
@@ -104,7 +104,7 @@ describe("validatePreset", () => {
       const inconsistent = {
         manifest: [{ module: mockPinia, enabled: true }],
         defaults: {
-          router: { history: {} }, // The router is missing from the manifest
+          router: () => ({ history: {} }), // The router is missing from the manifest
         },
       };
       expect(() => validatePreset("inconsistent", inconsistent)).toThrow(
@@ -112,40 +112,17 @@ describe("validatePreset", () => {
       );
     });
 
-    it("should throw when a default value is not an object", () => {
-      const badValue = {
+    it("should throw when a default value is not a plugin options factory", () => {
+      const badValue: PresetDefinition = {
         manifest: [{ module: mockPinia, enabled: true }],
         defaults: {
-          pinia: 123 as unknown as RuntimePluginConfig, // Should be an object
+          // @ts-expect-error: Deliberately pass `number` instead of a function factory to check for runtime validation
+          pinia: 123,
         },
       };
+
       expect(() => validatePreset("bad-value", badValue)).toThrow(
-        /Expected Object, but received number/,
-      );
-    });
-
-    it("should throw when a default value is null", () => {
-      const badValue = {
-        manifest: [{ module: mockPinia, enabled: true }],
-        defaults: {
-          pinia: null as unknown as RuntimePluginConfig,
-        },
-      };
-      expect(() => validatePreset("null-value", badValue)).toThrow(
-        /Expected Object, but received object/,
-      );
-    });
-
-    it("should throw when plugin defaults value is false", () => {
-      const invalid = {
-        manifest: [{ module: mockPinia, enabled: true }],
-        defaults: {
-          pinia: false as unknown as RuntimePluginConfig,
-        },
-      };
-
-      expect(() => validatePreset("bad-plugin-false", invalid)).toThrow(
-        "Expected Object, but received boolean",
+        /Expected a plugin options factory function, but received number/,
       );
     });
   });
@@ -154,7 +131,9 @@ describe("validatePreset", () => {
     it("should not mutate the preset object", () => {
       const moduleRef = mockPinia;
       const manifestEntryRef = { module: moduleRef, enabled: true };
-      const defaultsRef = { pinia: { a: 1 } };
+      const defaultsRef = {
+        pinia: () => ({ a: 1 }),
+      };
 
       const preset = {
         manifest: [manifestEntryRef],
@@ -167,7 +146,7 @@ describe("validatePreset", () => {
       expect(preset.manifest[0]).toBe(manifestEntryRef);
       expect(preset.manifest[0].module).toBe(moduleRef);
       expect(preset.defaults).toBe(defaultsRef);
-      expect(preset.defaults.pinia.a).toBe(1);
+      expect(preset.defaults.pinia().a).toBe(1);
     });
   });
 });

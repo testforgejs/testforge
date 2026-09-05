@@ -25,16 +25,16 @@ describe("recommended presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected Pinia defaults", () => {
-      expect(presets.default.defaults.pinia).toEqual({
+    it("should create the expected Pinia default options", () => {
+      expect(presets.default.defaults.pinia()).toEqual({
         initialState: {},
         stubActions: false,
         createSpy: vi.fn,
       });
     });
 
-    it("should contain the expected i18n defaults", () => {
-      expect(presets.default.defaults.i18n).toEqual({
+    it("should create the expected i18n default options", () => {
+      expect(presets.default.defaults.i18n()).toEqual({
         legacy: false,
         locale: "en",
         fallbackLocale: "en",
@@ -44,8 +44,8 @@ describe("recommended presets configuration", () => {
       });
     });
 
-    it("should contain the expected Router defaults", () => {
-      expect(presets.default.defaults.router).toMatchObject({
+    it("should create the expected Router default options", () => {
+      expect(presets.default.defaults.router()).toMatchObject({
         routes: [
           {
             path: "/",
@@ -54,7 +54,7 @@ describe("recommended presets configuration", () => {
         ],
       });
 
-      expect(presets.default.defaults.router.history).toBeDefined();
+      expect(presets.default.defaults.router().history).toBeDefined();
     });
   });
 
@@ -68,8 +68,8 @@ describe("recommended presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected Pinia defaults for piniaPreset", () => {
-      expect(presets.piniaPreset.defaults.pinia).toEqual({
+    it("should create the expected Pinia default options for piniaPreset", () => {
+      expect(presets.piniaPreset.defaults.pinia()).toEqual({
         initialState: {},
         stubActions: false,
         createSpy: vi.fn,
@@ -87,8 +87,8 @@ describe("recommended presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected i18n defaults for i18nPreset", () => {
-      expect(presets.i18nPreset.defaults.i18n).toEqual({
+    it("should create the expected i18n default options for i18nPreset", () => {
+      expect(presets.i18nPreset.defaults.i18n()).toEqual({
         legacy: false,
         locale: "en",
         fallbackLocale: "en",
@@ -109,8 +109,8 @@ describe("recommended presets configuration", () => {
       ]);
     });
 
-    it("should contain the expected Router defaults for routerPreset", () => {
-      expect(presets.routerPreset.defaults.router).toMatchObject({
+    it("should create the expected Router default options for routerPreset", () => {
+      expect(presets.routerPreset.defaults.router()).toMatchObject({
         routes: [
           {
             path: "/",
@@ -119,7 +119,7 @@ describe("recommended presets configuration", () => {
         ],
       });
 
-      expect(presets.routerPreset.defaults.router.history).toBeDefined();
+      expect(presets.routerPreset.defaults.router().history).toBeDefined();
     });
   });
 

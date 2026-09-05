@@ -2827,7 +2827,7 @@ describe("testComponentFactory Integration (Universal)", () => {
     });
 
     describe("Instance Exposing", () => {
-      it("should expose the created plugin instance when captureInstance helper is used", async () => {
+      it("should capture the created plugin instance when captureInstance helper is used", () => {
         const capture = captureInstance();
 
         const factory = testComponentFactory(
@@ -2844,6 +2844,35 @@ describe("testComponentFactory Integration (Universal)", () => {
 
         expect(capture.instance).toBeDefined();
         expect(typeof capture.instance.install).toBe("function");
+      });
+
+      it("should not capture the created plugin instance when plugin configuration is overridden", () => {
+        const capture = captureInstance();
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: { ...capture },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                initialState: {
+                  users: [],
+                },
+              },
+            },
+          },
+        );
+
+        expect(capture.instance).not.toBeDefined();
       });
 
       it("should expose the created plugin instance when raw expose callback is provided", () => {
@@ -3010,6 +3039,121 @@ describe("testComponentFactory Integration (Universal)", () => {
       const [, options] = mockMount.mock.calls[0];
 
       expect(options.global.plugins).toContain(providedPinia);
+    });
+  });
+
+  describe("Runtime Isolation", () => {
+    it("should create an independent router history for each factory call", () => {
+      let firstRouter;
+      let secondRouter;
+
+      const factory = testComponentFactory(MockComponent);
+
+      factory(
+        {},
+        {
+          plugins: {
+            router: {
+              expose(instance) {
+                firstRouter = instance;
+              },
+            },
+          },
+        },
+      );
+      factory(
+        {},
+        {
+          plugins: {
+            router: {
+              expose(instance) {
+                secondRouter = instance;
+              },
+            },
+          },
+        },
+      );
+
+      const firstRouterHistory = firstRouter.options.history;
+      const secondRouterHistory = secondRouter.options.history;
+
+      expect(firstRouterHistory).not.toBe(secondRouterHistory);
+    });
+
+    it("should create independent Pinia state for each factory call", () => {
+      let firstPinia;
+      let secondPinia;
+
+      const factory = testComponentFactory(MockComponent);
+
+      factory(
+        {},
+        {
+          plugins: {
+            pinia: {
+              expose(instance) {
+                firstPinia = instance;
+              },
+            },
+          },
+        },
+      );
+
+      factory(
+        {},
+        {
+          plugins: {
+            pinia: {
+              expose(instance) {
+                secondPinia = instance;
+              },
+            },
+          },
+        },
+      );
+
+      const firstState = firstPinia.state.value;
+      const secondState = secondPinia.state.value;
+
+      expect(firstState).not.toBe(secondState);
+    });
+
+    it("should create independent I18n messages for each factory call", () => {
+      let firstI18n;
+      let secondI18n;
+
+      const factory = testComponentFactory(MockComponent);
+
+      factory(
+        {},
+        {
+          plugins: {
+            i18n: {
+              expose(instance) {
+                firstI18n = instance;
+              },
+            },
+          },
+        },
+      );
+
+      factory(
+        {},
+        {
+          plugins: {
+            i18n: {
+              expose(instance) {
+                secondI18n = instance;
+              },
+            },
+          },
+        },
+      );
+
+      const firstMessages = firstI18n.global.messages.value;
+      const secondMessages = secondI18n.global.messages.value;
+
+      expect(firstMessages).not.toBe(secondMessages);
     });
   });
 });

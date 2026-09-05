@@ -30,7 +30,7 @@ yarn add -D @testforgejs/vue-test-plugin-pinia@beta
 
 Register `piniaPlugin` in the TestForge plugin manifest.
 
-```ts
+```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
 
@@ -43,10 +43,17 @@ const framework = createTestFramework({
           enabled: true,
         },
       ],
+      defaults: {
+        pinia: () => ({
+          initialState: {},
+        }),
+      },
     },
   },
 });
 ```
+
+`defaults.pinia` is an options factory. A new Pinia options object is created for each pipeline context.
 
 The plugin provides a Pinia instance for components mounted through TestForge.
 

@@ -18,9 +18,9 @@ const framework = createTestFramework({
         },
       ],
       defaults: {
-        primevue: {
+        primevue: () => ({
           ripple: true,
-        },
+        }),
       },
     },
   },

@@ -19,7 +19,7 @@ function createPrimeVueFramework(enabled: boolean) {
           },
         ],
         defaults: {
-          primevue: {},
+          primevue: () => ({}),
         },
       },
     },

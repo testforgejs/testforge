@@ -51,9 +51,9 @@ const framework = createTestFramework({
         },
       ],
       defaults: {
-        pinia: {
+        pinia: () => ({
           stubActions: true,
-        },
+        }),
       },
     },
   },
