@@ -1,6 +1,6 @@
 {
   "name": "testforge",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "type": "module",
   "description": "The TestForge ecosystem — extensible component testing tools for Vue 3",
   "private": true,
