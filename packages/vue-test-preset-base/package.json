@@ -1,6 +1,6 @@
 {
   "name": "@testforgejs/vue-test-preset-base",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "type": "module",
   "description": "Official base preset for the TestForge framework",
   "homepage": "https://github.com/testforgejs/testforge#readme",

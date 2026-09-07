@@ -1,6 +1,6 @@
 {
   "name": "@testforgejs/vue-test-plugin-pinia",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "type": "module",
   "description": "Official TestForge plugin for Pinia integration in component tests",
   "homepage": "https://github.com/testforgejs/testforge#readme",

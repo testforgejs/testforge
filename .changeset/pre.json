@@ -8,14 +8,18 @@
     "@testforgejs/vue-test-plugin-primevue": "0.0.1",
     "@testforgejs/vue-test-plugin-router": "0.1.0",
     "@testforgejs/vue-test-plugin-vuetify": "0.0.1",
-    "@testforgejs/vue-test-preset-recommended": "0.1.0"
+    "@testforgejs/vue-test-preset-recommended": "0.1.0",
+    "@testforgejs/vue-test-preset-base": "1.0.0-beta.0",
+    "@testforgejs/vue-test-preset-recommended-jest": "1.0.0-beta.0"
   },
   "changesets": [
+    "better-gifts-run",
     "bumpy-files-vanish",
     "calm-glasses-take",
     "chatty-foxes-travel",
     "chilly-cats-study",
     "clean-parents-dream",
+    "clear-apes-wait",
     "clear-rocks-grow",
     "curvy-yaks-wink",
     "famous-masks-try",
@@ -40,6 +44,7 @@
     "sparkly-beds-argue",
     "stale-results-stand",
     "tasty-bugs-dream",
-    "tricky-forks-bathe"
+    "tricky-forks-bathe",
+    "warm-ways-create"
   ]
 }

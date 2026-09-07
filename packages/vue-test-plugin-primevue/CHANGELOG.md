@@ -1,5 +1,13 @@
 # @testforgejs/vue-test-plugin-primevue
 
+## 1.0.0-beta.1
+
+### Patch Changes
+
+- Updated dependencies [011a3d9]
+- Updated dependencies [b7dad02]
+  - @testforgejs/vue-test-core@1.0.0-beta.1
+
 ## 1.0.0-beta.0
 
 ### Minor Changes

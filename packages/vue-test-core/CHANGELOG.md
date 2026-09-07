@@ -1,5 +1,45 @@
 # @testforgejs/vue-test-core
 
+## 1.0.0-beta.1
+
+### Major Changes
+
+- b7dad02: feat: introduce `PluginOptionsFactory` for preset plugin defaults
+
+  Preset plugin defaults are now defined as factory functions that return fresh plugin configuration objects instead of shared configuration objects. This prevents mutable plugin options from being shared between independent pipeline contexts.
+
+  This is a breaking change for custom presets: existing plugin defaults defined as plain objects must be migrated to option factories.
+
+  For example:
+
+  Before:
+
+  ```typescript
+  defaults: {
+    pinia: {
+      initialState: {},
+    },
+  }
+  ```
+
+  After:
+
+  ```typescript
+  defaults: {
+    pinia: () => ({
+      initialState: {},
+    }),
+  }
+  ```
+
+  When extending an existing preset, the base factory must be invoked explicitly if its options should be preserved.
+
+### Minor Changes
+
+- 011a3d9: feat: add `extendPreset` for creating project-specific presets from existing preset definitions.
+
+  Preset extensions can override plugin configuration and manifest entries while preserving the base preset configuration. Extension validation also ensures that newly added plugins declare both their `enabled` state and default configuration, and prevents invalid or unknown plugin defaults.
+
 ## 1.0.0-beta.0
 
 ### Major Changes
