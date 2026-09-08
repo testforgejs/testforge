@@ -98,17 +98,19 @@ The recommended preset builds on the shared TestForge base presets and provides 
 
 ## Install Dependencies
 
+Install TestForge and Vue Test Utils:
+
 ```bash
 pnpm add -D \
   @testforgejs/vue-test-core \
-  @testforgejs/vue-test-preset-recommended
+  @testforgejs/vue-test-preset-recommended \
+  @vue/test-utils
 ```
 
-TestForge requires Vue 3 and Vue Test Utils:
-
-```bash
-pnpm add -D vue@^3.3.0 @vue/test-utils@^2.0.0
-```
+> [!NOTE]
+> TestForge requires [Vue](https://vuejs.org/) 3.3.0 or higher and [Vue Test Utils](https://test-utils.vuejs.org/) 2.0.0 or higher.
+>
+> Vue is normally already installed as part of your Vue application. Vue Test Utils should be added to your development dependencies.
 
 > [!NOTE]
 >
