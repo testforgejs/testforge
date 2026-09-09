@@ -1,0 +1,15 @@
+{
+  "name": "@testforgejs/testforge-integration",
+  "version": "0.0.0",
+  "description": "Integration tests for TestForge packages",
+  "private": true,
+  "devDependencies": {
+    "@testforgejs/vue-test-core": "workspace:*",
+    "@testforgejs/vue-test-plugin-i18n": "workspace:*",
+    "@testforgejs/vue-test-plugin-pinia": "workspace:*",
+    "@testforgejs/vue-test-plugin-router": "workspace:*",
+    "@vue/test-utils": "^2.0.0",
+    "vue": "^3.3.0",
+    "vue-router": "^5.0.0"
+  }
+}

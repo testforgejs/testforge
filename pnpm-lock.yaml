@@ -96,18 +96,11 @@ importers:
         specifier: ^3.5.32
         version: 3.5.41(typescript@6.0.3)
 
-  packages/vue-test-core:
-    dependencies:
-      '@vue/test-utils':
-        specifier: ^2.0.0
-        version: 2.4.11(@vue/compiler-dom@3.5.41)(@vue/server-renderer@3.5.41)(vue@3.5.41(typescript@6.0.3))
-      vue:
-        specifier: ^3.3.0
-        version: 3.5.41(typescript@6.0.3)
-      vue-component-type-helpers:
-        specifier: ^3.3.4
-        version: 3.3.9
+  packages/testforge-integration:
     devDependencies:
+      '@testforgejs/vue-test-core':
+        specifier: workspace:*
+        version: link:../vue-test-core
       '@testforgejs/vue-test-plugin-i18n':
         specifier: workspace:*
         version: link:../vue-test-plugin-i18n
@@ -117,9 +110,28 @@ importers:
       '@testforgejs/vue-test-plugin-router':
         specifier: workspace:*
         version: link:../vue-test-plugin-router
+      '@vue/test-utils':
+        specifier: ^2.0.0
+        version: 2.4.11(@vue/compiler-dom@3.5.41)(@vue/server-renderer@3.5.41)(vue@3.5.41(typescript@6.0.3))
+      vue:
+        specifier: ^3.3.0
+        version: 3.5.41(typescript@6.0.3)
       vue-router:
         specifier: ^5.0.0
         version: 5.2.0(@vue/compiler-sfc@3.5.41)(esbuild@0.27.7)(pinia@4.0.3(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@25.9.5)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
+
+  packages/vue-test-core:
+    dependencies:
+      vue-component-type-helpers:
+        specifier: ^3.3.4
+        version: 3.3.9
+    devDependencies:
+      '@vue/test-utils':
+        specifier: ^2.0.0
+        version: 2.4.11(@vue/compiler-dom@3.5.41)(@vue/server-renderer@3.5.41)(vue@3.5.41(typescript@6.0.3))
+      vue:
+        specifier: ^3.3.0
+        version: 3.5.41(typescript@6.0.3)
 
   packages/vue-test-plugin-i18n:
     devDependencies:

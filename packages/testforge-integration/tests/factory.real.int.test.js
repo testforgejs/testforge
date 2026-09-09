@@ -1,7 +1,5 @@
 /** @jest-environment jsdom */
 // @vitest-environment jsdom
-import { captureInstance } from "../utils/captureInstance";
-
 const runner = typeof vi !== "undefined" ? vi : jest;
 
 // 1. Use hoisted to prepare data before mocks are injected (Vitest only)
@@ -47,6 +45,7 @@ runner.doMock("@testforgejs/vue-test-plugin-router", () => ({
 describe("testComponentFactory Integration (Expose Instance)", () => {
   const MockComponent = { name: "MockComponent", render: () => null };
   let testComponentFactory;
+  let captureInstance;
 
   beforeEach(async () => {
     runner.clearAllMocks();
@@ -74,11 +73,14 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
       element: {},
     });
 
-    const { createTestFramework } = await import("../index");
+    const core = await import("@testforgejs/vue-test-core");
+
     const { presets } = await import("./utils/presets/mockPresets.js");
-    testComponentFactory = createTestFramework({
+    testComponentFactory = core.createTestFramework({
       presets,
     }).testComponentFactory;
+
+    captureInstance = core.captureInstance;
   });
 
   describe("Expose Instance", () => {
@@ -120,7 +122,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
       factory();
 
       // 2. Verify the connection using mock spies (check what the `create` call returned)
-      // В The results of Jest/Vitest calls are stored in mock.results
+      // The results of Jest/Vitest calls are stored in mock.results
       expect(mocks.i18nCreate.mock.results[0].value).toBe(capturedI18n);
       expect(mocks.piniaCreate.mock.results[0].value).toBe(capturedPinia);
       expect(mocks.routerCreate.mock.results[0].value).toBe(capturedRouter);

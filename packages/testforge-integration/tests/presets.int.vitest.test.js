@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { vi } from "vitest";
-import { createTestFramework } from "../core/createTestFramework.js";
-import { presets } from "../../../vue-test-preset-recommended/src/presets.js";
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { presets } from "../../vue-test-preset-recommended/src/presets.js";
 
 const MockComponent = {
   name: "MockComponent",

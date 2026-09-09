@@ -56,12 +56,8 @@
     "vue": "^3.3.0"
   },
   "devDependencies": {
-    "@testforgejs/vue-test-plugin-i18n": "workspace:*",
-    "@testforgejs/vue-test-plugin-pinia": "workspace:*",
-    "@testforgejs/vue-test-plugin-router": "workspace:*",
     "@vue/test-utils": "^2.0.0",
-    "vue": "^3.3.0",
-    "vue-router": "^5.0.0"
+    "vue": "^3.3.0"
   },
   "tsd": {
     "directory": "test-d"

@@ -1,26 +1,4 @@
-import { captureInstance } from "../utils/captureInstance.js";
-import { ERROR_PREFIX } from "../constants/constants.js";
-
 const runner = typeof vi !== "undefined" ? vi : jest;
-
-const createFactory = async () => {
-  const { createTestFramework } = await import("../index");
-  const { presets } = await import("./utils/presets/mockPresets.js");
-
-  return createTestFramework({
-    presets,
-  }).testComponentFactory;
-};
-
-const createFactoryWithShallowDefault = async (shallowByDefault) => {
-  const { createTestFramework } = await import("../index");
-  const { presets } = await import("./utils/presets/mockPresets.js");
-
-  return createTestFramework({
-    presets,
-    shallowByDefault,
-  }).testComponentFactory;
-};
 
 describe("testComponentFactory Integration (Universal)", () => {
   const MockComponent = { name: "MockComponent", render: () => null };
@@ -28,6 +6,9 @@ describe("testComponentFactory Integration (Universal)", () => {
   let mockMount;
   let mockShallowMount;
   let testComponentFactory;
+  let captureInstance;
+
+  let createTestFramework;
 
   // References to mocked `create` functions to verify their calls
   const mockI18nCreate = runner.fn();
@@ -45,6 +26,23 @@ describe("testComponentFactory Integration (Universal)", () => {
   };
   const mockRouterInstance = {
     install: () => {},
+  };
+
+  const createFactory = async () => {
+    const { presets } = await import("./utils/presets/mockPresets.js");
+
+    return createTestFramework({
+      presets,
+    }).testComponentFactory;
+  };
+
+  const createFactoryWithShallowDefault = async (shallowByDefault) => {
+    const { presets } = await import("./utils/presets/mockPresets.js");
+
+    return createTestFramework({
+      presets,
+      shallowByDefault,
+    }).testComponentFactory;
   };
 
   beforeEach(async () => {
@@ -73,6 +71,10 @@ describe("testComponentFactory Integration (Universal)", () => {
       mount: mockMount,
       shallowMount: mockShallowMount, // mockShallowMount must be created in advance using runner.fn()
     }));
+
+    const core = await import("@testforgejs/vue-test-core");
+    createTestFramework = core.createTestFramework;
+    captureInstance = core.captureInstance;
 
     // Initializing the framework
     testComponentFactory = await createFactory();
@@ -2764,9 +2766,7 @@ describe("testComponentFactory Integration (Universal)", () => {
                 preset: "i18nPreset",
               },
             );
-          }).toThrow(
-            `${ERROR_PREFIX} Plugin "pinia" is configured but not supported by the active preset.`,
-          );
+          }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
         });
 
         it("should allow supported plugins from preset", () => {
@@ -2806,9 +2806,7 @@ describe("testComponentFactory Integration (Universal)", () => {
                 preset: "i18nPreset",
               },
             );
-          }).toThrow(
-            `${ERROR_PREFIX} Plugin "router" is configured but not supported by the active preset.`,
-          );
+          }).toThrow('Plugin "router" is configured but not supported by the active preset.');
         });
       });
     });
