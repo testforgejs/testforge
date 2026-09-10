@@ -20,8 +20,6 @@ export default tsEslint.config(
   js.configs.recommended,
   ...tsEslint.configs.recommended,
 
-  //jsdoc.configs["flat/recommended-typescript"],
-
   {
     files: ["**/*.{js,mjs,ts}"],
     languageOptions: {
@@ -37,7 +35,11 @@ export default tsEslint.config(
         beforeEach: "readonly",
       },
       parserOptions: {
-        project: ["./tsconfig.json", "./packages/*/tsconfig.json"],
+        project: [
+          "./tsconfig.json",
+          "./packages/*/tsconfig.json",
+          "./packages/*/tsconfig.test.json",
+        ],
         tsconfigRootDir: import.meta.dirname,
       },
     },

@@ -2,6 +2,8 @@
 module.exports = {
   testEnvironment: "jsdom",
 
+  slowTestThreshold: 15,
+
   testEnvironmentOptions: {
     customExportConditions: ["node", "node-addons"],
   },

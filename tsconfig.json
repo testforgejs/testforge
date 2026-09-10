@@ -16,11 +16,6 @@
       "@testforgejs/*": ["./packages/*/src"]
     }
   },
-  "include": [
-    "packages/*/src",
-    "packages/vue-test-core/tests",
-    "vitest.config.ts",
-    "__mocks__/**/*"
-  ],
+  "include": ["packages/*/src", "vitest.config.ts"],
   "exclude": ["node_modules", "**/dist", "packages/**/test-d"]
 }
