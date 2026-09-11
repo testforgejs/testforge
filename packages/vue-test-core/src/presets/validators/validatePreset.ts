@@ -11,7 +11,7 @@ import type { PresetDefinition, PluginName, PluginManifestEntry } from "../../ty
  * - preset defaults may only target plugins declared in the manifest
  * - plugin defaults must be option factory functions
  */
-export function validatePreset(name: PluginName, preset: PresetDefinition): void {
+export function validatePreset(name: string, preset: PresetDefinition): void {
   if (!preset) {
     throw new Error(`${ERROR_PREFIX} Preset "${name}" is null or undefined.`);
   }
