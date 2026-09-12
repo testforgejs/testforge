@@ -151,7 +151,78 @@ const { testComponentFactory } = createTestFramework({
 export { testComponentFactory };
 ```
 
-The preset registry defines the managed Vue plugins available to your tests and their default configuration.
+The preset configuration defines the managed Vue plugins available to your tests and their default configuration.
+
+### Using a Custom Preset
+
+TestForge does not require you to use an official preset. You can define a custom `PresetDefinition` using the TestForge plugin packages required by your project.
+
+For example, a minimal Pinia-only environment can be configured directly. The following TestForge plugin package is required for this custom preset example.
+
+Install the Pinia integration:
+
+```bash
+pnpm add -D @testforgejs/vue-test-plugin-pinia
+```
+
+TestForge does not include plugin integrations in `@testforgejs/vue-test-core`. Each managed Vue ecosystem integration is provided by its own package.
+
+```typescript
+// tests/setup.ts
+
+import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
+import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { vi } from "vitest";
+
+const preset: PresetDefinition = {
+  manifest: [
+    {
+      module: piniaPlugin,
+      enabled: true,
+    },
+  ],
+  defaults: {
+    pinia: () => ({
+      initialState: {},
+      stubActions: false,
+      createSpy: vi.fn,
+    }),
+  },
+};
+
+const { testComponentFactory } = createTestFramework({
+  preset,
+});
+
+export { testComponentFactory };
+```
+
+The `createTestFramework()` API supports two mutually exclusive configuration forms:
+
+```typescript
+createTestFramework({
+  preset,
+});
+```
+
+for a single runtime environment, or:
+
+```typescript
+createTestFramework({
+  presets: {
+    app: appPreset,
+    designSystem: designSystemPreset,
+  },
+});
+```
+
+for a registry of named runtime environments.
+
+A single `preset` is internally treated as the `default` preset. Use `presets` when you need multiple named test environments.
+
+For most projects, the official recommended preset is the easiest way to get started and experience the TestForge testing approach. As the test suite grows, most applications will benefit from a project-specific preset because application routes, managed plugins, and plugin defaults are specific to the application.
+
+Use the recommended preset as a starting point, then customize or compose a project-specific preset when the application requires its own runtime environment.
 
 ## Write Your First Test
 
@@ -547,6 +618,60 @@ Presets allow you to:
 - define lightweight or specialized test environments;
 - switch the active preset for an individual component factory invocation;
 - compose presets instead of duplicating shared configuration.
+
+### Configuring a Preset
+
+A framework can be configured with either a single preset or a registry of named presets.
+
+For a single custom environment:
+
+```typescript
+createTestFramework({
+  preset: myPreset,
+});
+```
+
+For multiple named environments:
+
+```typescript
+createTestFramework({
+  presets: {
+    default: defaultPreset,
+    admin: adminPreset,
+  },
+});
+```
+
+The two options are mutually exclusive.
+
+The `preset` form is a convenience for the common case where a project has one custom environment. TestForge exposes that preset internally as the `default` preset.
+
+The `presets` form is useful when a project needs multiple named environments or when presets are imported from an official or shared preset package.
+
+For example, the recommended preset package exposes a preset registry that can be passed directly to the framework:
+
+```typescript
+import { presets } from "@testforgejs/vue-test-preset-recommended";
+
+createTestFramework({
+  presets,
+});
+```
+
+You can also define a project-specific preset registry:
+
+```typescript
+const presets = {
+  app: appPreset,
+  designSystem: designSystemPreset,
+};
+
+createTestFramework({
+  presets,
+});
+```
+
+This separation allows the framework configuration to remain explicit while keeping preset definitions reusable and composable.
 
 ### Preset Composition
 

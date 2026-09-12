@@ -68,14 +68,12 @@ describe("validatePresets", () => {
     it("should reject preset that is null or undefined", () => {
       expect(() =>
         validatePresets({
-          // @ts-expect-error - intentionally passing invalid preset type
           bad: null,
         }),
       ).toThrow(`${ERROR_PREFIX} Preset "bad" is null or undefined.`);
 
       expect(() =>
         validatePresets({
-          // @ts-expect-error - intentionally passing invalid preset type
           bad: undefined,
         }),
       ).toThrow(`${ERROR_PREFIX} Preset "bad" is null or undefined.`);
@@ -85,7 +83,6 @@ describe("validatePresets", () => {
       expect(() =>
         validatePresets({
           default: {
-            // @ts-expect-error - intentionally passing invalid preset type
             manifest: null,
           },
         }),
@@ -96,7 +93,6 @@ describe("validatePresets", () => {
       expect(() =>
         validatePresets({
           valid: { manifest: [], defaults: {} },
-          // @ts-expect-error - intentionally passing invalid preset type
           invalid: { manifest: null, defaults: {} },
           anotherValid: { manifest: [], defaults: {} },
         }),
@@ -177,7 +173,6 @@ describe("validatePresets", () => {
               },
             ],
             defaults: {
-              // @ts-expect-error - intentionally passing invalid preset type
               auth: "not-an-function",
             },
           },

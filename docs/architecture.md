@@ -294,6 +294,58 @@ Preset extensions are validated before the resulting preset is created. Invalid 
 
 Presets define the complete managed plugin environment for a factory invocation.
 
+A preset is selected from the configuration supplied when the TestForge framework is created. The framework supports two mutually exclusive forms:
+
+- `preset` — provides a single `PresetDefinition`;
+- `presets` — provides a named registry of `TestFrameworkPresets`.
+
+For example, a framework can be created with a single project-specific preset:
+
+```typescript
+createTestFramework({
+  preset: projectPreset,
+});
+```
+
+or with a registry containing multiple runtime profiles:
+
+```typescript
+createTestFramework({
+  presets: projectPresets,
+});
+```
+
+These two options define different framework configuration modes and cannot be used together.
+
+### Selecting a Preset at Factory Invocation Time
+
+When a framework is created with a preset registry, `extraOptions.preset` selects one of the named profiles from that registry for the current factory invocation:
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    preset: "i18nPreset",
+  },
+);
+```
+
+This is different from the `preset` option passed to `createTestFramework()`.
+
+In other words:
+
+- `createTestFramework({ preset })` provides a single runtime environment to the framework;
+- `createTestFramework({ presets })` provides a named collection of runtime environments;
+- `extraOptions.preset` selects one of those named environments for a factory invocation.
+
+`extraOptions.preset` therefore applies only when the framework was created with `presets`.
+
+### Runtime Capability Boundary
+
+The selected preset defines the complete managed plugin environment for the current factory invocation.
+
 If a plugin is not declared in the active preset manifest, configuring it is considered invalid.
 
 For example:
@@ -317,13 +369,19 @@ If `i18nPreset` declares only `i18n`, the framework rejects the Pinia configurat
 
 This guarantees that an active preset behaves as an isolated runtime environment rather than as a partial configuration overlay.
 
-The distinction between preset composition and runtime configuration is important:
+The selected preset does not inherit plugins from another preset, including the registry's `default` preset.
 
-- `extendPreset()` constructs a new preset definition before the runtime environment is resolved;
-- `extraOptions.preset` selects one complete preset for a factory invocation;
+### Preset Composition vs Runtime Configuration
+
+Preset composition and runtime configuration are separate stages of the configuration process:
+
+- `extendPreset()` constructs a new preset definition before the framework runtime is created;
+- `createTestFramework({ preset })` supplies a single complete runtime environment;
+- `createTestFramework({ presets })` supplies a named collection of complete runtime environments;
+- `extraOptions.preset` selects one named preset from that collection for a factory invocation;
 - `mountOptions.plugins` and `extraOptions.plugins` modify managed plugin configuration within the selected runtime environment.
 
-They are therefore separate stages of configuration resolution.
+These mechanisms should not be treated as forms of inheritance.
 
 **Important:** If `mountOptions.plugins` or `extraOptions.plugins` contains configuration for a plugin that is **not declared** in the active preset's manifest, the framework throws a validation error.
 
@@ -531,6 +589,80 @@ For tests that require a different Router configuration for an individual scenar
 
 ---
 
+## Framework Configuration: Single Preset vs Preset Registry
+
+A TestForge framework can be initialized with either a single preset or a registry of named presets.
+
+For a project that needs only one runtime environment, provide a single `PresetDefinition`:
+
+```typescript
+const { testComponentFactory } = createTestFramework({
+  preset: projectPreset,
+});
+```
+
+The framework treats this preset as the `default` runtime environment.
+
+When a project needs multiple runtime environments, provide a `TestFrameworkPresets` registry instead:
+
+```typescript
+const { testComponentFactory } = createTestFramework({
+  presets: {
+    default: projectPreset,
+    router: routerPreset,
+  },
+});
+```
+
+The two forms are mutually exclusive. A framework configuration must not provide both `preset` and `presets`:
+
+```typescript
+// Invalid
+createTestFramework({
+  preset: projectPreset,
+  presets: projectPresets,
+});
+```
+
+This distinction allows the common single-environment case to remain simple while preserving named runtime profiles for projects that need multiple environments.
+
+A single `preset` is conceptually equivalent to a registry containing that preset under the `default` name:
+
+```typescript
+createTestFramework({
+  preset: projectPreset,
+});
+```
+
+is equivalent in runtime terms to:
+
+```typescript
+createTestFramework({
+  presets: {
+    default: projectPreset,
+  },
+});
+```
+
+The two forms differ only in how the framework configuration expresses the available runtime environments.
+
+Once the framework has been created, a factory invocation can select a named preset through `extraOptions.preset` when a preset registry is available:
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    preset: "router",
+  },
+);
+```
+
+When a framework is created with a single `preset`, that preset is the framework's default environment and no named preset registry is required.
+
+---
+
 ## Architectural Design Principles
 
 ### 1. Keep the Core Blind
@@ -624,7 +756,10 @@ The key principles are:
 - `extendPreset()` composes reusable preset definitions before runtime configuration begins.
 - Plugin configuration supplied through preset composition uses replacement semantics.
 - Base configuration can be preserved explicitly by invoking the base plugin options factory.
-- `extraOptions.preset` selects a complete preset for a factory invocation.
+- `createTestFramework({ preset })` configures a framework with a single default runtime environment.
+- `createTestFramework({ presets })` configures a framework with a registry of named runtime environments.
+- `preset` and `presets` are mutually exclusive framework configuration forms.
+- `extraOptions.preset` selects a named runtime environment for an individual factory invocation.
 - `mountOptions.plugins` replaces managed plugin configuration at a more local scope.
 - `extraOptions.plugins` provides a targeted shallow overlay.
 - Base presets should remain runner-independent and application-agnostic.

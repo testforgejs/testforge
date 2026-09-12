@@ -62,6 +62,12 @@ export type RuntimePluginOption = RuntimePluginConfig | false;
 
 export type ResolvedPluginOptions = Record<PluginName, RuntimePluginOption>;
 
+/**
+ * Default plugin configuration factories.
+ *
+ * Only plugins that require preset-level default configuration
+ * need to be included.
+ */
 export type PluginConfigDefaults = Record<PluginName, PluginOptionsFactory<RuntimePluginConfig>>;
 
 export type ResolvedPluginDefaults = Record<PluginName, RuntimePluginConfig>;
@@ -206,7 +212,16 @@ export type ComponentFactoryExtraOptions = {
  * `plugin.getName()` for plugins declared in `manifest`.
  */
 export interface PresetDefinition {
+  /** Plugins available to the preset and their enabled state. */
   manifest: PluginManifestEntry<any, any>[];
+
+  /**
+   * Default plugin configurations.
+   *
+   * A plugin declared in `manifest` does not have to be present here.
+   * Missing defaults mean that the preset provides no default configuration
+   * for that plugin.
+   */
   defaults: PluginConfigDefaults;
 }
 
@@ -341,10 +356,7 @@ export type ComponentFactory<T extends Component> = (
   extraOptions?: ComponentFactoryExtraOptions,
 ) => ReturnType<typeof mount<T>>;
 
-export interface CreateTestFrameworkOptions {
-  /** Preset configurations for plugins */
-  presets?: TestFrameworkPresets;
-
+interface CommonCreateTestFrameworkOptions {
   /**
    * Default value for Vue Test Utils `shallow` mounting.
    *
@@ -355,6 +367,20 @@ export interface CreateTestFrameworkOptions {
    */
   shallowByDefault?: boolean;
 }
+
+interface SinglePresetOptions extends CommonCreateTestFrameworkOptions {
+  /** Single preset used by the framework. */
+  preset: PresetDefinition;
+  presets?: never;
+}
+
+interface MultiplePresetsOptions extends CommonCreateTestFrameworkOptions {
+  /** Named preset configurations for plugins. */
+  preset?: never;
+  presets?: TestFrameworkPresets;
+}
+
+export type CreateTestFrameworkOptions = SinglePresetOptions | MultiplePresetsOptions;
 
 export interface MountRuntimeOptions {
   shallowByDefault: boolean;

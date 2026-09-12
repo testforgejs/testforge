@@ -9,10 +9,9 @@ import type { TestFrameworkPresets } from "../../types";
  *
  * Validation rules:
  * - presets must be a plain object
- * - each preset must have a valid name
- * - each preset definition is validated independently
+ * - each preset must have a valid definition
  */
-export function validatePresets(presets: TestFrameworkPresets = {}): void {
+export function validatePresets(presets: unknown): asserts presets is TestFrameworkPresets {
   if (!isPlainObject(presets)) {
     throw new Error(`${ERROR_PREFIX} Presets must be a plain object.`);
   }

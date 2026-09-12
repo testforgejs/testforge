@@ -20,6 +20,101 @@ const MockComponent = defineComponent({
   },
 });
 
+/**
+ * Verify createTestFramework options
+ */
+
+const preset = {
+  manifest: [],
+  defaults: {},
+};
+
+// Verify single preset
+createTestFramework({
+  preset,
+});
+
+// Verify multiple presets
+createTestFramework({
+  presets: {
+    default: preset,
+  },
+});
+
+// Verify shallowByDefault
+createTestFramework({
+  shallowByDefault: true,
+});
+
+createTestFramework({
+  shallowByDefault: false,
+});
+
+// Verify single preset with shallowByDefault
+createTestFramework({
+  preset,
+  shallowByDefault: true,
+});
+
+// Verify multiple presets with shallowByDefault
+createTestFramework({
+  presets: {
+    default: preset,
+  },
+  shallowByDefault: true,
+});
+
+// Verify preset and presets are mutually exclusive
+expectError(
+  createTestFramework({
+    preset,
+    presets: {
+      default: preset,
+    },
+  }),
+);
+
+// Verify invalid option
+expectError(
+  createTestFramework({
+    unknownOption: true,
+  }),
+);
+
+// Verify invalid preset
+expectError(
+  createTestFramework({
+    preset: {
+      manifest: [],
+      defaults: {},
+      unknownOption: true,
+    },
+  }),
+);
+
+// Verify invalid presets
+expectError(
+  createTestFramework({
+    presets: {
+      default: {
+        manifest: [],
+        defaults: {},
+        unknownOption: true,
+      },
+    },
+  }),
+);
+
+// Verify invalid shallowByDefault type
+expectError(
+  createTestFramework({
+    shallowByDefault: "true",
+  }),
+);
+
+// Verify empty options
+createTestFramework({});
+
 const framework = createTestFramework();
 
 const factory = framework.testComponentFactory(MockComponent);

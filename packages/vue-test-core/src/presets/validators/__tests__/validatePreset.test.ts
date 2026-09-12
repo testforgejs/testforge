@@ -30,14 +30,6 @@ describe("validatePreset", () => {
       expect(() => validatePreset(DEFAULT_PRESET_NAME, validPreset)).not.toThrow();
     });
 
-    it("should pass even when defaults are missing (optional field)", () => {
-      const presetWithoutDefaults: PresetDefinition = {
-        manifest: [{ module: mockPinia, enabled: true }],
-        defaults: { pinia: () => ({}) },
-      };
-      expect(() => validatePreset("minimal", presetWithoutDefaults)).not.toThrow();
-    });
-
     it("should allow an empty manifest", () => {
       const preset: PresetDefinition = { manifest: [], defaults: {} };
       expect(() => validatePreset("empty", preset)).not.toThrow();
@@ -99,7 +91,51 @@ describe("validatePreset", () => {
     });
   });
 
-  describe("defaults consistency validation", () => {
+  describe("defaults validation", () => {
+    it("should throw when defaults are missing", () => {
+      const presetWithoutDefaults = {
+        manifest: [{ module: mockPinia, enabled: true }],
+      };
+
+      expect(() => validatePreset("missing-defaults", presetWithoutDefaults)).toThrow(
+        /must have a "defaults" plain object/,
+      );
+    });
+
+    it("should throw when defaults is not a plain object", () => {
+      const invalid = {
+        manifest: [{ module: mockPinia, enabled: true }],
+        defaults: null,
+      };
+
+      expect(() => validatePreset("bad-defaults", invalid)).toThrow(
+        /must have a "defaults" plain object/,
+      );
+    });
+
+    it("should allow empty defaults object", () => {
+      const preset: PresetDefinition = {
+        manifest: [{ module: mockPinia, enabled: true }],
+        defaults: {},
+      };
+
+      expect(() => validatePreset("empty-defaults", preset)).not.toThrow();
+    });
+
+    it("should allow defaults for only a subset of manifest plugins", () => {
+      const preset = {
+        manifest: [
+          { module: mockPinia, enabled: true },
+          { module: mockI18n, enabled: true },
+        ],
+        defaults: {
+          pinia: () => ({}),
+        },
+      };
+
+      expect(() => validatePreset("partial-defaults", preset)).not.toThrow();
+    });
+
     it("should throw when defaults contains a key not present in manifest", () => {
       const inconsistent = {
         manifest: [{ module: mockPinia, enabled: true }],

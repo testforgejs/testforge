@@ -60,6 +60,58 @@ A preset controls:
 
 The preset system keeps the TestForge core independent from specific Vue ecosystem integrations. The core runtime does not need built-in knowledge of Pinia, Vue Router, Vue I18n, Vuetify, PrimeVue, or other integrations.
 
+### Single and Multiple Presets
+
+`createTestFramework()` supports two mutually exclusive ways to configure presets.
+
+Use `preset` when the framework needs a single runtime environment:
+
+```typescript
+createTestFramework({
+  preset: projectPreset,
+});
+```
+
+Use `presets` when the framework should provide multiple named runtime environments:
+
+```typescript
+createTestFramework({
+  presets: {
+    default: projectPreset,
+    i18n: i18nPreset,
+    router: routerPreset,
+  },
+});
+```
+
+These options cannot be used together.
+
+A single `preset` is treated as the framework's `default` preset internally. A `presets` registry allows individual factory invocations to select a named preset through `extraOptions.preset`.
+
+For example:
+
+```typescript
+const { testComponentFactory } = createTestFramework({
+  presets: {
+    default: defaultPreset,
+    i18n: i18nPreset,
+  },
+});
+
+const factory = testComponentFactory(MyComponent);
+
+factory(
+  {},
+  {},
+  {},
+  {
+    preset: "i18n",
+  },
+);
+```
+
+This distinction allows a project to start with a single custom runtime environment and introduce named runtime profiles later without changing the preset definition itself.
+
 ### Official preset packages
 
 TestForge provides a layered preset architecture:
@@ -100,7 +152,11 @@ The recommended presets include configurations for commonly used managed integra
 - Vue I18n;
 - Vue Router.
 
-The recommended preset packages are optional. You can also use the base presets directly or create and compose your own presets.
+The recommended preset is a convenient starting point for exploring TestForge and its approach to reusable component test environments.
+
+However, recommended presets are intentionally generic. Real applications usually have application-specific routes, managed plugins, and plugin defaults. Most projects will therefore eventually benefit from a project-specific preset that extends or adapts an existing preset to the application's runtime environment.
+
+The recommended preset packages are optional. You can also use the base preset directly or create your own project-specific preset.
 
 > [!TIP]
 > If you are getting started with TestForge, use the recommended preset that matches your test runner.
@@ -111,7 +167,7 @@ See the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/ma
 
 ## Quick Usage
 
-The following example uses Vitest and the recommended Vitest preset.
+The following example uses Vitest and the recommended Vitest preset registry.
 
 ```typescript
 // tests/setup.ts
@@ -125,6 +181,8 @@ const { testComponentFactory } = createTestFramework({
 
 export { testComponentFactory };
 ```
+
+This setup is a good starting point for exploring TestForge. As the application-specific testing environment grows, the project can define its own preset while continuing to reuse the official preset as a base.
 
 The resulting `testComponentFactory` can then be imported and reused throughout your component tests.
 
@@ -150,6 +208,30 @@ describe("MyComponent.vue", () => {
 For Jest projects, use `@testforgejs/vue-test-preset-recommended-jest` instead.
 
 👉 For a complete walkthrough, continue with the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md).
+
+---
+
+## Project-Specific Presets
+
+Most applications will eventually benefit from some application-specific preset configuration.
+
+For example, a project can extend the recommended preset with its own locale configuration:
+
+```typescript
+import { extendPreset } from "@testforgejs/vue-test-core";
+import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+
+const projectPreset = extendPreset(recommendedPresets.default, {
+  defaults: {
+    i18n: () => ({
+      ...recommendedPresets.default.defaults.i18n(),
+      locale: "uk",
+    }),
+  },
+});
+```
+
+---
 
 ## Documentation
 

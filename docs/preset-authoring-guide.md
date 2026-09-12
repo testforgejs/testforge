@@ -17,57 +17,193 @@ For Vue projects, TestForge provides a runner-independent base package and runne
 - `@testforgejs/vue-test-preset-recommended` for Vitest
 - `@testforgejs/vue-test-preset-recommended-jest` for Jest
 
-Most applications should start with an existing preset and extend it rather than creating a complete preset registry from scratch.
+Most applications should start with an existing preset and extend it rather than creating a complete preset from scratch.
+
+A preset can be used in two ways when creating a TestForge framework:
+
+- pass a single `PresetDefinition` through the `preset` option;
+- pass a registry of named presets through the `presets` option.
+
+These options are mutually exclusive. Use `preset` when the framework needs one custom runtime environment. Use `presets` when the project needs multiple named runtime profiles or when consuming an existing preset registry.
+
+The `preset` option is internally treated as the framework's `default` preset.
+
+---
+
+## Table of Contents
+
+- [Preset Structure](#1-preset-structure)
+- [`preset` vs `presets`](#2-preset-vs-presets)
+- [The `manifest`](#3-the-manifest)
+- [The `defaults`](#4-the-defaults)
+- [The `default` Preset](#5-the-default-preset)
+- [Specialized Presets](#6-specialized-presets)
+- [Preset Composition with `extendPreset()`](#7-preset-composition-with-extendpreset)
+
+  - [Extending Plugin Defaults](#71-extending-plugin-defaults)
+
+- [Runner-Specific Presets](#8-runner-specific-presets)
+- [Selecting a Preset at Runtime](#9-selecting-a-preset-at-runtime)
+- [Preset Configuration Layers](#10-preset-configuration-layers)
+- [Creating a Project-Specific Preset](#11-creating-a-project-specific-preset)
+
+  - [Project-Specific Router Configuration](#111-project-specific-router-configuration)
+
+- [Preset Design Guidelines](#12-preset-design-guidelines)
+- [Recommended Package Strategy](#13-recommended-package-strategy)
+- [Summary](#14-summary)
 
 ---
 
 ## 1. Preset Structure
 
-A preset consists of two primary parts:
+A `PresetDefinition` consists of two primary parts:
 
 1. `manifest` — declares the managed plugins available in the runtime environment.
-2. `defaults` — defines the baseline configuration for those plugins.
+2. `defaults` — defines the baseline configuration factories for managed plugins.
+
+Both properties are required.
 
 ```typescript
-import type { TestFrameworkPresets } from "@testforgejs/vue-test-core";
+import type { PresetDefinition } from "@testforgejs/vue-test-core";
 import { piniaPlugin, type VueTestPiniaOptions } from "@testforgejs/vue-test-plugin-pinia";
 import { i18nPlugin, type VueTestI18nOptions } from "@testforgejs/vue-test-plugin-i18n";
 import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
 
-export const presets = {
-  default: {
-    manifest: [
-      { module: piniaPlugin, enabled: true },
-      { module: i18nPlugin, enabled: true },
-      { module: routerPlugin, enabled: false },
-    ],
+const preset: PresetDefinition = {
+  manifest: [
+    { module: piniaPlugin, enabled: true },
+    { module: i18nPlugin, enabled: true },
+    { module: routerPlugin, enabled: false },
+  ],
 
-    defaults: {
-      pinia: () =>
-        ({
-          initialState: {},
-          stubActions: false,
-        }) satisfies VueTestPiniaOptions,
+  defaults: {
+    pinia: () =>
+      ({
+        initialState: {},
+        stubActions: false,
+      }) satisfies VueTestPiniaOptions,
 
-      i18n: () =>
-        ({
-          legacy: false,
-          locale: "en",
-          fallbackLocale: "en",
-          messages: {},
-          fallbackWarn: false,
-          missingWarn: false,
-        }) satisfies VueTestI18nOptions,
-    },
+    i18n: () =>
+      ({
+        legacy: false,
+        locale: "en",
+        fallbackLocale: "en",
+        messages: {},
+        fallbackWarn: false,
+        missingWarn: false,
+      }) satisfies VueTestI18nOptions,
   },
-} satisfies TestFrameworkPresets;
+};
 ```
 
 The `satisfies` operator is recommended because it validates the preset structure and provides plugin-specific type checking without changing the inferred type of the preset object.
 
+The `defaults` object may be empty:
+
+```typescript
+const preset: PresetDefinition = {
+  manifest: [{ module: piniaPlugin, enabled: true }],
+  defaults: {},
+};
+```
+
+An empty `defaults` object means that the preset does not provide baseline configuration for any of its declared plugins. This is valid when the corresponding plugin configuration is supplied through another configuration layer.
+
+A plugin may also be declared in the manifest without a corresponding entry in `defaults`. In that case, the plugin is part of the preset's capability boundary, but the preset does not provide default options for that plugin.
+
 ---
 
-## 2. The `manifest`
+## 2. `preset` vs `presets`
+
+When creating a TestForge framework, you can provide either a single preset or a registry of named presets.
+
+### Single custom preset
+
+Use `preset` when the framework needs one runtime environment:
+
+```typescript
+import { createTestFramework } from "@testforgejs/vue-test-core";
+
+const { testComponentFactory } = createTestFramework({
+  preset,
+});
+```
+
+The supplied preset is treated as the framework's `default` preset.
+
+Conceptually:
+
+```typescript
+createTestFramework({
+  preset,
+});
+```
+
+is equivalent to:
+
+```typescript
+createTestFramework({
+  presets: {
+    default: preset,
+  },
+});
+```
+
+The `preset` form is useful for small projects or specialized test setups where there is no need for multiple named environments.
+
+### Preset registry
+
+Use `presets` when the framework needs multiple named runtime environments:
+
+```typescript
+import { createTestFramework } from "@testforgejs/vue-test-core";
+
+const { testComponentFactory } = createTestFramework({
+  presets: {
+    default: defaultPreset,
+    i18n: i18nPreset,
+    router: routerPreset,
+  },
+});
+```
+
+The registry can contain multiple independent runtime profiles. A factory invocation can then select a specific profile by name.
+
+### The options are mutually exclusive
+
+A framework cannot be created with both `preset` and `presets`:
+
+```typescript
+// Invalid
+createTestFramework({
+  preset,
+  presets,
+});
+```
+
+This restriction keeps the framework configuration unambiguous: there is either one directly supplied preset or a named preset registry.
+
+### Which form should you use?
+
+Use `preset` when:
+
+- the project has one custom runtime environment;
+- you want the shortest configuration;
+- you do not need named runtime profiles.
+
+Use `presets` when:
+
+- the project has multiple runtime environments;
+- you need named specialized presets;
+- you are consuming an official or shared preset registry;
+- you want to compose several reusable preset definitions into a project-specific registry.
+
+For most projects, using an official recommended preset through `presets` is the easiest way to get started. However, most applications will eventually benefit from a project-specific preset because application routes, managed plugins, and plugin defaults are inherently application-specific.
+
+---
+
+## 3. The `manifest`
 
 The `manifest` defines the **plugin capability boundary** of a preset.
 
@@ -126,7 +262,7 @@ The plugin can subsequently be enabled through the appropriate runtime configura
 
 ---
 
-## 3. The `defaults`
+## 4. The `defaults`
 
 The `defaults` object defines baseline configuration factories for managed plugins.
 
@@ -188,9 +324,9 @@ Application-specific test data should generally not be placed into global preset
 
 ---
 
-## 4. The `default` Preset
+## 5. The `default` Preset
 
-Every preset registry should normally provide a `default` profile.
+A preset registry should normally provide a `default` profile.
 
 The `default` preset is used when no other preset is selected for a factory invocation.
 
@@ -200,35 +336,36 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-A project-level `default` preset should represent the runtime environment required by the majority of the project's component tests.
+For a preset registry, the `default` profile should represent the runtime environment required by the majority of the project's component tests.
 
-Specialized environments should be represented by additional named presets.
-
-For example:
+Specialized environments can be represented by additional named presets:
 
 ```typescript
 export const presets = {
-  default: {
-    // normal component-test environment
-  },
-
-  piniaPreset: {
-    // Pinia-only environment
-  },
-
-  i18nPreset: {
-    // I18n-only environment
-  },
-
-  routerPreset: {
-    // Router-only environment
-  },
+  default: defaultPreset,
+  piniaPreset: piniaPreset,
+  i18nPreset: i18nPreset,
+  routerPreset: routerPreset,
 };
 ```
 
+However, a standalone `PresetDefinition` does not need to be named `default`.
+
+When a single preset is passed through the `preset` option:
+
+```typescript
+createTestFramework({
+  preset: myPreset,
+});
+```
+
+TestForge internally treats it as the `default` preset.
+
+This means that the `default` name belongs to the preset registry concept. It is not a required property of `PresetDefinition` itself.
+
 ---
 
-## 5. Specialized Presets
+## 6. Specialized Presets
 
 A preset registry can contain multiple independent runtime profiles.
 
@@ -239,58 +376,96 @@ For example, `@testforgejs/vue-test-preset-base` provides:
 - `i18nPreset`
 - `routerPreset`
 
-The specialized presets intentionally contain only the plugin required by that environment.
+The specialized presets intentionally contain only the plugins required by their respective environments.
 
 For example:
 
 ```typescript
-i18nPreset: {
-  manifest: [
-    { module: i18nPlugin, enabled: true },
-  ],
+const i18nPreset: PresetDefinition = {
+  manifest: [{ module: i18nPlugin, enabled: true }],
 
   defaults: {
     i18n: defaultI18n,
   },
-},
+};
 ```
 
-> `defaultI18n` is a plugin options factory, allowing each pipeline context to receive a fresh I18n configuration object.
+`defaultI18n` is a plugin options factory, allowing each pipeline context to receive a fresh I18n configuration object.
 
 This is different from disabling Pinia and Router in the default preset.
 
-An `i18nPreset` does not merely disable unrelated plugins. They are outside the runtime capability boundary altogether.
+An `i18nPreset` does not merely disable unrelated plugins. Plugins that are not declared in its manifest are outside the runtime capability boundary altogether.
+
+A specialized preset can be used either as an entry in a preset registry or directly through the `preset` option:
+
+```typescript
+createTestFramework({
+  preset: i18nPreset,
+});
+```
+
+or:
+
+```typescript
+createTestFramework({
+  presets: {
+    default: defaultPreset,
+    i18n: i18nPreset,
+  },
+});
+```
 
 ---
 
-## 6. Preset Composition with `extendPreset()`
+## 7. Preset Composition with `extendPreset()`
 
-When an existing preset is almost suitable for a project, use `extendPreset()` instead of copying the entire preset.
+`extendPreset()` creates a new `PresetDefinition` from an existing preset.
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
+import { presets as basePresets } from "@testforgejs/vue-test-preset-recommended";
+import type { PresetDefinition } from "@testforgejs/vue-test-core";
 
-import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
-
-export const presets = {
-  default: extendPreset(basePresets.default, {
-    defaults: {
-      i18n: () => ({
-        ...basePresets.default.defaults.i18n(),
-        locale: "uk",
-      }),
-    },
-  }),
-} satisfies TestFrameworkPresets;
+const projectPreset: PresetDefinition = extendPreset(basePreset, {
+  defaults: {
+    i18n: () => ({
+      ...basePresets.default.defaults.i18n(),
+      // project-specific defaults
+      locale: "uk",
+    }),
+  },
+});
 ```
 
 > Because preset defaults are factories, extending an existing plugin configuration requires invoking the base factory inside the replacement factory.
 
-The resulting preset is a new, independent preset definition.
-
 `extendPreset()` is a **preset composition mechanism**. It is not a runtime configuration overlay.
 
-### 6.1. Extending Plugin Defaults
+The resulting preset can be used directly through `preset`:
+
+```typescript
+createTestFramework({
+  preset: projectPreset,
+});
+```
+
+It can also be added to a named preset registry:
+
+```typescript
+export const presets = {
+  default: projectPreset,
+};
+
+createTestFramework({
+  presets,
+});
+```
+
+This makes preset composition independent from the way the resulting preset is registered with the framework.
+
+When an existing preset is almost suitable for a project, use `extendPreset()` instead of copying the entire preset.
+
+### 7.1. Extending Plugin Defaults
 
 When an extension provides configuration for an existing plugin, that plugin's configuration is replaced as a whole.
 
@@ -352,7 +527,7 @@ This replacement semantics makes preset composition predictable and prevents con
 
 ---
 
-## 7. Runner-Specific Presets
+## 8. Runner-Specific Presets
 
 The base preset should remain independent of the test runner whenever possible.
 
@@ -406,9 +581,19 @@ This separation keeps the base preset reusable while allowing each runner-specif
 
 ---
 
-## 8. Selecting a Preset at Runtime
+## 9. Selecting a Preset at Runtime
 
-A factory can select a specific preset using the fourth argument, `extraOptions`.
+The `preset` option has two different roles in TestForge.
+
+When passed to `createTestFramework()`, `preset` contains a complete `PresetDefinition`:
+
+```typescript
+createTestFramework({
+  preset: myPreset,
+});
+```
+
+When passed through a component factory's `extraOptions`, `preset` is a preset name:
 
 ```typescript
 factory(
@@ -421,15 +606,42 @@ factory(
 );
 ```
 
-The `preset` property has the following meaning:
+The factory-level `preset` selects one of the named presets from the framework's preset registry.
+
+Therefore:
 
 ```typescript
-type PresetName = keyof TestFrameworkPresets;
+createTestFramework({
+  preset: myPreset,
+});
 ```
 
-It selects a complete preset profile for the current factory invocation.
+means **"configure this framework with this preset"**,
 
-For example:
+while:
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    preset: "i18nPreset",
+  },
+);
+```
+
+means **"use the `i18nPreset` profile for this factory invocation"**.
+
+When a framework is created with a single `preset`, that preset is registered internally as `default`, so the normal factory invocation uses it automatically:
+
+```typescript
+const factory = testComponentFactory(MyComponent);
+
+factory();
+```
+
+For a framework created with `presets`, a named preset can be selected explicitly:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
@@ -443,6 +655,8 @@ factory(
   },
 );
 ```
+
+The `preset` value is the **name of a preset in the framework's preset registry**.
 
 The factory invocation now resolves its managed plugin environment against `i18nPreset` instead of the registry's `default` preset.
 
@@ -465,11 +679,11 @@ i18nPreset: {
 
 Pinia is not implicitly inherited from `default`.
 
-This is intentional: each preset represents a complete runtime environment.
+Each preset represents a complete managed-plugin runtime environment.
 
 ---
 
-## 9. Preset Configuration Layers
+## 10. Preset Configuration Layers
 
 Preset configuration is only the first layer of the complete TestForge configuration model.
 
@@ -563,91 +777,190 @@ Use:
 
 ---
 
-## 10. Creating a Project-Specific Preset
+## 11. Creating a Project-Specific Preset
 
-For a project that needs custom defaults, start from an existing preset whenever possible.
+A project does not need to create a complete preset registry when it only needs one custom runtime environment.
 
 For example:
 
 ```typescript
-import { extendPreset } from "@testforgejs/vue-test-core";
-import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
+import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
 
-export const projectPresets = {
-  default: extendPreset(basePresets.default, {
-    defaults: {
-      i18n: () => ({
-        ...basePresets.default.defaults.i18n(),
-        locale: "uk",
-        fallbackLocale: "uk",
-        messages: {
-          uk: {
-            welcome: "Вітаємо",
-          },
-        },
-      }),
+import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { vi } from "vitest";
 
-      pinia: () => ({
-        ...basePresets.default.defaults.pinia(),
-        initialState: {},
-      }),
+const projectPreset: PresetDefinition = {
+  manifest: [
+    {
+      module: piniaPlugin,
+      enabled: true,
     },
-  }),
+  ],
+
+  defaults: {
+    pinia: () => ({
+      initialState: {},
+      stubActions: false,
+      createSpy: vi.fn,
+    }),
+  },
 };
-```
-
-### 10.1. Project-Specific Router Configuration
-
-```typescript
-defaults: {
-  // existing project defaults
-
-  router: () => ({
-    history: createMemoryHistory(),
-    routes: [
-      {
-        path: "/",
-        component: HomePage,
-      },
-      {
-        path: "/users",
-        component: UsersPage,
-      },
-    ],
-  }),
-},
-```
-
-Then pass the project registry to the framework:
-
-```typescript
-import { createTestFramework } from "@testforgejs/vue-test-core";
-import { projectPresets } from "./presets.js";
 
 const { testComponentFactory } = createTestFramework({
-  presets: projectPresets,
+  preset: projectPreset,
+});
+
+export { testComponentFactory };
+```
+
+This is the simplest form of a project-specific TestForge environment.
+
+### Using an Existing Preset as a Base
+
+When an existing preset is close to what the project needs, compose it with `extendPreset()`:
+
+```typescript
+import { extendPreset } from "@testforgejs/vue-test-core";
+import { presets as basePresets } from "@testforgejs/vue-test-preset-recommended";
+
+const projectPreset = extendPreset(basePresets.default, {
+  defaults: {
+    i18n: () => ({
+      ...basePresets.default.defaults.i18n(),
+      locale: "uk",
+      fallbackLocale: "uk",
+    }),
+  },
 });
 ```
 
-This approach keeps the project-specific changes explicit while inheriting the base preset's manifest and unrelated defaults.
+The resulting preset can then be passed directly to the framework:
 
----
+```typescript
+createTestFramework({
+  preset: projectPreset,
+});
+```
 
-## 11. Preset Design Guidelines
+If the project needs multiple environments, the same composed presets can instead be placed in a registry:
 
-### 11.1. Keep the base preset runner-independent
+```typescript
+const presets = {
+  default: projectPreset,
+  router: routerPreset,
+};
+
+createTestFramework({
+  presets,
+});
+```
+
+This allows preset authoring and framework registration to remain separate concerns.
+
+### 11.1. Project-Specific Router Configuration
+
+Router configuration is a good example of project-specific preset configuration.
+
+A general-purpose preset can provide the Router plugin and its runner-independent defaults, but it cannot know which routes and components belong to a particular application.
+
+For example, an application may need the following test routes:
+
+```typescript
+routes: [
+  {
+    path: "/",
+    component: HomePage,
+  },
+  {
+    path: "/users",
+    component: UsersPage,
+  },
+],
+```
+
+These routes should be defined in the project's own preset rather than in the shared recommended preset.
+
+If the project starts from an existing preset, extend its Router defaults explicitly:
+
+```typescript
+import { extendPreset } from "@testforgejs/vue-test-core";
+import { presets as basePresets } from "@testforgejs/vue-test-preset-recommended";
+import { createMemoryHistory } from "vue-router";
+
+import HomePage from "@/views/HomePage.vue";
+import UsersPage from "@/views/UsersPage.vue";
+
+const projectPreset = extendPreset(basePresets.default, {
+  defaults: {
+    router: () => ({
+      ...basePresets.default.defaults.router(),
+
+      history: createMemoryHistory(),
+
+      routes: [
+        {
+          path: "/",
+          component: HomePage,
+        },
+        {
+          path: "/users",
+          component: UsersPage,
+        },
+      ],
+    }),
+  },
+});
+```
+
+The resulting preset can be passed directly to the framework:
+
+```typescript
+import { createTestFramework } from "@testforgejs/vue-test-core";
+
+const { testComponentFactory } = createTestFramework({
+  preset: projectPreset,
+});
+```
+
+If the project uses multiple runtime environments, the same project-specific preset can instead be placed in a preset registry:
+
+```typescript
+const presets = {
+  default: projectPreset,
+  router: routerPreset,
+};
+
+const { testComponentFactory } = createTestFramework({
+  presets,
+});
+```
+
+The important distinction is between **shared plugin configuration** and **application-specific runtime configuration**:
+
+- the shared preset can provide the Router plugin and sensible generic defaults;
+- the project-specific preset provides the application's routes and components;
+- individual tests can still override Router configuration when a particular scenario requires it.
+
+This keeps reusable presets independent of application structure while allowing each project to define the Router environment it actually needs.
+
+> [!NOTE]
+> Router configuration is particularly likely to be project-specific because routes reference application components and paths. For this reason, application routes generally belong in a project-specific preset rather than in an official recommended preset.
+
+## 12. Preset Design Guidelines
+
+### 12.1. Keep the base preset runner-independent
 
 Do not put Vitest- or Jest-specific configuration into a runner-independent base preset.
 
 Use a runner-specific preset when a plugin requires test-runner-specific functionality.
 
-### 11.2. Prefer composition over duplication
+### 12.2. Prefer composition over duplication
 
 If an existing preset is close to what the project needs, use `extendPreset()`.
 
 Avoid copying an entire preset definition because copied presets can silently diverge from their source over time.
 
-### 11.3. Remember replacement semantics
+### 12.3. Remember replacement semantics
 
 When extending an existing plugin configuration, providing a new configuration replaces that plugin's configuration.
 
@@ -662,7 +975,7 @@ pinia: () => ({
 
 > The extension still replaces the plugin defaults factory as a whole. Invoking the base factory and spreading its returned options is an explicit choice to preserve the base configuration.
 
-### 11.4. Keep defaults minimal
+### 12.4. Keep defaults minimal
 
 Preset defaults should establish the environment, not encode every test scenario.
 
@@ -670,7 +983,7 @@ Avoid large, mutable application-specific state structures in global defaults.
 
 Use factory-level or test-level configuration for scenario-specific state.
 
-### 11.5. Keep runtime environments isolated
+### 12.5. Keep runtime environments isolated
 
 A preset should not cause mutable runtime instances to be shared between separate factory invocations.
 
@@ -682,7 +995,7 @@ This is particularly important for stateful integrations such as:
 - Vue Router history;
 - Vue I18n messages and related runtime state.
 
-### 11.6. Use specialized presets for specialized environments
+### 12.6. Use specialized presets for specialized environments
 
 If a group of tests needs only one managed plugin, consider creating a specialized preset rather than enabling unrelated plugins.
 
@@ -696,7 +1009,7 @@ can define an environment containing only Vue I18n.
 
 This makes the runtime boundary explicit and prevents unrelated plugins from being initialized.
 
-### 11.7. Treat the manifest as a capability boundary
+### 12.7. Treat the manifest as a capability boundary
 
 Do not assume that a plugin can be configured simply because its TestForge integration is installed.
 
@@ -706,7 +1019,7 @@ Configuration for undeclared plugins should be treated as invalid.
 
 ---
 
-## 12. Recommended Package Strategy
+## 13. Recommended Package Strategy
 
 For reusable Vue testing infrastructure, a useful package structure is:
 
@@ -733,20 +1046,26 @@ Projects can either use these recommended presets directly or compose their own 
 
 ---
 
-## 13. Summary
+## 14. Summary
 
 A TestForge preset defines a complete runtime environment for managed plugins.
 
 The key principles are:
 
+- `PresetDefinition` contains a `manifest` and a required `defaults` object;
 - `manifest` defines the plugin capability boundary;
 - `defaults` defines baseline plugin options as factories rather than shared configuration objects;
+- a plugin may be present in the manifest without having a corresponding entry in `defaults`;
 - each plugin options factory invocation produces fresh plugin options for the current pipeline context;
-- `default` should represent the normal project environment;
+- `preset` in `createTestFramework()` accepts a single `PresetDefinition`;
+- `presets` in `createTestFramework()` accepts a registry of named `PresetDefinition` objects;
+- `preset` and `presets` are mutually exclusive;
+- a single `preset` is internally treated as the `default` preset;
+- a preset registry should normally provide a `default` profile;
 - specialized presets provide isolated runtime profiles;
 - `extendPreset()` composes reusable preset definitions;
 - plugin configuration supplied to `extendPreset()` replaces that plugin's configuration as a whole;
-- `extraOptions.preset` selects a complete preset for a component factory invocation;
+- factory-level `extraOptions.preset` selects a named preset from the framework's registry;
 - `mountOptions.plugins` replaces managed plugin configuration at a more local scope;
 - `extraOptions.plugins` provides a targeted shallow overlay;
 - runner-specific behavior belongs in runner-specific presets;
@@ -754,8 +1073,9 @@ The key principles are:
 
 For most projects, the recommended workflow is:
 
-1. Start with `@testforgejs/vue-test-preset-base` or a runner-specific recommended preset.
-2. Select the appropriate runtime profile.
-3. Use `extendPreset()` for project-specific defaults.
-4. Keep test-specific state in factory or test configuration.
-5. Add specialized presets when a distinct runtime environment is useful.
+1. Start with an official runner-specific recommended preset.
+2. Use `presets` when consuming or maintaining a registry of named runtime profiles.
+3. Use `preset` when a single custom runtime environment is sufficient.
+4. Use `extendPreset()` for project-specific customization of an existing preset.
+5. Keep test-specific state in factory or test configuration.
+6. Add specialized presets when a distinct runtime environment is useful.

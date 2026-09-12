@@ -74,7 +74,7 @@ Presets can also build on top of other presets.
 
 For example, the official recommended presets are composed from `@testforgejs/vue-test-preset-base`. The base package provides common Vue plugin configuration, while runner-specific recommended presets add configuration required by a particular test runner.
 
-You do not need to understand this composition to get started. In most cases, you can simply use the preset that matches your test runner.
+You do not need to understand this composition to get started. In most cases, you can simply use the preset that matches your test runner. If you need only a small subset of plugins, you can also create a custom preset directly in your project and pass it to `createTestFramework({ preset })`.
 
 > [!TIP]
 > Start with the recommended preset if you are new to TestForge. Create or extend a custom preset when you need more control over which plugins are available or how they are configured.
@@ -86,6 +86,10 @@ See the [Preset Authoring Guide](./preset-authoring-guide.md) for information ab
 ## 3. 🧩 Integrating TestForge into a Project
 
 It is recommended to create a single TestForge configuration file, usually `tests/setup.ts` or `tests/test-utils.ts`.
+
+### Using a Ready-Made Preset
+
+The simplest approach is to use one of the official presets:
 
 ```typescript
 // @/tests/setup.ts
@@ -101,6 +105,63 @@ export { testComponentFactory };
 ```
 
 This creates one shared TestForge framework configuration for your test suite.
+
+### Using a Custom Preset
+
+You can also create your own preset when you want to control exactly which plugins are available and how they are configured.
+
+If your project only needs a single preset, you can pass it directly through the `preset` option:
+
+```typescript
+// @/tests/setup.ts
+
+import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
+import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { vi } from "vitest";
+
+const preset: PresetDefinition = {
+  manifest: [
+    {
+      module: piniaPlugin,
+      enabled: true,
+    },
+  ],
+  defaults: {
+    pinia: () => ({
+      initialState: {},
+      stubActions: false,
+      createSpy: vi.fn,
+    }),
+  },
+};
+
+const { testComponentFactory } = createTestFramework({
+  preset,
+});
+
+export { testComponentFactory };
+```
+
+The `preset` option is convenient when your project uses a single configuration. The preset is a normal TypeScript object, so you can edit its plugin manifest and default configuration directly in your project.
+
+If your project needs multiple named presets, use the `presets` option instead:
+
+```typescript
+const { testComponentFactory } = createTestFramework({
+  presets: {
+    default: {
+      // ...
+    },
+    integration: {
+      // ...
+    },
+  },
+});
+```
+
+The two options are mutually exclusive: use either `preset` or `presets`.
+
+Both approaches produce the same TestForge framework. The difference is only whether the framework receives one unnamed preset or a registry of named presets.
 
 You can then import the configured factory into your tests:
 
@@ -123,10 +184,14 @@ describe("MyComponent.vue", () => {
 
 ### `createTestFramework` Parameters
 
-| Parameter          | Type    | Default | Description                                                                |
-| :----------------- | :------ | :------ | :------------------------------------------------------------------------- |
-| `presets`          | object  | `{}`    | Preset registry containing the managed plugins available to the framework. |
-| `shallowByDefault` | boolean | `false` | Use `shallowMount()` instead of `mount()` by default.                      |
+| Parameter          | Type                   | Default | Description                                             |
+| :----------------- | :--------------------- | :------ | :------------------------------------------------------ |
+| `preset`           | `PresetDefinition`     | —       | A single preset used by the framework.                  |
+| `presets`          | `TestFrameworkPresets` | `{}`    | A registry of named presets available to the framework. |
+| `shallowByDefault` | `boolean`              | `false` | Use `shallowMount()` instead of `mount()` by default.   |
+
+> [!NOTE]
+> `preset` and `presets` cannot be used together. For a single project-wide configuration, `preset` is usually the simplest option. Use `presets` when you need multiple named configurations.
 
 ---
 

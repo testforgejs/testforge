@@ -20,6 +20,7 @@ import { mountWithPlugins } from "./mountWithPlugins.js";
 import { validateCreateTestFrameworkOptions } from "../validators/validateCreateTestFrameworkOptions.js";
 import { validateTestComponentFactoryArguments } from "../validators/validateTestComponentFactoryArguments.js";
 import { validateComponentFactoryArguments } from "../validators/validateComponentFactoryArguments.js";
+import { resolvePresets } from "./utils/resolvePresets.js";
 
 /*
  * Creates the main TestFramework instance.
@@ -32,7 +33,8 @@ import { validateComponentFactoryArguments } from "../validators/validateCompone
  */
 export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
   validateCreateTestFrameworkOptions(options);
-  const { presets = {}, shallowByDefault = false } = options;
+  const { shallowByDefault = false } = options;
+  const presets = resolvePresets(options);
 
   /*
    * Creates a reusable component mounting factory.
