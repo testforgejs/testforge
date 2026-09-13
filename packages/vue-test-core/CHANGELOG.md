@@ -1,5 +1,19 @@
 # @testforgejs/vue-test-core
 
+## 1.0.0-beta.2
+
+### Minor Changes
+
+- 5cca4ae: Add mutually exclusive `preset` and `presets` options to `createTestFramework()`.
+
+  Presets can now be provided either as a single runtime environment or as a named preset registry. When using a preset registry, `extraOptions.preset` selects the runtime environment for a factory invocation.
+
+  Expose the public `CreateTestFrameworkOptions`, `PresetExtension`, and `PluginManifestEntry` types for preset configuration and composition.
+
+### Patch Changes
+
+- eec595b: Fix the `validatePreset` API to correctly type preset names as strings.
+
 ## 1.0.0-beta.1
 
 ### Major Changes

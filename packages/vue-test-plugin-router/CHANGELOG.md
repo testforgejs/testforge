@@ -1,5 +1,13 @@
 # @testforgejs/vue-test-plugin-router
 
+## 1.0.0-beta.2
+
+### Patch Changes
+
+- Updated dependencies [eec595b]
+- Updated dependencies [5cca4ae]
+  - @testforgejs/vue-test-core@1.0.0-beta.2
+
 ## 1.0.0-beta.1
 
 ### Patch Changes

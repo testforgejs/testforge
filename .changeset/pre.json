@@ -10,7 +10,8 @@
     "@testforgejs/vue-test-plugin-vuetify": "0.0.1",
     "@testforgejs/vue-test-preset-recommended": "0.1.0",
     "@testforgejs/vue-test-preset-base": "1.0.0-beta.0",
-    "@testforgejs/vue-test-preset-recommended-jest": "1.0.0-beta.0"
+    "@testforgejs/vue-test-preset-recommended-jest": "1.0.0-beta.0",
+    "@testforgejs/testforge-integration": "0.0.0"
   },
   "changesets": [
     "better-gifts-run",
@@ -22,6 +23,7 @@
     "clear-apes-wait",
     "clear-rocks-grow",
     "curvy-yaks-wink",
+    "empty-jars-march",
     "famous-masks-try",
     "few-cameras-lose",
     "fifty-heads-try",
@@ -45,6 +47,7 @@
     "stale-results-stand",
     "tasty-bugs-dream",
     "tricky-forks-bathe",
+    "violet-donuts-think",
     "warm-ways-create"
   ]
 }
