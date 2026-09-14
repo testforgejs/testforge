@@ -56,5 +56,13 @@
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "vue-router": "^5.0.0"
+  },
+  "testforge": {
+    "plugin": {
+      "schemaVersion": 1,
+      "displayName": "Vue Router",
+      "description": "Vue Router integration",
+      "exportName": "routerPlugin"
+    }
   }
 }

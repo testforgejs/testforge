@@ -57,5 +57,13 @@
     "@testforgejs/vue-test-core": "workspace:*",
     "pinia": "^4.0.0",
     "@pinia/testing": "^2.0.0"
+  },
+  "testforge": {
+    "plugin": {
+      "schemaVersion": 1,
+      "displayName": "Pinia",
+      "description": "Pinia store integration",
+      "exportName": "piniaPlugin"
+    }
   }
 }

@@ -101,7 +101,7 @@ export default tsEslint.config(
   },
 
   {
-    files: ["scripts/**/*.js", "scripts/**/*.ts"],
+    files: ["scripts/**/*.{js,mjs,ts}"],
     extends: [tsEslint.configs.disableTypeChecked],
   },
 

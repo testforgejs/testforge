@@ -53,5 +53,13 @@
   "devDependencies": {
     "vuetify": "^4.0.0",
     "@testforgejs/vue-test-core": "workspace:*"
+  },
+  "testforge": {
+    "plugin": {
+      "schemaVersion": 1,
+      "displayName": "Vuetify",
+      "description": "Vuetify integration",
+      "exportName": "vuetifyPlugin"
+    }
   }
 }

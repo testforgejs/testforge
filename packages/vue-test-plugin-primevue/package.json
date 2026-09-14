@@ -53,5 +53,13 @@
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "primevue": "^4.0.0"
+  },
+  "testforge": {
+    "plugin": {
+      "schemaVersion": 1,
+      "displayName": "PrimeVue",
+      "description": "PrimeVue integration",
+      "exportName": "primeVuePlugin"
+    }
   }
 }

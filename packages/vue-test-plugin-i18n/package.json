@@ -55,5 +55,13 @@
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "vue-i18n": "^11.4.8"
+  },
+  "testforge": {
+    "plugin": {
+      "schemaVersion": 1,
+      "displayName": "Vue I18n",
+      "description": "Vue I18n integration",
+      "exportName": "i18nPlugin"
+    }
   }
 }
