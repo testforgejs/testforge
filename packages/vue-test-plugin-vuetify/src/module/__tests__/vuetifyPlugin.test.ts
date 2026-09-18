@@ -12,4 +12,29 @@ describe("vuetifyPlugin", () => {
 
     expect(definition.create).toBe(createVuetifyPlugin);
   });
+
+  it("should return default options factory when getDefaultOptions is called", () => {
+    const optionsFactory = vuetifyPlugin.getDefaultOptions();
+
+    expect(optionsFactory).toBeTypeOf("function");
+  });
+
+  it("should create Vuetify instance using default options", () => {
+    const optionsFactory = vuetifyPlugin.getDefaultOptions();
+    const options = optionsFactory();
+
+    const definition = vuetifyPlugin.getDefinition();
+    const instance = definition.create(options);
+
+    expect(instance).toBeDefined();
+    expect(instance.install).toBeTypeOf("function");
+  });
+
+  it("should provide components and directives in default options", () => {
+    const optionsFactory = vuetifyPlugin.getDefaultOptions();
+    const options = optionsFactory();
+
+    expect(options.components).toBeDefined();
+    expect(options.directives).toBeDefined();
+  });
 });

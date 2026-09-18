@@ -23,9 +23,34 @@ export interface PluginDefinition<TPlugin extends MountPlugin = MountPlugin, TOp
   afterCreate?: (plugin: TPlugin, ctx: PipelineContext) => void;
 }
 
+export interface UniversalRunner {
+  fn: <T extends (...args: any[]) => any>(implementation?: T) => any;
+
+  spyOn: <T extends object, M extends keyof T>(
+    object: T,
+    method: M,
+  ) => T[M] extends (...args: any[]) => any ? any : never;
+
+  clearAllMocks: () => any;
+  resetAllMocks: () => any;
+  restoreAllMocks: () => any;
+}
+
+export type PluginDefaultOptionsFactory<TOptions> = (
+  runner?: UniversalRunner,
+) => PluginOptionsFactory<TOptions>;
+
 export interface PluginModule<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
   getName(): PluginName;
   getDefinition(): PluginDefinition<TPlugin, TOptions>;
+  getDefaultOptions?: PluginDefaultOptionsFactory<TOptions>;
+}
+
+export interface PluginModuleWithDefaults<
+  TPlugin extends MountPlugin = MountPlugin,
+  TOptions = unknown,
+> extends PluginModule<TPlugin, TOptions> {
+  getDefaultOptions: PluginDefaultOptionsFactory<TOptions>;
 }
 
 export interface PluginRegistry {

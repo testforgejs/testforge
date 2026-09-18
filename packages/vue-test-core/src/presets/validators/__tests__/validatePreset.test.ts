@@ -9,6 +9,7 @@ describe("validatePreset", () => {
   const createMockModule = (name: string) => ({
     getName: () => name,
     getDefinition: () => ({ create: () => ({}) }),
+    getDefaultOptions: () => () => ({}),
   });
 
   const mockPinia = createMockModule("pinia");

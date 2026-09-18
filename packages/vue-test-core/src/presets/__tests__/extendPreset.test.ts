@@ -2,24 +2,16 @@ import { describe, it, expect, vi } from "vitest";
 import { extendPreset } from "../extendPreset.js";
 
 describe("extendPreset", () => {
-  const mockPinia = {};
-  const mockRouter = {};
-  const mockI18n = {};
+  // Helpers for creating mock modules
+  const createMockModule = (name: string) => ({
+    getName: () => name,
+    getDefinition: () => ({ create: () => ({}) }),
+    getDefaultOptions: () => () => ({}),
+  });
 
-  const mockPiniaPlugin = {
-    getName: () => "pinia",
-    getDefinition: () => ({ create: () => mockPinia }),
-  };
-
-  const mockRouterPlugin = {
-    getName: () => "router",
-    getDefinition: () => ({ create: () => mockRouter }),
-  };
-
-  const mockI18nPlugin = {
-    getName: () => "i18n",
-    getDefinition: () => ({ create: () => mockI18n }),
-  };
+  const mockPiniaPlugin = createMockModule("pinia");
+  const mockRouterPlugin = createMockModule("router");
+  const mockI18nPlugin = createMockModule("i18n");
 
   const base = {
     manifest: [

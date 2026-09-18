@@ -301,6 +301,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -339,6 +340,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -372,6 +374,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -379,6 +382,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "pinia",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -404,6 +408,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -434,6 +439,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -446,6 +452,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "pinia",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -548,6 +555,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -588,6 +596,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -622,6 +631,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -629,6 +639,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "pinia",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -656,6 +667,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -694,6 +706,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -734,6 +747,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -770,6 +784,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "i18n",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },
@@ -777,6 +792,7 @@ describe("createTestFramework → testComponentFactory", () => {
                   module: {
                     getName: () => "pinia",
                     getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
                   },
                   enabled: true,
                 },

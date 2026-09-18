@@ -12,6 +12,7 @@ describe("getPresetManifest", () => {
             getDefinition: () => ({
               create: () => ({}),
             }),
+            getDefaultOptions: () => () => ({}),
           },
           enabled: true,
         },
@@ -21,6 +22,7 @@ describe("getPresetManifest", () => {
             getDefinition: () => ({
               create: () => ({}),
             }),
+            getDefaultOptions: () => () => ({}),
           },
           enabled: false,
         },
@@ -61,6 +63,7 @@ describe("getPresetManifest", () => {
             getDefinition: () => ({
               create: () => ({}),
             }),
+            getDefaultOptions: () => () => ({}),
           },
           enabled: true,
         },

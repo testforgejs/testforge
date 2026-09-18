@@ -7,11 +7,13 @@ vi.mock("@testforgejs/vue-test-core", () => ({
 import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createI18nPlugin } from "../createI18nPlugin";
 
+const mockCreatePluginInstance = vi.mocked(createPluginInstance);
+
 describe("createI18nPlugin", () => {
   it("should delegate plugin creation to createPluginInstance", () => {
     const instance = { install: vi.fn() };
 
-    createPluginInstance.mockReturnValue(instance);
+    mockCreatePluginInstance.mockReturnValue(instance);
 
     const options = {
       locale: "en",
@@ -20,7 +22,7 @@ describe("createI18nPlugin", () => {
 
     const result = createI18nPlugin(options);
 
-    expect(createPluginInstance).toHaveBeenCalledTimes(1);
+    expect(mockCreatePluginInstance).toHaveBeenCalledTimes(1);
     expect(result).toBe(instance);
   });
 });

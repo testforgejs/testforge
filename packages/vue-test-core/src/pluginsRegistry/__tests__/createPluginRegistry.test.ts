@@ -16,6 +16,7 @@ const createMockPluginModule = (
 ): PluginModule => ({
   getName: vi.fn(() => name),
   getDefinition: vi.fn(() => definition),
+  getDefaultOptions: () => () => ({}),
 });
 
 describe("createPluginRegistry", () => {

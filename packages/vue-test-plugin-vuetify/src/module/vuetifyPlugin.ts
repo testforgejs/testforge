@@ -1,6 +1,7 @@
 import { createVuetifyPlugin } from "./createVuetifyPlugin.js";
+import { defaultOptions } from "../defaults.js";
 
-import type { PluginModule } from "@testforgejs/vue-test-core";
+import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";
 
 /**
@@ -11,15 +12,17 @@ import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";
  * component mounting.
  *
  * This plugin belongs to the
- * **Stateful Plugin Factory** category because Vuetify exposes
- * a runtime instance through {@link createVuetify}.
+ * **Stateful Plugin Factory** category because each configuration
+ * creates a dedicated Vuetify runtime instance.
  *
  * @see {@link createVuetifyPlugin}
  */
-export const vuetifyPlugin: PluginModule<VuetifyInstance, VueTestVuetifyOptions> = {
+export const vuetifyPlugin: PluginModuleWithDefaults<VuetifyInstance, VueTestVuetifyOptions> = {
   getName: () => "vuetify",
 
   getDefinition: () => ({
     create: createVuetifyPlugin,
   }),
+
+  getDefaultOptions: defaultOptions,
 };

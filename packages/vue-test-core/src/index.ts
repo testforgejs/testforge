@@ -15,6 +15,7 @@ export type {
   ComponentFactoryExtraOptions,
   CreateTestFrameworkOptions,
   MountPlugin,
+  PluginDefaultOptionsFactory,
   PluginOptionsFactory,
   PluginOptionsMap,
   PluginOptionsInput,
@@ -22,10 +23,12 @@ export type {
   PluginControlOptions,
   PluginManifestEntry,
   PluginModule,
+  PluginModuleWithDefaults,
   PresetDefinition,
   PresetExtension,
   TestFramework,
   TestFrameworkPresets,
+  UniversalRunner,
 } from "./types";
 
 // For backward compatibility

@@ -1,40 +1,84 @@
 import { describe, it, expect, vi } from "vitest";
+import { defineStore, setActivePinia } from "pinia";
+import type { Pinia } from "pinia";
 
-vi.mock("pinia", () => ({
-  setActivePinia: vi.fn(),
-}));
-
-import { setActivePinia, Pinia } from "pinia";
 import { piniaPlugin } from "../piniaPlugin.js";
 import { createPiniaPlugin } from "../createPiniaPlugin.js";
 
+vi.mock("pinia", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("pinia")>();
+
+  return {
+    ...actual,
+    setActivePinia: vi.fn(),
+  };
+});
+
 describe("piniaPlugin", () => {
   it("should return 'pinia' as plugin name when getName is called", () => {
-    // Act & Assert
     expect(piniaPlugin.getName()).toBe("pinia");
   });
 
   it("should return definition containing createPiniaPlugin when getDefinition is called", () => {
-    // Act
     const definition = piniaPlugin.getDefinition();
 
-    // Assert
     expect(definition.create).toBe(createPiniaPlugin);
   });
 
-  it("should call setActivePinia with created instance in afterCreate hook", () => {
-    // Arrange
-    const pinia = {} as Pinia;
+  it("should provide default Pinia options without a test runner", () => {
+    const optionsFactory = piniaPlugin.getDefaultOptions();
+    const options = optionsFactory();
+
+    expect(options).toEqual({
+      initialState: {},
+      stubActions: false,
+      createSpy: undefined,
+    });
+  });
+
+  it("should use the test runner mock function as createSpy", () => {
+    const optionsFactory = piniaPlugin.getDefaultOptions(vi);
+    const options = optionsFactory();
+
+    expect(options).toEqual({
+      initialState: {},
+      stubActions: false,
+      createSpy: vi.fn,
+    });
+  });
+
+  it("should create functional Pinia testing instance using default options", () => {
+    const useCounterStore = defineStore("counter", {
+      state: () => ({
+        count: 0,
+      }),
+
+      actions: {
+        increment() {
+          this.count++;
+        },
+      },
+    });
+
+    const options = piniaPlugin.getDefaultOptions(vi)();
 
     const definition = piniaPlugin.getDefinition();
+    const pinia = definition.create(options);
 
-    // Act
-    definition.afterCreate?.(
-      pinia,
-      {} as any, // ctx is not used by this hook
-    );
+    const store = useCounterStore(pinia);
 
-    // Assert
+    store.increment();
+
+    expect(store.count).toBe(1);
+    expect(store.increment).toHaveBeenCalledOnce();
+  });
+
+  it("should call setActivePinia with created instance in afterCreate hook", () => {
+    const pinia = {} as Pinia;
+    const definition = piniaPlugin.getDefinition();
+
+    definition.afterCreate?.(pinia, {} as any);
+
     expect(setActivePinia).toHaveBeenCalledTimes(1);
     expect(setActivePinia).toHaveBeenCalledWith(pinia);
   });

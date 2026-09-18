@@ -13,6 +13,7 @@ describe("createPlugins", () => {
     return {
       getName: () => name,
       getDefinition: () => definition,
+      getDefaultOptions: () => () => ({}),
     };
   };
 
@@ -123,6 +124,7 @@ describe("createPlugins", () => {
       const mockPinia = {
         getName: () => "pinia",
         getDefinition: () => definition,
+        getDefaultOptions: () => () => ({}),
       };
 
       const ctx = createMockCtx({
@@ -144,6 +146,7 @@ describe("createPlugins", () => {
       const plugin = {
         getName: () => "noBefore",
         getDefinition: () => definition,
+        getDefaultOptions: () => () => ({}),
       };
 
       const ctx = createMockCtx({
@@ -163,6 +166,7 @@ describe("createPlugins", () => {
         getDefinition: () => ({
           create: () => ({ isSimple: true }),
         }),
+        getDefaultOptions: () => () => ({}),
       };
 
       const ctx = createMockCtx({
@@ -205,6 +209,7 @@ describe("createPlugins", () => {
             return {};
           },
         }),
+        getDefaultOptions: () => () => ({}),
       });
 
       const ctx = createMockCtx({
@@ -227,6 +232,7 @@ describe("createPlugins", () => {
         getDefinition: () => ({
           create: vi.fn(() => ({})),
         }),
+        getDefaultOptions: () => () => ({}),
       };
 
       const badPlugin = {
@@ -236,6 +242,7 @@ describe("createPlugins", () => {
             throw new Error("boom");
           },
         }),
+        getDefaultOptions: () => () => ({}),
       };
 
       const ctx = createMockCtx({

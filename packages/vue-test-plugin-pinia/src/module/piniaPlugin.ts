@@ -1,11 +1,12 @@
 import { createPiniaPlugin } from "./createPiniaPlugin.js";
 import { setActivePinia } from "pinia";
+import { defaultOptions } from "../defaults.js";
 
 import type { Pinia } from "pinia";
 import type { VueTestPiniaOptions } from "../types/types";
-import type { PluginModule } from "@testforgejs/vue-test-core";
+import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 
-export const piniaPlugin: PluginModule<Pinia, VueTestPiniaOptions> = {
+export const piniaPlugin: PluginModuleWithDefaults<Pinia, VueTestPiniaOptions> = {
   getName: () => "pinia",
   getDefinition: () => ({
     // beforeCreate(ctx, options) {
@@ -20,4 +21,5 @@ export const piniaPlugin: PluginModule<Pinia, VueTestPiniaOptions> = {
       setActivePinia(instance);
     },
   }),
+  getDefaultOptions: defaultOptions,
 };

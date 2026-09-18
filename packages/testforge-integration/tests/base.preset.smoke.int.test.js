@@ -36,21 +36,35 @@ describe("base preset smoke", () => {
   };
 
   // Mock plugin creation while preserving the public plugin contract.
-  const createMockPlugin = (name, create) => ({
+  const createMockPlugin = (name, create, defaultOptions) => ({
     getName: () => name,
     getDefinition: () => ({ create }),
+    getDefaultOptions: () => () => defaultOptions,
   });
 
   runner.doMock("@testforgejs/vue-test-plugin-i18n", () => ({
-    i18nPlugin: createMockPlugin("i18n", mockI18nCreate),
+    i18nPlugin: createMockPlugin("i18n", mockI18nCreate, {
+      legacy: false,
+      locale: "en",
+      fallbackLocale: "en",
+      messages: {},
+      fallbackWarn: false,
+      missingWarn: false,
+    }),
   }));
 
   runner.doMock("@testforgejs/vue-test-plugin-pinia", () => ({
-    piniaPlugin: createMockPlugin("pinia", mockPiniaCreate),
+    piniaPlugin: createMockPlugin("pinia", mockPiniaCreate, {
+      initialState: {},
+      stubActions: false,
+    }),
   }));
 
   runner.doMock("@testforgejs/vue-test-plugin-router", () => ({
-    routerPlugin: createMockPlugin("router", mockRouterCreate),
+    routerPlugin: createMockPlugin("router", mockRouterCreate, {
+      history: {},
+      routes: [{ path: "/", component: { render: () => null } }],
+    }),
   }));
 
   beforeEach(async () => {

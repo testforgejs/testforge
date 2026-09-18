@@ -6,6 +6,7 @@ import type { PluginManifestEntry, PluginModule, PresetDefinition } from "../../
 const createMockPluginModule = (name: string) => ({
   getName: vi.fn(() => name),
   getDefinition: vi.fn(),
+  getDefaultOptions: () => () => ({}),
 });
 
 describe("createSupportedPluginsState", () => {

@@ -2,24 +2,16 @@ import { describe, expect, it } from "vitest";
 import { getSupportedPluginNames } from "../getSupportedPluginNames.js";
 
 describe("getSupportedPluginNames", () => {
-  const mockI18n = {};
-  const mockPinia = {};
-  const mockRouter = {};
+  // Helpers for creating mock modules
+  const createMockModule = (name: string) => ({
+    getName: () => name,
+    getDefinition: () => ({ create: () => ({}) }),
+    getDefaultOptions: () => () => ({}),
+  });
 
-  const i18nPlugin = {
-    getName: () => "i18n",
-    getDefinition: () => ({ create: () => mockI18n }),
-  };
-
-  const piniaPlugin = {
-    getName: () => "pinia",
-    getDefinition: () => ({ create: () => mockPinia }),
-  };
-
-  const routerPlugin = {
-    getName: () => "router",
-    getDefinition: () => ({ create: () => mockRouter }),
-  };
+  const i18nPlugin = createMockModule("i18n");
+  const piniaPlugin = createMockModule("pinia");
+  const routerPlugin = createMockModule("router");
 
   const presets = {
     default: {
