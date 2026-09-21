@@ -1,6 +1,6 @@
-# @testforgejs/vue-test-plugin-primevue
+# @testforgejs/vue-test-plugin-primevue-v3
 
-Official TestForge plugin for PrimeVue integration in component tests.
+Official TestForge plugin for PrimeVue 3 integration in component tests.
 
 ## Installation
 
@@ -9,19 +9,19 @@ Choose your preferred package manager.
 ### pnpm
 
 ```bash
-pnpm add -D @testforgejs/vue-test-plugin-primevue@beta
+pnpm add -D @testforgejs/vue-test-plugin-primevue-v3@beta
 ```
 
 ### npm
 
 ```bash
-npm install -D @testforgejs/vue-test-plugin-primevue@beta
+npm install -D @testforgejs/vue-test-plugin-primevue-v3@beta
 ```
 
 ### Yarn
 
 ```bash
-yarn add -D @testforgejs/vue-test-plugin-primevue@beta
+yarn add -D @testforgejs/vue-test-plugin-primevue-v3@beta
 ```
 
 > `@testforgejs/vue-test-core` is required.
@@ -32,7 +32,7 @@ Register `primeVuePlugin` in the TestForge plugin manifest.
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue";
+import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue-v3";
 
 const framework = createTestFramework({
   presets: {
@@ -44,7 +44,7 @@ const framework = createTestFramework({
         },
       ],
       defaults: {
-        primevue: () => ({
+        primevueV3: () => ({
           theme: {
             preset: Aura,
           },
@@ -59,14 +59,14 @@ const factory = framework.testComponentFactory(MyComponent);
 const wrapper = factory();
 ```
 
-`defaults.primevue` is an options factory. Each invocation produces a fresh PrimeVue options object for the current pipeline context.
+`defaults.primevueV3` is an options factory. Each invocation produces a fresh PrimeVue options object for the current pipeline context.
 
-The plugin provides PrimeVue integration for components mounted through TestForge.
+The plugin provides PrimeVue 3 integration for components mounted through TestForge.
 
 ## Supported versions
 
 - Vue: 3.3.0 or higher
-- PrimeVue: 4.x
+- PrimeVue: 3.x
 
 ## Documentation
 
@@ -74,4 +74,4 @@ See the [TestForge documentation](https://github.com/testforgejs/testforge#readm
 
 ### API Reference
 
-See the [API reference](https://github.com/testforgejs/testforge/blob/main/packages/vue-test-plugin-primevue/docs/api/README.md).
+See the [API reference](https://github.com/testforgejs/testforge/blob/main/packages/vue-test-plugin-primevue-v3/docs/api/README.md).

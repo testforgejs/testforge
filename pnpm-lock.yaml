@@ -163,6 +163,15 @@ importers:
         specifier: ^4.0.0
         version: 4.5.5(vue@3.5.41(typescript@6.0.3))
 
+  packages/vue-test-plugin-primevue-v3:
+    devDependencies:
+      '@testforgejs/vue-test-core':
+        specifier: workspace:*
+        version: link:../vue-test-core
+      primevue:
+        specifier: ^3.0.0
+        version: 3.53.1(vue@3.5.41(typescript@6.0.3))
+
   packages/vue-test-plugin-router:
     devDependencies:
       '@testforgejs/vue-test-core':
@@ -3766,6 +3775,11 @@ packages:
   pretty-format@30.4.1:
     resolution: {integrity: sha512-K6KiKMHTL4jjX4u3Kir2EW07nRfcqVTXIImx50wbjHQTcZPgg+gjVeNTIT3l3L1Rd4UefxfogquC9J37SoFyyw==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+
+  primevue@3.53.1:
+    resolution: {integrity: sha512-Bp4peZPdhfKYXwvtsOGGh5dfgmTelm+LZEZKGs/c5mOHhsUJ6xi3EcOZoQVI6oklS946ayMQvgD5L0S7itGO0g==}
+    peerDependencies:
+      vue: ^3.0.0
 
   primevue@4.5.5:
     resolution: {integrity: sha512-Kv5REIewCdP806QaoU+4nBXfmpzOGFKkZ9qH4KsL6MjiAQVc4PUzypt8erl4r3Vzh3nr3aWZIxkxYRRsLGiX2A==}
@@ -8502,6 +8516,10 @@ snapshots:
       ansi-styles: 5.2.0
       react-is-18: react-is@18.3.1
       react-is-19: react-is@19.2.8
+
+  primevue@3.53.1(vue@3.5.41(typescript@6.0.3)):
+    dependencies:
+      vue: 3.5.41(typescript@6.0.3)
 
   primevue@4.5.5(vue@3.5.41(typescript@6.0.3)):
     dependencies:

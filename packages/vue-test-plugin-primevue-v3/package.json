@@ -1,13 +1,13 @@
 {
-  "name": "@testforgejs/vue-test-plugin-primevue",
+  "name": "@testforgejs/vue-test-plugin-primevue-v3",
   "version": "1.0.0-beta.2",
   "type": "module",
-  "description": "Official TestForge plugin for PrimeVue integration in component tests",
+  "description": "Official TestForge plugin for PrimeVue 3 integration in component tests",
   "homepage": "https://github.com/testforgejs/testforge#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/testforgejs/testforge.git",
-    "directory": "packages/vue-test-plugin-primevue"
+    "directory": "packages/vue-test-plugin-primevue-v3"
   },
   "bugs": {
     "url": "https://github.com/testforgejs/testforge/issues"
@@ -48,17 +48,17 @@
   "author": "Roman Levchenko",
   "peerDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
-    "primevue": "^4.0.0"
+    "primevue": "^3.0.0"
   },
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
-    "primevue": "^4.0.0"
+    "primevue": "^3.0.0"
   },
   "testforge": {
     "plugin": {
       "schemaVersion": 1,
-      "displayName": "PrimeVue",
-      "description": "PrimeVue integration",
+      "displayName": "PrimeVue 3",
+      "description": "PrimeVue 3 integration",
       "exportName": "primeVuePlugin"
     }
   }
