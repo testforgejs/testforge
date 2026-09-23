@@ -15,7 +15,11 @@ export default defineConfig({
 
     server: {
       deps: {
-        inline: ["vuetify", "@testforgejs/vue-test-plugin-primevue-v3"],
+        inline: [
+          "vuetify",
+          "@testforgejs/vue-test-plugin-vuetify",
+          "@testforgejs/vue-test-plugin-primevue-v3",
+        ],
       },
     },
   },

@@ -141,6 +141,42 @@ importers:
         specifier: 'catalog:'
         version: 3.5.41(typescript@6.0.3)
 
+  packages/integration/vuetify-v3:
+    dependenciesMeta:
+      '@testforgejs/vue-test-plugin-vuetify':
+        injected: true
+    devDependencies:
+      '@testforgejs/vue-test-core':
+        specifier: workspace:*
+        version: link:../../vue-test-core
+      '@testforgejs/vue-test-plugin-vuetify':
+        specifier: workspace:*
+        version: file:packages/vue-test-plugin-vuetify(@testforgejs/vue-test-core@packages+vue-test-core)(vuetify@3.13.5(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.41(typescript@6.0.3)
+      vuetify:
+        specifier: ^3.0.0
+        version: 3.13.5(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
+
+  packages/integration/vuetify-v4:
+    dependenciesMeta:
+      '@testforgejs/vue-test-plugin-vuetify':
+        injected: true
+    devDependencies:
+      '@testforgejs/vue-test-core':
+        specifier: workspace:*
+        version: link:../../vue-test-core
+      '@testforgejs/vue-test-plugin-vuetify':
+        specifier: workspace:*
+        version: file:packages/vue-test-plugin-vuetify(@testforgejs/vue-test-core@packages+vue-test-core)(vuetify@4.1.9(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.41(typescript@6.0.3)
+      vuetify:
+        specifier: ^4.0.0
+        version: 4.1.9(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
+
   packages/testforge-integration:
     devDependencies:
       '@testforgejs/vue-test-core':
@@ -1823,6 +1859,12 @@ packages:
     peerDependencies:
       '@testforgejs/vue-test-core': workspace:*
       primevue: ^4.0.0
+
+  '@testforgejs/vue-test-plugin-vuetify@file:packages/vue-test-plugin-vuetify':
+    resolution: {directory: packages/vue-test-plugin-vuetify, type: directory}
+    peerDependencies:
+      '@testforgejs/vue-test-core': workspace:*
+      vuetify: ^3.0.0 || ^4.0.0
 
   '@tsd/typescript@5.9.3':
     resolution: {integrity: sha512-JSSdNiS0wgd8GHhBwnMAI18Y8XPhLVN+dNelPfZCXFhy9Lb3NbnFyp9JKxxr54jSUkEJPk3cidvCoHducSaRMQ==}
@@ -4551,6 +4593,21 @@ packages:
       typescript:
         optional: true
 
+  vuetify@3.13.5:
+    resolution: {integrity: sha512-1PKESHKgyIj6BfjVbpF1bLWvKIBOvyDqIcP6C0R173fNZDr4jyXH7ssigAZvfqV5nRmVS/N9sGtY/IekGQ9TSQ==}
+    peerDependencies:
+      typescript: '>=4.7'
+      vite-plugin-vuetify: '>=2.1.0'
+      vue: ^3.5.0
+      webpack-plugin-vuetify: '>=3.1.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      vite-plugin-vuetify:
+        optional: true
+      webpack-plugin-vuetify:
+        optional: true
+
   vuetify@4.1.9:
     resolution: {integrity: sha512-2NlpUiSwkUAGxKmkKwoRCst3IJF6EPP7msNJd+VxFjcAN9xCG+RFODzsfXfO2ypl9aSj3T/PJ65BBjQeTGgFKA==}
     peerDependencies:
@@ -6404,6 +6461,16 @@ snapshots:
     dependencies:
       '@testforgejs/vue-test-core': link:packages/vue-test-core
       primevue: 4.5.5(vue@3.5.41(typescript@6.0.3))
+
+  '@testforgejs/vue-test-plugin-vuetify@file:packages/vue-test-plugin-vuetify(@testforgejs/vue-test-core@packages+vue-test-core)(vuetify@3.13.5(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))':
+    dependencies:
+      '@testforgejs/vue-test-core': link:packages/vue-test-core
+      vuetify: 3.13.5(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
+
+  '@testforgejs/vue-test-plugin-vuetify@file:packages/vue-test-plugin-vuetify(@testforgejs/vue-test-core@packages+vue-test-core)(vuetify@4.1.9(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))':
+    dependencies:
+      '@testforgejs/vue-test-core': link:packages/vue-test-core
+      vuetify: 4.1.9(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
 
   '@tsd/typescript@5.9.3': {}
 
@@ -9283,6 +9350,12 @@ snapshots:
       '@vue/runtime-dom': 3.5.41
       '@vue/server-renderer': 3.5.41
       '@vue/shared': 3.5.41
+    optionalDependencies:
+      typescript: 6.0.3
+
+  vuetify@3.13.5(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)):
+    dependencies:
+      vue: 3.5.41(typescript@6.0.3)
     optionalDependencies:
       typescript: 6.0.3
 

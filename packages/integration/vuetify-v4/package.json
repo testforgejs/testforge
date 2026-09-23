@@ -1,0 +1,16 @@
+{
+  "name": "@testforge-internal/vuetify-v4-integration",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@testforgejs/vue-test-core": "workspace:*",
+    "@testforgejs/vue-test-plugin-vuetify": "workspace:*",
+    "vuetify": "^4.0.0",
+    "vue": "catalog:"
+  },
+  "dependenciesMeta": {
+    "@testforgejs/vue-test-plugin-vuetify": {
+      "injected": true
+    }
+  }
+}
