@@ -3,14 +3,25 @@ import { createPipelineContext } from "../core/createPipelineContext.js";
 import { createPipeline } from "../core/createPipeline.js";
 import { createMountPipeline } from "../mount/createMountPipeline.js";
 import { presets } from "./mockPresets.js";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
 import type { RuntimePluginConfig, TestFrameworkPresets } from "../../types";
 
 describe("Mount Pipeline Integration", () => {
+  const createMockPlugin = (name: string) => ({
+    getName: () => name,
+    getDefinition: () => ({
+      create: () => ({
+        install() {},
+      }),
+    }),
+    getDefaultOptions: () => () => ({}),
+  });
+
+  const mockPiniaPlugin = createMockPlugin("pinia");
+  const mockI18nPlugin = createMockPlugin("i18n");
+  const mockRouterPlugin = createMockPlugin("router");
+
   const run = (
     presets: TestFrameworkPresets,
     defaultMountOptions = {},
@@ -535,7 +546,7 @@ describe("Mount Pipeline Integration", () => {
 
       const mockPresets = {
         default: {
-          manifest: [{ module: piniaPlugin, enabled: true }],
+          manifest: [{ module: mockPiniaPlugin, enabled: true }],
           defaults: {
             pinia: () => ({}),
           },
@@ -851,9 +862,9 @@ describe("Mount Pipeline Integration", () => {
     const defaultPresets = {
       default: {
         manifest: [
-          { module: piniaPlugin, enabled: true },
-          { module: i18nPlugin, enabled: true },
-          { module: routerPlugin, enabled: false },
+          { module: mockPiniaPlugin, enabled: true },
+          { module: mockI18nPlugin, enabled: true },
+          { module: mockRouterPlugin, enabled: false },
         ],
         defaults: {
           i18n: () => ({ locale: "en", legacy: false }),
@@ -862,7 +873,7 @@ describe("Mount Pipeline Integration", () => {
         },
       },
       custom: {
-        manifest: [{ module: i18nPlugin, enabled: true }],
+        manifest: [{ module: mockI18nPlugin, enabled: true }],
         defaults: {
           i18n: () => ({ locale: "fr" }),
         },

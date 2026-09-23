@@ -1,6 +1,5 @@
 import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vitest/config";
-import path from "node:path";
 
 export default defineConfig({
   plugins: [vue()],
@@ -19,14 +18,5 @@ export default defineConfig({
         inline: ["vuetify", "@testforgejs/vue-test-plugin-primevue-v3"],
       },
     },
-  },
-
-  resolve: {
-    alias: [
-      {
-        find: /^@testforgejs\/(.*)$/,
-        replacement: path.resolve(import.meta.dirname, "packages/$1/src"),
-      },
-    ],
   },
 });

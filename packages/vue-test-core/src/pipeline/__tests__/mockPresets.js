@@ -5,6 +5,7 @@ const createMockPlugin = (name) => ({
       install() {},
     }),
   }),
+  getDefaultOptions: () => () => ({}),
 });
 
 const mockPiniaPlugin = createMockPlugin("pinia");
