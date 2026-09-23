@@ -1,5 +1,6 @@
 import { createVuetifyPlugin } from "./createVuetifyPlugin.js";
 import { defaultOptions } from "../defaults.js";
+import { VUETIFY_PLUGIN_NAME } from "../constants.js";
 
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";
@@ -18,7 +19,7 @@ import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";
  * @see {@link createVuetifyPlugin}
  */
 export const vuetifyPlugin: PluginModuleWithDefaults<VuetifyInstance, VueTestVuetifyOptions> = {
-  getName: () => "vuetify",
+  getName: () => VUETIFY_PLUGIN_NAME,
 
   getDefinition: () => ({
     create: createVuetifyPlugin,

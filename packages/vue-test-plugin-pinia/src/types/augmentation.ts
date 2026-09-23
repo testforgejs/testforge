@@ -1,3 +1,5 @@
+import { PINIA_PLUGIN_NAME } from "../constants.js";
+
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPiniaOptions } from "./types";
 
@@ -18,6 +20,6 @@ declare module "@testforgejs/vue-test-core" {
      * Configuration for the `pinia` plugin.
      * Accepts an object of type {@link VueTestPiniaOptions}, which controls the behavior of the stores in tests.
      */
-    pinia: VueTestPiniaOptions;
+    [PINIA_PLUGIN_NAME]: VueTestPiniaOptions;
   }
 }

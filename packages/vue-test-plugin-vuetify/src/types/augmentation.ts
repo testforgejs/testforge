@@ -1,3 +1,5 @@
+import { VUETIFY_PLUGIN_NAME } from "../constants.js";
+
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions } from "./types";
 
@@ -34,6 +36,6 @@ declare module "@testforgejs/vue-test-core" {
      * });
      * ```
      */
-    vuetify: VueTestVuetifyOptions;
+    [VUETIFY_PLUGIN_NAME]: VueTestVuetifyOptions;
   }
 }

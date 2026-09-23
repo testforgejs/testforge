@@ -1,5 +1,6 @@
 import { createPrimeVuePlugin } from "./createPrimeVuePlugin.js";
 import { defaultOptions } from "../defaults.js";
+import { PRIMEVUE_PLUGIN_NAME } from "../constants.js";
 
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types";
@@ -17,7 +18,7 @@ export const primeVuePlugin: PluginModuleWithDefaults<PrimeVueMountPlugin, VueTe
      *
      * @returns The plugin registration key (`"primevue"`).
      */
-    getName: () => "primevue",
+    getName: () => PRIMEVUE_PLUGIN_NAME,
 
     /**
      * Returns the PrimeVue plugin lifecycle definition.

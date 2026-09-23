@@ -1,3 +1,5 @@
+import { ROUTER_PLUGIN_NAME } from "../constants.js";
+
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestRouterOptions } from "./types";
 
@@ -30,6 +32,6 @@ declare module "@testforgejs/vue-test-core" {
      * });
      * ```
      */
-    router: VueTestRouterOptions;
+    [ROUTER_PLUGIN_NAME]: VueTestRouterOptions;
   }
 }

@@ -1,3 +1,5 @@
+import { I18N_PLUGIN_NAME } from "../constants.js";
+
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestI18nOptions } from "./types";
 
@@ -30,6 +32,6 @@ declare module "@testforgejs/vue-test-core" {
      * });
      * ```
      */
-    i18n: VueTestI18nOptions;
+    [I18N_PLUGIN_NAME]: VueTestI18nOptions;
   }
 }

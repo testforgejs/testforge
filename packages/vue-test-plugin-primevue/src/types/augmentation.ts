@@ -1,3 +1,5 @@
+import { PRIMEVUE_PLUGIN_NAME } from "../constants.js";
+
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions } from "./types";
 
@@ -32,6 +34,6 @@ declare module "@testforgejs/vue-test-core" {
      * })
      * ```
      */
-    primevue: VueTestPrimeVueOptions;
+    [PRIMEVUE_PLUGIN_NAME]: VueTestPrimeVueOptions;
   }
 }
