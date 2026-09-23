@@ -1,5 +1,10 @@
 packages:
   - "packages/*"
+  - "packages/integration/*"
+
 allowBuilds:
   esbuild: true
   unrs-resolver: true
+
+catalog:
+  vue: "^3.5.32"

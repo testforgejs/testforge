@@ -1,10 +1,12 @@
+import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vitest/config";
 import path from "node:path";
 
 export default defineConfig({
+  plugins: [vue()],
+
   test: {
     globals: true,
-    // environment: "node",
     include: ["**/*.vitest.test.js", "**/*.vitest.test.cjs", "**/*.test.ts", "**/*.int.test.js"],
 
     typecheck: {
@@ -14,10 +16,11 @@ export default defineConfig({
 
     server: {
       deps: {
-        inline: ["vuetify"],
+        inline: ["vuetify", "@testforgejs/vue-test-plugin-primevue-v3"],
       },
     },
   },
+
   resolve: {
     alias: [
       {

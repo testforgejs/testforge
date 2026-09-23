@@ -50,6 +50,7 @@
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
+    "@vitejs/plugin-vue": "^6.0.9",
     "@vue/test-utils": "^2.4.6",
     "babel-jest": "^30.3.0",
     "eslint": "^10.2.1",
@@ -70,7 +71,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
     "vitest": "4.1.4",
-    "vue": "^3.5.32"
+    "vue": "catalog:"
   },
   "lint-staged": {
     "*.{js,mjs,ts}": [

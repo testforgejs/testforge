@@ -141,6 +141,7 @@ export function create${pascalName}Plugin(
 writeFile(
   `src/module/${camelName}Plugin.ts`,
   `import { create${pascalName}Plugin } from "./create${pascalName}Plugin.js";
+import { defaultOptions } from "../defaults.js";
 
 import type { PluginModule } from "@testforgejs/vue-test-core";
 import type { VueTest${pascalName}Options } from "../types/types";
@@ -153,11 +154,30 @@ export const ${camelName}Plugin: PluginModule<any, VueTest${pascalName}Options> 
     // beforeCreate(ctx, options) { return options; },
     // afterCreate(instance, ctx) {}
   }),
+
+  getDefaultOptions: defaultOptions,
 };
 `,
 );
 
-// 7. src/index.ts
+// 7. src/defaults.ts
+writeFile(
+  "src/defaults.ts",
+  `import type {
+  PluginDefaultOptionsFactory,
+} from "@testforgejs/vue-test-core";
+
+import type { VueTest${pascalName}Options } from "./types/types";
+
+export const defaultOptions: PluginDefaultOptionsFactory<
+  VueTest${pascalName}Options
+> = () => () => ({
+  // TODO: Add the minimal options required to create a functional plugin instance.
+});
+`,
+);
+
+// 8. src/index.ts
 writeFile(
   "src/index.ts",
   `import "./types/augmentation.js";

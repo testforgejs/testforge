@@ -35,11 +35,7 @@ export default tsEslint.config(
         beforeEach: "readonly",
       },
       parserOptions: {
-        project: [
-          "./tsconfig.json",
-          "./packages/*/tsconfig.json",
-          "./packages/*/tsconfig.test.json",
-        ],
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
