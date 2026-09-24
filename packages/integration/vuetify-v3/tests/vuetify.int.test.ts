@@ -1,5 +1,5 @@
 /* @vitest-environment happy-dom */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import VuetifyFixture from "../src/VuetifyFixture.vue";
 import { testComponentFactory } from "./setup.js";
@@ -28,17 +28,24 @@ describe("Vuetify 3 integration", () => {
   });
 
   it("should fail when Vuetify plugin is not included in the preset", () => {
-    const preset: PresetDefinition = {
-      manifest: [],
-      defaults: {},
-    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    const { testComponentFactory } = createTestFramework({
-      preset,
-    });
+    try {
+      const preset: PresetDefinition = {
+        manifest: [],
+        defaults: {},
+      };
 
-    const factoryWithoutVuetify = testComponentFactory(VuetifyFixture);
+      const { testComponentFactory } = createTestFramework({
+        preset,
+      });
 
-    expect(() => factoryWithoutVuetify()).toThrow();
+      const factoryWithoutVuetify = testComponentFactory(VuetifyFixture);
+
+      expect(() => factoryWithoutVuetify()).toThrow();
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

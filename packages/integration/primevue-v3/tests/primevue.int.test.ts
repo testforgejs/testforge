@@ -1,5 +1,5 @@
 /* @vitest-environment happy-dom */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import PrimeVueFixture from "../src/PrimeVueFixture.vue";
 import { testComponentFactory } from "./setup.js";
@@ -28,15 +28,22 @@ describe("PrimeVue 3 integration", () => {
   });
 
   it("should fail when PrimeVue plugin is not included in the preset", () => {
-    const preset: PresetDefinition = {
-      manifest: [],
-      defaults: {},
-    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    const { testComponentFactory } = createTestFramework({
-      preset,
-    });
-    const factory = testComponentFactory(PrimeVueFixture);
-    expect(() => factory()).toThrow();
+    try {
+      const preset: PresetDefinition = {
+        manifest: [],
+        defaults: {},
+      };
+
+      const { testComponentFactory } = createTestFramework({
+        preset,
+      });
+      const factory = testComponentFactory(PrimeVueFixture);
+      expect(() => factory()).toThrow();
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
