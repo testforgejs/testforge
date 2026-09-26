@@ -18,6 +18,7 @@ const pascalName = kebabName
   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
   .join("");
 const camelName = pascalName.charAt(0).toLowerCase() + pascalName.slice(1);
+const constantName = `${kebabName.toUpperCase().replace(/-/g, "_")}_PLUGIN_NAME`;
 
 const targetDir = path.resolve(process.cwd(), `packages/vue-test-plugin-${kebabName}`);
 
@@ -29,6 +30,7 @@ if (fs.existsSync(targetDir)) {
 // A utility for creating files
 const writeFile = (filePath, content) => {
   const fullPath = path.join(targetDir, filePath);
+
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content.trim() + "\n");
 };
@@ -68,7 +70,7 @@ writeFile(
 }`,
 );
 
-// 2. tsconfig.json
+// 2. tsup.config.js
 writeFile(
   "tsup.config.js",
   `import { defineConfig } from "tsup";
@@ -79,34 +81,45 @@ export default defineConfig({
 });`,
 );
 
-// 3. src/types/types.ts
+// 3. src/constants/constants.ts
+writeFile(
+  "src/constants/constants.ts",
+  `export const ${constantName} = "${camelName}" as const;
+`,
+);
+
+// 4. src/types/types.ts
 writeFile(
   "src/types/types.ts",
   `import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
 // TODO: Replace 'any' with original library types (e.g., CustomOptions, CustomInstance)
-export interface VueTest${pascalName}Options extends Record<string, any>, PluginControlOptions<any> {
+export interface VueTest${pascalName}Options
+  extends Record<string, any>,
+    PluginControlOptions<any> {
   /** Example custom flag for test environment */
   mockData?: boolean;
 }
 `,
 );
 
-// 4. src/types/augmentation.ts
+// 5. src/types/augmentation.ts
 writeFile(
   "src/types/augmentation.ts",
   `import type {} from "@testforgejs/vue-test-core";
-import type { VueTest${pascalName}Options } from "./types";
+
+import { ${constantName} } from "../constants/constants.js";
+import type { VueTest${pascalName}Options } from "./types.js";
 
 declare module "@testforgejs/vue-test-core" {
   interface PluginOptionsMap {
-    ${camelName}: VueTest${pascalName}Options;
+    [${constantName}]: VueTest${pascalName}Options;
   }
 }
 `,
 );
 
-// 5. src/module/create{Name}Plugin.ts
+// 6. src/module/create{Name}Plugin.ts
 writeFile(
   `src/module/create${pascalName}Plugin.ts`,
   `import { createPluginInstance } from "@testforgejs/vue-test-core";
@@ -120,7 +133,8 @@ import type { VueTest${pascalName}Options } from "../types/types";
 export function create${pascalName}Plugin(
   options: VueTest${pascalName}Options,
 ): any {
-  // TODO: Replace with actual library factory
+  // TODO: Replace with actual library factory.
+  //
   // Example:
   // return createPluginInstance(createLibrary, options);
 
@@ -137,21 +151,45 @@ export function create${pascalName}Plugin(
 `,
 );
 
-// 6. src/module/{Name}Plugin.ts
+// 7. src/defaults.ts
+writeFile(
+  "src/defaults.ts",
+  `import type { PluginDefaultOptionsFactory } from "@testforgejs/vue-test-core";
+
+import type { VueTest${pascalName}Options } from "./types/types";
+
+export const defaultOptions: PluginDefaultOptionsFactory<
+  VueTest${pascalName}Options
+> = () => () => ({
+  // TODO: Add only the minimal project-independent options required
+  // to create a reliable TestForge integration.
+});
+`,
+);
+
+// 8. src/module/{name}Plugin.ts
 writeFile(
   `src/module/${camelName}Plugin.ts`,
-  `import { create${pascalName}Plugin } from "./create${pascalName}Plugin.js";
+  `import type { PluginModule } from "@testforgejs/vue-test-core";
+
+import { ${constantName} } from "../constants/constants.js";
 import { defaultOptions } from "../defaults.js";
-
-import type { PluginModule } from "@testforgejs/vue-test-core";
 import type { VueTest${pascalName}Options } from "../types/types";
+import { create${pascalName}Plugin } from "./create${pascalName}Plugin.js";
 
-export const ${camelName}Plugin: PluginModule<any, VueTest${pascalName}Options> = {
-  getName: () => "${camelName}",
+export const ${camelName}Plugin: PluginModule<
+  any,
+  VueTest${pascalName}Options
+> = {
+  getName: () => ${constantName},
 
   getDefinition: () => ({
     create: create${pascalName}Plugin,
-    // beforeCreate(ctx, options) { return options; },
+
+    // beforeCreate(ctx, options) {
+    //   return options;
+    // },
+
     // afterCreate(instance, ctx) {}
   }),
 
@@ -160,29 +198,20 @@ export const ${camelName}Plugin: PluginModule<any, VueTest${pascalName}Options> 
 `,
 );
 
-// 7. src/defaults.ts
-writeFile(
-  "src/defaults.ts",
-  `import type {
-  PluginDefaultOptionsFactory,
-} from "@testforgejs/vue-test-core";
-
-import type { VueTest${pascalName}Options } from "./types/types";
-
-export const defaultOptions: PluginDefaultOptionsFactory<
-  VueTest${pascalName}Options
-> = () => () => ({
-  // TODO: Add the minimal options required to create a functional plugin instance.
-});
-`,
-);
-
-// 8. src/index.ts
+// 9. src/index.ts
 writeFile(
   "src/index.ts",
   `import "./types/augmentation.js";
 
-export { ${camelName}Plugin } from "./module/${camelName}Plugin.js";
+export {
+  ${camelName}Plugin,
+  ${camelName}Plugin as plugin,
+} from "./module/${camelName}Plugin.js";
+
+export {
+  ${constantName} as PLUGIN_NAME,
+} from "./constants/constants.js";
+
 export * from "./types/types";
 `,
 );
