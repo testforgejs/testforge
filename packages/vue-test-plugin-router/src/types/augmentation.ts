@@ -1,4 +1,4 @@
-import { ROUTER_PLUGIN_NAME } from "../constants.js";
+import { ROUTER_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestRouterOptions } from "./types";

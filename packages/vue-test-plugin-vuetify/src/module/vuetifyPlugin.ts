@@ -1,6 +1,6 @@
 import { createVuetifyPlugin } from "./createVuetifyPlugin.js";
 import { defaultOptions } from "../defaults.js";
-import { VUETIFY_PLUGIN_NAME } from "../constants.js";
+import { VUETIFY_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";

@@ -1,4 +1,4 @@
-import { PINIA_PLUGIN_NAME } from "../constants.js";
+import { PINIA_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPiniaOptions } from "./types";

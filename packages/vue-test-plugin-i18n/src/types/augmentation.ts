@@ -1,4 +1,4 @@
-import { I18N_PLUGIN_NAME } from "../constants.js";
+import { I18N_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestI18nOptions } from "./types";

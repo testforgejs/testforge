@@ -1,4 +1,4 @@
-import { VUETIFY_PLUGIN_NAME } from "../constants.js";
+import { VUETIFY_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestVuetifyOptions } from "./types";

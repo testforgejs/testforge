@@ -1,6 +1,6 @@
 import { createRouterPlugin } from "./createRouterPlugin.js";
 import { defaultOptions } from "../defaults.js";
-import { ROUTER_PLUGIN_NAME } from "../constants.js";
+import { ROUTER_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { Router } from "vue-router";
 import type { VueTestRouterOptions } from "../types/types";

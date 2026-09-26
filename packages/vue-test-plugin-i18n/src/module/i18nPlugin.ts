@@ -1,6 +1,6 @@
 import { createI18nPlugin } from "./createI18nPlugin";
 import { defaultOptions } from "../defaults.js";
-import { I18N_PLUGIN_NAME } from "../constants.js";
+import { I18N_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { I18n } from "vue-i18n";
 import type { VueTestI18nOptions } from "../types/types";

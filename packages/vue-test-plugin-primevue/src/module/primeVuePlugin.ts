@@ -1,6 +1,6 @@
 import { createPrimeVuePlugin } from "./createPrimeVuePlugin.js";
 import { defaultOptions } from "../defaults.js";
-import { PRIMEVUE_PLUGIN_NAME } from "../constants.js";
+import { PRIMEVUE_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types";

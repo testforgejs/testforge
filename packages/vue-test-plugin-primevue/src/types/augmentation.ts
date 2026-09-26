@@ -1,4 +1,4 @@
-import { PRIMEVUE_PLUGIN_NAME } from "../constants.js";
+import { PRIMEVUE_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions } from "./types";
