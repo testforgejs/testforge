@@ -27,34 +27,22 @@ describe("recommended presets configuration", () => {
 
     it("should create the expected Pinia default options", () => {
       expect(presets.default.defaults.pinia()).toEqual({
-        initialState: {},
-        stubActions: false,
         createSpy: vi.fn,
       });
     });
 
-    it("should create the expected i18n default options", () => {
+    it("should provide i18n default options", () => {
       expect(presets.default.defaults.i18n()).toEqual({
         legacy: false,
-        locale: "en",
-        fallbackLocale: "en",
-        messages: {},
-        fallbackWarn: false,
-        missingWarn: false,
+        globalInjection: true,
       });
     });
 
     it("should create the expected Router default options", () => {
-      expect(presets.default.defaults.router()).toMatchObject({
-        routes: [
-          {
-            path: "/",
-            component: expect.any(Object),
-          },
-        ],
-      });
+      const options = presets.default.defaults.router();
 
-      expect(presets.default.defaults.router().history).toBeDefined();
+      expect(options.routes).toEqual([]);
+      expect(options.history).toBeDefined();
     });
   });
 
@@ -70,8 +58,6 @@ describe("recommended presets configuration", () => {
 
     it("should create the expected Pinia default options for piniaPreset", () => {
       expect(presets.piniaPreset.defaults.pinia()).toEqual({
-        initialState: {},
-        stubActions: false,
         createSpy: vi.fn,
       });
     });
@@ -87,14 +73,10 @@ describe("recommended presets configuration", () => {
       ]);
     });
 
-    it("should create the expected i18n default options for i18nPreset", () => {
+    it("should provide i18n default options for i18nPreset", () => {
       expect(presets.i18nPreset.defaults.i18n()).toEqual({
         legacy: false,
-        locale: "en",
-        fallbackLocale: "en",
-        messages: {},
-        fallbackWarn: false,
-        missingWarn: false,
+        globalInjection: true,
       });
     });
   });
@@ -110,16 +92,10 @@ describe("recommended presets configuration", () => {
     });
 
     it("should create the expected Router default options for routerPreset", () => {
-      expect(presets.routerPreset.defaults.router()).toMatchObject({
-        routes: [
-          {
-            path: "/",
-            component: expect.any(Object),
-          },
-        ],
-      });
+      const options = presets.routerPreset.defaults.router();
 
-      expect(presets.routerPreset.defaults.router().history).toBeDefined();
+      expect(options.routes).toEqual([]);
+      expect(options.history).toBeDefined();
     });
   });
 

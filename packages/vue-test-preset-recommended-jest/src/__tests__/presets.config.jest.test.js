@@ -25,16 +25,14 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should create the expected Pinia default options", () => {
-      expect(presets.default.defaults.pinia()).toMatchObject({
-        initialState: {},
-        stubActions: false,
-      });
-    });
-
     it("should configure Pinia to use Jest spies", () => {
-      const createSpy = presets.default.defaults.pinia().createSpy;
-      const spy = createSpy();
+      const options = presets.default.defaults.pinia();
+
+      expect(options).toEqual({
+        createSpy: expect.any(Function),
+      });
+
+      const spy = options.createSpy();
 
       expect(jest.isMockFunction(spy)).toBe(true);
     });
@@ -42,25 +40,15 @@ describe("jest presets configuration", () => {
     it("should create the expected i18n default options", () => {
       expect(presets.default.defaults.i18n()).toEqual({
         legacy: false,
-        locale: "en",
-        fallbackLocale: "en",
-        messages: {},
-        fallbackWarn: false,
-        missingWarn: false,
+        globalInjection: true,
       });
     });
 
-    it("should create the expected Router default options", () => {
-      expect(presets.default.defaults.router()).toMatchObject({
-        routes: [
-          {
-            path: "/",
-            component: expect.any(Object),
-          },
-        ],
-      });
+    it("should provide Router default options", () => {
+      const options = presets.default.defaults.router();
 
-      expect(presets.default.defaults.router().history).toBeDefined();
+      expect(options.routes).toEqual([]);
+      expect(options.history).toBeDefined();
     });
   });
 
@@ -74,16 +62,14 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should create the expected Pinia default options for piniaPreset", () => {
-      expect(presets.default.defaults.pinia()).toMatchObject({
-        initialState: {},
-        stubActions: false,
-      });
-    });
-
     it("should configure Pinia for piniaPreset to use Jest spies", () => {
-      const createSpy = presets.default.defaults.pinia().createSpy;
-      const spy = createSpy();
+      const options = presets.piniaPreset.defaults.pinia();
+
+      expect(options).toEqual({
+        createSpy: expect.any(Function),
+      });
+
+      const spy = options.createSpy();
 
       expect(jest.isMockFunction(spy)).toBe(true);
     });
@@ -102,11 +88,7 @@ describe("jest presets configuration", () => {
     it("should create the expected i18n default options for i18nPreset", () => {
       expect(presets.i18nPreset.defaults.i18n()).toEqual({
         legacy: false,
-        locale: "en",
-        fallbackLocale: "en",
-        messages: {},
-        fallbackWarn: false,
-        missingWarn: false,
+        globalInjection: true,
       });
     });
   });
@@ -121,17 +103,11 @@ describe("jest presets configuration", () => {
       ]);
     });
 
-    it("should create the expected Router default options for routerPreset", () => {
-      expect(presets.routerPreset.defaults.router()).toMatchObject({
-        routes: [
-          {
-            path: "/",
-            component: expect.any(Object),
-          },
-        ],
-      });
+    it("should provide Router default options for routerPreset", () => {
+      const options = presets.routerPreset.defaults.router();
 
-      expect(presets.routerPreset.defaults.router().history).toBeDefined();
+      expect(options.routes).toEqual([]);
+      expect(options.history).toBeDefined();
     });
   });
 

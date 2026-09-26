@@ -50,8 +50,8 @@
   "author": "Roman Levchenko",
   "peerDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
-    "pinia": ">=3.0.0 <5.0.0",
-    "@pinia/testing": ">=1.0.0 <3.0.0"
+    "pinia": "^3.0.0 || ^4.0.0",
+    "@pinia/testing": "^1.0.0 || ^2.0.0"
   },
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",

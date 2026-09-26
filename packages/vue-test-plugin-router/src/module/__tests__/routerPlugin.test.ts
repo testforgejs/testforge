@@ -17,10 +17,7 @@ describe("routerPlugin", () => {
     const options = routerPlugin.getDefaultOptions()();
 
     expect(options.history).toBeDefined();
-    expect(options.routes).toHaveLength(1);
-    expect(options.routes[0]).toMatchObject({
-      path: "/",
-    });
+    expect(options.routes).toEqual([]);
   });
 
   it("should create functional Router instance using default options", async () => {
@@ -29,10 +26,15 @@ describe("routerPlugin", () => {
     const definition = routerPlugin.getDefinition();
     const router = definition.create(options);
 
-    await router.push("/");
+    router.addRoute({
+      path: "/test",
+      component: { render: () => null },
+    });
+
+    await router.push("/test");
     await router.isReady();
 
-    expect(router.currentRoute.value.path).toBe("/");
-    expect(router.resolve("/").matched).toHaveLength(1);
+    expect(router.currentRoute.value.path).toBe("/test");
+    expect(router.resolve("/test").matched).toHaveLength(1);
   });
 });

@@ -29,25 +29,17 @@ describe("piniaPlugin", () => {
     const optionsFactory = piniaPlugin.getDefaultOptions();
     const options = optionsFactory();
 
-    expect(options).toEqual({
-      initialState: {},
-      stubActions: false,
-      createSpy: undefined,
-    });
+    expect(options).toEqual({});
   });
 
   it("should use the test runner mock function as createSpy", () => {
     const optionsFactory = piniaPlugin.getDefaultOptions(vi);
     const options = optionsFactory();
 
-    expect(options).toEqual({
-      initialState: {},
-      stubActions: false,
-      createSpy: vi.fn,
-    });
+    expect(options).toEqual({ createSpy: vi.fn });
   });
 
-  it("should create functional Pinia testing instance using default options", () => {
+  it("should create Pinia testing instance with actions stubbed by default", () => {
     const useCounterStore = defineStore("counter", {
       state: () => ({
         count: 0,
@@ -61,6 +53,35 @@ describe("piniaPlugin", () => {
     });
 
     const options = piniaPlugin.getDefaultOptions(vi)();
+
+    const definition = piniaPlugin.getDefinition();
+    const pinia = definition.create(options);
+
+    const store = useCounterStore(pinia);
+
+    store.increment();
+
+    expect(store.count).toBe(0);
+    expect(store.increment).toHaveBeenCalledOnce();
+  });
+
+  it("should execute actions when stubActions is disabled", () => {
+    const useCounterStore = defineStore("counter", {
+      state: () => ({
+        count: 0,
+      }),
+
+      actions: {
+        increment() {
+          this.count++;
+        },
+      },
+    });
+
+    const options = {
+      ...piniaPlugin.getDefaultOptions(vi)(),
+      stubActions: false,
+    };
 
     const definition = piniaPlugin.getDefinition();
     const pinia = definition.create(options);

@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { unref } from "vue";
 
 import { i18nPlugin } from "../i18nPlugin.js";
 import { createI18nPlugin } from "../createI18nPlugin.js";
@@ -20,11 +19,7 @@ describe("i18nPlugin", () => {
 
     expect(options).toEqual({
       legacy: false,
-      locale: "en",
-      fallbackLocale: "en",
-      messages: {},
-      fallbackWarn: false,
-      missingWarn: false,
+      globalInjection: true,
     });
   });
 
@@ -36,6 +31,5 @@ describe("i18nPlugin", () => {
 
     expect(i18n.install).toBeTypeOf("function");
     expect(i18n.global.t).toBeTypeOf("function");
-    expect(unref(i18n.global.locale)).toBe("en");
   });
 });
