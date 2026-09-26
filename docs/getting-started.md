@@ -129,7 +129,7 @@ const preset: PresetDefinition = {
   defaults: {
     pinia: () => ({
       initialState: {},
-      stubActions: false,
+      stubActions: true,
       createSpy: vi.fn,
     }),
   },
