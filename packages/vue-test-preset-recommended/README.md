@@ -151,18 +151,18 @@ import { vi } from "vitest";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(vi),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
 
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(vi),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
 
@@ -170,6 +170,10 @@ export const presets = {
   routerPreset: basePresets.routerPreset,
 };
 ```
+
+Preset definitions use the standardized `PLUGIN_NAME` export as the configuration key instead of repeating plugin name literals.
+
+This keeps the identifier exported by the plugin package as the single source of truth.
 
 When only one of these environments is needed, use it directly through `createTestFramework({ preset })`.
 
@@ -311,31 +315,31 @@ Projects that need actual routes or another history implementation should provid
 
 ```text
 @testforgejs/vue-test-preset-base
-        │
-        ├── default
-        │      └── Pinia defaults without a runner
-        │
-        ├── piniaPreset
-        │      └── Pinia defaults without a runner
-        │
-        ├── i18nPreset
-        │
-        └── routerPreset
-               │
-               ▼
+       │
+       ├── default
+       │      └── Pinia defaults without a runner
+       │
+       ├── piniaPreset
+       │      └── Pinia defaults without a runner
+       │
+       ├── i18nPreset
+       │
+       └── routerPreset
+              │
+              ▼
 @testforgejs/vue-test-preset-recommended
-        │
-        ├── default
-        │      └── piniaPlugin.getDefaultOptions(vi)
-        │
-        ├── piniaPreset
-        │      └── piniaPlugin.getDefaultOptions(vi)
-        │
-        ├── i18nPreset
-        │      └── inherited unchanged
-        │
-        └── routerPreset
-               └── inherited unchanged
+       │
+       ├── default
+       │      └── piniaPlugin.getDefaultOptions(vi)
+       │
+       ├── piniaPreset
+       │      └── piniaPlugin.getDefaultOptions(vi)
+       │
+       ├── i18nPreset
+       │      └── inherited unchanged
+       │
+       └── routerPreset
+              └── inherited unchanged
 ```
 
 This separation keeps runner knowledge out of the base preset.
@@ -373,15 +377,17 @@ does not implicitly call:
 piniaPlugin.getDefaultOptions(vi);
 ```
 
-The recommended preset explicitly selects the runner-aware Pinia defaults:
+The recommended preset explicitly selects the runner-aware Pinia defaults using the identifier exported by the plugin package:
 
 ```typescript
 defaults: {
-  pinia: piniaPlugin.getDefaultOptions(vi),
+  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
 }
 ```
 
-This keeps the source of plugin configuration visible and prevents plugin defaults from changing existing presets implicitly.
+The `PLUGIN_NAME` export identifies the plugin consistently across its module and preset configuration, while `getDefaultOptions()` provides the configuration factory selected by the preset.
+
+This keeps both the target plugin and the source of its configuration explicit and prevents plugin defaults from changing existing presets implicitly.
 
 ## Switching Presets at Runtime
 
@@ -461,14 +467,14 @@ Use the Pinia plugin's runner-aware defaults as the baseline:
 import { vi } from "vitest";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       ...piniaDefaults(),
       stubActions: false,
     }),
@@ -501,14 +507,14 @@ Application locale and translation messages should be configured explicitly:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const i18nDefaults = i18nPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...i18nDefaults(),
       locale: "en",
       messages: {
@@ -535,14 +541,17 @@ Application routes should also be configured explicitly:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const routerDefaults = routerPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    router: () => ({
+    [ROUTER_PLUGIN_NAME]: () => ({
       ...routerDefaults(),
       routes: [
         {
@@ -564,7 +573,7 @@ import { createWebHistory } from "vue-router";
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    router: () => ({
+    [ROUTER_PLUGIN_NAME]: () => ({
       ...routerDefaults(),
       history: createWebHistory(),
       routes,
@@ -582,7 +591,7 @@ For example:
 ```typescript
 extendPreset(recommendedPresets.default, {
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       stubActions: false,
       createSpy: vi.fn,
     }),
@@ -603,7 +612,7 @@ const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
 
 extendPreset(recommendedPresets.default, {
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       ...piniaDefaults(),
       stubActions: false,
     }),
@@ -611,19 +620,21 @@ extendPreset(recommendedPresets.default, {
 });
 ```
 
-This makes both the baseline and the project-specific additions visible.
+This makes the plugin identifier, the baseline, and the project-specific additions visible.
 
 ## Plugin Options Factory Isolation
 
 Preset `defaults` values are plugin options factories rather than shared configuration objects.
 
-For example:
+Preset definitions use the exported plugin identifier:
 
 ```typescript
 defaults: {
-  pinia: piniaPlugin.getDefaultOptions(vi),
+  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
 }
 ```
+
+Because `PINIA_PLUGIN_NAME` resolves to `"pinia"`, the resolved preset can still be consumed through its normal property key.
 
 Each invocation produces a fresh options object for the current pipeline context:
 

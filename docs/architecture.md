@@ -36,6 +36,9 @@ The `defaults` field contains **plugin options factories**, rather than shared p
 ### Preset Structure Example
 
 ```typescript
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+
 const presets = {
   default: {
     manifest: [
@@ -43,10 +46,10 @@ const presets = {
       { module: i18nPlugin, enabled: false },
     ],
     defaults: {
-      pinia: () => ({
+      [PINIA_PLUGIN_NAME]: () => ({
         stubActions: true,
       }),
-      i18n: () => ({
+      [I18N_PLUGIN_NAME]: () => ({
         locale: "uk",
         messages: {},
       }),
@@ -55,7 +58,7 @@ const presets = {
   i18nOnly: {
     manifest: [{ module: i18nPlugin, enabled: true }],
     defaults: {
-      i18n: () => ({
+      [I18N_PLUGIN_NAME]: () => ({
         locale: "en",
         messages: {},
       }),
@@ -74,7 +77,7 @@ Preset plugin defaults are defined as `PluginOptionsFactory` functions rather th
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     initialState: {},
     stubActions: false,
   }),
@@ -94,7 +97,7 @@ A preset should therefore not define plugin defaults as a shared object:
 
 ```typescript
 defaults: {
-  pinia: {
+  [PINIA_PLUGIN_NAME]: {
     initialState: {},
   },
 }
@@ -104,7 +107,7 @@ Instead, define them as a factory:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     initialState: {},
   }),
 }
@@ -131,7 +134,7 @@ This prevents mutable plugin configuration from being shared between independent
 Plugin-specific option types can be applied directly to the returned configuration:
 
 ```typescript
-pinia: () =>
+[PINIA_PLUGIN_NAME]: () =>
   ({
     stubActions: true,
   }) satisfies VueTestPiniaOptions,
@@ -147,7 +150,7 @@ For example:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     ...basePreset.defaults.pinia(),
     createSpy: vi.fn,
   }),
@@ -173,12 +176,13 @@ This provides a controlled way to build project-specific runtime environments wi
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { vi } from "vitest";
 
 const presets = {
   default: extendPreset(recommendedPresets.default, {
     defaults: {
-      pinia: () => ({
+      [PINIA_PLUGIN_NAME]: () => ({
         ...recommendedPresets.default.defaults.pinia(),
         createSpy: vi.fn,
       }),
@@ -205,7 +209,7 @@ For example, if the base preset contains:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     initialState: {
       user: { id: 1 },
     },
@@ -218,7 +222,7 @@ and the extension provides:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     createSpy: vi.fn,
   }),
 }
@@ -228,7 +232,7 @@ the resulting preset uses the explicitly supplied Pinia defaults:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     createSpy: vi.fn,
   }),
 }
@@ -242,7 +246,7 @@ If selected base options should be preserved, they must be copied explicitly by 
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     ...recommendedPresets.default.defaults.pinia(),
     createSpy: vi.fn,
   }),
@@ -267,7 +271,7 @@ const extendedPreset = extendPreset(basePreset, {
   ],
 
   defaults: {
-    customPlugin: () => ({
+    [CUSTOM_PLUGIN_NAME]: () => ({
       // plugin-specific defaults
     }),
   },
@@ -469,7 +473,7 @@ For example:
 The Vitest preset may provide Vitest-specific spies:
 
 ```typescript
-pinia: () => ({
+[PINIA_PLUGIN_NAME]: () => ({
   ...basePresets.default.defaults.pinia(),
   createSpy: vi.fn,
 });
@@ -504,11 +508,13 @@ For example:
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 
 export const projectPresets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      i18n: () => ({
+      [I18N_PLUGIN_NAME]: () => ({
         ...basePresets.default.defaults.i18n(),
         locale: "uk",
         fallbackLocale: "uk",
@@ -519,7 +525,7 @@ export const projectPresets = {
         },
       }),
 
-      pinia: () => ({
+      [PINIA_PLUGIN_NAME]: () => ({
         ...basePresets.default.defaults.pinia(),
         initialState: {},
       }),
@@ -531,10 +537,12 @@ export const projectPresets = {
 Application-specific Router configuration can be defined in the same way:
 
 ```typescript
+import { PLUGIN_NAME as ROUTER_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-router";
+
 export const projectPresets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      router: () => ({
+      [ROUTER_PLUGIN_NAME]: () => ({
         ...basePresets.default.defaults.router(),
         routes: [
           {

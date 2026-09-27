@@ -116,7 +116,7 @@ If your project only needs a single preset, you can pass it directly through the
 // @/tests/setup.ts
 
 import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { vi } from "vitest";
 
 const preset: PresetDefinition = {
@@ -127,7 +127,7 @@ const preset: PresetDefinition = {
     },
   ],
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       initialState: {},
       stubActions: true,
       createSpy: vi.fn,

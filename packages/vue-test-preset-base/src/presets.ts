@@ -1,6 +1,9 @@
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 
 import type { TestFrameworkPresets } from "@testforgejs/vue-test-core";
 
@@ -12,30 +15,30 @@ export const presets = {
       { module: routerPlugin, enabled: false },
     ],
     defaults: {
-      i18n: i18nPlugin.getDefaultOptions(),
-      pinia: piniaPlugin.getDefaultOptions(),
-      router: routerPlugin.getDefaultOptions(),
+      [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
+      [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
     },
   },
 
   piniaPreset: {
     manifest: [{ module: piniaPlugin, enabled: true }],
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
     },
   },
 
   i18nPreset: {
     manifest: [{ module: i18nPlugin, enabled: true }],
     defaults: {
-      i18n: i18nPlugin.getDefaultOptions(),
+      [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
     },
   },
 
   routerPreset: {
     manifest: [{ module: routerPlugin, enabled: true }],
     defaults: {
-      router: routerPlugin.getDefaultOptions(),
+      [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
     },
   },
 } satisfies TestFrameworkPresets;

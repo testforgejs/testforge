@@ -43,6 +43,7 @@ describe("base preset smoke", () => {
   });
 
   runner.doMock("@testforgejs/vue-test-plugin-i18n", () => ({
+    PLUGIN_NAME: "i18n",
     i18nPlugin: createMockPlugin("i18n", mockI18nCreate, {
       legacy: false,
       locale: "en",
@@ -54,6 +55,7 @@ describe("base preset smoke", () => {
   }));
 
   runner.doMock("@testforgejs/vue-test-plugin-pinia", () => ({
+    PLUGIN_NAME: "pinia",
     piniaPlugin: createMockPlugin("pinia", mockPiniaCreate, {
       initialState: {},
       stubActions: false,
@@ -61,6 +63,7 @@ describe("base preset smoke", () => {
   }));
 
   runner.doMock("@testforgejs/vue-test-plugin-router", () => ({
+    PLUGIN_NAME: "router",
     routerPlugin: createMockPlugin("router", mockRouterCreate, {
       history: {},
       routes: [{ path: "/", component: { render: () => null } }],

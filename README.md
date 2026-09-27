@@ -74,7 +74,7 @@ To test different behaviors of the _same_ component, you need slightly different
 - Test D needs the router to start on a specific protected path.
 
 > Vue Test Utils gives you the flexibility to configure all of this, but the test suite can end up maintaining dozens of large, slightly different configuration objects.
-
+>
 > You end up copy-pasting 30 lines of `mount()` boilerplate just to change a single boolean flag or locale string.
 
 Now multiply this by 200+ tests. Your test suite becomes difficult to maintain:
@@ -182,8 +182,7 @@ TestForge does not include plugin integrations in `@testforgejs/vue-test-core`. 
 // tests/setup.ts
 
 import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
-
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { vi } from "vitest";
 
 const preset = {
@@ -195,7 +194,7 @@ const preset = {
   ],
 
   defaults: {
-    pinia: piniaPlugin.getDefaultOptions(vi),
+    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
   },
 } satisfies PresetDefinition;
 
@@ -230,7 +229,7 @@ const preset = {
   ],
 
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       ...piniaDefaults(),
       stubActions: false,
     }),
@@ -542,7 +541,6 @@ Without a reusable environment, tests may repeatedly rebuild the same plugin set
 
 ```typescript
 // Test 1: English locale
-
 it("renders English greeting", () => {
   const wrapper = mount(MyComponent, {
     global: {
@@ -552,7 +550,6 @@ it("renders English greeting", () => {
           locale: "en",
           messages,
         }),
-
         createTestingPinia({
           initialState: {
             user: {
@@ -560,7 +557,6 @@ it("renders English greeting", () => {
             },
           },
         }),
-
         createRouter({
           history: createMemoryHistory(),
           routes,
@@ -571,7 +567,6 @@ it("renders English greeting", () => {
 });
 
 // Test 2: French locale
-
 it("renders French greeting", () => {
   const wrapper = mount(MyComponent, {
     global: {
@@ -581,7 +576,6 @@ it("renders French greeting", () => {
           locale: "fr",
           messages,
         }),
-
         createTestingPinia({
           initialState: {
             user: {
@@ -589,7 +583,6 @@ it("renders French greeting", () => {
             },
           },
         }),
-
         createRouter({
           history: createMemoryHistory(),
           routes,
@@ -787,11 +780,18 @@ These defaults belong to the plugin because the plugin understands the integrate
 
 They are **not automatically applied**.
 
-A preset explicitly chooses whether to use them:
+A preset explicitly chooses whether to use them.
+
+Preset definitions target plugin configuration through the standardized `PLUGIN_NAME` export:
 
 ```typescript
+import {
+  i18nPlugin,
+  PLUGIN_NAME as I18N_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-i18n";
+
 defaults: {
-  i18n: i18nPlugin.getDefaultOptions(),
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
 }
 ```
 
@@ -825,10 +825,12 @@ For example:
 
 ```typescript
 import type { PresetDefinition } from "@testforgejs/vue-test-core";
-
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 
 const preset = {
   manifest: [
@@ -838,12 +840,16 @@ const preset = {
   ],
 
   defaults: {
-    pinia: piniaPlugin.getDefaultOptions(),
-    i18n: i18nPlugin.getDefaultOptions(),
-    router: routerPlugin.getDefaultOptions(),
+    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
+    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+    [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
   },
 } satisfies PresetDefinition;
 ```
+
+Preset definitions use the standardized `PLUGIN_NAME` exports as their configuration keys.
+
+This keeps each plugin's exported identifier as the single source of truth instead of repeating plugin name literals in preset definitions.
 
 The two sections have separate responsibilities:
 
@@ -867,7 +873,7 @@ manifest: [
 ],
 
 defaults: {
-  router: routerPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 },
 ```
 
@@ -1179,7 +1185,6 @@ const VTUConfig = {
   props: {
     title: "Hello",
   },
-
   global: {
     mocks: {
       $t: (msg) => msg,
@@ -1194,7 +1199,6 @@ The TestForge equivalent can route the same VTU-style options through a reusable
 
 ```typescript
 import { testComponentFactory } from "@/tests/setup";
-
 import MyComponent from "./MyComponent.vue";
 
 const factory = testComponentFactory(MyComponent);

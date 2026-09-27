@@ -147,15 +147,28 @@ return plugin options factories that provide each plugin's project-independent i
 
 The base preset explicitly references these factories.
 
-Conceptually:
+Each TestForge plugin package also exposes its plugin identifier through the standardized `PLUGIN_NAME` export.
+
+Preset definitions use these exported identifiers as their `defaults` keys:
 
 ```typescript
-defaults: {
-  pinia: piniaPlugin.getDefaultOptions(),
-  i18n: i18nPlugin.getDefaultOptions(),
-  router: routerPlugin.getDefaultOptions(),
-}
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
+
+const defaults = {
+  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+};
 ```
+
+This keeps the identifier exported by each plugin package as the single source of truth instead of repeating plugin name literals in preset definitions.
+
+The same identifier is used by the plugin module itself and by the preset configuration that targets it.
 
 Plugin defaults are **not applied automatically**.
 
@@ -388,13 +401,13 @@ For Vitest:
 import { vi } from "vitest";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
 
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(vi),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
 };
@@ -404,21 +417,20 @@ For Jest:
 
 ```typescript
 import { jest } from "@jest/globals";
-
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
 
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(jest),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(jest),
     },
   }),
 };
 ```
 
-This keeps knowledge about Pinia's integration defaults inside the Pinia plugin package.
+This keeps knowledge about Pinia's integration defaults and plugin identifier inside the Pinia plugin package.
 
 The dedicated Pinia preset can be adapted in the same way:
 
@@ -426,7 +438,7 @@ The dedicated Pinia preset can be adapted in the same way:
 export const presets = {
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(vi),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
 };
@@ -450,7 +462,7 @@ For example:
 ```typescript
 extendPreset(basePresets.default, {
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
     }),
   },
@@ -466,7 +478,7 @@ When the plugin provides an appropriate defaults API, prefer using it directly:
 ```typescript
 extendPreset(basePresets.default, {
   defaults: {
-    pinia: piniaPlugin.getDefaultOptions(vi),
+    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
   },
 });
 ```
@@ -478,7 +490,7 @@ const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
 
 extendPreset(basePresets.default, {
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       ...piniaDefaults(),
       stubActions: false,
     }),
@@ -486,7 +498,7 @@ extendPreset(basePresets.default, {
 });
 ```
 
-This keeps both the source of defaults and the additional project policy explicit.
+This keeps both the plugin identifier, the source of defaults, and the additional project policy explicit.
 
 ## Project-Specific Presets
 
@@ -507,10 +519,12 @@ For example:
 ```typescript
 import { vi } from "vitest";
 import { createMemoryHistory } from "vue-router";
-
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 
 const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
 const i18nDefaults = i18nPlugin.getDefaultOptions();
@@ -533,12 +547,12 @@ export const projectPreset = {
   ],
 
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       ...piniaDefaults(),
       stubActions: false,
     }),
 
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...i18nDefaults(),
       locale: "en",
       messages: {
@@ -548,7 +562,7 @@ export const projectPreset = {
       },
     }),
 
-    router: () => ({
+    [ROUTER_PLUGIN_NAME]: () => ({
       ...routerDefaults(),
       history: createMemoryHistory(),
       routes: [
@@ -566,7 +580,6 @@ For the common case where the application uses a single project-specific runtime
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-
 import { projectPreset } from "./projectPreset";
 
 export const { testComponentFactory } = createTestFramework({
@@ -670,11 +683,11 @@ This isolation is intentional: presets are runtime environment profiles rather t
 
 Preset defaults are plugin options factories rather than shared configuration objects.
 
-For example:
+Preset definitions use the plugin's exported identifier:
 
 ```typescript
 defaults: {
-  i18n: i18nPlugin.getDefaultOptions(),
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
 }
 ```
 
@@ -682,12 +695,14 @@ or conceptually:
 
 ```typescript
 defaults: {
-  i18n: () => ({
+  [I18N_PLUGIN_NAME]: () => ({
     legacy: false,
     globalInjection: true,
   }),
 }
 ```
+
+Because `I18N_PLUGIN_NAME` resolves to `"i18n"`, the resulting preset can still be consumed through its normal property key.
 
 TestForge invokes the factory while resolving plugin configuration for a pipeline context.
 

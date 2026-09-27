@@ -220,11 +220,13 @@ For example, a project can extend the recommended preset with its own locale con
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    i18n: () => ({
-      ...recommendedPresets.default.defaults.i18n(),
+    [I18N_PLUGIN_NAME]: () => ({
+      legacy: false,
+      globalInjection: true,
       locale: "uk",
     }),
   },

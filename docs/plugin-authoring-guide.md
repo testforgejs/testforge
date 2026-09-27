@@ -498,6 +498,12 @@ while generic tooling can rely on the standardized exports:
 import { plugin, PLUGIN_NAME } from "@testforgejs/vue-test-plugin-custom";
 ```
 
+Every TestForge plugin package must expose the standardized `plugin` and
+`PLUGIN_NAME` exports from its package entry point.
+
+Generic tooling should rely on these standardized exports rather than
+package-specific export names.
+
 The standardized package contract is:
 
 ```text

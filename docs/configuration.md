@@ -103,6 +103,8 @@ Each default is defined as a `PluginOptionsFactory`. TestForge invokes the facto
 Preset defaults are factories that produce the baseline plugin configuration.
 
 ```typescript
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+
 const { testComponentFactory } = createTestFramework({
   presets: {
     default: {
@@ -113,9 +115,8 @@ const { testComponentFactory } = createTestFramework({
         },
       ],
       defaults: {
-        pinia: () => ({
-          initialState: {},
-          stubActions: true,
+        [PINIA_PLUGIN_NAME]: () => ({
+          stubActions: false,
         }),
       },
     },
@@ -145,7 +146,7 @@ When extending a preset, invoke the base factory if the existing options should 
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     ...basePreset.defaults.pinia(),
     createSpy: vi.fn,
   }),
@@ -784,6 +785,8 @@ Managed plugins are available only when they are registered in the active preset
 For example, you must register the plugin module in the manifest:
 
 ```typescript
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+
 const { testComponentFactory } = createTestFramework({
   presets: {
     default: {
@@ -794,7 +797,7 @@ const { testComponentFactory } = createTestFramework({
         },
       ],
       defaults: {
-        pinia: () => ({}),
+        [PINIA_PLUGIN_NAME]: () => ({}),
       },
     },
   },
@@ -834,32 +837,32 @@ It does not introduce inheritance between runtime configuration layers.
 
 #### Extending the Recommended Preset
 
-A common use case is adapting the recommended preset to a specific test runner.
-
-For example, Vitest and Jest use different spy implementations. The recommended preset can provide the common Pinia configuration, while the project-specific preset replaces the Pinia default factory to provide the appropriate `createSpy` implementation.
+For example, the recommended Vitest preset already provides the runner-aware Pinia configuration, including the appropriate `createSpy` implementation. A project can preserve that configuration while changing application-specific behavior such as action stubbing.
 
 ```typescript
-import { vi } from "vitest";
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 const presets = {
   default: extendPreset(recommendedPresets.default, {
     defaults: {
-      pinia: () => ({
+      [PINIA_PLUGIN_NAME]: () => ({
         ...recommendedPresets.default.defaults.pinia(),
-        createSpy: vi.fn,
+        stubActions: false,
       }),
     },
   }),
 };
 ```
 
-Because preset plugin defaults are `PluginOptionsFactory` functions, the base factory must be explicitly invoked when its returned options should be preserved.
+Because preset plugin defaults are `PluginOptionsFactory` functions, the source factory must be explicitly invoked when its returned options should be preserved.
 
-The extension replaces the `pinia` default factory with the new factory. It does not automatically merge the options returned by the original factory.
+The extension replaces the Pinia default factory with the new factory. It does not automatically merge the options returned by the original factory.
 
-This keeps the project-specific setup small while making the resulting plugin configuration explicit and predictable.
+In this example, the recommended preset continues to provide the Vitest-specific Pinia integration, including `createSpy: vi.fn`, while the project preset adds its own `stubActions: false` policy.
+
+This keeps runner integration in the recommended preset and application-specific behavior in the project preset.
 
 #### Manifest Extensions
 
@@ -874,7 +877,7 @@ const extendedPreset = extendPreset(basePreset, {
     },
   ],
   defaults: {
-    customPlugin: () => ({
+    [CUSTOM_PLUGIN_NAME]: () => ({
       // plugin-specific defaults
     }),
   },
@@ -908,7 +911,7 @@ For example, if the base preset contains:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     initialState: {
       user: {
         id: 1,
@@ -923,7 +926,7 @@ and the extension provides:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     createSpy: vi.fn,
   }),
 }
@@ -933,7 +936,7 @@ the resulting preset uses the explicitly supplied factory:
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     createSpy: vi.fn,
   }),
 }
@@ -947,7 +950,7 @@ If selected base options should be preserved, invoke the base factory explicitly
 
 ```typescript
 defaults: {
-  pinia: () => ({
+  [PINIA_PLUGIN_NAME]: () => ({
     ...recommendedPresets.default.defaults.pinia(),
     createSpy: vi.fn,
   }),
@@ -1001,7 +1004,7 @@ extendPreset(basePreset, {
     },
   ],
   defaults: {
-    customPlugin: () => ({
+    [CUSTOM_PLUGIN_NAME]: () => ({
       // plugin-specific defaults
     }),
   },
@@ -1022,12 +1025,13 @@ The resulting preset can be passed to `createTestFramework()` like any other pre
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 const { testComponentFactory } = createTestFramework({
   presets: {
     default: extendPreset(recommendedPresets.default, {
       defaults: {
-        pinia: () => ({
+        [PINIA_PLUGIN_NAME]: () => ({
           ...recommendedPresets.default.defaults.pinia(),
           createSpy: vi.fn,
         }),

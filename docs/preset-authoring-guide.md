@@ -83,10 +83,12 @@ Both properties are required.
 
 ```typescript
 import type { PresetDefinition } from "@testforgejs/vue-test-core";
-
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 
 const preset = {
   manifest: [
@@ -96,11 +98,25 @@ const preset = {
   ],
 
   defaults: {
-    pinia: piniaPlugin.getDefaultOptions(),
-    i18n: i18nPlugin.getDefaultOptions(),
-    router: routerPlugin.getDefaultOptions(),
+    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
+    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+    [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
   },
 } satisfies PresetDefinition;
+```
+
+Preset definitions use the standardized `PLUGIN_NAME` exports as their `defaults` keys.
+
+This keeps each plugin's exported identifier as the single source of truth instead of repeating plugin name literals in preset definitions.
+
+The descriptive plugin export identifies the module used by the manifest, while `PLUGIN_NAME` identifies the corresponding configuration entry:
+
+```text
+plugin module
+→ manifest entry
+
+PLUGIN_NAME
+→ defaults key
 ```
 
 This example demonstrates three independent concepts:
@@ -129,7 +145,7 @@ manifest: [
 ],
 
 defaults: {
-  router: routerPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 },
 ```
 
@@ -242,6 +258,8 @@ const { testComponentFactory } = createTestFramework({
 
 The registry can contain multiple independent runtime profiles.
 
+Registry keys such as `i18n` or `router` are user-defined runtime profile names. They are separate from plugin identifiers used as keys inside a preset's `defaults` object.
+
 A component factory invocation can then select a specific profile by name through `extraOptions.preset`.
 
 Use `presets` when:
@@ -314,7 +332,7 @@ const i18nPreset: PresetDefinition = {
   ],
 
   defaults: {
-    i18n: i18nPlugin.getDefaultOptions(),
+    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
   },
 };
 ```
@@ -365,7 +383,7 @@ The manifest determines enablement:
 while `defaults` determines baseline configuration:
 
 ```typescript
-router: routerPlugin.getDefaultOptions(),
+[ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 ```
 
 This separation allows a preset to make a plugin readily available without paying its runtime initialization cost for every mount.
@@ -383,11 +401,11 @@ manifest: [
 ],
 ```
 
-This is useful for contextual integrations that belong to the preset's supported runtime environment but are not required by most components.
+This means the plugin is part of the preset's capability boundary but is not initialized unless configuration or another activation mechanism enables it.
 
-The plugin can subsequently be enabled through the appropriate runtime or project-specific configuration.
+Whether a plugin belongs in a preset and whether it should be enabled by default are independent decisions.
 
-The decision to enable a plugin by default is **preset policy**.
+Default enablement should reflect the intended runtime environment.
 
 It should be based on the role that integration plays in the intended runtime environment, rather than on whether the plugin package merely exists.
 
@@ -401,11 +419,15 @@ Each entry is a plugin options factory:
 
 ```typescript
 defaults: {
-  pinia: piniaPlugin.getDefaultOptions(),
-  i18n: i18nPlugin.getDefaultOptions(),
-  router: routerPlugin.getDefaultOptions(),
+  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 },
 ```
+
+Use the standardized `PLUGIN_NAME` export for these keys rather than repeating literals such as `"pinia"`, `"i18n"`, or `"router"`.
+
+This keeps plugin identity owned by the plugin package while allowing the preset to select its configuration explicitly.
 
 TestForge invokes these factories while resolving the active preset configuration.
 
@@ -427,7 +449,7 @@ For example:
 
 ```typescript
 defaults: {
-  i18n: i18nPlugin.getDefaultOptions(),
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
 },
 ```
 
@@ -460,7 +482,7 @@ A preset explicitly decides whether to use those defaults:
 
 ```typescript
 defaults: {
-  router: routerPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 },
 ```
 
@@ -489,7 +511,7 @@ const i18nDefaults = i18nPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...i18nDefaults(),
       locale: "uk",
       fallbackLocale: "uk",
@@ -565,7 +587,7 @@ A preset can also define its own options factory directly:
 
 ```typescript
 defaults: {
-  i18n: () => ({
+  [I18N_PLUGIN_NAME]: () => ({
     legacy: false,
     globalInjection: true,
     locale: "uk",
@@ -683,7 +705,7 @@ const i18nPreset: PresetDefinition = {
   ],
 
   defaults: {
-    i18n: i18nPlugin.getDefaultOptions(),
+    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
   },
 };
 ```
@@ -727,14 +749,14 @@ For example:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const i18nDefaults = i18nPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...i18nDefaults(),
       locale: "uk",
       fallbackLocale: "uk",
@@ -778,7 +800,7 @@ Suppose the base preset contains:
 
 ```typescript
 defaults: {
-  i18n: i18nPlugin.getDefaultOptions(),
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
 },
 ```
 
@@ -787,7 +809,7 @@ and the extension provides:
 ```typescript
 extendPreset(basePreset, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       locale: "uk",
     }),
   },
@@ -826,7 +848,7 @@ const baseI18n = basePreset.defaults.i18n;
 
 const projectPreset = extendPreset(basePreset, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...baseI18n(),
       locale: "uk",
     }),
@@ -850,7 +872,7 @@ const i18nDefaults = i18nPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(basePreset, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...i18nDefaults(),
       locale: "uk",
     }),
@@ -902,10 +924,12 @@ const projectPreset = extendPreset(basePreset, {
   ],
 
   defaults: {
-    custom: customPlugin.getDefaultOptions(),
+    [CUSTOM_PLUGIN_NAME]: customPlugin.getDefaultOptions(),
   },
 });
 ```
+
+Here `CUSTOM_PLUGIN_NAME` represents the custom plugin package's standardized `PLUGIN_NAME` export.
 
 When extending a preset, treat `manifest` and `defaults` as separate responsibilities:
 
@@ -947,18 +971,18 @@ import { vi } from "vitest";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(vi),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
 
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(vi),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
 
@@ -974,18 +998,18 @@ import { jest } from "@jest/globals";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 export const presets = {
   default: extendPreset(basePresets.default, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(jest),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(jest),
     },
   }),
 
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
-      pinia: piniaPlugin.getDefaultOptions(jest),
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(jest),
     },
   }),
 
@@ -1111,7 +1135,7 @@ const presets = {
     ],
 
     defaults: {
-      i18n: i18nPlugin.getDefaultOptions(),
+      [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
     },
   },
 };
@@ -1128,6 +1152,8 @@ Selecting:
 does not inherit Pinia or Router from `default`.
 
 The `i18n` preset defines the complete managed-plugin runtime environment for that invocation.
+
+Notice that the registry key `i18n` is a runtime profile name, while `[I18N_PLUGIN_NAME]` is a managed plugin configuration key. They serve different purposes.
 
 ---
 
@@ -1159,7 +1185,7 @@ For example:
 
 ```typescript
 defaults: {
-  pinia: piniaPlugin.getDefaultOptions(vi),
+  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
 }
 ```
 
@@ -1243,6 +1269,8 @@ Use:
 
 Scenario-specific configuration should generally live in these local layers rather than being placed into global preset defaults.
 
+The literal `pinia` key remains appropriate in these runtime APIs. `PLUGIN_NAME` constants are used when authoring preset `defaults`, not as a requirement for ordinary test configuration.
+
 ---
 
 ## 11. Creating a Project-Specific Preset
@@ -1259,8 +1287,7 @@ For example:
 
 ```typescript
 import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
-
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { vi } from "vitest";
 
 const projectPreset = {
@@ -1272,8 +1299,7 @@ const projectPreset = {
   ],
 
   defaults: {
-    pinia: piniaPlugin.getDefaultOptions(vi),
-    stubActions: false,
+    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
   },
 } satisfies PresetDefinition;
 
@@ -1302,7 +1328,7 @@ const projectPreset = {
   ],
 
   defaults: {
-    pinia: () => ({
+    [PINIA_PLUGIN_NAME]: () => ({
       ...piniaDefaults(),
       stubActions: false,
     }),
@@ -1326,15 +1352,14 @@ When an existing recommended preset is close to what the project needs, compose 
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const i18nDefaults = i18nPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...i18nDefaults(),
       locale: "uk",
       fallbackLocale: "uk",
@@ -1388,8 +1413,10 @@ For example:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 import HomePage from "@/views/HomePage.vue";
@@ -1406,7 +1433,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
   ],
 
   defaults: {
-    router: () => ({
+    [ROUTER_PLUGIN_NAME]: () => ({
       ...routerDefaults(),
 
       routes: [
@@ -1442,7 +1469,7 @@ This is necessary because the official default preset declares Router but keeps 
 Second, the project extends the Router plugin baseline with application routes:
 
 ```typescript
-router: () => ({
+[ROUTER_PLUGIN_NAME]: () => ({
   ...routerDefaults(),
   routes,
 });
@@ -1486,7 +1513,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
   ],
 
   defaults: {
-    router: () => ({
+    [ROUTER_PLUGIN_NAME]: () => ({
       ...routerDefaults(),
       history: createWebHistory(),
       routes,
@@ -1543,7 +1570,7 @@ const baseI18n = basePreset.defaults.i18n;
 
 const projectPreset = extendPreset(basePreset, {
   defaults: {
-    i18n: () => ({
+    [I18N_PLUGIN_NAME]: () => ({
       ...baseI18n(),
       locale: "uk",
     }),
@@ -1555,6 +1582,8 @@ The extension still replaces the factory as a whole.
 
 Invoking another factory and spreading its returned options is an explicit composition decision.
 
+Reading an already constructed preset through `basePreset.defaults.i18n` remains valid. The `PLUGIN_NAME` constant is used when declaring the new `defaults` entry.
+
 ### 12.4. Prefer plugin-provided defaults
 
 When a plugin exposes an appropriate `getDefaultOptions()`, prefer using it instead of reproducing the integration baseline manually.
@@ -1563,7 +1592,7 @@ Prefer:
 
 ```typescript
 defaults: {
-  router: routerPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 }
 ```
 
@@ -1571,7 +1600,7 @@ over manually copying:
 
 ```typescript
 defaults: {
-  router: () => ({
+  [ROUTER_PLUGIN_NAME]: () => ({
     history: createMemoryHistory(),
     routes: [],
   }),
@@ -1579,6 +1608,8 @@ defaults: {
 ```
 
 The plugin package should remain the owner of its project-independent integration baseline.
+
+The plugin package should also remain the owner of its identifier. Use its standardized `PLUGIN_NAME` export when declaring preset `defaults` entries instead of duplicating the identifier as a string literal.
 
 ### 12.5. Keep plugin defaults and application policy separate
 
@@ -1652,7 +1683,7 @@ const routerPreset: PresetDefinition = {
   ],
 
   defaults: {
-    router: routerPlugin.getDefaultOptions(),
+    [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
   },
 };
 ```
@@ -1723,6 +1754,7 @@ The base package should:
 - compose runner-independent managed plugins;
 - choose their default enabled state;
 - explicitly select project-independent defaults exposed by plugin packages;
+- use the standardized plugin identifiers exported by those packages;
 - avoid test-runner-specific configuration.
 
 Runner-specific recommended packages should:
@@ -1780,6 +1812,7 @@ The key principles are:
 
 - `PresetDefinition` contains a `manifest` and a required `defaults` object;
 - `manifest` defines the plugin capability boundary;
+- preset `defaults` keys should use the standardized `PLUGIN_NAME` exports from plugin packages;
 - the manifest also defines each plugin's default enabled state;
 - a plugin may be declared without a corresponding `defaults` entry;
 - a `defaults` entry does not enable a plugin;
@@ -1787,7 +1820,7 @@ The key principles are:
 - plugin defaults are opt-in and are not applied merely because a plugin appears in the manifest;
 - preset defaults are plugin options factories rather than shared configuration objects;
 - options factories should produce fresh configuration for independent pipeline contexts;
-- plugin packages own reusable library integration baselines;
+- plugin packages own reusable library integration baselines and stable plugin identifiers;
 - presets explicitly select or replace plugin configuration;
 - project-specific presets own application policy;
 - `preset` in `createTestFramework()` accepts a single `PresetDefinition`;
@@ -1795,6 +1828,7 @@ The key principles are:
 - `preset` and `presets` are mutually exclusive;
 - a single `preset` is internally treated as `default`;
 - a preset registry should normally provide a `default` profile;
+- preset registry keys are runtime profile names and are independent of plugin identifiers;
 - factory-level `extraOptions.preset` selects a named profile from the registry;
 - runtime preset selection requires a registry created through `presets`;
 - runtime presets are complete profiles rather than overlays;
@@ -1807,6 +1841,7 @@ The key principles are:
 - runner-specific presets should pass runner context to plugins rather than reproduce plugin configuration;
 - `mountOptions.plugins` replaces managed plugin configuration at a local scope;
 - `extraOptions.plugins` provides a targeted shallow overlay;
+- runtime `plugins` keys remain the normal consumer-facing configuration API;
 - mutable plugin runtime state must remain isolated between component factory invocations;
 - official base and recommended presets are convenient starting environments rather than complete application-specific configurations.
 
