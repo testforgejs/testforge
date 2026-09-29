@@ -9,6 +9,7 @@ It covers:
 - merge strategies for Vue Test Utils and managed plugin options;
 - execution controls and runtime overlays;
 - managed plugin configuration and validation;
+- preset composition;
 - third-party Vue Test Utils plugins;
 - advanced plugin instance handling.
 
@@ -25,6 +26,10 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
   - [3.4. Props & Slots Priority](#props-slots-priority)
 - [4. Execution Flags](#execution-flags)
 - [5. Managed Plugins](#managed-plugins)
+  - [5.1. Preset Manifest Declaration](#51-preset-manifest-declaration)
+  - [5.2. Preset Composition with `extendPreset()`](#52-preset-composition-with-extendpreset)
+  - [5.3. Configuration Validation](#53-configuration-validation)
+  - [5.4. Practical Examples](#54-practical-examples)
 - [6. Third-Party Plugins](#third-party-plugins)
 - [7. Advanced: Working with Plugin Instances](#plugin-instances)
   - [7.1. Using Pre-created Instances (`__meta.instance`)](#precreated-plugin-instances)
@@ -46,7 +51,7 @@ const factory = testComponentFactory(
   Component,
   defaultProps?,
   defaultMountOptions?,
-  defaultSlots?
+  defaultSlots?,
 );
 ```
 
@@ -64,7 +69,7 @@ const wrapper = factory(
   props?,
   mountOptions?,
   slots?,
-  extraOptions?
+  extraOptions?,
 );
 ```
 
@@ -96,31 +101,35 @@ Each layer represents a different configuration scope and is designed for a diff
 
 ### Layer 1: Preset Defaults
 
-Preset defaults provide the project-wide baseline configuration for managed plugins.
+Preset defaults provide the baseline configuration for managed plugins in the active runtime environment.
 
 Each default is defined as a `PluginOptionsFactory`. TestForge invokes the factory when resolving the active preset configuration.
 
-Preset defaults are factories that produce the baseline plugin configuration.
+For example, a project-owned Pinia preset can materialize its Vitest configuration explicitly:
 
 ```typescript
-import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { vi } from "vitest";
+
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+
+const preset = {
+  manifest: [
+    {
+      module: piniaPlugin,
+      enabled: true,
+    },
+  ],
+
+  defaults: {
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+    }),
+  },
+};
 
 const { testComponentFactory } = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: piniaPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        [PINIA_PLUGIN_NAME]: () => ({
-          stubActions: false,
-        }),
-      },
-    },
-  },
+  preset,
 });
 ```
 
@@ -142,20 +151,9 @@ first !== second; // true
 
 This is particularly important for plugins with nested or mutable configuration such as Pinia state, Vue Router routes and history configuration, and Vue I18n messages.
 
-When extending a preset, invoke the base factory if the existing options should be preserved:
-
-```typescript
-defaults: {
-  [PINIA_PLUGIN_NAME]: () => ({
-    ...basePreset.defaults.pinia(),
-    createSpy: vi.fn,
-  }),
-}
-```
-
-The extension replaces the plugin's default factory as a whole. Calling the base factory and spreading its result is an explicit decision to preserve the base options.
-
 Managed plugins must be declared in the active preset manifest before they can be configured through TestForge's managed `plugins` API.
+
+Preset composition is a separate concern and is described later in [Section 5.2](#52-preset-composition-with-extendpreset).
 
 ---
 
@@ -292,11 +290,11 @@ When the same option is provided at both the factory level (`defaultMountOptions
 
 Examples include:
 
-- `data`
-- `attrs`
-- `attachTo`
-- `shallow`
-- other top-level VTU mount options that are represented as flat values
+- `data`;
+- `attrs`;
+- `attachTo`;
+- `shallow`;
+- other top-level VTU mount options that are represented as flat values.
 
 For example:
 
@@ -331,7 +329,7 @@ import { createTestFramework } from "@testforgejs/vue-test-core";
 import { presets } from "@testforgejs/vue-test-preset-recommended";
 
 export const { testComponentFactory } = createTestFramework({
-  presets,
+  preset: presets.default,
   shallowByDefault: true,
 });
 ```
@@ -349,7 +347,7 @@ For example:
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
-  presets,
+  preset: presets.default,
   shallowByDefault: true,
 });
 
@@ -384,21 +382,15 @@ The most specific configuration wins.
 
 ### 3.2. The `global` Section
 
-Standard VTU `global` options (`stubs`, `mocks`, `provide`) are processed using a **selective recursive merge** strategy across Layer 2 and Layer 3. This allows seamless "layering" of test-double infrastructure (e.g., adding a stub in a test does not wipe out base stubs defined in the factory).
+Standard VTU `global` options (`stubs`, `mocks`, `provide`) are processed using a **selective recursive merge** strategy across Layer 2 and Layer 3.
 
-#### Key Merge Rules:
+This allows test-double infrastructure to be layered without removing unrelated factory-level configuration.
 
-- **Objects**: Merged recursively only on intersecting keys. Non-intersecting objects retain their original references (no deep cloning).
-- **Arrays**: Combined into a unique set (union merge with deduplication).
-- **Primitives**: Test-level values strictly overwrite factory-level values.
+#### Key Merge Rules
 
-This allows test-specific configuration to extend the factory-level setup without removing unrelated configuration.
-
-Common examples include:
-
-- `global.stubs`
-- `global.mocks`
-- `global.provide`
+- **Objects** — merged recursively only on intersecting keys. Non-intersecting objects retain their original references; they are not deep-cloned.
+- **Arrays** — combined into a unique set using union merge with deduplication.
+- **Primitives** — test-level values overwrite factory-level values.
 
 For example:
 
@@ -472,7 +464,7 @@ Managed plugins control plugin-specific configuration such as:
 - Pinia `initialState`;
 - Vue I18n `messages` and `locale`;
 - Vue Router `routes`;
-- plugin-specific options for Vuetify, PrimeVue, and other supported integrations.
+- plugin-specific options for Vuetify, PrimeVue, PrimeVue 3, and other supported integrations.
 
 Because these options can represent application state, blindly deep-merging them can produce unexpected test behavior.
 
@@ -481,7 +473,9 @@ Because these options can represent application state, blindly deep-merging them
 When a managed plugin is configured through `defaultMountOptions.plugins` or `mountOptions.plugins`, the plugin configuration replaces the corresponding configuration from the previous layer.
 
 > [!NOTE]
-> Plugin replacement occurs at the configuration object level, not per property. Consequently, fields such as `expose`, `captureInstance`, and `__meta` are discarded when a plugin configuration is overridden in Layer 3. If they should remain active, they must be included in the overriding configuration.
+> Plugin replacement occurs at the configuration object level, not per property.
+>
+> Consequently, fields such as `expose`, `captureInstance`, and `__meta` are discarded when a plugin configuration is overridden in Layer 3. If they should remain active, they must be included in the overriding configuration.
 
 For example, suppose the factory has:
 
@@ -636,7 +630,7 @@ factory(props, mountOptions, slots, extraOptions);
 
 - **Type:** `keyof TestFrameworkPresets`
 
-Selects a specific preset profile from the project's preset registry for the current factory invocation.
+Selects a specific preset profile from the framework's preset registry for the current factory invocation.
 
 ```typescript
 factory(
@@ -649,7 +643,12 @@ factory(
 );
 ```
 
-This allows a single factory to execute against a different preset profile without changing the framework's global configuration.
+This allows a single factory to execute against a different registered runtime profile.
+
+> [!NOTE]
+> `extraOptions.preset` is relevant when the framework was created with `createTestFramework({ presets })`.
+>
+> When the framework is created with a single `preset`, that preset is the framework's default runtime environment and no runtime profile selection is required.
 
 ---
 
@@ -700,7 +699,9 @@ factory(
 - **Type:** `boolean`
 - **Default:** `false`
 
-When set to `true`, the factory ignores `defaultMountOptions` defined when the factory was created. This allows the current test to resolve its mount configuration without inheriting factory-level default mount options.
+When set to `true`, the factory ignores `defaultMountOptions` defined when the factory was created.
+
+This allows the current test to resolve its mount configuration without inheriting factory-level default mount options.
 
 ```typescript
 factory(
@@ -714,20 +715,24 @@ factory(
 ```
 
 > [!NOTE]
-> `skipDefaultOptions` affects the factory-level `defaultMountOptions` layer. It does not remove preset defaults inherited from the active global preset.
+> `skipDefaultOptions` affects the factory-level `defaultMountOptions` layer. It does not remove preset defaults from the active preset.
 
 ---
 
 ### 4.2. `mountOptions`
 
-Most `mountOptions` are standard Vue Test Utils options. However, TestForge also supports framework-specific execution flags inside this second argument.
+Most `mountOptions` are standard Vue Test Utils options.
+
+However, TestForge also supports framework-specific execution flags inside this second argument.
 
 #### The `skipManagedPlugins` Flag
 
 - **Type:** `boolean`
 - **Default:** `false`
 
-When set to `true`, TestForge disables managed plugin orchestration for the current mount. This allows the test to take full manual control over plugin initialization using standard Vue Test Utils `global.plugins`.
+When set to `true`, TestForge disables managed plugin orchestration for the current mount.
+
+This allows the test to take full manual control over plugin initialization using standard Vue Test Utils `global.plugins`.
 
 ```typescript
 const wrapper = factory(
@@ -757,17 +762,18 @@ This is useful when:
 
 ## 5. 🛠 Managed Plugins
 
-Managed plugins are supported Vue ecosystem integrations that participate in TestForge's managed plugin lifecycle.
+Managed plugins are Vue ecosystem integrations that participate in TestForge's managed plugin lifecycle.
 
 Examples include:
 
-- Pinia
-- Vue Router
-- Vue I18n
-- Vuetify
-- PrimeVue
+- Pinia;
+- Vue Router;
+- Vue I18n;
+- Vuetify;
+- PrimeVue;
+- PrimeVue 3.
 
-Managed plugins differ from third-party plugins registered directly through Vue Test Utils.
+Managed plugins differ from Vue plugins registered directly through Vue Test Utils.
 
 They:
 
@@ -778,35 +784,100 @@ They:
 - support Layer 4 runtime overlays;
 - are validated against the active preset.
 
-### 5.1. Preset Manifest Declaration
+Every managed plugin has a stable identifier exported by its package through `PLUGIN_NAME`.
 
-Managed plugins are available only when they are registered in the active preset manifest. The core runtime does not automatically discover or activate managed plugins.
-
-For example, you must register the plugin module in the manifest:
+Preset authors use the exported constant when declaring `defaults`, while runtime configuration normally uses the corresponding string key:
 
 ```typescript
-import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+defaults: {
+  [PINIA_PLUGIN_NAME]: () => ({
+    createSpy: vi.fn,
+  }),
+}
+```
+
+corresponds to:
+
+```typescript
+plugins: {
+  pinia: {
+    // Pinia-specific configuration
+  },
+}
+```
+
+The Pinia package exports `PLUGIN_NAME` with the value `"pinia"`, which is why runtime configuration uses `plugins.pinia`.
+
+See [Getting Started → Managed Plugin Identifiers](./getting-started.md#managed-plugin-identifiers) for the canonical list of official TestForge plugin identifiers.
+
+> [!IMPORTANT]
+> The managed `plugins` object is not a general-purpose Vue plugin registry.
+>
+> Its keys must identify managed plugins declared in the active preset's `manifest`.
+
+Conceptually:
+
+```text
+active preset manifest
+        ↓
+available managed plugin identifiers
+        ↓
+plugins: {
+  pinia: ...,
+  router: ...,
+}
+```
+
+### 5.1. Preset Manifest Declaration
+
+Managed plugins are available only when they are registered in the active preset manifest.
+
+The core runtime does not automatically discover or activate managed plugins.
+
+For example, a project-owned Pinia preset can declare the plugin and its explicit configuration:
+
+```typescript
+import { vi } from "vitest";
+
+import { createTestFramework } from "@testforgejs/vue-test-core";
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+
+const preset = {
+  manifest: [
+    {
+      module: piniaPlugin,
+      enabled: true,
+    },
+  ],
+
+  defaults: {
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+    }),
+  },
+};
 
 const { testComponentFactory } = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: piniaPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        [PINIA_PLUGIN_NAME]: () => ({}),
-      },
-    },
-  },
+  preset,
 });
 
 export { testComponentFactory };
 ```
 
-Only after `pinia` is declared in the active manifest can it be safely used and configured across your component factories and tests:
+The same identifier is represented differently at the two API levels:
+
+```text
+PINIA_PLUGIN_NAME
+→ "pinia"
+
+preset authoring
+→ [PINIA_PLUGIN_NAME]
+
+runtime configuration
+→ plugins.pinia
+```
+
+Only after Pinia is declared in the active manifest can the managed `pinia` key be used across component factories and tests:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
@@ -821,52 +892,117 @@ factory(
 );
 ```
 
-If a managed plugin is not part of the active preset manifest, TestForge will strictly reject configuration attempts for that plugin to prevent silent configuration failures.
+If a managed plugin is not part of the active preset manifest, TestForge rejects configuration attempts for that plugin.
+
+A package being installed is not enough. The managed plugin must belong to the active runtime profile.
 
 ---
 
-### 5.2. Extending Presets
+### 5.2. Preset Composition with `extendPreset()`
 
-TestForge provides `extendPreset()` for creating a project-specific preset from an existing preset.
+A project-owned preset does not need to extend an existing TestForge preset.
 
-This is useful when a project wants to reuse the standard configuration provided by `@testforgejs/vue-test-preset-recommended` while customizing the runtime environment for its own test runner or application.
+It can be defined independently with an explicit `PresetDefinition`, as shown in the previous section.
 
-Preset extension is a **composition mechanism**. It creates a new complete preset by combining an existing preset with explicitly provided manifest and default configuration changes.
+TestForge also provides `extendPreset()` when intentional reuse of another preset is useful.
+
+Preset extension is a **composition mechanism**.
+
+It creates a new complete preset from an existing preset plus explicit manifest or default-configuration changes.
 
 It does not introduce inheritance between runtime configuration layers.
 
-#### Extending the Recommended Preset
+Conceptually:
 
-For example, the recommended Vitest preset already provides the runner-aware Pinia configuration, including the appropriate `createSpy` implementation. A project can preserve that configuration while changing application-specific behavior such as action stubbing.
+```text
+direct project preset
+→ independent explicit configuration
 
-```typescript
-import { extendPreset } from "@testforgejs/vue-test-core";
-import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
-import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
-
-const presets = {
-  default: extendPreset(recommendedPresets.default, {
-    defaults: {
-      [PINIA_PLUGIN_NAME]: () => ({
-        ...recommendedPresets.default.defaults.pinia(),
-        stubActions: false,
-      }),
-    },
-  }),
-};
+extendPreset(sourcePreset, ...)
+→ reuse source preset
+→ non-replaced configuration remains coupled to sourcePreset
 ```
 
-Because preset plugin defaults are `PluginOptionsFactory` functions, the source factory must be explicitly invoked when its returned options should be preserved.
+#### Extending the Recommended Preset
 
-The extension replaces the Pinia default factory with the new factory. It does not automatically merge the options returned by the original factory.
+For example, a project can reuse the composition of the recommended Vitest preset while taking explicit ownership of its Pinia configuration:
 
-In this example, the recommended preset continues to provide the Vitest-specific Pinia integration, including `createSpy: vi.fn`, while the project preset adds its own `stubActions: false` policy.
+```typescript
+import { vi } from "vitest";
 
-This keeps runner integration in the recommended preset and application-specific behavior in the project preset.
+import { extendPreset } from "@testforgejs/vue-test-core";
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+
+const projectPreset = extendPreset(recommendedPresets.default, {
+  defaults: {
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+      stubActions: false,
+    }),
+  },
+});
+```
+
+The extension replaces the Pinia default factory from the source preset.
+
+The resulting project-owned configuration is visible directly in source:
+
+```typescript
+{
+  createSpy: vi.fn,
+  stubActions: false,
+}
+```
+
+This is normally preferable when the project wants that configuration to remain explicit and stable across changes to the source preset's Pinia defaults.
+
+The resulting preset can be used directly:
+
+```typescript
+const { testComponentFactory } = createTestFramework({
+  preset: projectPreset,
+});
+```
+
+#### Following a Source Preset Factory
+
+A project can instead deliberately preserve and extend a source preset factory:
+
+```typescript
+const sourcePinia = recommendedPresets.default.defaults.pinia;
+
+const projectPreset = extendPreset(recommendedPresets.default, {
+  defaults: {
+    [PINIA_PLUGIN_NAME]: () => ({
+      ...sourcePinia(),
+      stubActions: false,
+    }),
+  },
+});
+```
+
+Because preset defaults are `PluginOptionsFactory` functions, the source factory must be invoked explicitly when its returned options should be reused.
+
+This has different ownership semantics:
+
+```text
+explicit materialized factory
+→ project owns configuration
+
+spread source preset factory
+→ project intentionally follows source preset behavior
+```
+
+If the source factory changes after a dependency update, the effective project configuration can change as well.
+
+Use this form only when that coupling is intentional.
 
 #### Manifest Extensions
 
-An extension can also add managed plugins to the base preset.
+An extension can also modify the managed plugin capability boundary.
+
+For example, it can add a managed plugin:
 
 ```typescript
 const extendedPreset = extendPreset(basePreset, {
@@ -876,38 +1012,45 @@ const extendedPreset = extendPreset(basePreset, {
       enabled: true,
     },
   ],
+
   defaults: {
     [CUSTOM_PLUGIN_NAME]: () => ({
-      // plugin-specific defaults
+      // Explicit plugin configuration
     }),
   },
 });
 ```
 
-When a plugin is added to the manifest, its `enabled` state must be explicitly specified and its default options factory must be provided.
-
-An extension may also change the `enabled` state of a plugin already declared in the base manifest:
+An extension may also change the `enabled` state of a plugin already declared in the source manifest:
 
 ```typescript
 const extendedPreset = extendPreset(basePreset, {
   manifest: [
     {
       module: routerPlugin,
-      enabled: false,
+      enabled: true,
     },
   ],
 });
 ```
 
-This changes the plugin's default activation state without requiring the entire base manifest to be redeclared.
+This changes the plugin's default activation state without requiring the entire source manifest to be redeclared.
+
+`manifest` and `defaults` remain separate concerns:
+
+```text
+manifest
+→ capability + default activation
+
+defaults
+→ baseline configuration
+```
 
 #### Plugin Default Replacement
 
 Plugin defaults provided by an extension use **replacement semantics**, not deep merging.
 
-If an extension provides a default factory for an existing plugin, that factory replaces the corresponding factory from the base preset.
-
-For example, if the base preset contains:
+If the source preset contains:
 
 ```typescript
 defaults: {
@@ -932,7 +1075,7 @@ defaults: {
 }
 ```
 
-the resulting preset uses the explicitly supplied factory:
+the resulting preset uses:
 
 ```typescript
 defaults: {
@@ -942,28 +1085,18 @@ defaults: {
 }
 ```
 
-The `initialState` and `stubActions` values returned by the base factory are not automatically inherited.
+The `initialState` and `stubActions` returned by the source factory are not automatically inherited.
 
-This replacement semantics is intentional. Once a project explicitly replaces a plugin's default factory, the resulting configuration should not silently acquire additional options from the base preset.
+This is intentional.
 
-If selected base options should be preserved, invoke the base factory explicitly:
+Once a project explicitly replaces a plugin factory, the resulting configuration does not silently acquire additional options from the source preset.
 
-```typescript
-defaults: {
-  [PINIA_PLUGIN_NAME]: () => ({
-    ...recommendedPresets.default.defaults.pinia(),
-    createSpy: vi.fn,
-  }),
-}
-```
-
-The base factory returns a fresh options object, which can then be extended with project-specific values.
+If following the source factory is intentional, invoke it explicitly as shown above.
 
 > [!NOTE]
->
 > `extendPreset()` replaces plugin default factories; it does not merge the objects returned by those factories.
 >
-> If the base plugin configuration should be preserved, invoke the base factory explicitly and extend its returned options.
+> Spreading a source factory is an explicit decision to remain coupled to that source configuration.
 
 #### Extension Validation
 
@@ -971,29 +1104,14 @@ The base factory returns a fresh options object, which can then be extended with
 
 The following rules apply:
 
-- A new plugin added to `manifest` must explicitly define `enabled`.
-- A new plugin added to `manifest` must have a corresponding entry in `defaults`.
-- `defaults` may only contain plugins declared in the resulting manifest.
-- Plugin defaults must be `PluginOptionsFactory` functions that return valid plugin options.
-- `false` is not allowed in preset defaults. To disable a plugin, use `enabled: false` in the manifest or pass `false` through runtime plugin configuration.
-- Duplicate plugin entries inside the extension manifest are rejected.
+- a new plugin added to `manifest` must explicitly define `enabled`;
+- `defaults` may only contain plugins declared in the resulting manifest;
+- plugin defaults must be `PluginOptionsFactory` functions that return valid plugin options;
+- `false` is not allowed in preset defaults;
+- to disable a plugin by default, use `enabled: false` in the manifest;
+- duplicate plugin entries inside the extension manifest are rejected.
 
-For example, this is invalid:
-
-```typescript
-extendPreset(basePreset, {
-  manifest: [
-    {
-      module: customPlugin,
-      enabled: true,
-    },
-  ],
-});
-```
-
-because the new plugin does not have a corresponding default options factory.
-
-The correct form is:
+If a newly added plugin requires baseline configuration, provide its factory explicitly:
 
 ```typescript
 extendPreset(basePreset, {
@@ -1003,45 +1121,23 @@ extendPreset(basePreset, {
       enabled: true,
     },
   ],
+
   defaults: {
     [CUSTOM_PLUGIN_NAME]: () => ({
-      // plugin-specific defaults
+      // Explicit plugin configuration
     }),
   },
 });
 ```
 
 > [!IMPORTANT]
->
 > `extendPreset()` is intended for **preset composition**, not runtime plugin configuration.
 >
-> Use `extendPreset()` when defining a project-specific preset based on an existing preset.
+> Use it when reuse of another preset is intentional.
+>
+> Use a direct project-owned `PresetDefinition` when you want independent explicit project configuration.
 >
 > Use `mountOptions.plugins` or `extraOptions.plugins` when changing plugin configuration for an individual test.
-
-#### Using the Extended Preset
-
-The resulting preset can be passed to `createTestFramework()` like any other preset:
-
-```typescript
-import { createTestFramework } from "@testforgejs/vue-test-core";
-import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
-
-const { testComponentFactory } = createTestFramework({
-  presets: {
-    default: extendPreset(recommendedPresets.default, {
-      defaults: {
-        [PINIA_PLUGIN_NAME]: () => ({
-          ...recommendedPresets.default.defaults.pinia(),
-          createSpy: vi.fn,
-        }),
-      },
-    }),
-  },
-});
-```
-
-This approach allows the recommended preset to provide a common baseline while keeping test-runner-specific configuration in the consuming project.
 
 ---
 
@@ -1083,16 +1179,14 @@ Any unknown plugin key is rejected.
 
 The manifest therefore acts as the capability boundary for managed plugin configuration.
 
----
-
 #### Plugin Configuration Values
 
-Managed plugin configuration values must follow strict constraints and can only be:
+Runtime managed plugin configuration values can be:
 
 - an options object;
 - `false`, to explicitly disable the plugin for the current mount.
 
-For example, to disable a managed plugin for one test:
+For example:
 
 ```typescript
 factory(
@@ -1105,15 +1199,13 @@ factory(
 );
 ```
 
-Preset defaults follow a different rule: they are always defined as `PluginOptionsFactory` functions and cannot use `false`.
+Preset defaults follow a different rule: they are `PluginOptionsFactory` functions and cannot use `false`.
 
-To make a managed plugin available but disabled by default, use `enabled: false` in the preset manifest and enable it through runtime configuration when needed.
-
----
+To make a managed plugin available but disabled by default, use `enabled: false` in the preset manifest and activate it through runtime configuration when needed.
 
 #### Unmanaged Third-Party Plugins
 
-Third-party plugins that are not registered as managed TestForge integrations must not be passed through the managed `plugins` object.
+Vue plugins that are not registered as managed TestForge integrations must not be passed through the managed `plugins` object.
 
 Use standard Vue Test Utils configuration instead:
 
@@ -1130,17 +1222,19 @@ factory(
 
 This keeps TestForge-managed plugin configuration separate from raw Vue Test Utils plugin registration.
 
-Managed plugins participate in TestForge's preset, validation, and lifecycle pipeline. Unmanaged plugins bypass that pipeline and are passed directly to Vue Test Utils.
+Managed plugins participate in TestForge's preset, validation, and lifecycle pipeline.
+
+Manually registered Vue plugins bypass that pipeline and are passed directly to Vue Test Utils.
 
 ---
 
 ### 5.4. Practical Examples
 
-A plugin declared in a preset manifest can be dynamically enabled or disabled depending on your test requirements.
+A plugin declared in a preset manifest can be dynamically enabled or disabled depending on test requirements.
 
 #### Disabling a Managed Plugin Completely
 
-Pass `false` through `mountOptions.plugins` to completely disable a managed integration for a specific test:
+Pass `false` through `mountOptions.plugins` to disable a managed integration for a specific test:
 
 ```typescript
 factory(
@@ -1153,13 +1247,13 @@ factory(
 );
 ```
 
-This disables the managed Router pipeline for the current mount. This is highly useful when you need to run a baseline test with zero console noise, or take full manual control over the environment.
+This disables the managed Router pipeline for the current mount.
 
----
+This can be useful when the test does not need Router or when the test intends to take manual control over the environment.
 
 #### Enabling a Plugin Disabled by Default
 
-If a plugin is declared in your preset manifest with `enabled: false`, you can explicitly activate it for an individual test by passing an empty configuration object `{}`:
+If a plugin is declared in the active preset manifest with `enabled: false`, you can activate it for an individual test by passing an empty configuration object:
 
 ```typescript
 factory(
@@ -1172,7 +1266,7 @@ factory(
 );
 ```
 
-This allows a preset to make a heavy integration available to the project without forcing it onto every component test by default.
+This allows a preset to make an integration available without initializing it for every component test.
 
 ---
 
@@ -1180,9 +1274,9 @@ This allows a preset to make a heavy integration available to the project withou
 
 ## 6. 🔌 Third-Party Plugins
 
-TestForge-managed plugins are tightly integrated into the framework's configuration and preset lifecycle pipeline.
+TestForge-managed plugins are integrated into the framework's configuration and preset lifecycle pipeline.
 
-Third-party Vue plugins that are not managed by TestForge must be registered using standard Vue Test Utils options inside the `global` section.
+Vue plugins that are not managed by TestForge can be registered using standard Vue Test Utils options inside the `global` section.
 
 For example:
 
@@ -1201,25 +1295,29 @@ const wrapper = factory(
 );
 ```
 
-Third-party plugins bypass TestForge processing, are not included in presets, and cannot be configured through the managed `plugins` object.
+Plugins registered through `global.plugins` bypass TestForge's managed plugin processing.
 
-### Managed vs Third-Party Plugins Quick Reference
+### Managed vs Manually Registered Plugins Quick Reference
 
-| Configuration Key | Allowed Plugins                                                     | Pipeline Integration                                  |
-| :---------------- | :------------------------------------------------------------------ | :---------------------------------------------------- |
-| `plugins`         | **Managed only** (`pinia`, `router`, `i18n`, `vuetify`, `primevue`) | Participates in presets, validation, and overlays     |
-| `global.plugins`  | **Third-party only** (any custom Vue plugin)                        | Bypasses TestForge, passed directly to Vue Test Utils |
+| Configuration Key | Allowed Plugins                                                       | Pipeline Integration                                                  |
+| :---------------- | :-------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| `plugins`         | **Managed only** — identifiers declared in the active preset manifest | Participates in presets, validation, lifecycle handling, and overlays |
+| `global.plugins`  | **Manually registered Vue plugins**                                   | Bypasses TestForge and is passed directly to Vue Test Utils           |
+
+This table intentionally does not duplicate the list of official managed plugin identifiers.
+
+See [Getting Started → Managed Plugin Identifiers](./getting-started.md#managed-plugin-identifiers) for the canonical list.
 
 ### When to Use `global.plugins`
 
 Use the standard Vue Test Utils array when:
 
-- the Vue plugin is not natively supported or managed by TestForge;
+- the Vue plugin is not supported or managed by TestForge;
 - the test requires a custom, manually pre-instantiated plugin;
-- you need to completely bypass TestForge's managed lifecycle pipeline for a specific dependency.
+- you need to bypass TestForge's managed lifecycle pipeline for a specific dependency.
 
 > [!TIP]
-> If you need to work directly with underlying instances of _managed_ plugins (e.g., accessing the raw Pinia or Router instance after automation), see the advanced **Working with Plugin Instances** guide.
+> If you need to work directly with underlying instances of managed plugins such as Pinia or Router, see [Advanced: Working with Plugin Instances](#plugin-instances).
 
 ---
 
@@ -1227,13 +1325,15 @@ Use the standard Vue Test Utils array when:
 
 ## 7. 🛡 Advanced: Working with Plugin Instances
 
-In most cases, you do not need to interact directly with plugin instances. However, doing so is useful when you need to assert the internal state of **Pinia**, **Vue Router**, or **Vue I18n** after a component has performed an action.
+In most cases, you do not need to interact directly with plugin instances.
+
+However, doing so is useful when you need to assert the internal state of **Pinia**, **Vue Router**, or **Vue I18n** after a component has performed an action.
 
 <a id="precreated-plugin-instances"></a>
 
 ### 7.1. Using Pre-created Instances (`__meta.instance`)
 
-Sometimes a test requires an **already existing** plugin instance (e.g., a Pinia instance pre-populated with mock state via `@pinia/testing`, or a fully configured Router) instead of letting the framework initialize a new one.
+Sometimes a test requires an **already existing** plugin instance — for example, a Pinia instance pre-populated with mock state via `@pinia/testing`, or a fully configured Router — instead of letting the framework initialize a new one.
 
 For this purpose, managed plugins support a protected `__meta.instance` property inside `extraOptions.plugins`:
 
@@ -1262,30 +1362,34 @@ factory(
 
 **When `__meta.instance` is provided:**
 
-- Managed plugin lifecycle creation is completely skipped.
-- Any standard plugin options specified alongside it are ignored.
-- The supplied instance is injected directly into the Vue Test Utils mounting pipeline.
+- managed plugin lifecycle creation is completely skipped;
+- standard plugin options specified alongside it are ignored;
+- the supplied instance is injected directly into the Vue Test Utils mounting pipeline.
 
 > [!WARNING]
-> Any other plugin options specified alongside `__meta.instance` will be silently ignored because the provided instance takes absolute precedence.
+> Any other plugin options specified alongside `__meta.instance` will be ignored because the provided instance takes precedence.
 
 #### Why is this better than `global.plugins`?
 
-Using `__meta.instance` allows TestForge to recognize that the managed plugin already exists. This prevents the framework from spinning up a second instance, avoiding conflicts between multiple copies of the same library and keeping the lifecycle consistent with the rest of the preset pipeline.
+Using `__meta.instance` allows TestForge to recognize that the managed plugin already exists.
+
+This prevents the framework from creating a second instance and keeps the plugin inside the managed preset lifecycle.
 
 > [!NOTE]
 > **Choosing Between `__meta.instance` and `skipManagedPlugins`:**
 >
-> - Use `__meta.instance` when you want to provide a custom instance for **one specific plugin** (e.g., Pinia) but still want TestForge to automatically orchestrate other managed plugins from your preset (like Vue Router, Vuetify, or Vue I18n).
-> - Use `skipManagedPlugins: true` only when you want to **completely opt out** of TestForge's plugin pipeline for the current mount and manually construct the entire global environment from scratch using raw Vue Test Utils arrays.
+> - Use `__meta.instance` when you want to provide a custom instance for **one specific managed plugin** while still allowing TestForge to orchestrate the other managed plugins from the active preset.
+> - Use `skipManagedPlugins: true` when you want to **completely opt out** of TestForge's managed plugin pipeline for the current mount and manually construct the environment through Vue Test Utils.
 
 #### When should `__meta.instance` be used?
 
-- **State Sharing:** When you need to share the exact same plugin instance across multiple helpers or assertions.
-- **Complex Preparation:** When you want to manually prepare a complex, multi-step runtime state before mounting the component.
+- **State Sharing** — when you need to share the exact same plugin instance across multiple helpers or assertions.
+- **Complex Preparation** — when you want to manually prepare complex runtime state before mounting the component.
 
 > [!NOTE]
-> Providing `__meta.instance` is mainly useful for plugins that maintain heavy runtime state, such as **Pinia** or **Vue Router**. Plugins implemented as plain install objects (like **Vuetify** or **PrimeVue**) do not benefit from instance reuse because they do not expose meaningful runtime state to assert.
+> Providing `__meta.instance` is mainly useful for plugins that maintain meaningful runtime state, such as **Pinia** or **Vue Router**.
+>
+> Plugins implemented primarily as install objects, such as **Vuetify** or **PrimeVue**, generally do not benefit from instance reuse in the same way.
 
 ---
 
@@ -1297,7 +1401,7 @@ Sometimes tests need direct access to the actual plugin instance created by the 
 
 #### Option A: Using `expose`
 
-You can pass an `expose` callback function which receives the freshly created instance immediately before the component mounts.
+You can pass an `expose` callback that receives the freshly created instance immediately before the component mounts.
 
 ```typescript
 import type { Pinia } from "pinia";
@@ -1404,4 +1508,6 @@ const second = factory(
 expect(firstCapture.instance).not.toBe(secondCapture.instance);
 ```
 
-When a test intentionally requires a shared plugin instance (for example, to share state across multiple mounts or helpers), do not rely on automatic managed instance creation. Instead, explicitly create the instance and pass it via `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances).
+When a test intentionally requires a shared plugin instance — for example, to share state across multiple mounts or helpers — do not rely on automatic managed instance creation.
+
+Instead, explicitly create the instance and pass it through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances).

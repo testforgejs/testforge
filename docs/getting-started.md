@@ -60,26 +60,48 @@ A preset defines:
 
 - which managed plugins are available in the test environment;
 - which plugins are enabled by default;
-- the default configuration for those plugins.
+- the baseline configuration factories for those plugins.
 
-The TestForge core does not automatically know about Vue ecosystem plugins. A plugin becomes available to the framework only when it is registered through the active preset.
+The TestForge core does not automatically know about Vue ecosystem plugins.
 
-For example, a preset can make Pinia, Vue Router, and Vue I18n available to your tests:
+A managed plugin becomes available to the framework only when it is declared in the active preset's `manifest`.
+
+Conceptually:
+
+```text
+preset.manifest
+→ defines available managed plugins
+
+preset.defaults
+→ defines their baseline configuration
+```
+
+For example, the official recommended preset provides a runtime environment containing managed integrations such as Pinia, Vue I18n, and Vue Router:
 
 ```typescript
 import { presets } from "@testforgejs/vue-test-preset-recommended";
 ```
 
-Presets can also build on top of other presets.
+Official TestForge presets can also be composed from other reusable presets.
 
-For example, the official recommended presets are composed from `@testforgejs/vue-test-preset-base`. The base package provides common Vue plugin configuration, while runner-specific recommended presets add configuration required by a particular test runner.
+For example, `@testforgejs/vue-test-preset-recommended` builds on `@testforgejs/vue-test-preset-base`. The base package provides runner-independent composition, while the recommended package adds Vitest-specific configuration where required.
 
-You do not need to understand this composition to get started. In most cases, you can simply use the preset that matches your test runner. If you need only a small subset of plugins, you can also create a custom preset directly in your project and pass it to `createTestFramework({ preset })`.
+You do not need to understand this composition to get started.
+
+For most projects, begin with:
+
+```typescript
+preset: presets.default;
+```
+
+If you later want your project to own its testing configuration directly, you can create a project-specific preset with explicit plugin factories.
 
 > [!TIP]
-> Start with the recommended preset if you are new to TestForge. Create or extend a custom preset when you need more control over which plugins are available or how they are configured.
+> Start with the recommended preset if you are new to TestForge.
+>
+> Create a project-owned preset when you want the effective plugin configuration to be visible and editable directly in your project.
 
-See the [Preset Authoring Guide](./preset-authoring-guide.md) for information about creating and composing custom presets.
+See the [Preset Authoring Guide](./preset-authoring-guide.md) for information about creating and composing presets.
 
 ---
 
@@ -89,7 +111,7 @@ It is recommended to create a single TestForge configuration file, usually `test
 
 ### Using a Ready-Made Preset
 
-The simplest approach is to use one of the official presets:
+The simplest approach is to use the default environment from the official recommended preset:
 
 ```typescript
 // @/tests/setup.ts
@@ -98,42 +120,45 @@ import { createTestFramework } from "@testforgejs/vue-test-core";
 import { presets } from "@testforgejs/vue-test-preset-recommended";
 
 const { testComponentFactory } = createTestFramework({
-  presets,
+  preset: presets.default,
 });
 
 export { testComponentFactory };
 ```
 
-This creates one shared TestForge framework configuration for your test suite.
+This creates one shared TestForge runtime environment for your test suite.
 
-### Using a Custom Preset
+A single `preset` is the preferred form when your project needs only one testing environment.
 
-You can also create your own preset when you want to control exactly which plugins are available and how they are configured.
+### Using a Custom Project Preset
 
-If your project only needs a single preset, you can pass it directly through the `preset` option:
+You can also create your own preset when you want to control exactly which managed plugins are available and how they are configured.
+
+A project-owned preset should normally make its concrete plugin configuration explicit.
+
+For example, a minimal Pinia environment for Vitest can be written as:
 
 ```typescript
 // @/tests/setup.ts
 
+import { vi } from "vitest";
 import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
-import { vi } from "vitest";
 
-const preset: PresetDefinition = {
+const preset = {
   manifest: [
     {
       module: piniaPlugin,
       enabled: true,
     },
   ],
+
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
-      initialState: {},
-      stubActions: true,
       createSpy: vi.fn,
     }),
   },
-};
+} satisfies PresetDefinition;
 
 const { testComponentFactory } = createTestFramework({
   preset,
@@ -142,26 +167,47 @@ const { testComponentFactory } = createTestFramework({
 export { testComponentFactory };
 ```
 
-The `preset` option is convenient when your project uses a single configuration. The preset is a normal TypeScript object, so you can edit its plugin manifest and default configuration directly in your project.
+The preset is a normal TypeScript object owned by your project.
 
-If your project needs multiple named presets, use the `presets` option instead:
+Its effective Pinia configuration is visible directly in source:
+
+```typescript
+{
+  createSpy: vi.fn,
+}
+```
+
+This means the project does not depend on hidden preset defaults for the configuration it owns.
+
+Project-owned configuration should remain minimal. You do not need to list every option supported by Pinia, Vue Router, Vue I18n, or another integrated library unless your project intentionally wants to control that option.
+
+### Using Multiple Named Presets
+
+If your project needs multiple runtime environments, use the `presets` option instead:
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
   presets: {
-    default: {
-      // ...
-    },
-    integration: {
-      // ...
-    },
+    default: appPreset,
+    integration: integrationPreset,
   },
 });
 ```
 
-The two options are mutually exclusive: use either `preset` or `presets`.
+The two framework configuration forms are mutually exclusive:
 
-Both approaches produce the same TestForge framework. The difference is only whether the framework receives one unnamed preset or a registry of named presets.
+```text
+preset
+→ one runtime environment
+
+presets
+→ multiple named runtime environments
+→ runtime selection through extraOptions.preset
+```
+
+A single `preset` is internally treated as the framework's default environment.
+
+A `presets` registry exposes several named runtime profiles that can be selected when invoking a component factory.
 
 You can then import the configured factory into your tests:
 
@@ -184,14 +230,16 @@ describe("MyComponent.vue", () => {
 
 ### `createTestFramework` Parameters
 
-| Parameter          | Type                   | Default | Description                                             |
-| :----------------- | :--------------------- | :------ | :------------------------------------------------------ |
-| `preset`           | `PresetDefinition`     | —       | A single preset used by the framework.                  |
-| `presets`          | `TestFrameworkPresets` | `{}`    | A registry of named presets available to the framework. |
-| `shallowByDefault` | `boolean`              | `false` | Use `shallowMount()` instead of `mount()` by default.   |
+| Parameter          | Type                   | Default | Description                                                          |
+| :----------------- | :--------------------- | :------ | :------------------------------------------------------------------- |
+| `preset`           | `PresetDefinition`     | —       | A single preset used as the framework's default runtime environment. |
+| `presets`          | `TestFrameworkPresets` | `{}`    | A registry of named runtime environments available to the framework. |
+| `shallowByDefault` | `boolean`              | `false` | Use `shallowMount()` instead of `mount()` by default.                |
 
 > [!NOTE]
-> `preset` and `presets` cannot be used together. For a single project-wide configuration, `preset` is usually the simplest option. Use `presets` when you need multiple named configurations.
+> `preset` and `presets` cannot be used together.
+>
+> For a single project-wide environment, `preset` is usually the simplest option. Use `presets` when you intentionally need multiple named runtime profiles.
 
 ---
 
@@ -199,7 +247,9 @@ describe("MyComponent.vue", () => {
 
 `testComponentFactory` creates a reusable factory for mounting a specific component.
 
-You can create a factory once and reuse it across multiple tests. The factory can define common component props, slots, Vue Test Utils options, and managed plugin configuration that should be shared by the tests using that factory.
+You can create a factory once and reuse it across multiple tests.
+
+The factory can define common component props, slots, Vue Test Utils options, and managed plugin configuration that should be shared by the tests using that factory.
 
 ```typescript
 const factory = testComponentFactory(MyComponent, {
@@ -225,17 +275,102 @@ This keeps repetitive mounting configuration in one place while allowing individ
 
 ## 5. 🛠 Using Managed Plugins
 
-TestForge provides managed integrations for commonly used Vue ecosystem plugins.
+TestForge provides managed integrations for Vue ecosystem libraries such as Pinia, Vue Router, Vue I18n, Vuetify, and PrimeVue.
 
-TestForge provides managed integrations for Vue ecosystem plugins such as Pinia, Vue Router, Vue I18n, Vuetify, and PrimeVue.
+Managed plugins can be configured through presets and through TestForge's managed `plugins` API.
 
-Managed plugins can be configured through the preset and used through the TestForge plugin configuration API.
+Unlike manually registered Vue Test Utils plugins, managed plugins are known to TestForge through plugin modules declared in the active preset.
 
-Unlike manually registered Vue Test Utils plugins, managed plugins can be created and configured by TestForge using the plugin definitions registered in the active preset.
+### Managed Plugin Identifiers
+
+Every TestForge managed plugin has a stable identifier.
+
+The plugin package exports that identifier through the standardized `PLUGIN_NAME` export.
+
+For example:
+
+```typescript
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+
+// PINIA_PLUGIN_NAME === "pinia"
+```
+
+Preset authors use the exported constant when declaring preset defaults:
+
+```typescript
+defaults: {
+  [PINIA_PLUGIN_NAME]: () => ({
+    createSpy: vi.fn,
+  }),
+}
+```
+
+At runtime, the normal consumer-facing API uses the corresponding string key:
+
+```typescript
+plugins: {
+  pinia: {
+    // ...
+  },
+}
+```
+
+The official managed plugin identifiers are:
+
+| Integration | Package                                    | `PLUGIN_NAME` value | Runtime `plugins` key |
+| :---------- | :----------------------------------------- | :------------------ | :-------------------- |
+| Pinia       | `@testforgejs/vue-test-plugin-pinia`       | `"pinia"`           | `pinia`               |
+| Vue Router  | `@testforgejs/vue-test-plugin-router`      | `"router"`          | `router`              |
+| Vue I18n    | `@testforgejs/vue-test-plugin-i18n`        | `"i18n"`            | `i18n`                |
+| Vuetify     | `@testforgejs/vue-test-plugin-vuetify`     | `"vuetify"`         | `vuetify`             |
+| PrimeVue    | `@testforgejs/vue-test-plugin-primevue`    | `"primevue"`        | `primevue`            |
+| PrimeVue 3  | `@testforgejs/vue-test-plugin-primevue-v3` | `"primevueV3"`      | `primevueV3`          |
+
+These identifiers are part of the TestForge plugin contract.
+
+They are not arbitrary names chosen by individual tests.
+
+### The Active Preset Defines Available Plugins
+
+The `plugins` object is **not** a general-purpose Vue plugin registry.
+
+Its keys must identify TestForge managed plugins declared in the active preset's `manifest`.
+
+Conceptually:
+
+```text
+active preset
+     │
+     ▼
+manifest
+     │
+     ▼
+available managed plugin identifiers
+     │
+     ▼
+plugins: {
+  pinia: ...,
+  router: ...,
+}
+```
+
+If the active preset declares:
+
+```text
+pinia
+i18n
+router
+```
+
+then those are the managed plugin identifiers that can be configured through the TestForge `plugins` API.
+
+A plugin package merely being installed in the project does not make that plugin available to TestForge.
+
+It must belong to the active preset.
 
 ### Configuring a Managed Plugin
 
-For example, a Pinia plugin can be configured when creating a component factory:
+For example, Pinia can be configured when creating a component factory:
 
 ```typescript
 const factory = testComponentFactory(
@@ -253,6 +388,16 @@ const factory = testComponentFactory(
     },
   },
 );
+```
+
+Here:
+
+```text
+pinia
+→ managed plugin identifier
+
+initialState
+→ Pinia-specific configuration
 ```
 
 The configuration is specific to the factory and is applied when the factory mounts the component.
@@ -278,6 +423,28 @@ factory(
 
 The exact options available depend on the managed plugin.
 
+For example, Router configuration uses the `router` identifier:
+
+```typescript
+plugins: {
+  router: {
+    // Router-specific options
+  },
+}
+```
+
+PrimeVue 3 uses:
+
+```typescript
+plugins: {
+  primevueV3: {
+    // PrimeVue 3-specific options
+  },
+}
+```
+
+The identifier determines which managed plugin receives the configuration, while that plugin's type definitions determine which options are valid.
+
 See the documentation for the individual plugin packages for plugin-specific configuration:
 
 - [`@testforgejs/vue-test-plugin-pinia`](../packages/vue-test-plugin-pinia/docs/api/README.md)
@@ -285,14 +452,40 @@ See the documentation for the individual plugin packages for plugin-specific con
 - [`@testforgejs/vue-test-plugin-i18n`](../packages/vue-test-plugin-i18n/docs/api/README.md)
 - [`@testforgejs/vue-test-plugin-vuetify`](../packages/vue-test-plugin-vuetify/docs/api/README.md)
 - [`@testforgejs/vue-test-plugin-primevue`](../packages/vue-test-plugin-primevue/docs/api/README.md)
+- [`@testforgejs/vue-test-plugin-primevue-v3`](../packages/vue-test-plugin-primevue-v3/docs/api/README.md)
 
 ---
 
 ## 6. 🔌 Enabling and Disabling Managed Plugins
 
-A managed plugin must be available in the active preset before it can be configured through the managed plugin API.
+A managed plugin must belong to the active preset before it can be configured through the managed plugin API.
 
-If a plugin is registered in the preset but disabled by default, you can enable it for a specific factory or test:
+The preset's `manifest` determines both:
+
+- whether the plugin is available;
+- whether it is enabled by default.
+
+Conceptually:
+
+```text
+plugin absent from manifest
+→ unavailable
+→ cannot be configured through plugins
+
+plugin in manifest + enabled: false
+→ available
+→ disabled by default
+
+plugin in manifest + enabled: true
+→ available
+→ enabled by default
+```
+
+### Enabling a Plugin
+
+If a plugin is registered in the active preset but disabled by default, you can provide configuration for it when creating a factory or mounting a component.
+
+For example, if Router belongs to the active preset but is disabled by default:
 
 ```typescript
 const factory = testComponentFactory(
@@ -306,7 +499,11 @@ const factory = testComponentFactory(
 );
 ```
 
-You can also explicitly disable a managed plugin for a specific test:
+The `router` key is valid because the Router plugin belongs to the active preset's manifest.
+
+### Disabling a Plugin
+
+You can also explicitly disable a managed plugin for a specific factory or test:
 
 ```typescript
 factory(
@@ -319,10 +516,52 @@ factory(
 );
 ```
 
-This is useful when a plugin is normally active in the project but is not required for a particular test.
+This is useful when a plugin is normally active in the selected runtime environment but is not required for a particular test.
+
+### Invalid Plugin Configuration
+
+If a plugin is not declared in the active preset, configuring it is invalid.
+
+For example, suppose the active preset contains only Vue I18n.
+
+This configuration is invalid:
+
+```typescript
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {},
+    },
+  },
+);
+```
+
+even if `@testforgejs/vue-test-plugin-pinia` is installed in the project.
+
+The Pinia managed plugin must first belong to the active preset's manifest.
 
 > [!NOTE]
-> Managed plugin configuration is validated against the active preset. Plugin names used in the `plugins` configuration must correspond to plugins registered in the preset.
+> Managed plugin configuration is validated against the active preset.
+>
+> Keys used inside `plugins` must correspond to managed plugin identifiers declared by that preset.
+
+When a framework uses multiple named presets, the capability boundary belongs to the preset selected for the current factory invocation.
+
+For example:
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    preset: "router",
+  },
+);
+```
+
+selects the named `router` runtime profile, and its manifest determines which managed plugin identifiers are valid for that invocation.
 
 ---
 
@@ -331,5 +570,5 @@ This is useful when a plugin is normally active in the project but is not requir
 Now that you have a basic TestForge setup, you can explore the more advanced parts of the framework:
 
 - **[Configuration & Advanced Usage](./configuration.md)** — Learn how TestForge resolves configuration across presets, factories, tests, and extra options.
-- **[Preset Authoring Guide](./preset-authoring-guide.md)** — Create project-specific or organization-wide presets.
+- **[Preset Authoring Guide](./preset-authoring-guide.md)** — Create project-specific, organization-wide, or reusable presets.
 - **[Plugin Authoring Guide](./plugin-authoring-guide.md)** — Build custom managed plugins for TestForge.

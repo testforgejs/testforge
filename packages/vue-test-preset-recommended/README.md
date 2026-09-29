@@ -18,17 +18,26 @@ Conceptually:
 
 ```text
 plugin
-→ owns the project-independent integration baseline
+→ owns reusable integration knowledge
 
 base preset
+→ consumes runner-independent plugin defaults
 → composes plugins without choosing a test runner
 
 recommended preset
+→ consumes runner-aware plugin defaults
 → adds Vitest-specific runner integration
 
-project preset
-→ adds application-specific behavior
+project-owned preset
+→ materializes concrete plugin configuration
+→ owns application-specific policy
 ```
+
+The distinction between the recommended preset and a project-owned preset is intentional.
+
+The TestForge-maintained recommended preset may use `getDefaultOptions()` because it deliberately follows the integration baseline exported by the installed plugin version.
+
+A project-owned preset should normally materialize the concrete configuration it wants to preserve in its own source code.
 
 ## Installation
 
@@ -175,6 +184,8 @@ Preset definitions use the standardized `PLUGIN_NAME` export as the configuratio
 
 This keeps the identifier exported by the plugin package as the single source of truth.
 
+Because this package is a TestForge-maintained reusable preset, it intentionally obtains its runner-aware Pinia baseline through `getDefaultOptions(vi)`.
+
 When only one of these environments is needed, use it directly through `createTestFramework({ preset })`.
 
 ### `presets.default`
@@ -305,7 +316,7 @@ The in-memory history keeps routing isolated from browser URL state.
 
 The empty route table ensures that TestForge does not invent application-specific routes.
 
-Projects that need actual routes or another history implementation should provide them explicitly in a project preset.
+Projects that need actual routes or another history implementation should provide them explicitly in a project-owned preset.
 
 ## Recommended vs Base Presets
 
@@ -344,7 +355,7 @@ Projects that need actual routes or another history implementation should provid
 
 This separation keeps runner knowledge out of the base preset.
 
-It also keeps knowledge about how Vitest integrates with Pinia inside the Pinia plugin rather than duplicating that configuration in the preset package.
+It also keeps knowledge about how Vitest integrates with Pinia inside the Pinia plugin rather than duplicating that configuration in the TestForge-maintained preset package.
 
 In other words:
 
@@ -385,9 +396,11 @@ defaults: {
 }
 ```
 
-The `PLUGIN_NAME` export identifies the plugin consistently across its module and preset configuration, while `getDefaultOptions()` provides the configuration factory selected by the preset.
+The `PLUGIN_NAME` export identifies the plugin consistently across its module and preset configuration, while `getDefaultOptions()` provides the configuration factory selected by this TestForge-maintained preset.
 
-This keeps both the target plugin and the source of its configuration explicit and prevents plugin defaults from changing existing presets implicitly.
+Because the recommended preset deliberately references `getDefaultOptions(vi)`, it intentionally follows the runner-aware integration baseline provided by the installed Pinia plugin version.
+
+Project-owned presets that need their concrete configuration to remain visible and stable across plugin baseline changes should materialize that configuration explicitly instead.
 
 ## Switching Presets at Runtime
 
@@ -455,27 +468,29 @@ Runtime selection through `extraOptions.preset` applies to named presets registe
 
 The recommended presets are ordinary TestForge preset definitions and can be composed with `extendPreset()`.
 
-Application-specific behavior should normally be added in a project preset rather than in TestForge plugin defaults.
+Application-specific behavior should normally be added in a project-owned preset rather than in TestForge plugin defaults.
+
+When a project replaces a plugin factory, it should normally materialize the concrete configuration it wants to own rather than call `getDefaultOptions()` again.
+
+This keeps the project's effective test environment visible in source and prevents future changes to a plugin baseline from silently changing that materialized configuration.
 
 ### Customizing Pinia
 
 For example, a project may want real Pinia actions to execute instead of using the upstream testing default that stubs them.
 
-Use the Pinia plugin's runner-aware defaults as the baseline:
+A project-owned preset can materialize both the required Vitest integration and the project-specific action policy:
 
 ```typescript
 import { vi } from "vitest";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
-
-const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
-      ...piniaDefaults(),
+      createSpy: vi.fn,
       stubActions: false,
     }),
   },
@@ -491,7 +506,21 @@ This produces:
 }
 ```
 
-The runner integration remains owned by the Pinia plugin, while `stubActions: false` is explicit project policy.
+The recommended preset obtains `createSpy: vi.fn` through the Pinia plugin's runner-aware defaults.
+
+The project-owned preset materializes that value in its own source together with its `stubActions: false` policy.
+
+Conceptually:
+
+```text
+recommended preset
+→ follows runner-aware plugin baseline
+
+project-owned preset
+→ materializes createSpy: vi.fn
+→ adds stubActions: false
+→ owns the resulting configuration
+```
 
 A project using this single runtime environment can pass it directly to TestForge:
 
@@ -503,19 +532,21 @@ const { testComponentFactory } = createTestFramework({
 
 ### Customizing Vue I18n
 
-Application locale and translation messages should be configured explicitly:
+Application locale and translation messages should be configured explicitly.
+
+A project-owned preset should also materialize the integration values it intends to preserve:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
-
-const i18nDefaults = i18nPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
     [I18N_PLUGIN_NAME]: () => ({
-      ...i18nDefaults(),
+      legacy: false,
+      globalInjection: true,
+
       locale: "en",
       messages: {
         en: {
@@ -527,6 +558,18 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 });
 ```
 
+Here:
+
+```text
+legacy / globalInjection
+→ materialized integration baseline
+
+locale / messages
+→ project-specific policy
+```
+
+All of these values are now visible and owned by the project preset.
+
 Use it directly when no runtime preset switching is needed:
 
 ```typescript
@@ -537,9 +580,12 @@ const { testComponentFactory } = createTestFramework({
 
 ### Customizing Vue Router
 
-Application routes should also be configured explicitly:
+Application routes should also be configured explicitly.
+
+The recommended default preset declares Router but keeps it disabled, so a project that wants Router as part of its default runtime should explicitly enable it and materialize its Router configuration:
 
 ```typescript
+import { createMemoryHistory } from "vue-router";
 import { extendPreset } from "@testforgejs/vue-test-core";
 import {
   routerPlugin,
@@ -547,12 +593,18 @@ import {
 } from "@testforgejs/vue-test-plugin-router";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
-const routerDefaults = routerPlugin.getDefaultOptions();
-
 const projectPreset = extendPreset(recommendedPresets.default, {
+  manifest: [
+    {
+      module: routerPlugin,
+      enabled: true,
+    },
+  ],
+
   defaults: {
     [ROUTER_PLUGIN_NAME]: () => ({
-      ...routerDefaults(),
+      history: createMemoryHistory(),
+
       routes: [
         {
           path: "/",
@@ -564,17 +616,34 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 });
 ```
 
-The plugin-provided in-memory history is preserved here.
+The project now owns both decisions:
 
-If the application requires another history implementation, override it explicitly:
+```text
+manifest
+→ Router is enabled
+
+defaults
+→ createMemoryHistory()
+→ application routes
+```
+
+The in-memory history is explicit project-owned configuration rather than an indirect dependency on `routerPlugin.getDefaultOptions()`.
+
+If the application requires another history implementation, replace it directly:
 
 ```typescript
 import { createWebHistory } from "vue-router";
 
 const projectPreset = extendPreset(recommendedPresets.default, {
+  manifest: [
+    {
+      module: routerPlugin,
+      enabled: true,
+    },
+  ],
+
   defaults: {
     [ROUTER_PLUGIN_NAME]: () => ({
-      ...routerDefaults(),
       history: createWebHistory(),
       routes,
     }),
@@ -584,7 +653,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 
 ## Replacing Preset Defaults
 
-When an extension provides a plugin options factory, that factory replaces the corresponding factory from the base preset.
+When an extension provides a plugin options factory, that factory replaces the corresponding factory from the source preset.
 
 For example:
 
@@ -592,8 +661,8 @@ For example:
 extendPreset(recommendedPresets.default, {
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
-      stubActions: false,
       createSpy: vi.fn,
+      stubActions: false,
     }),
   },
 });
@@ -605,28 +674,66 @@ TestForge does not implicitly merge this factory with:
 piniaPlugin.getDefaultOptions(vi);
 ```
 
-If existing plugin defaults should be preserved, compose them explicitly:
+or with the factory already present in `recommendedPresets.default`.
+
+For a project-owned preset, explicit replacement is normally preferable because the effective configuration is visible in project source:
 
 ```typescript
-const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
+[PINIA_PLUGIN_NAME]: () => ({
+  createSpy: vi.fn,
+  stubActions: false,
+})
+```
 
-extendPreset(recommendedPresets.default, {
+A project can instead deliberately preserve and spread the source preset factory:
+
+```typescript
+const sourcePinia = recommendedPresets.default.defaults.pinia;
+
+const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
-      ...piniaDefaults(),
+      ...sourcePinia(),
       stubActions: false,
     }),
   },
 });
 ```
 
-This makes the plugin identifier, the baseline, and the project-specific additions visible.
+This has different semantics.
+
+The project now intentionally continues to depend on the Pinia factory provided by `recommendedPresets.default`.
+
+If that source factory changes after a dependency update, the effective project configuration can change as well.
+
+Conceptually:
+
+```text
+spread source preset factory
+→ continue following source preset behavior
+
+explicit replacement factory
+→ project owns the resulting configuration
+```
+
+For a stable project-owned preset, prefer explicit materialization:
+
+```typescript
+const projectPreset = extendPreset(recommendedPresets.default, {
+  defaults: {
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+      stubActions: false,
+    }),
+  },
+});
+```
 
 ## Plugin Options Factory Isolation
 
 Preset `defaults` values are plugin options factories rather than shared configuration objects.
 
-Preset definitions use the exported plugin identifier:
+The recommended preset stores its Pinia options factory under the exported plugin identifier:
 
 ```typescript
 defaults: {
@@ -671,6 +778,18 @@ component factory invocation
 → creates an individual component test runtime
 ```
 
+The `getDefaultOptions(vi)` example in this section describes the implementation of the TestForge-maintained recommended preset.
+
+A project-owned preset can preserve the same factory isolation while materializing its configuration explicitly:
+
+```typescript
+defaults: {
+  [PINIA_PLUGIN_NAME]: () => ({
+    createSpy: vi.fn,
+  }),
+}
+```
+
 ## Using a Preset with Other Framework Configuration
 
 When using a single runtime environment, combine it with other framework options through `preset`:
@@ -691,7 +810,9 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The selected preset provides the managed-plugin runtime baseline, while project presets and individual component tests can add or override configuration where needed.
+The selected preset provides the managed-plugin runtime baseline.
+
+A project-owned preset can materialize and replace that configuration explicitly, while individual component tests can apply local overrides where needed.
 
 ## Related Packages
 

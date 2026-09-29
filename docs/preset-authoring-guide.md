@@ -16,18 +16,44 @@ Responsibilities are separated between plugins and presets:
 ```text
 plugin
 → owns library-specific integration knowledge
-→ may expose project-independent defaults
+→ may expose a reusable baseline through getDefaultOptions()
 
-preset
-→ composes plugins into a runtime environment
-→ chooses which plugins are enabled
-→ explicitly selects or replaces plugin configuration
+TestForge-maintained preset package
+→ composes reusable plugin integrations
+→ may consume getDefaultOptions()
 
-project preset
+project-owned preset
+→ owns its concrete plugin configuration
+→ expresses that configuration explicitly
 → adds application-specific policy
 ```
 
-A plugin may expose a project-independent integration baseline through `getDefaultOptions()`, but those defaults are never applied automatically. A preset explicitly decides whether to use them.
+This distinction is important.
+
+A plugin may expose a project-independent integration baseline through `getDefaultOptions()`. TestForge-maintained preset packages can use that API when they intentionally want to track the baseline provided by the installed plugin version.
+
+Project-owned presets should instead materialize the relevant configuration directly as `PluginOptionsFactory` functions.
+
+For example, rather than keeping:
+
+```typescript
+defaults: {
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+}
+```
+
+in project-owned source code, prefer:
+
+```typescript
+defaults: {
+  [I18N_PLUGIN_NAME]: () => ({
+    legacy: false,
+    globalInjection: true,
+  }),
+}
+```
+
+This makes the project's testing environment visible, editable, and stable across changes to a plugin's `getDefaultOptions()` implementation.
 
 For Vue projects, TestForge provides a runner-independent base package and runner-specific recommended presets:
 
@@ -35,7 +61,9 @@ For Vue projects, TestForge provides a runner-independent base package and runne
 - `@testforgejs/vue-test-preset-recommended` for Vitest
 - `@testforgejs/vue-test-preset-recommended-jest` for Jest
 
-The base and recommended presets are intended as convenient starting points. Larger applications will typically evolve toward project-specific presets containing their own routes, localization, state policy, enabled plugin composition, and other application-specific configuration.
+These TestForge-maintained packages may use `getDefaultOptions()` internally.
+
+Projects can use an official recommended preset directly, or use it as a starting point for a project-owned preset whose plugin configuration is expressed explicitly.
 
 A preset can be used in two ways when creating a TestForge framework:
 
@@ -59,7 +87,7 @@ A single `preset` is internally treated as the framework's `default` preset.
 - [The `default` Preset](#5-the-default-preset)
 - [Specialized Presets](#6-specialized-presets)
 - [Preset Composition with `extendPreset()`](#7-preset-composition-with-extendpreset)
-  - [Replacing and Preserving Plugin Configuration](#71-replacing-and-preserving-plugin-configuration)
+  - [Replacing Plugin Configuration](#71-replacing-plugin-configuration)
   - [Extending the Manifest](#72-extending-the-manifest)
 - [Runner-Specific Presets](#8-runner-specific-presets)
 - [Selecting a Preset at Runtime](#9-selecting-a-preset-at-runtime)
@@ -77,11 +105,15 @@ A single `preset` is internally treated as the framework's `default` preset.
 A `PresetDefinition` consists of two primary parts:
 
 1. `manifest` — declares the managed plugins available in the runtime environment.
-2. `defaults` — selects baseline configuration factories for managed plugins.
+2. `defaults` — defines baseline configuration factories for managed plugins.
 
 Both properties are required.
 
+A project-owned preset can define its runtime explicitly:
+
 ```typescript
+import { vi } from "vitest";
+import { createMemoryHistory } from "vue-router";
 import type { PresetDefinition } from "@testforgejs/vue-test-core";
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
@@ -98,9 +130,19 @@ const preset = {
   ],
 
   defaults: {
-    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
-    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
-    [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+    }),
+
+    [I18N_PLUGIN_NAME]: () => ({
+      legacy: false,
+      globalInjection: true,
+    }),
+
+    [ROUTER_PLUGIN_NAME]: () => ({
+      history: createMemoryHistory(),
+      routes: [],
+    }),
   },
 } satisfies PresetDefinition;
 ```
@@ -119,7 +161,7 @@ PLUGIN_NAME
 → defaults key
 ```
 
-This example demonstrates three independent concepts:
+The example demonstrates three independent concepts:
 
 ```text
 manifest
@@ -129,10 +171,10 @@ enabled
 → determines whether a declared plugin is active by default
 
 defaults
-→ determines which baseline configuration factory the preset selects
+→ determines the baseline configuration factory for each plugin
 ```
 
-A plugin can therefore be declared and have default configuration available while still being disabled by default.
+A plugin can therefore be declared and have baseline configuration available while still being disabled by default.
 
 For example:
 
@@ -145,7 +187,10 @@ manifest: [
 ],
 
 defaults: {
-  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: () => ({
+    history: createMemoryHistory(),
+    routes: [],
+  }),
 },
 ```
 
@@ -320,7 +365,7 @@ A plugin that is not declared in the active manifest is not part of that runtime
 
 Consequently, attempting to configure an undeclared plugin is invalid.
 
-For example, if `i18nPreset` contains only Vue I18n:
+For example, if a project-owned `i18nPreset` contains only Vue I18n:
 
 ```typescript
 const i18nPreset: PresetDefinition = {
@@ -332,7 +377,10 @@ const i18nPreset: PresetDefinition = {
   ],
 
   defaults: {
-    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+    [I18N_PLUGIN_NAME]: () => ({
+      legacy: false,
+      globalInjection: true,
+    }),
   },
 };
 ```
@@ -360,14 +408,12 @@ This makes presets complete runtime profiles rather than partial configuration o
 
 ### `enabled`
 
-The `enabled` state belongs to the preset, not to the plugin defaults.
+The `enabled` state belongs to the preset.
 
-A plugin can expose `getDefaultOptions()` without making itself automatically active.
-
-Similarly, placing a factory in `defaults` does not enable the plugin.
+Providing a factory in `defaults` does not enable a plugin.
 
 ```text
-plugin defaults
+plugin configuration
 ≠ plugin enablement
 ```
 
@@ -383,10 +429,13 @@ The manifest determines enablement:
 while `defaults` determines baseline configuration:
 
 ```typescript
-[ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+[ROUTER_PLUGIN_NAME]: () => ({
+  history: createMemoryHistory(),
+  routes: [],
+}),
 ```
 
-This separation allows a preset to make a plugin readily available without paying its runtime initialization cost for every mount.
+This separation allows a preset to make a plugin readily available without initializing it for every mount.
 
 ### `enabled: false`
 
@@ -407,35 +456,90 @@ Whether a plugin belongs in a preset and whether it should be enabled by default
 
 Default enablement should reflect the intended runtime environment.
 
-It should be based on the role that integration plays in the intended runtime environment, rather than on whether the plugin package merely exists.
+It should be based on the role that integration plays in the intended runtime environment rather than on whether the plugin package merely exists.
 
 ---
 
 ## 4. The `defaults`
 
-The `defaults` object selects baseline configuration factories for managed plugins.
+The `defaults` object defines baseline configuration factories for managed plugins.
 
-Each entry is a plugin options factory:
+Each entry is a `PluginOptionsFactory`:
 
 ```typescript
 defaults: {
-  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(),
-  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
-  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+  [PINIA_PLUGIN_NAME]: () => ({
+    createSpy: vi.fn,
+  }),
+
+  [I18N_PLUGIN_NAME]: () => ({
+    legacy: false,
+    globalInjection: true,
+  }),
+
+  [ROUTER_PLUGIN_NAME]: () => ({
+    history: createMemoryHistory(),
+    routes: [],
+  }),
 },
 ```
 
 Use the standardized `PLUGIN_NAME` export for these keys rather than repeating literals such as `"pinia"`, `"i18n"`, or `"router"`.
 
-This keeps plugin identity owned by the plugin package while allowing the preset to select its configuration explicitly.
+This keeps plugin identity owned by the plugin package while keeping the actual project configuration owned by the preset source code.
 
 TestForge invokes these factories while resolving the active preset configuration.
 
 Each invocation should produce fresh configuration for the current pipeline context.
 
-### Plugin-provided defaults
+### Explicit project-owned configuration
 
-A plugin may expose a project-independent integration baseline through `getDefaultOptions()`:
+A project-owned preset should make its plugin integration baseline visible in source code.
+
+For example:
+
+```typescript
+defaults: {
+  [I18N_PLUGIN_NAME]: () => ({
+    legacy: false,
+    globalInjection: true,
+  }),
+},
+```
+
+is preferred in project-owned source over:
+
+```typescript
+defaults: {
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+},
+```
+
+The explicit version has several advantages:
+
+- the effective configuration is visible in the project;
+- the user can edit it directly;
+- upgrading the plugin package does not silently replace that configuration through a changed `getDefaultOptions()` implementation;
+- code review can see changes to the project's test environment;
+- generated project presets remain ordinary editable TypeScript rather than thin wrappers around hidden defaults.
+
+Project-owned configuration should still remain minimal.
+
+Explicit configuration does **not** mean reproducing every option supported by the underlying library.
+
+For example, a generated Pinia preset may contain only:
+
+```typescript
+[PINIA_PLUGIN_NAME]: () => ({
+  createSpy: vi.fn,
+}),
+```
+
+Additional options such as `stubActions`, `initialState`, or other Pinia testing options can be added when the project actually wants to choose them.
+
+### `getDefaultOptions()` in TestForge-maintained presets
+
+Plugins may expose a project-independent baseline through `getDefaultOptions()`:
 
 ```typescript
 piniaPlugin.getDefaultOptions();
@@ -443,23 +547,41 @@ i18nPlugin.getDefaultOptions();
 routerPlugin.getDefaultOptions();
 ```
 
-The returned value is an options factory suitable for use in a preset.
+This API is intended for TestForge-maintained reusable preset packages that deliberately follow the integration baseline exported by the installed plugin version.
 
-For example:
+For example, `@testforgejs/vue-test-preset-base` can use:
 
 ```typescript
 defaults: {
   [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
 },
 ```
 
-A preset does not need to reproduce the plugin's integration baseline manually.
+and a Vitest-specific recommended preset can use:
 
-When an appropriate plugin-provided baseline exists, prefer using it directly.
+```typescript
+defaults: {
+  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
+},
+```
 
-### Plugin defaults are opt-in
+In these packages, following the plugin baseline is intentional.
 
-Plugin defaults are never applied automatically.
+The responsibility is:
+
+```text
+plugin package
+→ defines reusable integration baseline
+
+TestForge-maintained preset package
+→ consumes that baseline
+
+project-owned preset
+→ materializes concrete configuration
+```
+
+### Plugin defaults are never implicit
 
 Declaring a plugin:
 
@@ -472,13 +594,22 @@ manifest: [
 ],
 ```
 
-does **not** implicitly call:
+does not implicitly apply any configuration.
+
+A preset must still provide a configuration factory if a baseline is required.
+
+For a project-owned preset:
 
 ```typescript
-routerPlugin.getDefaultOptions();
+defaults: {
+  [ROUTER_PLUGIN_NAME]: () => ({
+    history: createMemoryHistory(),
+    routes: [],
+  }),
+},
 ```
 
-A preset explicitly decides whether to use those defaults:
+For a TestForge-maintained reusable preset package, the same baseline may instead be obtained through the plugin API:
 
 ```typescript
 defaults: {
@@ -486,79 +617,68 @@ defaults: {
 },
 ```
 
-or provide a different configuration factory.
-
 In other words:
 
 ```text
 manifest inclusion ≠ default configuration
 ```
 
-This is important for API stability.
+### Integration baseline vs application policy
 
-A plugin can gain or change `getDefaultOptions()` without silently changing existing presets that do not reference those defaults.
-
-### Plugin defaults vs preset policy
-
-Plugin-provided defaults represent a reusable, project-independent integration baseline.
-
-A project preset can build application-specific policy on top of that baseline.
+A project-owned factory can contain both the integration choices required by TestForge and application-specific policy.
 
 For example:
 
 ```typescript
-const i18nDefaults = i18nPlugin.getDefaultOptions();
+defaults: {
+  [I18N_PLUGIN_NAME]: () => ({
+    legacy: false,
+    globalInjection: true,
 
-const projectPreset = extendPreset(recommendedPresets.default, {
-  defaults: {
-    [I18N_PLUGIN_NAME]: () => ({
-      ...i18nDefaults(),
-      locale: "uk",
-      fallbackLocale: "uk",
-      messages,
-    }),
-  },
-});
+    locale: "uk",
+    fallbackLocale: "uk",
+    messages,
+  }),
+},
 ```
 
-Here:
+The conceptual ownership is:
 
 ```text
-i18nPlugin.getDefaultOptions()
-→ plugin-owned integration baseline
+legacy / globalInjection
+→ materialized integration baseline
 
 locale / fallbackLocale / messages
-→ project-owned application policy
+→ project-specific application policy
 ```
 
-The same principle applies to other plugins:
+Similarly:
 
 ```text
-Pinia plugin
-→ runner integration
+Pinia
+→ createSpy: vi.fn
+→ project may additionally choose action/state policy
 
-project preset
-→ state/action policy
+Router
+→ createMemoryHistory()
+→ project supplies application routes
 
-Router plugin
-→ isolated history baseline
-
-project preset
-→ application routes
-
-I18n plugin
+I18n
 → Vue integration mode
-
-project preset
-→ locales and translations
+→ project supplies locales and translations
 ```
+
+Once written into a project preset, these values are all part of project-owned source code.
 
 ### Fresh options
 
-Plugin defaults are factories rather than shared configuration objects:
+Preset defaults are factories rather than shared configuration objects:
 
 ```typescript
-const i18nDefaults = i18nPlugin.getDefaultOptions();
+const i18nDefaults = () => ({
+  legacy: false,
+  globalInjection: true,
+});
 
 const first = i18nDefaults();
 const second = i18nDefaults();
@@ -566,12 +686,15 @@ const second = i18nDefaults();
 first !== second; // true
 ```
 
-Some factories also create fresh nested runtime values.
+Factories can also create fresh nested runtime values.
 
-For example, Router defaults create a new history instance:
+For example:
 
 ```typescript
-const routerDefaults = routerPlugin.getDefaultOptions();
+const routerDefaults = () => ({
+  history: createMemoryHistory(),
+  routes: [],
+});
 
 const first = routerDefaults();
 const second = routerDefaults();
@@ -580,25 +703,6 @@ first.history !== second.history; // true
 ```
 
 This prevents mutable configuration or runtime state from being unintentionally shared between independent pipeline contexts.
-
-### Custom defaults
-
-A preset can also define its own options factory directly:
-
-```typescript
-defaults: {
-  [I18N_PLUGIN_NAME]: () => ({
-    legacy: false,
-    globalInjection: true,
-    locale: "uk",
-    messages,
-  }),
-},
-```
-
-This is appropriate when the preset intentionally owns that configuration.
-
-However, avoid manually reproducing plugin-provided defaults when the plugin already exposes the required baseline.
 
 ---
 
@@ -676,7 +780,7 @@ Vue Router
 
 This is a preset-level design choice.
 
-A larger application can define a project-specific preset with exactly the enabled integrations it requires.
+A project-specific preset should choose the enabled integrations that represent that application's component-testing runtime.
 
 ---
 
@@ -691,7 +795,7 @@ For example, `@testforgejs/vue-test-preset-base` provides:
 - `i18nPreset`
 - `routerPreset`
 
-The specialized presets intentionally contain only the plugins required by their respective environments.
+Projects can also define their own specialized profiles.
 
 For example:
 
@@ -705,7 +809,10 @@ const i18nPreset: PresetDefinition = {
   ],
 
   defaults: {
-    [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+    [I18N_PLUGIN_NAME]: () => ({
+      legacy: false,
+      globalInjection: true,
+    }),
   },
 };
 ```
@@ -743,27 +850,30 @@ Do not create additional profiles merely to avoid ordinary test-level configurat
 
 `extendPreset()` creates a new `PresetDefinition` from an existing preset.
 
-This is the preferred way to adapt an existing preset without copying the entire definition.
+This is the preferred way to reuse an existing manifest and other preset structure without copying the entire definition.
 
 For example:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
-import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
-const i18nDefaults = i18nPlugin.getDefaultOptions();
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+
+import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
     [I18N_PLUGIN_NAME]: () => ({
-      ...i18nDefaults(),
+      legacy: false,
+      globalInjection: true,
       locale: "uk",
       fallbackLocale: "uk",
     }),
   },
 });
 ```
+
+The project preset reuses the composition of the recommended preset but owns the I18n configuration it explicitly replaces.
 
 `extendPreset()` is a **preset composition mechanism**.
 
@@ -792,16 +902,17 @@ createTestFramework({
 
 Preset composition and framework registration are separate concerns.
 
-### 7.1. Replacing and Preserving Plugin Configuration
+### 7.1. Replacing Plugin Configuration
 
 When an extension provides a `defaults` factory for an existing plugin, that factory replaces the existing preset factory as a whole.
 
-Suppose the base preset contains:
+Suppose the source preset resolves I18n to:
 
 ```typescript
-defaults: {
-  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
-},
+{
+  legacy: false,
+  globalInjection: true,
+}
 ```
 
 and the extension provides:
@@ -816,7 +927,7 @@ extendPreset(basePreset, {
 });
 ```
 
-The resulting I18n preset configuration is:
+The resulting I18n configuration is:
 
 ```typescript
 {
@@ -833,65 +944,74 @@ It does not implicitly retain:
 }
 ```
 
-from another factory.
+from the source factory.
 
 This replacement behavior is intentional.
 
-It keeps preset composition explicit and prevents an extension from silently inheriting configuration it did not request.
+It keeps preset composition explicit and prevents configuration from being silently merged across independently owned factories.
 
-#### Preserving the source preset configuration
-
-If the goal is to preserve the exact baseline selected by the source preset, invoke its factory explicitly:
+A project-owned replacement should therefore materialize every value that the project intends to preserve:
 
 ```typescript
-const baseI18n = basePreset.defaults.i18n;
-
 const projectPreset = extendPreset(basePreset, {
   defaults: {
     [I18N_PLUGIN_NAME]: () => ({
-      ...baseI18n(),
+      legacy: false,
+      globalInjection: true,
       locale: "uk",
     }),
   },
 });
 ```
 
-This means:
+This is preferable to spreading a source preset factory when the project wants to own a stable configuration.
 
-```text
-preserve the source preset's selected configuration
-→ then add project policy
-```
-
-#### Starting from the plugin baseline
-
-If the project wants to depend directly on the plugin-owned integration baseline instead, use `getDefaultOptions()`:
+For example, this is possible:
 
 ```typescript
-const i18nDefaults = i18nPlugin.getDefaultOptions();
+const sourceI18n = basePreset.defaults.i18n;
 
 const projectPreset = extendPreset(basePreset, {
   defaults: {
     [I18N_PLUGIN_NAME]: () => ({
-      ...i18nDefaults(),
+      ...sourceI18n(),
       locale: "uk",
     }),
   },
 });
 ```
 
-This means:
+but it has different semantics.
 
-```text
-start from the plugin integration baseline
-→ then add project policy
+The project now intentionally continues to depend on the source preset's I18n factory. If that factory changes after a dependency update, the effective project configuration can change as well.
+
+Use this form only when following the source preset is intentional.
+
+For a project-owned stable configuration, prefer explicit materialization:
+
+```typescript
+const projectPreset = extendPreset(basePreset, {
+  defaults: {
+    [I18N_PLUGIN_NAME]: () => ({
+      legacy: false,
+      globalInjection: true,
+      locale: "uk",
+    }),
+  },
+});
 ```
 
-These approaches are related but semantically different.
+Conceptually:
 
-Use the source preset factory when preserving the source preset's behavior is intentional.
+```text
+spread source factory
+→ continue following source preset behavior
 
-Use `getDefaultOptions()` when the project wants to depend directly on the plugin contract.
+explicit factory
+→ project owns the resulting configuration
+```
+
+Project-owned presets should normally prefer the second model.
 
 ### 7.2. Extending the Manifest
 
@@ -924,7 +1044,9 @@ const projectPreset = extendPreset(basePreset, {
   ],
 
   defaults: {
-    [CUSTOM_PLUGIN_NAME]: customPlugin.getDefaultOptions(),
+    [CUSTOM_PLUGIN_NAME]: () => ({
+      // Explicit project-owned plugin configuration
+    }),
   },
 });
 ```
@@ -947,6 +1069,8 @@ Changing one does not implicitly change the other.
 
 ## 8. Runner-Specific Presets
 
+This section describes **TestForge-maintained reusable preset packages**.
+
 The base preset should remain independent of a particular test runner whenever possible.
 
 Runner-specific behavior belongs in runner-specific presets.
@@ -962,7 +1086,7 @@ recommended       recommended-jest
    Vitest              Jest
 ```
 
-The runner-specific preset should provide runner context to plugins that need it, without duplicating library-specific integration knowledge.
+Because these packages are maintained together with the TestForge plugin integrations, they can intentionally use `getDefaultOptions()` and follow the baseline exported by the corresponding plugin version.
 
 For Vitest:
 
@@ -971,6 +1095,7 @@ import { vi } from "vitest";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
+
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 export const presets = {
@@ -998,6 +1123,7 @@ import { jest } from "@jest/globals";
 
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
+
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 export const presets = {
@@ -1021,14 +1147,14 @@ export const presets = {
 The important responsibility boundary is:
 
 ```text
-runner-specific preset
+runner-specific TestForge preset
 → knows which test runner is used
 
 Pinia plugin
-→ knows how runner support maps to Pinia testing configuration
+→ knows how that runner maps to Pinia testing configuration
 ```
 
-The preset therefore does not reproduce Pinia's configuration manually.
+The reusable preset package therefore does not reproduce Pinia integration knowledge manually.
 
 It asks the Pinia plugin for the appropriate runner-aware baseline:
 
@@ -1038,6 +1164,16 @@ piniaPlugin.getDefaultOptions(jest);
 ```
 
 Runner-independent plugins can continue using the configuration inherited from the base preset.
+
+This use of `getDefaultOptions()` is intentionally different from project-owned preset authoring.
+
+```text
+TestForge-maintained reusable preset
+→ follows plugin baseline
+
+project-owned preset
+→ materializes explicit configuration
+```
 
 ---
 
@@ -1135,7 +1271,10 @@ const presets = {
     ],
 
     defaults: {
-      [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+      [I18N_PLUGIN_NAME]: () => ({
+        legacy: false,
+        globalInjection: true,
+      }),
     },
   },
 };
@@ -1181,11 +1320,13 @@ These layers do not all use the same merge strategy.
 
 Preset defaults provide the baseline managed-plugin configuration for the selected runtime environment.
 
-For example:
+For example, a project-owned Vitest preset can provide:
 
 ```typescript
 defaults: {
-  [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
+  [PINIA_PLUGIN_NAME]: () => ({
+    createSpy: vi.fn,
+  }),
 }
 ```
 
@@ -1277,7 +1418,9 @@ The literal `pinia` key remains appropriate in these runtime APIs. `PLUGIN_NAME`
 
 The official base and recommended presets are convenient starting points.
 
-A real application can define its own preset once its component-testing environment requires application-specific policy.
+A project-owned preset should make the project's managed-plugin configuration explicit.
+
+The goal is for the generated or hand-written preset file to be understandable without inspecting the implementation of `getDefaultOptions()` inside plugin packages.
 
 A project does not need a preset registry when it only needs one runtime environment.
 
@@ -1286,9 +1429,11 @@ A project does not need a preset registry when it only needs one runtime environ
 For example:
 
 ```typescript
-import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
-import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { vi } from "vitest";
+
+import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
+
+import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
 const projectPreset = {
   manifest: [
@@ -1299,7 +1444,9 @@ const projectPreset = {
   ],
 
   defaults: {
-    [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+    }),
   },
 } satisfies PresetDefinition;
 
@@ -1312,13 +1459,17 @@ export { testComponentFactory };
 
 This is the simplest form of a project-specific TestForge environment.
 
-Application policy can be added explicitly.
-
-For example, if the project wants real Pinia actions:
+The effective Pinia baseline is visible directly in the project:
 
 ```typescript
-const piniaDefaults = piniaPlugin.getDefaultOptions(vi);
+{
+  createSpy: vi.fn,
+}
+```
 
+If the project wants real Pinia actions, it can make that policy explicit:
+
+```typescript
 const projectPreset = {
   manifest: [
     {
@@ -1329,38 +1480,43 @@ const projectPreset = {
 
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
-      ...piniaDefaults(),
+      createSpy: vi.fn,
       stubActions: false,
     }),
   },
 } satisfies PresetDefinition;
 ```
 
-The distinction is explicit:
+The distinction is visible in source:
 
 ```text
-createSpy
-→ provided by the plugin's runner integration
+createSpy: vi.fn
+→ TestForge/Vitest integration required by this project
 
 stubActions: false
-→ chosen by the project
+→ project-specific action policy
 ```
+
+Both values now belong to the project preset.
 
 ### Using an existing preset as a base
 
-When an existing recommended preset is close to what the project needs, compose it with `extendPreset()`:
+When an existing recommended preset has the desired plugin composition, a project can reuse that composition with `extendPreset()` while replacing the plugin configurations it wants to own explicitly.
+
+For example:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";
-import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
-import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
-const i18nDefaults = i18nPlugin.getDefaultOptions();
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+
+import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   defaults: {
     [I18N_PLUGIN_NAME]: () => ({
-      ...i18nDefaults(),
+      legacy: false,
+      globalInjection: true,
       locale: "uk",
       fallbackLocale: "uk",
       messages,
@@ -1368,6 +1524,8 @@ const projectPreset = extendPreset(recommendedPresets.default, {
   },
 });
 ```
+
+This allows the project to reuse preset composition while making the I18n configuration it owns visible in its own source.
 
 The resulting preset can be passed directly to the framework:
 
@@ -1392,11 +1550,17 @@ createTestFramework({
 
 This keeps preset authoring separate from framework registration.
 
+> [!NOTE]
+>
+> Extending an official preset without replacing one of its `defaults` entries means that the resulting project preset continues to inherit that source factory.
+>
+> If the project needs that plugin configuration to remain fully project-owned and stable across changes to the source preset, replace the inherited factory with an explicit project-owned factory.
+
 ### 11.1. Project-Specific Router Configuration
 
-Router configuration is a good example of application-specific preset policy.
+Router configuration is a good example of project-owned preset policy.
 
-A general-purpose plugin can provide a project-independent Router baseline:
+A useful TestForge Router baseline is:
 
 ```typescript
 {
@@ -1405,24 +1569,24 @@ A general-purpose plugin can provide a project-independent Router baseline:
 }
 ```
 
-but it cannot know which routes and components belong to a particular application.
-
-Application routes therefore belong in the project's own preset.
+A project can materialize that baseline and add its own routes directly.
 
 For example:
 
 ```typescript
+import { createMemoryHistory } from "vue-router";
+
 import { extendPreset } from "@testforgejs/vue-test-core";
+
 import {
   routerPlugin,
   PLUGIN_NAME as ROUTER_PLUGIN_NAME,
 } from "@testforgejs/vue-test-plugin-router";
+
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
 
 import HomePage from "@/views/HomePage.vue";
 import UsersPage from "@/views/UsersPage.vue";
-
-const routerDefaults = routerPlugin.getDefaultOptions();
 
 const projectPreset = extendPreset(recommendedPresets.default, {
   manifest: [
@@ -1434,7 +1598,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 
   defaults: {
     [ROUTER_PLUGIN_NAME]: () => ({
-      ...routerDefaults(),
+      history: createMemoryHistory(),
 
       routes: [
         {
@@ -1466,27 +1630,23 @@ manifest: [
 
 This is necessary because the official default preset declares Router but keeps it disabled.
 
-Second, the project extends the Router plugin baseline with application routes:
+Second, the project owns the Router configuration directly:
 
 ```typescript
 [ROUTER_PLUGIN_NAME]: () => ({
-  ...routerDefaults(),
+  history: createMemoryHistory(),
   routes,
 });
 ```
 
-The project does not need to reproduce the in-memory history because that is already part of the Router plugin's project-independent baseline.
-
 Conceptually:
 
 ```text
-Router plugin
-→ isolated memory history
-→ empty route table
+createMemoryHistory()
+→ explicit project-owned testing baseline
 
-project preset
-→ enables Router
-→ supplies application routes
+application routes
+→ project-specific policy
 ```
 
 The resulting preset can be used directly:
@@ -1499,7 +1659,7 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-If another history implementation is part of the project's testing policy, override it explicitly:
+If another history implementation is part of the project's testing policy, replace it explicitly:
 
 ```typescript
 import { createWebHistory } from "vue-router";
@@ -1514,7 +1674,6 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 
   defaults: {
     [ROUTER_PLUGIN_NAME]: () => ({
-      ...routerDefaults(),
       history: createWebHistory(),
       routes,
     }),
@@ -1522,7 +1681,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 });
 ```
 
-This keeps shared plugin configuration independent of application structure while allowing each project to define the Router environment it actually needs.
+The complete Router behavior chosen by the project remains visible in the project preset.
 
 > [!NOTE]
 > Router configuration is particularly likely to be project-specific because routes reference application paths and components. Application routes generally belong in a project-specific preset rather than in an official base or recommended preset.
@@ -1531,72 +1690,88 @@ This keeps shared plugin configuration independent of application structure whil
 
 ## 12. Preset Design Guidelines
 
-### 12.1. Keep the base preset runner-independent
+### 12.1. Keep TestForge base presets runner-independent
 
-Do not place Vitest- or Jest-specific configuration directly into a runner-independent base preset.
+Do not place Vitest- or Jest-specific configuration directly into `@testforgejs/vue-test-preset-base`.
 
-Use runner-specific presets when an integration requires runner context.
-
-For example:
+The TestForge-maintained base preset can use runner-independent plugin defaults:
 
 ```typescript
 piniaPlugin.getDefaultOptions();
 ```
 
-is suitable for a runner-independent preset, while:
+while runner-specific TestForge preset packages can supply their runner:
 
 ```typescript
 piniaPlugin.getDefaultOptions(vi);
 ```
 
-belongs in a Vitest-specific preset.
+This guideline applies to the TestForge-maintained preset package hierarchy.
+
+A project-owned preset should instead materialize the runner-specific configuration it actually uses:
+
+```typescript
+[PINIA_PLUGIN_NAME]: () => ({
+  createSpy: vi.fn,
+}),
+```
 
 ### 12.2. Prefer composition over duplication
 
-If an existing preset is close to what the project needs, use `extendPreset()`.
+If an existing preset has the plugin composition the project needs, `extendPreset()` can reuse that structure.
 
-Avoid copying the complete preset definition.
+Avoid copying a complete manifest unnecessarily.
 
-Copied presets can silently diverge from their source as TestForge evolves.
+At the same time, do not use composition as a reason to hide project-owned plugin configuration.
+
+A project can reuse the preset structure while explicitly replacing the relevant `defaults` factories.
 
 ### 12.3. Remember replacement semantics
 
 Providing a new plugin factory through `extendPreset()` replaces that plugin's existing preset factory.
 
-If the existing configuration should be retained, preserve it explicitly:
+For example:
 
 ```typescript
-const baseI18n = basePreset.defaults.i18n;
-
 const projectPreset = extendPreset(basePreset, {
   defaults: {
     [I18N_PLUGIN_NAME]: () => ({
-      ...baseI18n(),
+      legacy: false,
+      globalInjection: true,
       locale: "uk",
     }),
   },
 });
 ```
 
-The extension still replaces the factory as a whole.
+The extension replaces the source I18n factory as a whole.
 
-Invoking another factory and spreading its returned options is an explicit composition decision.
+No automatic merge occurs.
 
-Reading an already constructed preset through `basePreset.defaults.i18n` remains valid. The `PLUGIN_NAME` constant is used when declaring the new `defaults` entry.
-
-### 12.4. Prefer plugin-provided defaults
-
-When a plugin exposes an appropriate `getDefaultOptions()`, prefer using it instead of reproducing the integration baseline manually.
-
-Prefer:
+If a project instead invokes and spreads the source factory:
 
 ```typescript
-defaults: {
-  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
-}
+const sourceI18n = basePreset.defaults.i18n;
+
+const projectPreset = extendPreset(basePreset, {
+  defaults: {
+    [I18N_PLUGIN_NAME]: () => ({
+      ...sourceI18n(),
+      locale: "uk",
+    }),
+  },
+});
 ```
 
-over manually copying:
+the project intentionally continues to depend on that source factory.
+
+That can be useful, but it means dependency updates may change the effective project configuration.
+
+For a stable project-owned preset, prefer explicitly materializing the values the project intends to preserve.
+
+### 12.4. Prefer explicit project-owned defaults
+
+In project-owned presets, prefer explicit factories:
 
 ```typescript
 defaults: {
@@ -1607,37 +1782,66 @@ defaults: {
 }
 ```
 
-The plugin package should remain the owner of its project-independent integration baseline.
+over:
 
-The plugin package should also remain the owner of its identifier. Use its standardized `PLUGIN_NAME` export when declaring preset `defaults` entries instead of duplicating the identifier as a string literal.
+```typescript
+defaults: {
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+}
+```
 
-### 12.5. Keep plugin defaults and application policy separate
+The explicit form makes the project's effective testing configuration visible and prevents a future change to `getDefaultOptions()` from silently changing that project preset.
 
-Plugin-provided defaults should represent project-independent integration behavior.
+This does not mean copying every option supported by Vue Router, Pinia, Vue I18n, or another integrated library.
 
-Application-specific choices belong in project presets.
+Materialize only the integration baseline and policies the project intentionally owns.
 
-Examples include:
+For example:
 
-- application routes;
-- locales and fallback locales;
-- translation messages;
-- initial application state;
-- action stubbing policy;
-- themes;
-- icons;
-- API-specific configuration;
-- application-specific managed plugins.
+```typescript
+[PINIA_PLUGIN_NAME]: () => ({
+  createSpy: vi.fn,
+}),
+```
+
+is preferable to generating a large object containing every optional Pinia testing setting.
+
+The plugin package remains the owner of the plugin identifier through `PLUGIN_NAME`.
+
+The project preset owns its concrete configuration.
+
+### 12.5. Keep integration baseline and application policy understandable
+
+A project preset may contain both:
+
+- values required to establish the chosen TestForge integration;
+- values that express project-specific application policy.
+
+Keep that distinction understandable in source.
+
+For example:
+
+```typescript
+[I18N_PLUGIN_NAME]: () => ({
+  legacy: false,
+  globalInjection: true,
+
+  locale: "uk",
+  messages,
+}),
+```
 
 Conceptually:
 
 ```text
-plugin
-→ library integration
+legacy / globalInjection
+→ integration baseline chosen by the project
 
-project preset
+locale / messages
 → application policy
 ```
+
+Both are explicit because both affect the project's runtime environment.
 
 ### 12.6. Keep defaults minimal
 
@@ -1647,13 +1851,36 @@ Avoid putting large mutable test fixtures into global preset configuration.
 
 Scenario-specific state generally belongs in factory- or test-level configuration.
 
-### 12.7. Preserve upstream behavior unless policy requires otherwise
+Similarly, do not enumerate optional library settings only to document that they exist.
 
-When a project does not need different behavior, allow the integrated library or plugin baseline to remain in control.
+Generated project presets should remain concise configuration files rather than API references.
 
-Do not copy or override options merely for explicitness.
+### 12.7. Preserve upstream behavior by omitting unnecessary options
 
-This keeps project presets smaller and reduces unnecessary coupling to upstream configuration details.
+Explicit project ownership does not require explicitly setting every upstream option.
+
+If the project does not need to choose a particular behavior, omit that option and allow the underlying library's normal behavior to apply.
+
+For example:
+
+```typescript
+[PINIA_PLUGIN_NAME]: () => ({
+  createSpy: vi.fn,
+}),
+```
+
+does not need to also specify:
+
+```typescript
+stubActions;
+stubPatch;
+stubReset;
+fakeApp;
+```
+
+unless the project intentionally wants to control those behaviors.
+
+This keeps project presets explicit without making them unnecessarily coupled to the complete upstream option surface.
 
 ### 12.8. Keep runtime environments isolated
 
@@ -1665,7 +1892,18 @@ This is particularly important for stateful integrations such as:
 - Vue Router history;
 - Vue I18n runtime state.
 
-Use options factories and plugin factories that create fresh values where required.
+Use options factories that create fresh values where required.
+
+For example:
+
+```typescript
+[ROUTER_PLUGIN_NAME]: () => ({
+  history: createMemoryHistory(),
+  routes,
+}),
+```
+
+creates a new history instance each time the preset factory is resolved.
 
 ### 12.9. Use specialized presets for specialized environments
 
@@ -1683,7 +1921,10 @@ const routerPreset: PresetDefinition = {
   ],
 
   defaults: {
-    [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+    [ROUTER_PLUGIN_NAME]: () => ({
+      history: createMemoryHistory(),
+      routes: [],
+    }),
   },
 };
 ```
@@ -1702,7 +1943,7 @@ Configuration for undeclared managed plugins is invalid.
 
 ### 12.11. Treat enabled state as preset policy
 
-`getDefaultOptions()` determines configuration, not enablement.
+Plugin configuration and plugin enablement are separate concerns.
 
 Whether a plugin should be active by default depends on the runtime profile the preset is trying to represent.
 
@@ -1714,11 +1955,15 @@ A project-specific preset should choose the enabled set that best represents tha
 
 ### 12.12. Treat official presets as starting points
 
-Official base and recommended presets are not intended to model every application perfectly.
+Official base and recommended presets provide a convenient way to adopt TestForge quickly:
 
-They provide a convenient environment for adopting TestForge quickly.
+```typescript
+createTestFramework({
+  preset: recommendedPresets.default,
+});
+```
 
-As an application grows, define a project-specific preset that makes its testing policy explicit:
+As an application grows, it can define a project-specific preset whose configuration is visible and editable in the project:
 
 ```typescript
 createTestFramework({
@@ -1726,13 +1971,21 @@ createTestFramework({
 });
 ```
 
-This is the natural place for application routes, localization, state policy, plugin enablement, themes, and other project-specific behavior.
+That project preset is the natural place for:
+
+- explicit plugin integration configuration;
+- application routes;
+- localization;
+- state policy;
+- plugin enablement;
+- themes;
+- other project-specific behavior.
 
 ---
 
 ## 13. Recommended Package Strategy
 
-For reusable Vue testing infrastructure, a useful package structure is:
+For TestForge-maintained reusable Vue testing infrastructure, the package structure is:
 
 ```text
 @testforgejs/vue-test-preset-base
@@ -1749,19 +2002,34 @@ recommended        recommended-jest
       Vitest            Jest
 ```
 
-The base package should:
+These packages are different from project-owned presets.
+
+### TestForge-maintained base preset
+
+`@testforgejs/vue-test-preset-base` should:
 
 - compose runner-independent managed plugins;
 - choose their default enabled state;
-- explicitly select project-independent defaults exposed by plugin packages;
-- use the standardized plugin identifiers exported by those packages;
+- use standardized plugin identifiers through `PLUGIN_NAME`;
+- consume project-independent plugin baselines through `getDefaultOptions()`;
 - avoid test-runner-specific configuration.
 
-Runner-specific recommended packages should:
+For example:
+
+```typescript
+defaults: {
+  [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
+  [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
+},
+```
+
+### TestForge-maintained runner presets
+
+`@testforgejs/vue-test-preset-recommended` and `@testforgejs/vue-test-preset-recommended-jest` should:
 
 - reuse the base preset composition;
 - add runner context only where required;
-- keep library-specific integration knowledge inside the plugin packages.
+- keep library-specific integration knowledge inside plugin packages.
 
 For example:
 
@@ -1770,17 +2038,22 @@ recommended
 → supplies vi
 
 Pinia plugin
-→ converts vi into createSpy configuration
+→ converts vi into Pinia testing configuration
 ```
 
-rather than:
+through:
 
-```text
-recommended
-→ manually reimplements Pinia defaults
+```typescript
+[PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi)
 ```
 
-Projects can use the recommended preset directly as a starting point:
+rather than manually reproducing the Pinia integration baseline.
+
+This is intentional because these packages are maintained together as part of TestForge.
+
+### Project-owned presets
+
+A project can use an official recommended preset directly:
 
 ```typescript
 createTestFramework({
@@ -1788,19 +2061,55 @@ createTestFramework({
 });
 ```
 
-or derive an application-specific environment:
+If the project creates its own preset, its plugin configuration should normally be explicit:
+
+```typescript
+const projectPreset = {
+  manifest: [
+    {
+      module: piniaPlugin,
+      enabled: true,
+    },
+  ],
+
+  defaults: {
+    [PINIA_PLUGIN_NAME]: () => ({
+      createSpy: vi.fn,
+    }),
+  },
+} satisfies PresetDefinition;
+```
+
+or:
 
 ```typescript
 const projectPreset = extendPreset(recommendedPresets.default, {
-  // application-specific policy
-});
-
-createTestFramework({
-  preset: projectPreset,
+  defaults: {
+    [I18N_PLUGIN_NAME]: () => ({
+      legacy: false,
+      globalInjection: true,
+      locale: "uk",
+      messages,
+    }),
+  },
 });
 ```
 
-A named preset registry should be introduced when the project actually benefits from multiple independent runtime environments.
+The distinction is:
+
+```text
+TestForge-maintained preset package
+→ may follow plugin getDefaultOptions()
+
+project-owned preset
+→ owns explicit configuration
+```
+
+This is also the intended model for presets generated by the TestForge CLI.
+
+The CLI should generate ordinary editable TypeScript with materialized plugin configuration rather than leaving `getDefaultOptions()` calls in the generated project file.
+
+A named preset registry should be introduced only when the project actually benefits from multiple independent runtime environments.
 
 ---
 
@@ -1816,13 +2125,16 @@ The key principles are:
 - the manifest also defines each plugin's default enabled state;
 - a plugin may be declared without a corresponding `defaults` entry;
 - a `defaults` entry does not enable a plugin;
-- plugins may expose project-independent defaults through `getDefaultOptions()`;
-- plugin defaults are opt-in and are not applied merely because a plugin appears in the manifest;
-- preset defaults are plugin options factories rather than shared configuration objects;
+- preset defaults are `PluginOptionsFactory` functions rather than shared configuration objects;
 - options factories should produce fresh configuration for independent pipeline contexts;
-- plugin packages own reusable library integration baselines and stable plugin identifiers;
-- presets explicitly select or replace plugin configuration;
-- project-specific presets own application policy;
+- plugin packages own stable plugin identifiers and reusable integration knowledge;
+- TestForge-maintained preset packages may consume reusable plugin baselines through `getDefaultOptions()`;
+- `getDefaultOptions()` is used by `vue-test-preset-base`, `vue-test-preset-recommended`, and `vue-test-preset-recommended-jest` to keep official preset integration aligned with plugin packages;
+- project-owned presets should normally express their plugin configuration explicitly rather than calling `getDefaultOptions()`;
+- generated project presets should materialize the relevant integration baseline into editable TypeScript;
+- explicit project configuration should remain minimal and should not enumerate every optional upstream setting;
+- project-owned configuration remains stable unless the project changes it;
+- project presets may combine integration baseline values with application-specific policy;
 - `preset` in `createTestFramework()` accepts a single `PresetDefinition`;
 - `presets` accepts a registry of named `PresetDefinition` objects;
 - `preset` and `presets` are mutually exclusive;
@@ -1834,16 +2146,17 @@ The key principles are:
 - runtime presets are complete profiles rather than overlays;
 - `extendPreset()` composes reusable preset definitions;
 - plugin configuration supplied through `extendPreset()` uses replacement semantics;
-- preserving source-preset configuration requires explicitly invoking the source factory;
-- starting from a plugin baseline can be done explicitly through `getDefaultOptions()`;
+- spreading a source preset factory intentionally keeps the project coupled to that source factory;
+- explicitly materializing configuration transfers ownership of that configuration to the project;
 - manifest extensions can change plugin capability or default enablement;
-- runner-specific behavior belongs in runner-specific presets;
-- runner-specific presets should pass runner context to plugins rather than reproduce plugin configuration;
+- runner-specific behavior in official TestForge presets belongs in runner-specific preset packages;
+- official runner-specific presets should pass runner context to plugins rather than reproduce plugin integration knowledge;
 - `mountOptions.plugins` replaces managed plugin configuration at a local scope;
 - `extraOptions.plugins` provides a targeted shallow overlay;
 - runtime `plugins` keys remain the normal consumer-facing configuration API;
 - mutable plugin runtime state must remain isolated between component factory invocations;
-- official base and recommended presets are convenient starting environments rather than complete application-specific configurations.
+- official base and recommended presets are convenient starting environments;
+- project-owned presets are the place where the project's chosen testing configuration becomes explicit.
 
 For most projects, the recommended workflow is:
 
@@ -1857,12 +2170,22 @@ For most projects, the recommended workflow is:
 
 2. Use a single `preset` while one runtime environment is sufficient.
 
-3. As the application grows, create a project-specific preset with `extendPreset()`.
+3. When the project needs to own its testing configuration explicitly, create a project-specific preset.
 
-4. Keep application routes, localization, state policy, enabled plugin composition, and other project policy in that project preset.
+4. Materialize the relevant plugin configuration directly in that project preset.
 
-5. Keep scenario-specific state and one-off behavior in factory- or test-level configuration.
+   ```typescript
+   defaults: {
+     [PINIA_PLUGIN_NAME]: () => ({
+       createSpy: vi.fn,
+     }),
+   }
+   ```
 
-6. Introduce `presets` only when multiple named runtime environments are genuinely useful.
+5. Keep application routes, localization, state policy, enabled plugin composition, and other project policy in the project preset.
 
-7. Add specialized presets when a distinct runtime capability boundary improves the project's test architecture.
+6. Keep scenario-specific state and one-off behavior in factory- or test-level configuration.
+
+7. Introduce `presets` only when multiple named runtime environments are genuinely useful.
+
+8. Add specialized presets when a distinct runtime capability boundary improves the project's test architecture.
