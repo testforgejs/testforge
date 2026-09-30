@@ -8,10 +8,9 @@
 export function generateSource(plugins) {
   const entries = plugins
     .map(
-      ({ packageName, exportName, displayName, description }) =>
+      ({ packageName, displayName, description }) =>
         `  {\n` +
         `    packageName: ${JSON.stringify(packageName)},\n` +
-        `    exportName: ${JSON.stringify(exportName)},\n` +
         `    displayName: ${JSON.stringify(displayName)},\n` +
         `    description: ${JSON.stringify(description)},\n` +
         `  },`,
@@ -23,7 +22,6 @@ export function generateSource(plugins) {
 
 export interface TestForgePluginRegistryEntry {
   packageName: string;
-  exportName: string;
   displayName: string;
   description: string;
 }

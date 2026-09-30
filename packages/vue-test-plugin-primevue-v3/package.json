@@ -57,9 +57,7 @@
   "testforge": {
     "plugin": {
       "schemaVersion": 1,
-      "displayName": "PrimeVue 3",
-      "description": "PrimeVue 3 integration",
-      "exportName": "primeVuePlugin"
+      "displayName": "PrimeVue 3"
     }
   }
 }

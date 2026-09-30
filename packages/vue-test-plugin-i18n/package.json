@@ -59,9 +59,7 @@
   "testforge": {
     "plugin": {
       "schemaVersion": 1,
-      "displayName": "Vue I18n",
-      "description": "Vue I18n integration",
-      "exportName": "i18nPlugin"
+      "displayName": "Vue I18n"
     }
   }
 }

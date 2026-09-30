@@ -60,9 +60,7 @@
   "testforge": {
     "plugin": {
       "schemaVersion": 1,
-      "displayName": "Vue Router",
-      "description": "Vue Router integration",
-      "exportName": "routerPlugin"
+      "displayName": "Vue Router"
     }
   }
 }

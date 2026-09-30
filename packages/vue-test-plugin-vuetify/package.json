@@ -57,9 +57,7 @@
   "testforge": {
     "plugin": {
       "schemaVersion": 1,
-      "displayName": "Vuetify",
-      "description": "Vuetify integration",
-      "exportName": "vuetifyPlugin"
+      "displayName": "Vuetify"
     }
   }
 }

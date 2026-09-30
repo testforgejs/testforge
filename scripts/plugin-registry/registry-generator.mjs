@@ -19,7 +19,6 @@ export async function generatePluginRegistry({ pluginsDirectory, outputFile }) {
 
   assertUnique(plugins, "packageName");
   assertUnique(plugins, "displayName");
-  assertUnique(plugins, "exportName");
 
   const source = generateSource(plugins);
 

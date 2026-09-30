@@ -26,24 +26,22 @@ describe("generatePluginRegistry", () => {
 
     await createPluginPackage(pluginsDirectory, "vue-test-plugin-pinia", {
       name: "@testforgejs/vue-test-plugin-pinia",
+      description: "Pinia store integration",
       testforge: {
         plugin: {
           schemaVersion: 1,
-          exportName: "piniaPlugin",
           displayName: "Pinia",
-          description: "Pinia store integration",
         },
       },
     });
 
     await createPluginPackage(pluginsDirectory, "vue-test-plugin-router", {
       name: "@testforgejs/vue-test-plugin-router",
+      description: "Vue Router integration",
       testforge: {
         plugin: {
           schemaVersion: 1,
-          exportName: "routerPlugin",
           displayName: "Vue Router",
-          description: "Vue Router integration",
         },
       },
     });
@@ -56,13 +54,11 @@ describe("generatePluginRegistry", () => {
     expect(plugins).toEqual([
       {
         packageName: "@testforgejs/vue-test-plugin-pinia",
-        exportName: "piniaPlugin",
         displayName: "Pinia",
         description: "Pinia store integration",
       },
       {
         packageName: "@testforgejs/vue-test-plugin-router",
-        exportName: "routerPlugin",
         displayName: "Vue Router",
         description: "Vue Router integration",
       },
@@ -71,8 +67,14 @@ describe("generatePluginRegistry", () => {
     const source = await fs.readFile(outputFile, "utf8");
 
     expect(source).toContain('packageName: "@testforgejs/vue-test-plugin-pinia"');
-    expect(source).toContain('exportName: "piniaPlugin"');
+    expect(source).toContain('displayName: "Pinia"');
+    expect(source).toContain('description: "Pinia store integration"');
+
     expect(source).toContain('packageName: "@testforgejs/vue-test-plugin-router"');
+    expect(source).toContain('displayName: "Vue Router"');
+    expect(source).toContain('description: "Vue Router integration"');
+
+    expect(source).not.toContain("exportName");
   });
 });
 

@@ -1,22 +1,17 @@
 const SUPPORTED_SCHEMA_VERSION = 1;
 const PLUGIN_PACKAGE_PREFIX = "@testforgejs/vue-test-plugin-";
-const IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /**
- * @typedef {object} PluginRegistryEntry
+ * @typedef {object} PluginMetadata
  * @property {string} packageName
- * @property {string} exportName
  * @property {string} displayName
  * @property {string} description
  */
 
 /**
- * Validates plugin metadata from an external package.json and converts it
- * into a normalized plugin registry entry.
- *
  * @param {unknown} packageJson
  * @param {string} packagePath
- * @returns {PluginRegistryEntry}
+ * @returns {PluginMetadata}
  */
 export function validatePluginMetadata(packageJson, packagePath) {
   const metadata = packageJson && typeof packageJson === "object" && packageJson.testforge?.plugin;
@@ -39,22 +34,17 @@ export function validatePluginMetadata(packageJson, packagePath) {
     throw new Error(`Invalid "testforge.plugin.displayName" in ${packagePath}`);
   }
 
-  if (typeof metadata.description !== "string" || metadata.description.trim() === "") {
-    throw new Error(`Invalid "testforge.plugin.description" in ${packagePath}`);
-  }
-
-  if (typeof metadata.exportName !== "string" || !IDENTIFIER_PATTERN.test(metadata.exportName)) {
-    throw new Error(`Invalid "testforge.plugin.exportName" in ${packagePath}`);
-  }
-
   if (typeof packageJson.name !== "string" || !packageJson.name.startsWith(PLUGIN_PACKAGE_PREFIX)) {
     throw new Error(`Invalid plugin package name in ${packagePath}: ${packageJson.name}`);
   }
 
+  if (typeof packageJson.description !== "string" || packageJson.description.trim() === "") {
+    throw new Error(`Invalid package description in ${packagePath}`);
+  }
+
   return {
     packageName: packageJson.name,
-    exportName: metadata.exportName,
     displayName: metadata.displayName,
-    description: metadata.description,
+    description: packageJson.description,
   };
 }
