@@ -11,7 +11,8 @@
     "@testforgejs/vue-test-preset-recommended": "0.1.0",
     "@testforgejs/vue-test-preset-base": "1.0.0-beta.0",
     "@testforgejs/vue-test-preset-recommended-jest": "1.0.0-beta.0",
-    "@testforgejs/testforge-integration": "0.0.0"
+    "@testforgejs/testforge-integration": "0.0.0",
+    "@testforgejs/vue-test-plugin-primevue-v3": "1.0.0-beta.2"
   },
   "changesets": [
     "better-gifts-run",
@@ -23,6 +24,8 @@
     "clear-apes-wait",
     "clear-rocks-grow",
     "curvy-yaks-wink",
+    "deep-moles-heal",
+    "eleven-hands-repeat",
     "empty-jars-march",
     "famous-masks-try",
     "few-cameras-lose",
@@ -33,6 +36,7 @@
     "humble-dingos-deny",
     "itchy-dancers-lose",
     "khaki-bottles-kneel",
+    "lazy-nights-play",
     "lucky-rocks-teach",
     "mighty-zoos-punch",
     "orange-hotels-cover",
@@ -46,6 +50,7 @@
     "sparkly-beds-argue",
     "stale-results-stand",
     "tasty-bugs-dream",
+    "tidy-animals-arrive",
     "tricky-forks-bathe",
     "violet-donuts-think",
     "warm-ways-create"
