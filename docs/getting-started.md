@@ -136,7 +136,15 @@ You can also create your own preset when you want to control exactly which manag
 
 A project-owned preset should normally make its concrete plugin configuration explicit.
 
-For example, a minimal Pinia environment for Vitest can be written as:
+Plugin integrations imported directly by a project-owned preset must be installed as direct project dependencies.
+
+For example, a minimal Pinia environment for Vitest requires the Pinia integration package:
+
+```bash
+pnpm add -D @testforgejs/vue-test-plugin-pinia
+```
+
+It can then be configured explicitly in the project preset:
 
 ```typescript
 // @/tests/setup.ts
