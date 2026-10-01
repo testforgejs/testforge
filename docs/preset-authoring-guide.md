@@ -76,6 +76,15 @@ Use `preset` when the framework needs one runtime environment. Use `presets` whe
 
 A single `preset` is internally treated as the framework's `default` preset.
 
+> [!NOTE]
+> This guide focuses on preset authoring rather than package installation.
+>
+> Any project or package that directly imports a TestForge plugin package must declare that plugin package as a direct dependency.
+>
+> For project-owned test configuration, this typically means installing the plugin package as a development dependency.
+>
+> See the [Getting Started Guide](./getting-started.md) for project installation and initial setup.
+
 ---
 
 ## Table of Contents

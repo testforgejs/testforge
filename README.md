@@ -685,6 +685,13 @@ TestForge is built around a few ideas that work together.
 
 Individually they are simple. Together they remove most test setup noise.
 
+> [!NOTE]
+> Examples in this section focus on TestForge concepts rather than package installation.
+>
+> Any project or package that directly imports a TestForge plugin package must declare that plugin package as a direct dependency.
+>
+> See the [Getting Started Guide](./docs/getting-started.md) for project installation and initial setup.
+
 ---
 
 <a id="test-component-factory"></a>

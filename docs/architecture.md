@@ -38,6 +38,13 @@ The `defaults` field contains **plugin options factories** rather than shared pl
 
 TestForge invokes these factories while resolving a preset so that each pipeline context receives its own plugin configuration.
 
+> [!NOTE]
+> Examples in this document focus on TestForge architecture rather than installation.
+>
+> TestForge plugin packages imported directly by project code must be installed as direct project dependencies.
+>
+> See the [Getting Started Guide](./getting-started.md) for installation and project setup instructions.
+
 ### Preset Structure Example
 
 A project-owned preset can define its runtime environment directly:

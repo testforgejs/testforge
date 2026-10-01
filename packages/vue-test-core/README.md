@@ -44,6 +44,13 @@ yarn add -D @testforgejs/vue-test-core
 >
 > `vue` and `@vue/test-utils` are peer dependencies of `@testforgejs/vue-test-core`. Make sure they are installed in your project.
 
+> [!NOTE]
+> TestForge mounts Vue components through Vue Test Utils, so component tests require a DOM-like test environment.
+>
+> Configure your test runner with an environment such as `happy-dom` or `jsdom`.
+>
+> See the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md) for a complete Vitest setup.
+
 For most projects, you will also want to install a preset package that defines the managed Vue plugins available to your tests.
 
 ---
@@ -215,7 +222,15 @@ For Jest projects, use `@testforgejs/vue-test-preset-recommended-jest` instead.
 
 Most applications will eventually benefit from some application-specific preset configuration.
 
-For example, a project can extend the recommended preset with its own locale configuration:
+Plugin integrations imported directly by a project-specific preset must be installed as direct project dependencies.
+
+For example, the following preset imports the Vue I18n integration directly:
+
+```bash
+pnpm add -D @testforgejs/vue-test-plugin-i18n
+```
+
+A project can then extend the recommended preset with its own locale configuration:
 
 ```typescript
 import { extendPreset } from "@testforgejs/vue-test-core";

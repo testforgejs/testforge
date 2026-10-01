@@ -293,25 +293,16 @@ Unlike manually registered Vue Test Utils plugins, managed plugins are known to 
 
 Every TestForge managed plugin has a stable identifier.
 
-The plugin package exports that identifier through the standardized `PLUGIN_NAME` export.
+Each plugin package exposes that identifier through the standardized `PLUGIN_NAME` export.
 
 For example:
 
-```typescript
-import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
-
-// PINIA_PLUGIN_NAME === "pinia"
+```text
+@testforgejs/vue-test-plugin-pinia
+→ PLUGIN_NAME === "pinia"
 ```
 
-Preset authors use the exported constant when declaring preset defaults:
-
-```typescript
-defaults: {
-  [PINIA_PLUGIN_NAME]: () => ({
-    createSpy: vi.fn,
-  }),
-}
-```
+Project-owned presets can use this exported constant when declaring preset defaults, as shown earlier in [Using a Custom Project Preset](#using-a-custom-project-preset).
 
 At runtime, the normal consumer-facing API uses the corresponding string key:
 

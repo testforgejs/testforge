@@ -15,6 +15,13 @@ It covers:
 
 If you are new to TestForge, start with the [Getting Started Guide](getting-started.md).
 
+> [!NOTE]
+> This guide focuses on TestForge configuration and advanced usage rather than package installation.
+>
+> TestForge plugin packages imported directly by project code must be installed as direct project dependencies.
+>
+> See the [Getting Started Guide](getting-started.md) for installation and initial project setup.
+
 ## Table of Contents
 
 - [1. `testComponentFactory` Signature](#testcomponentfactory-signature)
