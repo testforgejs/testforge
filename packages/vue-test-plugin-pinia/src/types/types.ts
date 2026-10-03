@@ -1,4 +1,4 @@
-import type { Pinia } from "pinia";
+import type { TestingPinia } from "@pinia/testing";
 import type { TestingOptions } from "@pinia/testing";
 import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
@@ -8,7 +8,7 @@ import type { PluginControlOptions } from "@testforgejs/vue-test-core";
  *
  * @param pinia - Созданный инстанс Pinia для тестирования.
  */
-export type MockStoresFn = (pinia: Pinia) => void;
+export type MockStoresFn = (pinia: TestingPinia) => void;
 
 /**
  * Configuration options for the Pinia test plugin.
@@ -19,7 +19,7 @@ export type MockStoresFn = (pinia: Pinia) => void;
  * @see {@link TestingOptions} to configure action stubs and the initial state.
  * @see {@link PluginControlOptions} to use interception methods such as `expose`.
  */
-export interface VueTestPiniaOptions extends TestingOptions, PluginControlOptions<Pinia> {
+export interface VueTestPiniaOptions extends TestingOptions, PluginControlOptions<TestingPinia> {
   /**
    * A callback function to modify the state of stores before a component is mounted.
    *

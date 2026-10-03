@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { defineStore, setActivePinia } from "pinia";
-import type { Pinia } from "pinia";
+import type { TestingPinia } from "@pinia/testing";
 
 import { piniaPlugin } from "../piniaPlugin.js";
 import { createPiniaPlugin } from "../createPiniaPlugin.js";
@@ -95,7 +95,7 @@ describe("piniaPlugin", () => {
   });
 
   it("should call setActivePinia with created instance in afterCreate hook", () => {
-    const pinia = {} as Pinia;
+    const pinia = {} as TestingPinia;
     const definition = piniaPlugin.getDefinition();
 
     definition.afterCreate?.(pinia, {} as any);

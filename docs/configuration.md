@@ -1411,9 +1411,9 @@ Sometimes tests need direct access to the actual plugin instance created by the 
 You can pass an `expose` callback that receives the freshly created instance immediately before the component mounts.
 
 ```typescript
-import type { Pinia } from "pinia";
+import type { TestingPinia } from "@pinia/testing";
 
-let piniaInstance: Pinia;
+let piniaInstance: TestingPinia;
 
 const factory = testComponentFactory(MyComponent);
 
@@ -1423,7 +1423,7 @@ factory(
     plugins: {
       pinia: {
         expose(instance) {
-          piniaInstance = instance as Pinia;
+          piniaInstance = instance as TestingPinia;
         },
       },
     },

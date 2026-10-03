@@ -7,7 +7,7 @@ import { h } from "vue";
 import { defineStore } from "pinia";
 
 import type { TestFramework } from "@testforgejs/vue-test-core";
-import type { Pinia } from "pinia";
+import type { TestingPinia } from "@pinia/testing";
 
 // Creating a test store for integration testing
 const useCounterStore = defineStore("counter", {
@@ -84,7 +84,7 @@ describe("piniaPlugin integration", () => {
 
   it("should capture pinia instance and reflect updates when state is modified externally", async () => {
     // Arrange
-    const piniaCapture = captureInstance<Pinia>();
+    const piniaCapture = captureInstance<TestingPinia>();
     const factory = framework.testComponentFactory(
       Component,
       {},
@@ -117,7 +117,7 @@ describe("piniaPlugin integration", () => {
 
   it("should expose pinia instance through callback when expose option is provided", () => {
     // Arrange
-    let exposedInstance: Pinia | undefined;
+    let exposedInstance: TestingPinia | undefined;
 
     const factory = framework.testComponentFactory(
       Component,

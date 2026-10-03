@@ -5,7 +5,7 @@ import { defineComponent } from "vue";
 import { defineStore } from "pinia";
 
 import type { VueWrapper, mount } from "@vue/test-utils";
-import type { Pinia } from "pinia";
+import type { TestingPinia } from "@pinia/testing";
 import type { VueTestPiniaOptions } from "../dist/index.js";
 
 // Test store for checking types within callbacks
@@ -21,21 +21,21 @@ expectAssignable<VueTestPiniaOptions>({
   stubActions: true,
   initialState: { counter: { count: 10 } },
   mockStores(pinia) {
-    expectType<Pinia>(pinia);
+    expectType<TestingPinia>(pinia);
     const store = useCounterStore(pinia);
     store.count = 20;
   },
   expose(instance) {
-    expectType<Pinia>(instance);
+    expectType<TestingPinia>(instance);
   },
 });
 
 /*
  * captureInstance should preserve the provided Pinia instance type.
  */
-const capture = captureInstance<Pinia>();
+const capture = captureInstance<TestingPinia>();
 
-expectType<Pinia | undefined>(capture.instance);
+expectType<TestingPinia | undefined>(capture.instance);
 
 /*
  * Module augmentation should register "pinia"
@@ -84,10 +84,10 @@ const wrapper = factory(
       pinia: {
         stubActions: false,
         mockStores: (pinia) => {
-          expectType<Pinia>(pinia);
+          expectType<TestingPinia>(pinia);
         },
         expose: (instance) => {
-          expectType<Pinia>(instance);
+          expectType<TestingPinia>(instance);
         },
       },
     },
@@ -149,10 +149,10 @@ framework.testComponentFactory(
     plugins: {
       pinia: {
         mockStores: (pinia) => {
-          expectType<Pinia>(pinia);
+          expectType<TestingPinia>(pinia);
         },
         expose: (instance) => {
-          expectType<Pinia>(instance);
+          expectType<TestingPinia>(instance);
         },
       },
     },
@@ -174,4 +174,4 @@ expectError(
 );
 
 // Verify that invalid property access triggers a type error
-expectError(captureInstance<Pinia>().instance?.unknownProperty);
+expectError(captureInstance<TestingPinia>().instance?.unknownProperty);
