@@ -1,23 +1,24 @@
-import type { TestingPinia } from "@pinia/testing";
-import type { TestingOptions } from "@pinia/testing";
+import type { TestingPinia, TestingOptions } from "@pinia/testing";
 import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
 /**
- * A callback function to mutate or configure Pinia stores immediately after they are created.
- * Used to set the initial state (mocking) in tests.
+ * A callback for configuring Pinia stores after the testing Pinia instance
+ * is created and before the component is mounted.
  *
- * @param pinia - Созданный инстанс Pinia для тестирования.
+ * Use it to initialize or modify stores required by the test.
+ *
+ * @param pinia - The testing Pinia instance used by the mounted component.
  */
 export type MockStoresFn = (pinia: TestingPinia) => void;
 
 /**
  * Configuration options for the Pinia test plugin.
  *
- * This interface integrates the standard Pinia testing initialization settings
- * (`TestingOptions` from `@pinia/testing`) with the TestForge core configuration options.
+ * Combines standard Pinia testing configuration (`TestingOptions` from `@pinia/testing`)
+ * with TestForge plugin control options.
  *
- * @see {@link TestingOptions} to configure action stubs and the initial state.
- * @see {@link PluginControlOptions} to use interception methods such as `expose`.
+ * @see {@link TestingOptions} for configuring action stubs, initial state, and Pinia plugins.
+ * @see {@link PluginControlOptions} for instance capturing and exposure mechanisms.
  */
 export interface VueTestPiniaOptions extends TestingOptions, PluginControlOptions<TestingPinia> {
   /**
