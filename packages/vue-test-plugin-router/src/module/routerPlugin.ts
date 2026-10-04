@@ -7,7 +7,10 @@ import type { VueTestRouterOptions } from "../types/types";
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 
 /**
- * A Vue Router plugin module for the TestForge testing framework.
+ * Managed Vue Router plugin module for TestForge.
+ *
+ * Provides the runtime definition for creating Vue Router instances
+ * and exposes the default configuration used by TestForge-managed presets.
  */
 export const routerPlugin: PluginModuleWithDefaults<Router, VueTestRouterOptions> = {
   getName: () => ROUTER_PLUGIN_NAME,

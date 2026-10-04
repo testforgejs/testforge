@@ -6,6 +6,7 @@
  *
  * @packageDocumentation
  */
+
 import "./types/augmentation.js";
 
 export { piniaPlugin, piniaPlugin as plugin } from "./module/piniaPlugin.js";

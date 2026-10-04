@@ -4,10 +4,24 @@ import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 /**
  * Configuration options for the Vue Router test plugin.
  *
- * This interface integrates standard router initialization settings
- * and TestForge test kernel control options (such as `expose`).
+ * Combines standard Vue Router configuration (`RouterOptions` from `vue-router`)
+ * with TestForge plugin control options.
  *
- * @see {@link RouterOptions} from the `vue-router` package for configuring routes and history.
- * @see {@link PluginControlOptions} from the `@testforgejs/vue-test-core` package for instance interception.
+ * @example
+ * Configure the managed Vue Router plugin for a component test:
+ *
+ * ```ts
+ * factory({}, {
+ *   plugins: {
+ *     router: {
+ *       history: createMemoryHistory(),
+ *       routes: [],
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @see `RouterOptions` from `vue-router` for configuring routes and history.
+ * @see `PluginControlOptions` from `@testforgejs/vue-test-core` for instance capturing and exposure mechanisms.
  */
-export interface VueTestRouterOptions extends RouterOptions, PluginControlOptions<Router> {}
+export type VueTestRouterOptions = RouterOptions & PluginControlOptions<Router>;

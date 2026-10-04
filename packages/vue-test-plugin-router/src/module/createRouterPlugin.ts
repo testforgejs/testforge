@@ -5,7 +5,7 @@ import type { Router } from "vue-router";
 import type { VueTestRouterOptions } from "../types/types";
 
 /*
- * Creates a Vue Router plugin instance.
+ * Creates a Vue Router instance.
  *
  * Extracted into a separate factory to simplify testing and mocking.
  */

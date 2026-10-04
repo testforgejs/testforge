@@ -6,6 +6,7 @@
  *
  * @packageDocumentation
  */
+
 import "./types/augmentation.js";
 
 export { i18nPlugin, i18nPlugin as plugin } from "./module/i18nPlugin.js";
