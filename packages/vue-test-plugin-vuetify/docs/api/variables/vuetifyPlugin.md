@@ -1,21 +1,12 @@
 [**@testforgejs/vue-test-plugin-vuetify**](../README.md)
 
----
+***
 
-> `const` **vuetifyPlugin**: `PluginModule`\<[`VuetifyInstance`](../type-aliases/VuetifyInstance.md), [`VueTestVuetifyOptions`](../interfaces/VueTestVuetifyOptions.md)\>
+> `const` **vuetifyPlugin**: `PluginModuleWithDefaults`\<[`VuetifyInstance`](../type-aliases/VuetifyInstance.md), [`VueTestVuetifyOptions`](../type-aliases/VueTestVuetifyOptions.md)\>
 
-Defined in: packages/vue-test-plugin-vuetify/src/module/vuetifyPlugin.ts:19
+Defined in: [module/vuetifyPlugin.ts:14](https://github.com/testforgejs/testforge/blob/59da003c0d553647780ed2283c2e264267736f6c/packages/vue-test-plugin-vuetify/src/module/vuetifyPlugin.ts#L14)
 
-Official TestForge integration for Vuetify.
+Managed Vuetify plugin module for TestForge.
 
-Registers the `vuetify` plugin key in the TestForge plugin registry
-and provides a factory for creating Vuetify runtime instances during
-component mounting.
-
-This plugin belongs to the
-**Stateful Plugin Factory** category because Vuetify exposes
-a runtime instance through createVuetify.
-
-## See
-
-createVuetifyPlugin
+Provides the runtime definition for creating Vuetify instances
+and exposes the default configuration used by TestForge-managed presets.

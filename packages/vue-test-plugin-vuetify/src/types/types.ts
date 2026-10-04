@@ -1,29 +1,38 @@
-import { createVuetify } from "vuetify";
-
+import type { createVuetify, VuetifyOptions } from "vuetify";
 import type { PluginControlOptions } from "@testforgejs/vue-test-core";
-import type { VuetifyOptions } from "vuetify";
 
 /**
- * Runtime Vuetify instance created by {@link createVuetify}.
+ * Vuetify runtime instance created by createVuetify.
  *
- * This is the actual plugin instance installed into Vue Test Utils
- * via `global.plugins`.
+ * Represents the managed Vuetify instance used by TestForge
+ * during component mounting.
  *
- * @see {@link createVuetify}
+ * @see `createVuetify` from `vuetify`.
  */
 export type VuetifyInstance = ReturnType<typeof createVuetify>;
 
 /**
  * Configuration options for the Vuetify test plugin.
  *
- * This interface combines standard Vuetify initialization settings
- * with TestForge plugin control options such as `expose()`.
+ * Combines standard Vuetify configuration (`VuetifyOptions` from `vuetify`)
+ * with TestForge plugin control options.
  *
- * @see {@link VuetifyOptions} from the `vuetify` package for theme,
- * icon, component and directive configuration.
+ * @example
+ * Configure the managed Vuetify plugin for a component test:
  *
- * @see {@link PluginControlOptions} from `@testforgejs/vue-test-core`
- * for instance interception and testing helpers.
+ * ```ts
+ * factory({}, {
+ *   plugins: {
+ *     vuetify: {
+ *       theme: {
+ *         defaultTheme: "light",
+ *       },
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @see `VuetifyOptions` from `vuetify` for theme, icon, component, and directive configuration.
+ * @see `PluginControlOptions` from `@testforgejs/vue-test-core` for instance capturing and exposure mechanisms.
  */
-export interface VueTestVuetifyOptions
-  extends VuetifyOptions, PluginControlOptions<VuetifyInstance> {}
+export type VueTestVuetifyOptions = VuetifyOptions & PluginControlOptions<VuetifyInstance>;

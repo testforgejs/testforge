@@ -1,16 +1,16 @@
 [**@testforgejs/vue-test-plugin-vuetify**](../README.md)
 
----
+***
 
-> **VuetifyInstance** = `ReturnType<typeof createVuetify>`
+> **VuetifyInstance** = `ReturnType`\<*typeof* `createVuetify`\>
 
-Defined in: packages/vue-test-plugin-vuetify/src/types/types.ts:14
+Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/59da003c0d553647780ed2283c2e264267736f6c/packages/vue-test-plugin-vuetify/src/types/types.ts#L12)
 
-Runtime Vuetify instance created by createVuetify.
+Vuetify runtime instance created by createVuetify.
 
-This is the actual plugin instance installed into Vue Test Utils
-via `global.plugins`.
+Represents the managed Vuetify instance used by TestForge
+during component mounting.
 
 ## See
 
-createVuetify
+`createVuetify` from `vuetify`.
