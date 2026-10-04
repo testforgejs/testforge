@@ -4,15 +4,30 @@
 
 > **VueTestPrimeVueOptions** = `PrimeVueConfiguration`
 
-Defined in: [types/types.ts:26](https://github.com/testforgejs/testforge/blob/f4df6d6cebcefc739cc98e2a15bcf64c485b8055/packages/vue-test-plugin-primevue-v3/src/types/types.ts#L26)
+Defined in: [types/types.ts:38](https://github.com/testforgejs/testforge/blob/9cfd3a2e112de126cbfa15198961d9b37823b7d1/packages/vue-test-plugin-primevue-v3/src/types/types.ts#L38)
 
-Configuration options for the PrimeVue 3 TestForge plugin.
+Configuration options for the managed PrimeVue 3 plugin.
 
-This type maps directly to the official PrimeVue 3 configuration object
-and intentionally does not include TestForge runtime controls such as
-`expose()` or `__meta.instance`, because PrimeVue does not create
-a reusable runtime instance.
+Maps directly to the standard PrimeVue 3 configuration.
+
+Unlike plugins that create a dedicated runtime instance, PrimeVue 3 uses
+an install-based Vue plugin integration and therefore does not support
+TestForge instance controls such as `expose`.
+
+## Example
+
+Configure the managed PrimeVue 3 plugin for a component test:
+
+```ts
+factory({}, {
+  plugins: {
+    primevueV3: {
+      ripple: true,
+    },
+  },
+});
+```
 
 ## See
 
-PrimeVueConfiguration
+`PrimeVueConfiguration` from `primevue/config`.

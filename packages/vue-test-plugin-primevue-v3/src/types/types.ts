@@ -1,26 +1,38 @@
-import PrimeVue from "primevue/config";
-
+import type PrimeVue from "primevue/config";
 import type { PrimeVueConfiguration } from "primevue/config";
 
 /**
- * Vue Test Utils compatible plugin tuple for PrimeVue 3.
+ * Vue Test Utils-compatible plugin tuple for PrimeVue 3.
  *
- * PrimeVue 3 is an install-based Vue plugin and therefore integrates
- * through a standard `[plugin, options]` tuple instead of a runtime instance.
+ * Represents the install-based PrimeVue 3 plugin together with its configuration,
+ * as accepted by Vue Test Utils through `global.plugins`.
  *
- * @see {@link PrimeVue}
- * @see {@link PrimeVueConfiguration}
+ * @see `PrimeVueConfiguration` from `primevue/config`.
  */
 export type PrimeVueMountPlugin = [typeof PrimeVue, PrimeVueConfiguration];
 
 /**
- * Configuration options for the PrimeVue 3 TestForge plugin.
+ * Configuration options for the managed PrimeVue 3 plugin.
  *
- * This type maps directly to the official PrimeVue 3 configuration object
- * and intentionally does not include TestForge runtime controls such as
- * `expose()` or `__meta.instance`, because PrimeVue does not create
- * a reusable runtime instance.
+ * Maps directly to the standard PrimeVue 3 configuration.
  *
- * @see {@link PrimeVueConfiguration}
+ * Unlike plugins that create a dedicated runtime instance, PrimeVue 3 uses
+ * an install-based Vue plugin integration and therefore does not support
+ * TestForge instance controls such as `expose`.
+ *
+ * @example
+ * Configure the managed PrimeVue 3 plugin for a component test:
+ *
+ * ```ts
+ * factory({}, {
+ *   plugins: {
+ *     primevueV3: {
+ *       ripple: true,
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @see `PrimeVueConfiguration` from `primevue/config`.
  */
 export type VueTestPrimeVueOptions = PrimeVueConfiguration;

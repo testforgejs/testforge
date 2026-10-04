@@ -4,35 +4,21 @@ import type {} from "@testforgejs/vue-test-core";
 import type { VueTestPrimeVueOptions } from "./types";
 
 /**
- * Extends TestForge kernel types for PrimeVue integration.
+ * TestForge core type augmentation for PrimeVue integration.
  *
  * Registers the `primevue` configuration key inside the global
  * plugin options map, enabling strict typing and IDE autocompletion
  * when configuring PrimeVue in component tests.
  *
- * @module Augmentation
+ * @module PrimeVueAugmentation
  */
 declare module "@testforgejs/vue-test-core" {
   /**
-   * Global TestForge plugin configuration registry.
+   * Global map for TestForge plugin configuration options.
    */
   interface PluginOptionsMap {
     /**
-     * Configuration for the `primevue` plugin.
-     *
-     * Accepts standard {@link VueTestPrimeVueOptions}
-     * which correspond directly to PrimeVue configuration options.
-     *
-     * @example
-     * ```ts
-     * factory({}, {
-     *   plugins: {
-     *     primevue: {
-     *       ripple: true
-     *     }
-     *   }
-     * })
-     * ```
+     * Configuration accepted by the managed `primevue` plugin.
      */
     [PRIMEVUE_PLUGIN_NAME]: VueTestPrimeVueOptions;
   }
