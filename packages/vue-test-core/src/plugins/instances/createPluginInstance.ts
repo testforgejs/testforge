@@ -1,6 +1,6 @@
 import type { RuntimePluginOptions } from "../../types";
 
-import { exposeInstance } from "../helpers/exposeInstance.js";
+import { exposeInstance } from "./exposeInstance.js";
 
 /*
  * Creates (or reuses) a plugin instance using the provided factory.

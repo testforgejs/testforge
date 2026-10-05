@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { exposeInstance } from "../exposeInstance.js";
+import { exposeInstance } from "../../../plugins/instances/exposeInstance.js";
 
 import type { PluginRuntimeMeta } from "../../../types";
 
