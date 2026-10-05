@@ -165,6 +165,21 @@ export interface PluginMeta {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginOptionsMap {}
 
+export const PLUGIN_INSTANCE_REFERENCE_TYPE = "plugin-instance-reference" as const;
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface PluginInstanceMap {}
+
+export type PluginInstanceName = Extract<keyof PluginInstanceMap, PluginName>;
+
+export type PluginInstanceReferenceType = typeof PLUGIN_INSTANCE_REFERENCE_TYPE;
+
+export interface PluginInstanceReference<TPluginName extends PluginInstanceName, TResult> {
+  readonly __type: PluginInstanceReferenceType;
+  readonly pluginName: TPluginName;
+  readonly resolve: (instance: PluginInstanceMap[TPluginName]) => TResult;
+}
+
 export type PluginOptionsInput = {
   [K in keyof PluginOptionsMap]?: PluginOptionsMap[K] | false;
 };

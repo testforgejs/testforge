@@ -6,11 +6,8 @@ import type { VueTestPrimeVueOptions } from "./types";
 /**
  * TestForge core type augmentation for PrimeVue integration.
  *
- * Registers the `primevue` configuration key inside the global
- * plugin options map, enabling strict typing and IDE autocompletion
- * when configuring PrimeVue in component tests.
- *
- * @module PrimeVueAugmentation
+ * Registers the public plugin configuration type
+ * used by TestForge's managed plugin APIs.
  */
 declare module "@testforgejs/vue-test-core" {
   /**

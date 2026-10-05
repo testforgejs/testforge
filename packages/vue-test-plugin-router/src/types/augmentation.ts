@@ -1,37 +1,33 @@
 import { ROUTER_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
+import type { Router } from "vue-router";
 import type { VueTestRouterOptions } from "./types";
 
 /**
- * Extending TestForge kernel types for Vue Router integration.
+ * TestForge core type augmentation for Vue Router integration.
  *
- * This module registers the router configuration in the global plugin map,
- * which ensures strict typing when calling `testComponentFactory`.
- *
- * @module Augmentation
+ * Registers the public plugin configuration and runtime instance types
+ * used by TestForge's managed plugin APIs.
  */
 declare module "@testforgejs/vue-test-core" {
   /**
-   * The global interface for the TestForge kernel plugin options.
+   * Global map for TestForge plugin configuration options.
    */
   interface PluginOptionsMap {
     /**
-     * Configuration for the `router` plugin.
-     * Accepts an object of type {@link VueTestRouterOptions} containing Vue router settings and control hooks.
-     *
-     * @example
-     * ```ts
-     * factory({}, {
-     *   plugins: {
-     *     router: {
-     *       history: createMemoryHistory(),
-     *       routes: [...]
-     *     }
-     *   }
-     * });
-     * ```
+     * Configuration accepted by the managed `router` plugin.
      */
     [ROUTER_PLUGIN_NAME]: VueTestRouterOptions;
+  }
+
+  /**
+   * Global map for managed plugin runtime instances.
+   */
+  interface PluginInstanceMap {
+    /**
+     * Runtime Vue Router instance created by the managed `router` plugin.
+     */
+    [ROUTER_PLUGIN_NAME]: Router;
   }
 }

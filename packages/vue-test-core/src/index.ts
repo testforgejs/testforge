@@ -4,6 +4,7 @@ export { createPluginInstance } from "./plugins/instances/createPluginInstance.j
 export { createVuePlugin } from "./pluginsRegistry/factory/createVuePlugin.js";
 export { captureInstance } from "./utils/captureInstance.js";
 export { extendPreset } from "./presets/extendPreset.js";
+export { fromPluginInstance } from "./plugins/dependencies/fromPluginInstance.js";
 export { validatePreset } from "./presets/validators/validatePreset.js";
 export { validatePresets } from "./presets/validators/validatePresets.js";
 
@@ -17,6 +18,8 @@ export type {
   MountPlugin,
   PluginDefaultOptionsFactory,
   PluginOptionsFactory,
+  PluginInstanceMap,
+  PluginInstanceReference,
   PluginOptionsMap,
   PluginOptionsInput,
   PluginOverridesInput,

@@ -1,15 +1,14 @@
 import { I18N_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
+import type { I18n } from "vue-i18n";
 import type { VueTestI18nOptions } from "./types";
 
 /**
  * TestForge core type augmentation for Vue I18n integration.
  *
- * This module registers the i18n configuration under the global plugin options map,
- * enabling full type safety when defining internationalization options in tests.
- *
- * @module I18nAugmentation
+ * Registers the public plugin configuration and runtime instance types
+ * used by TestForge's managed plugin APIs.
  */
 declare module "@testforgejs/vue-test-core" {
   /**
@@ -17,21 +16,18 @@ declare module "@testforgejs/vue-test-core" {
    */
   interface PluginOptionsMap {
     /**
-     * Configuration for the `i18n` plugin.
-     * Accepts a {@link VueTestI18nOptions} object to manage localization and translations.
-     *
-     * @example
-     * ```ts
-     * factory({}, {
-     *   plugins: {
-     *     i18n: {
-     *       locale: "en",
-     *       messages: { en: { hello: "Hello World" } }
-     *     }
-     *   }
-     * });
-     * ```
+     * Configuration accepted by the managed `i18n` plugin.
      */
     [I18N_PLUGIN_NAME]: VueTestI18nOptions;
+  }
+
+  /**
+   * Global map for managed plugin runtime instances.
+   */
+  interface PluginInstanceMap {
+    /**
+     * Runtime Vue I18n instance created by the managed `i18n` plugin.
+     */
+    [I18N_PLUGIN_NAME]: I18n;
   }
 }
