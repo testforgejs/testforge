@@ -1,5 +1,14 @@
 # @testforgejs/vue-test-preset-base
 
+## 1.0.0-beta.4
+
+### Patch Changes
+
+- Updated dependencies [9cfd3a2]
+- Updated dependencies [f33f94a]
+  - @testforgejs/vue-test-plugin-router@1.0.0-beta.4
+  - @testforgejs/vue-test-plugin-pinia@1.0.0-beta.4
+
 ## 1.0.0-beta.3
 
 ### Major Changes

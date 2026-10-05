@@ -1,5 +1,11 @@
 # @testforgejs/vue-test-plugin-vuetify
 
+## 1.0.0-beta.4
+
+### Patch Changes
+
+- 9cfd3a2: Represent Router and Vuetify plugin options as intersection type aliases instead of interfaces, preserving their configuration shape while producing cleaner generated API documentation.
+
 ## 1.0.0-beta.3
 
 ### Minor Changes

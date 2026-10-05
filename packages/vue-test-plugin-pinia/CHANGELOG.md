@@ -1,5 +1,11 @@
 # @testforgejs/vue-test-plugin-pinia
 
+## 1.0.0-beta.4
+
+### Patch Changes
+
+- f33f94a: Use `TestingPinia` as the Pinia plugin runtime instance type, accurately reflecting the instance returned by `createTestingPinia` and exposing its testing-specific properties to TypeScript consumers.
+
 ## 1.0.0-beta.3
 
 ### Major Changes
