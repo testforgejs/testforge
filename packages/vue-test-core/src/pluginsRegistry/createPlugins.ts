@@ -1,6 +1,12 @@
-import type { ResolvedPluginOptions, PipelineContext, MountPlugin } from "../types";
-
+import { ERROR_PREFIX } from "../constants/constants.js";
+import { buildPluginDependencyGraph } from "../plugins/dependencies/buildPluginDependencyGraph.js";
+import { collectPluginDependencies } from "../plugins/dependencies/collectPluginDependencies.js";
+import { sortPluginDependencyGraph } from "../plugins/dependencies/sortPluginDependencyGraph.js";
+import { validatePluginDependencyGraph } from "../plugins/dependencies/validatePluginDependencyGraph.js";
 import { createPluginRegistry } from "./createPluginRegistry.js";
+import { getActivePlugins } from "./getActivePlugins.js";
+
+import type { MountPlugin, PipelineContext, ResolvedPluginOptions } from "../types";
 
 /*
  * Creates Vue plugins used for mounting components in tests.
@@ -34,22 +40,48 @@ export function createPlugins(
   const { preset } = ctx;
   const registry = createPluginRegistry(preset?.manifest);
 
-  for (const [name, definition] of registry.entries()) {
-    let pluginOptions = options[name];
+  const activePlugins = getActivePlugins(registry.getNames(), options);
 
-    if (pluginOptions !== false && pluginOptions && typeof pluginOptions === "object") {
-      if (definition.beforeCreate) {
-        pluginOptions = definition.beforeCreate(ctx, pluginOptions);
-      }
+  const activePluginNames = activePlugins.map(({ name }) => name);
 
-      const pluginInstance = definition.create(pluginOptions);
+  const dependencies = activePlugins.flatMap(({ name, options: pluginOptions }) =>
+    collectPluginDependencies(name, pluginOptions),
+  );
 
-      if (definition.afterCreate) {
-        definition.afterCreate(pluginInstance, ctx);
-      }
+  const dependencyGraph = buildPluginDependencyGraph(activePluginNames, dependencies);
 
-      plugins.push(pluginInstance);
+  validatePluginDependencyGraph(dependencyGraph);
+
+  const creationOrder = sortPluginDependencyGraph(dependencyGraph);
+
+  const activePluginsByName = new Map(activePlugins.map((plugin) => [plugin.name, plugin]));
+
+  for (const name of creationOrder) {
+    const definition = registry.get(name);
+
+    if (!definition) {
+      throw new Error(`${ERROR_PREFIX} Cannot create unknown plugin "${name}".`);
     }
+
+    const activePlugin = activePluginsByName.get(name);
+
+    if (!activePlugin) {
+      throw new Error(`${ERROR_PREFIX} Active plugin "${name}" is missing during creation.`);
+    }
+
+    let pluginOptions = activePlugin.options;
+
+    if (definition.beforeCreate) {
+      pluginOptions = definition.beforeCreate(ctx, pluginOptions);
+    }
+
+    const createdPlugin = definition.create(pluginOptions);
+
+    if (definition.afterCreate) {
+      definition.afterCreate(createdPlugin, ctx);
+    }
+
+    plugins.push(createdPlugin);
   }
 
   return plugins;

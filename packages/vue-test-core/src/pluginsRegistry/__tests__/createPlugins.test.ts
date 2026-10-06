@@ -1,12 +1,44 @@
-import { describe, it, expect, vi } from "vitest";
-import { createPlugins } from "../createPlugins.js";
+import { describe, expect, it, vi } from "vitest";
+
+import { ERROR_PREFIX } from "../../constants/constants.js";
+import { fromPluginInstance } from "../../plugins/dependencies/fromPluginInstance.js";
 import { createMockCtx } from "../../pipeline/__tests__/fixtures.js";
+import { createPlugins } from "../createPlugins.js";
+
+interface CreatePluginsDependencyAInstance {
+  id: string;
+}
+
+interface CreatePluginsDependencyBInstance {
+  id: string;
+}
+
+interface CreatePluginsSourceInstance {
+  id: string;
+}
+
+declare module "../../types" {
+  interface PluginOptionsMap {
+    createPluginsDependencyA: object;
+    createPluginsDependencyB: object;
+    createPluginsSource: object;
+  }
+
+  interface PluginInstanceMap {
+    createPluginsDependencyA: CreatePluginsDependencyAInstance;
+    createPluginsDependencyB: CreatePluginsDependencyBInstance;
+    createPluginsSource: CreatePluginsSourceInstance;
+  }
+}
 
 describe("createPlugins", () => {
-  const createMockPlugin = (name: string, instance = { id: `inst-${name}` }) => {
+  const createMockPlugin = (name: string, createdPlugin = { id: `inst-${name}` }) => {
     const definition = {
-      beforeCreate: vi.fn((ctx, opts) => ({ ...opts, modified: true })),
-      create: vi.fn(() => instance),
+      beforeCreate: vi.fn((ctx, opts) => ({
+        ...opts,
+        modified: true,
+      })),
+      create: vi.fn(() => createdPlugin),
       afterCreate: vi.fn(),
     };
 
@@ -23,23 +55,54 @@ describe("createPlugins", () => {
   describe("manifest and options filtering", () => {
     it("should create plugins only when present in both manifest and options", () => {
       const mockPinia = createMockPlugin("pinia");
+
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: mockPinia, enabled: true }],
-          defaults: { pinia: () => ({}) },
+          manifest: [
+            {
+              module: mockPinia,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            pinia: () => ({}),
+          },
         },
       });
-      const result = createPlugins({ pinia: {} }, ctx);
+
+      const result = createPlugins(
+        {
+          pinia: {},
+        },
+        ctx,
+      );
 
       expect(result).toHaveLength(1);
     });
 
     it("should skip plugins when they are set to false in options", () => {
       const mockI18n = createMockPlugin("i18n");
+
       const ctx = createMockCtx({
-        preset: { manifest: [{ module: mockI18n, enabled: true }], defaults: { i18n: () => ({}) } },
+        preset: {
+          manifest: [
+            {
+              module: mockI18n,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            i18n: () => ({}),
+          },
+        },
       });
-      const result = createPlugins({ i18n: false }, ctx);
+
+      const result = createPlugins(
+        {
+          i18n: false,
+        },
+        ctx,
+      );
 
       expect(result).toHaveLength(0);
       expect(mockI18n.getDefinition().create).not.toHaveBeenCalled();
@@ -47,25 +110,49 @@ describe("createPlugins", () => {
 
     it("should ignore options when plugins are not present in the manifest", () => {
       const mockPinia = createMockPlugin("pinia");
+
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: mockPinia, enabled: true }],
-          defaults: { pinia: () => ({}) },
+          manifest: [
+            {
+              module: mockPinia,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            pinia: () => ({}),
+          },
         },
       });
-      const result = createPlugins({ pinia: {}, router: {} }, ctx);
+
+      const result = createPlugins(
+        {
+          pinia: {},
+          router: {},
+        },
+        ctx,
+      );
 
       expect(result).toHaveLength(1);
     });
 
     it("should skip plugin when options are missing for that plugin", () => {
       const mockPinia = createMockPlugin("pinia");
+
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: mockPinia, enabled: true }],
-          defaults: { pinia: () => ({}) },
+          manifest: [
+            {
+              module: mockPinia,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            pinia: () => ({}),
+          },
         },
       });
+
       const result = createPlugins({}, ctx);
 
       expect(result).toHaveLength(0);
@@ -78,23 +165,39 @@ describe("createPlugins", () => {
   describe("plugin lifecycle hooks", () => {
     it("should run beforeCreate, create and afterCreate with the expected arguments", () => {
       const mockPinia = createMockPlugin("pinia");
+
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: mockPinia, enabled: true }],
-          defaults: { pinia: () => ({}) },
+          manifest: [
+            {
+              module: mockPinia,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            pinia: () => ({}),
+          },
         },
       });
-      const options = { pinia: { some: "opt" } };
+
+      const options = {
+        pinia: {
+          some: "opt",
+        },
+      };
+
       const result = createPlugins(options, ctx);
 
-      const def = mockPinia.getDefinition();
+      const definition = mockPinia.getDefinition();
 
-      expect(def.beforeCreate).toHaveBeenCalledWith(ctx, options.pinia);
-      expect(def.create).toHaveBeenCalledWith({
+      expect(definition.beforeCreate).toHaveBeenCalledWith(ctx, options.pinia);
+
+      expect(definition.create).toHaveBeenCalledWith({
         some: "opt",
         modified: true,
       });
-      expect(def.afterCreate).toHaveBeenCalledWith(result[0], ctx);
+
+      expect(definition.afterCreate).toHaveBeenCalledWith(result[0], ctx);
     });
 
     it("should run lifecycle hooks in the correct order", () => {
@@ -113,7 +216,10 @@ describe("createPlugins", () => {
         create: vi.fn((opts) => {
           calls.push("create");
 
-          return { instance: true, opts };
+          return {
+            instance: true,
+            opts,
+          };
         }),
 
         afterCreate: vi.fn(() => {
@@ -129,20 +235,35 @@ describe("createPlugins", () => {
 
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: mockPinia, enabled: true }],
+          manifest: [
+            {
+              module: mockPinia,
+              enabled: true,
+            },
+          ],
           defaults: {
             pinia: () => ({}),
           },
         },
       });
 
-      createPlugins({ pinia: { some: "opt" } }, ctx);
+      createPlugins(
+        {
+          pinia: {
+            some: "opt",
+          },
+        },
+        ctx,
+      );
 
       expect(calls).toEqual(["beforeCreate", "create", "afterCreate"]);
     });
 
     it("should pass original options to create when beforeCreate is missing", () => {
-      const definition = { create: vi.fn(() => ({})) };
+      const definition = {
+        create: vi.fn(() => ({})),
+      };
+
       const plugin = {
         getName: () => "noBefore",
         getDefinition: () => definition,
@@ -151,54 +272,75 @@ describe("createPlugins", () => {
 
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: plugin, enabled: true }],
-          defaults: { noBefore: () => ({}) },
+          manifest: [
+            {
+              module: plugin,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            noBefore: () => ({}),
+          },
         },
       });
-      createPlugins({ noBefore: { x: 1 } }, ctx);
 
-      expect(definition.create).toHaveBeenCalledWith({ x: 1 });
+      createPlugins(
+        {
+          noBefore: {
+            x: 1,
+          },
+        },
+        ctx,
+      );
+
+      expect(definition.create).toHaveBeenCalledWith({
+        x: 1,
+      });
     });
 
     it("should work correctly when optional hooks are missing", () => {
       const simplePlugin = {
         getName: () => "simple",
         getDefinition: () => ({
-          create: () => ({ isSimple: true }),
+          create: () => ({
+            isSimple: true,
+          }),
         }),
         getDefaultOptions: () => () => ({}),
       };
 
       const ctx = createMockCtx({
         preset: {
-          manifest: [{ module: simplePlugin, enabled: true }],
-          defaults: { simple: () => ({}) },
+          manifest: [
+            {
+              module: simplePlugin,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            simple: () => ({}),
+          },
         },
       });
-      const result = createPlugins({ simple: {} }, ctx);
 
-      expect(result[0]).toEqual({ isSimple: true });
+      const result = createPlugins(
+        {
+          simple: {},
+        },
+        ctx,
+      );
+
+      expect(result[0]).toEqual({
+        isSimple: true,
+      });
     });
   });
 
   // ---------------------------------------------------------------------------
-  // Pipeline contracts
+  // Plugin dependency ordering
   // ---------------------------------------------------------------------------
-  describe("pipeline contracts", () => {
-    it("should not mutate original options object", () => {
-      const mock = createMockPlugin("pinia");
-      const ctx = createMockCtx({
-        preset: { manifest: [{ module: mock, enabled: true }], defaults: { pinia: () => ({}) } },
-      });
-      const options = { pinia: { a: 1 } };
-      const snapshot = structuredClone(options);
-
-      createPlugins(options, ctx);
-
-      expect(options).toEqual(snapshot);
-    });
-
-    it("should create plugins in manifest order", () => {
+  describe("plugin dependency ordering", () => {
+    it("should preserve manifest order when plugins are independent", () => {
       const calls: string[] = [];
 
       const make = (name: string) => ({
@@ -206,6 +348,7 @@ describe("createPlugins", () => {
         getDefinition: () => ({
           create: () => {
             calls.push(name);
+
             return {};
           },
         }),
@@ -215,15 +358,294 @@ describe("createPlugins", () => {
       const ctx = createMockCtx({
         preset: {
           manifest: [
-            { module: make("A"), enabled: true },
-            { module: make("B"), enabled: true },
+            {
+              module: make("A"),
+              enabled: true,
+            },
+            {
+              module: make("B"),
+              enabled: true,
+            },
           ],
-          defaults: { A: () => ({}), B: () => ({}) },
+          defaults: {
+            A: () => ({}),
+            B: () => ({}),
+          },
         },
       });
-      createPlugins({ A: {}, B: {} }, ctx);
+
+      createPlugins(
+        {
+          A: {},
+          B: {},
+        },
+        ctx,
+      );
 
       expect(calls).toEqual(["A", "B"]);
+    });
+
+    it("should create a dependency before the plugin that depends on it", () => {
+      const calls: string[] = [];
+
+      const dependency = createMockPlugin("createPluginsDependencyA", {
+        id: "dependencyA",
+      });
+
+      const source = createMockPlugin("createPluginsSource", {
+        id: "source",
+      });
+
+      dependency.getDefinition().create.mockImplementation(() => {
+        calls.push("createPluginsDependencyA");
+
+        return {
+          id: "dependencyA",
+        };
+      });
+
+      source.getDefinition().create.mockImplementation(() => {
+        calls.push("createPluginsSource");
+
+        return {
+          id: "source",
+        };
+      });
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      createPlugins(
+        {
+          createPluginsSource: {
+            dependency: fromPluginInstance("createPluginsDependencyA", (instance) => instance.id),
+          },
+          createPluginsDependencyA: {},
+        },
+        ctx,
+      );
+
+      expect(calls).toEqual(["createPluginsDependencyA", "createPluginsSource"]);
+    });
+
+    it("should create transitive dependencies in dependency order", () => {
+      const calls: string[] = [];
+
+      const dependencyA = createMockPlugin("createPluginsDependencyA", {
+        id: "dependencyA",
+      });
+
+      const dependencyB = createMockPlugin("createPluginsDependencyB", {
+        id: "dependencyB",
+      });
+
+      const source = createMockPlugin("createPluginsSource", {
+        id: "source",
+      });
+
+      dependencyA.getDefinition().create.mockImplementation(() => {
+        calls.push("createPluginsDependencyA");
+
+        return {
+          id: "dependencyA",
+        };
+      });
+
+      dependencyB.getDefinition().create.mockImplementation(() => {
+        calls.push("createPluginsDependencyB");
+
+        return {
+          id: "dependencyB",
+        };
+      });
+
+      source.getDefinition().create.mockImplementation(() => {
+        calls.push("createPluginsSource");
+
+        return {
+          id: "source",
+        };
+      });
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependencyB,
+              enabled: true,
+            },
+            {
+              module: dependencyA,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyB: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      createPlugins(
+        {
+          createPluginsSource: {
+            dependency: fromPluginInstance("createPluginsDependencyB", (instance) => instance.id),
+          },
+          createPluginsDependencyB: {
+            dependency: fromPluginInstance("createPluginsDependencyA", (instance) => instance.id),
+          },
+          createPluginsDependencyA: {},
+        },
+        ctx,
+      );
+
+      expect(calls).toEqual([
+        "createPluginsDependencyA",
+        "createPluginsDependencyB",
+        "createPluginsSource",
+      ]);
+    });
+
+    it("should fail before creation when a required dependency is inactive", () => {
+      const dependency = createMockPlugin("createPluginsDependencyA");
+
+      const source = createMockPlugin("createPluginsSource");
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      expect(() =>
+        createPlugins(
+          {
+            createPluginsSource: {
+              dependency: fromPluginInstance("createPluginsDependencyA", (instance) => instance.id),
+            },
+            createPluginsDependencyA: false,
+          },
+          ctx,
+        ),
+      ).toThrow(
+        `${ERROR_PREFIX} Plugin "createPluginsSource" depends on inactive plugin "createPluginsDependencyA".`,
+      );
+
+      expect(source.getDefinition().create).not.toHaveBeenCalled();
+
+      expect(dependency.getDefinition().create).not.toHaveBeenCalled();
+    });
+
+    it("should fail before creation when plugin dependencies are circular", () => {
+      const dependency = createMockPlugin("createPluginsDependencyA");
+
+      const source = createMockPlugin("createPluginsSource");
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      expect(() =>
+        createPlugins(
+          {
+            createPluginsSource: {
+              dependency: fromPluginInstance("createPluginsDependencyA", (instance) => instance.id),
+            },
+            createPluginsDependencyA: {
+              dependency: fromPluginInstance("createPluginsSource", (instance) => instance.id),
+            },
+          },
+          ctx,
+        ),
+      ).toThrow(/Circular plugin dependency detected/);
+
+      expect(source.getDefinition().create).not.toHaveBeenCalled();
+
+      expect(dependency.getDefinition().create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Pipeline contracts
+  // ---------------------------------------------------------------------------
+  describe("pipeline contracts", () => {
+    it("should not mutate original options object", () => {
+      const mock = createMockPlugin("pinia");
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: mock,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            pinia: () => ({}),
+          },
+        },
+      });
+
+      const options = {
+        pinia: {
+          a: 1,
+        },
+      };
+
+      const snapshot = structuredClone(options);
+
+      createPlugins(options, ctx);
+
+      expect(options).toEqual(snapshot);
     });
 
     it("should stop plugin creation when plugin create throws", () => {
@@ -248,8 +670,14 @@ describe("createPlugins", () => {
       const ctx = createMockCtx({
         preset: {
           manifest: [
-            { module: badPlugin, enabled: true },
-            { module: followingPlugin, enabled: true },
+            {
+              module: badPlugin,
+              enabled: true,
+            },
+            {
+              module: followingPlugin,
+              enabled: true,
+            },
           ],
           defaults: {
             bad: () => ({}),
