@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ERROR_PREFIX } from "../../constants/constants.js";
-import { fromPluginInstance } from "../../plugins/dependencies/fromPluginInstance.js";
-import { createMockCtx } from "../../pipeline/__tests__/fixtures.js";
-import { createPlugins } from "../createPlugins.js";
+import { ERROR_PREFIX } from "../../../constants/constants.js";
+import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
+import { createMockCtx } from "../../../pipeline/__tests__/fixtures.js";
+import { createPlugins } from "../../../plugins/registry/createPlugins.js";
 
 interface CreatePluginsDependencyAInstance {
   id: string;
@@ -17,7 +17,7 @@ interface CreatePluginsSourceInstance {
   id: string;
 }
 
-declare module "../../types" {
+declare module "../../../types" {
   interface PluginOptionsMap {
     createPluginsDependencyA: object;
     createPluginsDependencyB: object;

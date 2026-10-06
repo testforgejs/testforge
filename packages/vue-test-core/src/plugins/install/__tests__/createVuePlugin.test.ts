@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createVuePlugin } from "../createVuePlugin";
+import { createVuePlugin } from "../../../plugins/install/createVuePlugin";
 
 import type { Plugin } from "vue";
 

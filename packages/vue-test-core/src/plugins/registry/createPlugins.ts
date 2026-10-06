@@ -1,12 +1,12 @@
-import { ERROR_PREFIX } from "../constants/constants.js";
-import { buildPluginDependencyGraph } from "../plugins/dependencies/buildPluginDependencyGraph.js";
-import { collectPluginDependencies } from "../plugins/dependencies/collectPluginDependencies.js";
-import { sortPluginDependencyGraph } from "../plugins/dependencies/sortPluginDependencyGraph.js";
-import { validatePluginDependencyGraph } from "../plugins/dependencies/validatePluginDependencyGraph.js";
+import { ERROR_PREFIX } from "../../constants/constants.js";
+import { buildPluginDependencyGraph } from "../dependencies/buildPluginDependencyGraph.js";
+import { collectPluginDependencies } from "../dependencies/collectPluginDependencies.js";
+import { sortPluginDependencyGraph } from "../dependencies/sortPluginDependencyGraph.js";
+import { validatePluginDependencyGraph } from "../dependencies/validatePluginDependencyGraph.js";
 import { createPluginRegistry } from "./createPluginRegistry.js";
 import { getActivePlugins } from "./getActivePlugins.js";
 
-import type { MountPlugin, PipelineContext, ResolvedPluginOptions } from "../types";
+import type { MountPlugin, PipelineContext, ResolvedPluginOptions } from "../../types.js";
 
 /*
  * Creates Vue plugins used for mounting components in tests.

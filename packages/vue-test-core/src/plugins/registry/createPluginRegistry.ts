@@ -1,4 +1,9 @@
-import type { PluginManifestEntry, PluginRegistry, PluginDefinition, PluginName } from "../types";
+import type {
+  PluginManifestEntry,
+  PluginRegistry,
+  PluginDefinition,
+  PluginName,
+} from "../../types";
 
 /*
  * Creates a runtime registry for resolving plugin definitions by name.

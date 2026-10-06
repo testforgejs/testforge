@@ -9,7 +9,7 @@ import type {
 import type { Component } from "vue";
 
 import { mount, shallowMount } from "@vue/test-utils";
-import { createPlugins } from "../pluginsRegistry/createPlugins.js";
+import { createPlugins } from "../plugins/registry/createPlugins.js";
 
 /*
  * Mounts a component using the fully resolved framework context.

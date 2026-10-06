@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { getActivePlugins } from "../../../src/pluginsRegistry/getActivePlugins.js";
+import { getActivePlugins } from "../getActivePlugins.js";
 
-import type { ResolvedPluginOptions } from "../../../src/types";
+import type { ResolvedPluginOptions } from "../../../types.js";
 
 describe("getActivePlugins", () => {
   it("should return active plugins with their options", () => {

@@ -5,12 +5,12 @@ vi.mock("@vue/test-utils", () => ({
   shallowMount: vi.fn(() => "shallow-result"),
 }));
 
-vi.mock("../../pluginsRegistry/createPlugins.js", () => ({
+vi.mock("../../plugins/registry/createPlugins.js", () => ({
   createPlugins: vi.fn(() => ["managed-plugin"]),
 }));
 
 import { mount, shallowMount } from "@vue/test-utils";
-import { createPlugins } from "../../pluginsRegistry/createPlugins.js";
+import { createPlugins } from "../../plugins/registry/createPlugins.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
 
 import type { MountReadyContext } from "../../types";
