@@ -19,10 +19,11 @@ describe("piniaPlugin", () => {
     expect(piniaPlugin.getName()).toBe("pinia");
   });
 
-  it("should return definition containing createPiniaPlugin when getDefinition is called", () => {
+  it("should expose plugin definition", () => {
     const definition = piniaPlugin.getDefinition();
 
     expect(definition.create).toBe(createPiniaPlugin);
+    expect(definition.supportsInstanceReferences).toBe(true);
   });
 
   it("should provide default Pinia options without a test runner", () => {

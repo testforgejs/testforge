@@ -16,6 +16,7 @@ export const vuetifyPlugin: PluginModuleWithDefaults<VuetifyInstance, VueTestVue
 
   getDefinition: () => ({
     create: createVuetifyPlugin,
+    supportsInstanceReferences: true,
   }),
 
   getDefaultOptions: defaultOptions,

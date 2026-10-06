@@ -21,6 +21,7 @@ export interface PluginDefinition<TPlugin extends MountPlugin = MountPlugin, TOp
   beforeCreate?: (ctx: PipelineContext, options: TOptions) => TOptions;
   create: (options: TOptions) => TPlugin;
   afterCreate?: (plugin: TPlugin, ctx: PipelineContext) => void;
+  supportsInstanceReferences?: true;
 }
 
 export interface UniversalRunner {

@@ -12,6 +12,7 @@ describe("i18nPlugin", () => {
     const definition = i18nPlugin.getDefinition();
 
     expect(definition.create).toBe(createI18nPlugin);
+    expect(definition.supportsInstanceReferences).toBe(true);
   });
 
   it("should provide default Vue I18n options", () => {

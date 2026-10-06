@@ -7,10 +7,11 @@ describe("vuetifyPlugin", () => {
     expect(vuetifyPlugin.getName()).toBe("vuetify");
   });
 
-  it("should return definition containing createVuetifyPlugin when getDefinition is called", () => {
+  it("should expose plugin definition", () => {
     const definition = vuetifyPlugin.getDefinition();
 
     expect(definition.create).toBe(createVuetifyPlugin);
+    expect(definition.supportsInstanceReferences).toBe(true);
   });
 
   it("should return default options factory when getDefaultOptions is called", () => {

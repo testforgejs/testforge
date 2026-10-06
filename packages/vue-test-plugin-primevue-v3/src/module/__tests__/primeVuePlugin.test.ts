@@ -14,6 +14,12 @@ describe("primeVuePlugin", () => {
     expect(definition.create).toBe(createPrimeVuePlugin);
   });
 
+  it("should not support plugin instance references", () => {
+    const definition = primeVuePlugin.getDefinition();
+
+    expect(definition.supportsInstanceReferences).toBeUndefined();
+  });
+
   it("should not provide unstyled mode in default options", () => {
     const optionsFactory = primeVuePlugin.getDefaultOptions();
     const options = optionsFactory();

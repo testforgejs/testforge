@@ -7,10 +7,11 @@ describe("routerPlugin", () => {
     expect(routerPlugin.getName()).toBe("router");
   });
 
-  it("should return definition containing createRouterPlugin when getDefinition is called", () => {
+  it("should expose plugin definition", () => {
     const definition = routerPlugin.getDefinition();
 
     expect(definition.create).toBe(createRouterPlugin);
+    expect(definition.supportsInstanceReferences).toBe(true);
   });
 
   it("should provide default Router options", () => {

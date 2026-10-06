@@ -27,6 +27,7 @@ export const piniaPlugin: PluginModuleWithDefaults<TestingPinia, VueTestPiniaOpt
     afterCreate(instance) {
       setActivePinia(instance);
     },
+    supportsInstanceReferences: true,
   }),
   getDefaultOptions: defaultOptions,
 };

@@ -16,6 +16,7 @@ export const routerPlugin: PluginModuleWithDefaults<Router, VueTestRouterOptions
   getName: () => ROUTER_PLUGIN_NAME,
   getDefinition: () => ({
     create: createRouterPlugin,
+    supportsInstanceReferences: true,
   }),
   getDefaultOptions: defaultOptions,
 };

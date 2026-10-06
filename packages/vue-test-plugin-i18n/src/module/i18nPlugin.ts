@@ -17,6 +17,7 @@ export const i18nPlugin: PluginModuleWithDefaults<I18n, VueTestI18nOptions> = {
 
   getDefinition: () => ({
     create: createI18nPlugin,
+    supportsInstanceReferences: true,
   }),
 
   getDefaultOptions: defaultOptions,
