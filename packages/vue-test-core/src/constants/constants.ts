@@ -1,3 +1,6 @@
-export const FRAMEWORK_NAME = "TestForge";
-export const ERROR_PREFIX = `[${FRAMEWORK_NAME}]`;
-export const DEFAULT_PRESET_NAME = "default";
+export const FRAMEWORK_NAME = "TestForge" as const;
+export const ERROR_PREFIX = `[${FRAMEWORK_NAME}]` as const;
+export const DEFAULT_PRESET_NAME = "default" as const;
+export const SHARED_PLUGIN_INSTANCE_KEY = "__sharedInstance" as const;
+export const OPAQUE_PLUGIN_CONFIG_KEYS = [SHARED_PLUGIN_INSTANCE_KEY] as const;
+export const OPAQUE_PLUGIN_CONFIG_KEY_SET: ReadonlySet<string> = new Set(OPAQUE_PLUGIN_CONFIG_KEYS);

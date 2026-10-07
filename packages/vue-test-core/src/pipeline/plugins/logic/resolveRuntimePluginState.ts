@@ -1,6 +1,13 @@
-import type { ResolvedPluginConfig, PluginOverlay, RuntimePluginState } from "../../../types";
-
+import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/constants.js";
+import { isPluginInstanceReference } from "../../../plugins/dependencies/isPluginInstanceReference.js";
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
+
+import type {
+  PluginName,
+  ResolvedPluginConfig,
+  PluginOverlay,
+  RuntimePluginState,
+} from "../../../types";
 
 /*
  * Resolves a user/plugin configuration into a runtime-ready plugin config.
@@ -32,6 +39,7 @@ import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverl
  * }
  */
 export function resolveRuntimePluginState(
+  pluginName: PluginName,
   config: ResolvedPluginConfig,
   overlay?: PluginOverlay,
 ): RuntimePluginState {
@@ -40,10 +48,17 @@ export function resolveRuntimePluginState(
   };
 
   if (isPluginOverlayObject(overlay)) {
-    const meta = overlay.__meta;
+    const instance = overlay.__meta?.instance;
 
-    if (meta?.instance) {
-      runtimeConfig.__sharedInstance = meta.instance;
+    if (instance !== undefined) {
+      if (isPluginInstanceReference(instance)) {
+        throw new Error(
+          `${ERROR_PREFIX} Plugin "${pluginName}" cannot use fromPluginInstance() as "__meta.instance". ` +
+            `"__meta.instance" must contain a pre-created plugin instance.`,
+        );
+      }
+
+      runtimeConfig[SHARED_PLUGIN_INSTANCE_KEY] = instance;
     }
   }
 

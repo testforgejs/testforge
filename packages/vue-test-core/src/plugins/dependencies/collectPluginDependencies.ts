@@ -1,3 +1,4 @@
+import { OPAQUE_PLUGIN_CONFIG_KEY_SET } from "../../constants/constants.js";
 import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 
@@ -11,6 +12,10 @@ import type { PluginDependency } from "./types";
  * Plugin instance references are treated as atomic descriptors. Arrays and
  * plain objects are traversed recursively, while other object types are left
  * untouched.
+ *
+ * Configuration values stored under opaque plugin config keys are treated as
+ * runtime values and are not traversed. This includes pre-created plugin
+ * instances stored in `__sharedInstance`.
  *
  * Duplicate references to the same plugin produce a single dependency.
  *
@@ -39,6 +44,7 @@ export function collectPluginDependencies<TPluginName extends PluginName>(
 
       visited.add(value);
       value.forEach(visit);
+
       return;
     }
 
@@ -52,7 +58,13 @@ export function collectPluginDependencies<TPluginName extends PluginName>(
 
     visited.add(value);
 
-    Object.values(value).forEach(visit);
+    for (const [key, nestedValue] of Object.entries(value)) {
+      if (OPAQUE_PLUGIN_CONFIG_KEY_SET.has(key)) {
+        continue;
+      }
+
+      visit(nestedValue);
+    }
   };
 
   visit(config);

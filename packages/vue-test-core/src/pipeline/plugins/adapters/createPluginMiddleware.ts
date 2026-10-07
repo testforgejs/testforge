@@ -21,19 +21,20 @@ import { getExtraPluginOptions } from "../logic/getExtraPluginOptions";
  * - write the resolved config into `ctx.result.plugins`
  */
 export function createPluginMiddleware(
-  name: PluginName,
+  pluginName: PluginName,
 ): PipelineMiddleware<RuntimeContext, RuntimeContext> {
   return <T extends PipelineContext>(ctx: T): T => {
-    const config = getPluginConfig(ctx, name);
+    const config = getPluginConfig(ctx, pluginName);
 
     if (!config) return ctx;
 
     const extraOptions = resolveExtraOptions(ctx.extraOptions);
     const runtimeConfig = resolveRuntimePluginState(
+      pluginName,
       config,
-      getExtraPluginOptions(extraOptions, name),
+      getExtraPluginOptions(extraOptions, pluginName),
     );
 
-    return patchPluginState(ctx, name, runtimeConfig);
+    return patchPluginState(ctx, pluginName, runtimeConfig);
   };
 }

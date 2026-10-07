@@ -1,4 +1,4 @@
-import { ERROR_PREFIX } from "../../constants/constants.js";
+import { ERROR_PREFIX, OPAQUE_PLUGIN_CONFIG_KEY_SET } from "../../constants/constants.js";
 import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 
@@ -19,9 +19,9 @@ import type {
  *
  * The source configuration is never mutated.
  *
- * Non-plain objects are treated as opaque runtime values and are not
- * traversed. Shared object references are preserved through WeakMap-based
- * resolution tracking.
+ * Non-plain objects and values stored under opaque plugin config keys are
+ * treated as runtime values and are not traversed. Shared object references
+ * are preserved through WeakMap-based resolution tracking.
  *
  * If the root value itself is a PluginInstanceReference, its resolved
  * value is returned directly.
@@ -85,6 +85,10 @@ export function resolvePluginInstanceReferences<T>(
     let result: Record<string, unknown> | undefined;
 
     for (const [key, item] of Object.entries(current)) {
+      if (OPAQUE_PLUGIN_CONFIG_KEY_SET.has(key)) {
+        continue;
+      }
+
       const resolvedItem = visit(item);
 
       if (resolvedItem === item) {
