@@ -4,8 +4,21 @@ import { createPipeline } from "../core/createPipeline.js";
 import { createMountPipeline } from "../mount/createMountPipeline.js";
 import { presets } from "./mockPresets.js";
 import { ERROR_PREFIX } from "../../constants/constants.js";
+import { fromPluginInstance } from "../../plugins/dependencies/fromPluginInstance.js";
+import { isPluginInstanceReference } from "../../plugins/dependencies/isPluginInstanceReference.js";
+import { resolvePluginInstanceReferences } from "../../plugins/dependencies/resolvePluginInstanceReferences.js";
 
 import type { RuntimePluginConfig, TestFrameworkPresets } from "../../types";
+
+interface PipelineDependencyInstance {
+  id: string;
+}
+
+declare module "../../types" {
+  interface PluginInstanceMap {
+    pipelineDependency: PipelineDependencyInstance;
+  }
+}
 
 describe("Mount Pipeline Integration", () => {
   const createMockPlugin = (name: string) => ({
@@ -88,6 +101,48 @@ describe("Mount Pipeline Integration", () => {
 
       expect(piniaConfig.stubActions).toBe(true);
       expect(piniaConfig.initialState).toEqual({ keyB: 2 });
+    });
+  });
+
+  describe("Mount-scoped Plugin Configuration", () => {
+    it("should resolve plugin instance references independently across pipeline runs", () => {
+      const mountOptions = {
+        plugins: {
+          pinia: {
+            nested: {
+              dependency: fromPluginInstance("pipelineDependency", (instance) => instance.id),
+            },
+          },
+        },
+      };
+
+      const firstResult = run(presets, {}, mountOptions);
+
+      const firstPiniaConfig = firstResult.plugins.pinia as RuntimePluginConfig;
+
+      const firstResolvedPiniaConfig = resolvePluginInstanceReferences(
+        firstPiniaConfig,
+        new Map([["pipelineDependency", { id: "first-instance" }]]),
+      );
+
+      expect(firstResolvedPiniaConfig.nested.dependency).toBe("first-instance");
+
+      expect(isPluginInstanceReference(firstPiniaConfig.nested.dependency)).toBe(true);
+
+      const secondResult = run(presets, {}, mountOptions);
+
+      const secondPiniaConfig = secondResult.plugins.pinia as RuntimePluginConfig;
+
+      const secondResolvedPiniaConfig = resolvePluginInstanceReferences(
+        secondPiniaConfig,
+        new Map([["pipelineDependency", { id: "second-instance" }]]),
+      );
+
+      expect(secondResolvedPiniaConfig.nested.dependency).toBe("second-instance");
+
+      expect(firstResolvedPiniaConfig.nested.dependency).toBe("first-instance");
+
+      expect(isPluginInstanceReference(secondPiniaConfig.nested.dependency)).toBe(true);
     });
   });
 

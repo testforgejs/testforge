@@ -5,21 +5,26 @@ import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 import type {
   PluginInstanceMap,
   PluginInstanceName,
-  PluginName,
   PluginInstanceReference,
+  PluginName,
 } from "../../types";
 
 /*
- * Resolves deferred plugin instance references in a runtime configuration value.
+ * Resolves deferred plugin instance references within a mount-scoped
+ * runtime configuration.
  *
- * Arrays and plain objects are traversed recursively and cloned without mutating
- * the original configuration. Non-plain objects are treated as opaque values.
+ * Arrays and plain configuration objects are traversed recursively.
+ * Branches containing resolved references are copied lazily, while
+ * unchanged branches preserve their original identity.
  *
- * Shared references and cyclic structures are preserved through WeakMap-based
- * clone tracking.
+ * The source configuration is never mutated.
  *
- * Each PluginInstanceReference is resolved against a plugin that must already
- * exist in the created plugin registry.
+ * Non-plain objects are treated as opaque runtime values and are not
+ * traversed. Shared object references are preserved through WeakMap-based
+ * resolution tracking.
+ *
+ * If the root value itself is a PluginInstanceReference, its resolved
+ * value is returned directly.
  */
 export function resolvePluginInstanceReferences<T>(
   value: T,
@@ -32,43 +37,80 @@ export function resolvePluginInstanceReferences<T>(
       return resolveReference(current, createdPlugins);
     }
 
-    if (Array.isArray(current)) {
-      const existing = resolved.get(current);
+    if (current === null || typeof current !== "object") {
+      return current;
+    }
 
-      if (existing !== undefined) {
-        return existing;
+    if (Array.isArray(current)) {
+      if (resolved.has(current)) {
+        return resolved.get(current);
       }
 
-      const result: unknown[] = [];
+      let result: unknown[] | undefined;
 
-      resolved.set(current, result);
+      for (const [index, item] of current.entries()) {
+        const resolvedItem = visit(item);
 
-      current.forEach((item) => {
-        result.push(visit(item));
-      });
+        if (resolvedItem === item) {
+          continue;
+        }
 
-      return result;
+        if (result === undefined) {
+          const clone = current.slice();
+
+          clone[index] = resolvedItem;
+          result = clone;
+
+          continue;
+        }
+
+        result[index] = resolvedItem;
+      }
+
+      const resolvedArray = result ?? current;
+
+      resolved.set(current, resolvedArray);
+
+      return resolvedArray;
     }
 
     if (!isPlainObject(current)) {
       return current;
     }
 
-    const existing = resolved.get(current);
-
-    if (existing !== undefined) {
-      return existing;
+    if (resolved.has(current)) {
+      return resolved.get(current);
     }
 
-    const result = Object.create(Object.getPrototypeOf(current)) as Record<string, unknown>;
+    let result: Record<string, unknown> | undefined;
 
-    resolved.set(current, result);
+    for (const [key, item] of Object.entries(current)) {
+      const resolvedItem = visit(item);
 
-    Object.entries(current).forEach(([key, item]) => {
-      result[key] = visit(item);
-    });
+      if (resolvedItem === item) {
+        continue;
+      }
 
-    return result;
+      if (result === undefined) {
+        const clone = Object.assign(
+          Object.create(Object.getPrototypeOf(current)) as Record<string, unknown>,
+          current,
+        );
+
+        clone[key] = resolvedItem;
+        result = clone;
+
+        continue;
+      }
+
+      result[key] = resolvedItem;
+    }
+
+    const resolvedObject = result ?? current;
+
+    resolved.set(current, resolvedObject);
+
+    return resolvedObject;
   };
 
   return visit(value) as T;
@@ -79,15 +121,17 @@ export function resolvePluginInstanceReferences<T>(
  */
 function resolveReference<TPluginName extends PluginInstanceName>(
   reference: PluginInstanceReference<TPluginName, unknown>,
-  createdPlugins: ReadonlyMap<PluginName, unknown>,
+  createdPluginInstances: ReadonlyMap<PluginName, unknown>,
 ): unknown {
-  if (!createdPlugins.has(reference.pluginName)) {
+  if (!createdPluginInstances.has(reference.pluginName)) {
     throw new Error(
       `${ERROR_PREFIX} Cannot resolve plugin instance reference "${reference.pluginName}" before the plugin has been created.`,
     );
   }
 
-  const instance = createdPlugins.get(reference.pluginName) as PluginInstanceMap[TPluginName];
+  const instance = createdPluginInstances.get(
+    reference.pluginName,
+  ) as PluginInstanceMap[TPluginName];
 
   return reference.resolve(instance);
 }

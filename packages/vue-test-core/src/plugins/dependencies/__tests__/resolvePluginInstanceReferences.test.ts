@@ -124,15 +124,27 @@ describe("resolvePluginInstanceReferences", () => {
     expect(resolver).not.toHaveBeenCalled();
   });
 
-  it("should not mutate the original configuration", () => {
+  it("should copy only branches containing resolved references without mutating the source", () => {
     const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+    const unchanged = {
+      value: "unchanged",
+    };
 
     const config = {
       nested: {
         reference,
+        unchanged,
       },
-      items: [reference],
+      items: [reference, unchanged],
+      untouched: {
+        value: "untouched",
+      },
     };
+
+    const originalNested = config.nested;
+    const originalItems = config.items;
+    const originalUntouched = config.untouched;
 
     const createdPlugins = createPlugins([
       [
@@ -146,37 +158,41 @@ describe("resolvePluginInstanceReferences", () => {
     const resolved = resolvePluginInstanceReferences(config, createdPlugins);
 
     expect(resolved).not.toBe(config);
-    expect(resolved.nested).not.toBe(config.nested);
-    expect(resolved.items).not.toBe(config.items);
+
+    expect(resolved.nested).not.toBe(originalNested);
+    expect(resolved.items).not.toBe(originalItems);
+
+    expect(resolved.untouched).toBe(originalUntouched);
+    expect(resolved.nested.unchanged).toBe(unchanged);
+    expect(resolved.items[1]).toBe(unchanged);
+
+    expect(resolved.nested.reference).toBe("resolved");
+    expect(resolved.items[0]).toBe("resolved");
 
     expect(config.nested.reference).toBe(reference);
     expect(config.items[0]).toBe(reference);
   });
 
-  it("should preserve cyclic configuration structures", () => {
-    const config: Record<string, unknown> = {
-      reference: fromPluginInstance("dependencyA", (instance) => instance.value),
+  it("should preserve the original configuration when no references are resolved", () => {
+    const nested = {
+      value: "nested",
     };
 
-    config.self = config;
+    const items = ["first", "second"];
 
-    const createdPlugins = createPlugins([
-      [
-        "dependencyA",
-        {
-          value: "resolved",
-        },
-      ],
-    ]);
+    const config = {
+      nested,
+      items,
+    };
 
-    const resolved = resolvePluginInstanceReferences(config, createdPlugins);
+    const resolved = resolvePluginInstanceReferences(config, createPlugins([]));
 
-    expect(resolved).not.toBe(config);
-    expect(resolved.reference).toBe("resolved");
-    expect(resolved.self).toBe(resolved);
+    expect(resolved).toBe(config);
+    expect(resolved.nested).toBe(nested);
+    expect(resolved.items).toBe(items);
   });
 
-  it("should preserve shared object references", () => {
+  it("should preserve shared object references when a shared branch is copied", () => {
     const shared = {
       reference: fromPluginInstance("dependencyA", (instance) => instance.value),
     };
@@ -197,11 +213,18 @@ describe("resolvePluginInstanceReferences", () => {
 
     const resolved = resolvePluginInstanceReferences(config, createdPlugins);
 
+    expect(resolved).not.toBe(config);
+
     expect(resolved.first).not.toBe(shared);
     expect(resolved.first).toBe(resolved.second);
+
     expect(resolved.first).toEqual({
       reference: "resolved",
     });
+
+    expect(config.first).toBe(shared);
+    expect(config.second).toBe(shared);
+    expect(config.first.reference).toBe(shared.reference);
   });
 
   it("should throw when the referenced plugin has not been created", () => {
@@ -212,5 +235,31 @@ describe("resolvePluginInstanceReferences", () => {
     expect(() => resolvePluginInstanceReferences(reference, createdPlugins)).toThrow(
       `${ERROR_PREFIX} Cannot resolve plugin instance reference "dependencyA" before the plugin has been created.`,
     );
+  });
+
+  it("should preserve shared plugin instance identity", () => {
+    const sharedInstance = {
+      id: "shared",
+      install: () => {},
+    };
+
+    const config = {
+      __sharedInstance: sharedInstance,
+      dependency: fromPluginInstance("dependencyA", (instance) => instance.value),
+    };
+
+    const createdPlugins = new Map([
+      [
+        "dependencyA",
+        {
+          value: "resolved",
+        },
+      ],
+    ]);
+
+    const resolved = resolvePluginInstanceReferences(config, createdPlugins);
+
+    expect(resolved.__sharedInstance).toBe(sharedInstance);
+    expect(resolved.dependency).toBe("resolved");
   });
 });

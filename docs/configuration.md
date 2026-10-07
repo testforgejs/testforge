@@ -1472,11 +1472,13 @@ After mounting, the captured instance can be inspected or manipulated directly i
 
 ### 7.3. Instance Isolation
 
-Each component factory invocation creates an isolated runtime environment.
+By default, each component factory invocation creates an isolated runtime environment.
 
 Managed plugin instances created for one mount are not automatically shared with another factory invocation.
 
 This prevents state from leaking between tests.
+
+Instance isolation applies to plugin instances created by TestForge. User-provided pre-created instances retain their identity and may intentionally be shared across mounts.
 
 For example:
 
@@ -1517,4 +1519,4 @@ expect(firstCapture.instance).not.toBe(secondCapture.instance);
 
 When a test intentionally requires a shared plugin instance — for example, to share state across multiple mounts or helpers — do not rely on automatic managed instance creation.
 
-Instead, explicitly create the instance and pass it through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances).
+Instead, explicitly create the instance and pass it through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances). The supplied instance is reused as-is rather than recreated by TestForge, so its identity and any shared runtime state are preserved across mounts that use it.
