@@ -109,7 +109,7 @@ writeFile(
   `import type {} from "@testforgejs/vue-test-core";
 
 import { ${constantName} } from "../constants/constants.js";
-import type { VueTest${pascalName}Options } from "./types.js";
+import type { VueTest${pascalName}Options } from "./types";
 
 declare module "@testforgejs/vue-test-core" {
   interface PluginOptionsMap {

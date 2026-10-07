@@ -2,7 +2,7 @@ import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 
 import type { PluginInstanceName, PluginName } from "../../types";
-import type { PluginDependency } from "./types.js";
+import type { PluginDependency } from "./types";
 
 /**
  * Collects runtime instance dependencies declared in a plugin's effective

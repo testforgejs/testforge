@@ -1,12 +1,14 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 import { buildPluginDependencyGraph } from "../dependencies/buildPluginDependencyGraph.js";
 import { collectPluginDependencies } from "../dependencies/collectPluginDependencies.js";
+import { resolvePluginInstanceReferences } from "../dependencies/resolvePluginInstanceReferences.js";
 import { sortPluginDependencyGraph } from "../dependencies/sortPluginDependencyGraph.js";
 import { validatePluginDependencyGraph } from "../dependencies/validatePluginDependencyGraph.js";
+import { validatePluginInstanceReferenceTargets } from "../dependencies/validatePluginInstanceReferenceTargets.js";
 import { createPluginRegistry } from "./createPluginRegistry.js";
 import { getActivePlugins } from "./getActivePlugins.js";
 
-import type { MountPlugin, PipelineContext, ResolvedPluginOptions } from "../../types.js";
+import type { MountPlugin, PluginName, PipelineContext, ResolvedPluginOptions } from "../../types";
 
 /*
  * Creates Vue plugins used for mounting components in tests.
@@ -52,9 +54,13 @@ export function createPlugins(
 
   validatePluginDependencyGraph(dependencyGraph);
 
+  validatePluginInstanceReferenceTargets(dependencies, registry);
+
   const creationOrder = sortPluginDependencyGraph(dependencyGraph);
 
   const activePluginsByName = new Map(activePlugins.map((plugin) => [plugin.name, plugin]));
+
+  const createdPluginInstances = new Map<PluginName, unknown>();
 
   for (const name of creationOrder) {
     const definition = registry.get(name);
@@ -69,13 +75,20 @@ export function createPlugins(
       throw new Error(`${ERROR_PREFIX} Active plugin "${name}" is missing during creation.`);
     }
 
-    let pluginOptions = activePlugin.options;
+    let pluginOptions = resolvePluginInstanceReferences(
+      activePlugin.options,
+      createdPluginInstances,
+    );
 
     if (definition.beforeCreate) {
       pluginOptions = definition.beforeCreate(ctx, pluginOptions);
     }
 
     const createdPlugin = definition.create(pluginOptions);
+
+    if (definition.supportsInstanceReferences) {
+      createdPluginInstances.set(name, createdPlugin);
+    }
 
     if (definition.afterCreate) {
       definition.afterCreate(createdPlugin, ctx);

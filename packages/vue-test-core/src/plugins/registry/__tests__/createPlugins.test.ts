@@ -32,7 +32,11 @@ declare module "../../../types" {
 }
 
 describe("createPlugins", () => {
-  const createMockPlugin = (name: string, createdPlugin = { id: `inst-${name}` }) => {
+  const createMockPlugin = (
+    name: string,
+    createdPlugin = { id: `inst-${name}` },
+    supportsInstanceReferences = false,
+  ) => {
     const definition = {
       beforeCreate: vi.fn((ctx, opts) => ({
         ...opts,
@@ -40,6 +44,7 @@ describe("createPlugins", () => {
       })),
       create: vi.fn(() => createdPlugin),
       afterCreate: vi.fn(),
+      ...(supportsInstanceReferences ? { supportsInstanceReferences: true as const } : {}),
     };
 
     return {
@@ -388,9 +393,13 @@ describe("createPlugins", () => {
     it("should create a dependency before the plugin that depends on it", () => {
       const calls: string[] = [];
 
-      const dependency = createMockPlugin("createPluginsDependencyA", {
-        id: "dependencyA",
-      });
+      const dependency = createMockPlugin(
+        "createPluginsDependencyA",
+        {
+          id: "dependencyA",
+        },
+        true,
+      );
 
       const source = createMockPlugin("createPluginsSource", {
         id: "source",
@@ -447,13 +456,21 @@ describe("createPlugins", () => {
     it("should create transitive dependencies in dependency order", () => {
       const calls: string[] = [];
 
-      const dependencyA = createMockPlugin("createPluginsDependencyA", {
-        id: "dependencyA",
-      });
+      const dependencyA = createMockPlugin(
+        "createPluginsDependencyA",
+        {
+          id: "dependencyA",
+        },
+        true,
+      );
 
-      const dependencyB = createMockPlugin("createPluginsDependencyB", {
-        id: "dependencyB",
-      });
+      const dependencyB = createMockPlugin(
+        "createPluginsDependencyB",
+        {
+          id: "dependencyB",
+        },
+        true,
+      );
 
       const source = createMockPlugin("createPluginsSource", {
         id: "source",
@@ -528,7 +545,7 @@ describe("createPlugins", () => {
     });
 
     it("should fail before creation when a required dependency is inactive", () => {
-      const dependency = createMockPlugin("createPluginsDependencyA");
+      const dependency = createMockPlugin("createPluginsDependencyA", { id: "dependencyA" }, true);
 
       const source = createMockPlugin("createPluginsSource");
 
@@ -571,7 +588,7 @@ describe("createPlugins", () => {
     });
 
     it("should fail before creation when plugin dependencies are circular", () => {
-      const dependency = createMockPlugin("createPluginsDependencyA");
+      const dependency = createMockPlugin("createPluginsDependencyA", { id: "dependencyA" }, true);
 
       const source = createMockPlugin("createPluginsSource");
 
@@ -612,6 +629,52 @@ describe("createPlugins", () => {
 
       expect(dependency.getDefinition().create).not.toHaveBeenCalled();
     });
+
+    it("should fail before creation when a dependency does not support instance references", () => {
+      const dependency = createMockPlugin("createPluginsDependencyA", {
+        id: "dependencyA",
+      });
+
+      const source = createMockPlugin("createPluginsSource", {
+        id: "source",
+      });
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      expect(() =>
+        createPlugins(
+          {
+            createPluginsSource: {
+              dependency: fromPluginInstance("createPluginsDependencyA", (instance) => instance.id),
+            },
+            createPluginsDependencyA: {},
+          },
+          ctx,
+        ),
+      ).toThrow(
+        `${ERROR_PREFIX} Plugin "createPluginsSource" depends on plugin "createPluginsDependencyA", which does not support instance references.`,
+      );
+
+      expect(source.getDefinition().create).not.toHaveBeenCalled();
+      expect(dependency.getDefinition().create).not.toHaveBeenCalled();
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -646,6 +709,191 @@ describe("createPlugins", () => {
       createPlugins(options, ctx);
 
       expect(options).toEqual(snapshot);
+    });
+
+    it("should resolve plugin instance references before lifecycle hooks without mutating source options", () => {
+      const dependency = createMockPlugin(
+        "createPluginsDependencyA",
+        {
+          id: "dependencyA",
+        },
+        true,
+      );
+
+      const source = createMockPlugin("createPluginsSource", {
+        id: "source",
+      });
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      const reference = fromPluginInstance("createPluginsDependencyA", (instance) => instance.id);
+
+      const options = {
+        createPluginsSource: {
+          dependency: reference,
+        },
+        createPluginsDependencyA: {},
+      };
+
+      createPlugins(options, ctx);
+
+      const sourceDefinition = source.getDefinition();
+
+      expect(sourceDefinition.beforeCreate).toHaveBeenCalledWith(ctx, {
+        dependency: "dependencyA",
+      });
+
+      expect(sourceDefinition.create).toHaveBeenCalledWith({
+        dependency: "dependencyA",
+        modified: true,
+      });
+
+      expect(options.createPluginsSource.dependency).toBe(reference);
+    });
+
+    it("should resolve plugin instance references independently across repeated calls", () => {
+      const dependency = createMockPlugin(
+        "createPluginsDependencyA",
+        {
+          id: "unused",
+        },
+        true,
+      );
+
+      dependency
+        .getDefinition()
+        .create.mockImplementationOnce(() => ({
+          id: "first-instance",
+        }))
+        .mockImplementationOnce(() => ({
+          id: "second-instance",
+        }));
+
+      const source = createMockPlugin("createPluginsSource", {
+        id: "source",
+      });
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      const reference = fromPluginInstance("createPluginsDependencyA", (instance) => instance.id);
+
+      const options = {
+        createPluginsSource: {
+          dependency: reference,
+        },
+        createPluginsDependencyA: {},
+      };
+
+      createPlugins(options, ctx);
+      createPlugins(options, ctx);
+
+      const sourceDefinition = source.getDefinition();
+
+      expect(sourceDefinition.beforeCreate).toHaveBeenNthCalledWith(1, ctx, {
+        dependency: "first-instance",
+      });
+
+      expect(sourceDefinition.beforeCreate).toHaveBeenNthCalledWith(2, ctx, {
+        dependency: "second-instance",
+      });
+
+      expect(options.createPluginsSource.dependency).toBe(reference);
+    });
+
+    it("should preserve runtime value identity while resolving sibling references", () => {
+      const dependency = createMockPlugin(
+        "createPluginsDependencyA",
+        {
+          id: "dependencyA",
+        },
+        true,
+      );
+
+      const source = createMockPlugin("createPluginsSource", {
+        id: "source",
+      });
+
+      const ctx = createMockCtx({
+        preset: {
+          manifest: [
+            {
+              module: source,
+              enabled: true,
+            },
+            {
+              module: dependency,
+              enabled: true,
+            },
+          ],
+          defaults: {
+            createPluginsSource: () => ({}),
+            createPluginsDependencyA: () => ({}),
+          },
+        },
+      });
+
+      const sharedInstance = {
+        id: "shared",
+        install: () => {},
+      };
+
+      const options = {
+        createPluginsSource: {
+          sharedInstance,
+          dependency: fromPluginInstance("createPluginsDependencyA", (instance) => instance.id),
+        },
+        createPluginsDependencyA: {},
+      };
+
+      createPlugins(options, ctx);
+
+      expect(source.getDefinition().beforeCreate).toHaveBeenCalledWith(
+        ctx,
+        expect.objectContaining({
+          sharedInstance,
+          dependency: "dependencyA",
+        }),
+      );
+
+      const resolvedOptions = source.getDefinition().beforeCreate.mock.calls[0][1];
+
+      expect(resolvedOptions).not.toBe(options.createPluginsSource);
+
+      expect(resolvedOptions.sharedInstance).toBe(sharedInstance);
     });
 
     it("should stop plugin creation when plugin create throws", () => {

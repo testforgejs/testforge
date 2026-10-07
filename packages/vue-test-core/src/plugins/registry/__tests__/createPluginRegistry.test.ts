@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createPluginRegistry } from "../createPluginRegistry.js";
 
-import type { PluginDefinition, PluginManifestEntry, PluginModule } from "../../../types.js";
+import type { PluginDefinition, PluginManifestEntry, PluginModule } from "../../../types";
 
 export const createMockPluginDefinition = (
   overrides: Partial<PluginDefinition> = {},

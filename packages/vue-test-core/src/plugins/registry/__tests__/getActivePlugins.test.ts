@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getActivePlugins } from "../getActivePlugins.js";
 
-import type { ResolvedPluginOptions } from "../../../types.js";
+import type { ResolvedPluginOptions } from "../../../types";
 
 describe("getActivePlugins", () => {
   it("should return active plugins with their options", () => {
