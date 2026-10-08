@@ -1,10 +1,6 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
-import { buildPluginDependencyGraph } from "../dependencies/buildPluginDependencyGraph.js";
-import { collectPluginDependencies } from "../dependencies/collectPluginDependencies.js";
 import { resolvePluginInstanceReferences } from "../dependencies/resolvePluginInstanceReferences.js";
-import { sortPluginDependencyGraph } from "../dependencies/sortPluginDependencyGraph.js";
-import { validatePluginDependencyGraph } from "../dependencies/validatePluginDependencyGraph.js";
-import { validatePluginInstanceReferenceTargets } from "../dependencies/validatePluginInstanceReferenceTargets.js";
+import { resolvePluginCreationOrder } from "../dependencies/resolvePluginCreationOrder.js";
 import { supportsPluginInstanceReferences } from "../dependencies/guards/supportsPluginInstanceReferences.js";
 import { createPluginRegistry } from "./createPluginRegistry.js";
 import { getActivePlugins } from "./getActivePlugins.js";
@@ -50,19 +46,7 @@ export function createPlugins(
 
   const activePlugins = getActivePlugins(registry.getNames(), options);
 
-  const activePluginNames = activePlugins.map(({ name }) => name);
-
-  const dependencies = activePlugins.flatMap(({ name, options: pluginOptions }) =>
-    collectPluginDependencies(name, pluginOptions),
-  );
-
-  const dependencyGraph = buildPluginDependencyGraph(activePluginNames, dependencies);
-
-  validatePluginDependencyGraph(dependencyGraph);
-
-  validatePluginInstanceReferenceTargets(dependencies, registry);
-
-  const creationOrder = sortPluginDependencyGraph(dependencyGraph);
+  const creationOrder = resolvePluginCreationOrder(activePlugins, registry);
 
   const activePluginsByName = new Map(activePlugins.map((plugin) => [plugin.name, plugin]));
 
