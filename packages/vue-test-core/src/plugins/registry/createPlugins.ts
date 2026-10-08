@@ -5,10 +5,16 @@ import { resolvePluginInstanceReferences } from "../dependencies/resolvePluginIn
 import { sortPluginDependencyGraph } from "../dependencies/sortPluginDependencyGraph.js";
 import { validatePluginDependencyGraph } from "../dependencies/validatePluginDependencyGraph.js";
 import { validatePluginInstanceReferenceTargets } from "../dependencies/validatePluginInstanceReferenceTargets.js";
+import { supportsPluginInstanceReferences } from "../dependencies/guards/supportsPluginInstanceReferences.js";
 import { createPluginRegistry } from "./createPluginRegistry.js";
 import { getActivePlugins } from "./getActivePlugins.js";
 
-import type { MountPlugin, PluginName, PipelineContext, ResolvedPluginOptions } from "../../types";
+import type {
+  MountPlugin,
+  PluginInstanceName,
+  PipelineContext,
+  ResolvedPluginOptions,
+} from "../../types";
 
 /*
  * Creates Vue plugins used for mounting components in tests.
@@ -60,7 +66,7 @@ export function createPlugins(
 
   const activePluginsByName = new Map(activePlugins.map((plugin) => [plugin.name, plugin]));
 
-  const createdPluginInstances = new Map<PluginName, unknown>();
+  const createdPluginInstances = new Map<PluginInstanceName, unknown>();
 
   for (const name of creationOrder) {
     const definition = registry.get(name);
@@ -86,7 +92,7 @@ export function createPlugins(
 
     const createdPlugin = definition.create(pluginOptions);
 
-    if (definition.supportsInstanceReferences) {
+    if (supportsPluginInstanceReferences(name, definition)) {
       createdPluginInstances.set(name, createdPlugin);
     }
 

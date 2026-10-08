@@ -1,17 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ERROR_PREFIX } from "../../../../src/constants/constants.js";
-import { fromPluginInstance } from "../../../../src/plugins/dependencies/fromPluginInstance.js";
-import { resolvePluginInstanceReferences } from "../../../../src/plugins/dependencies/resolvePluginInstanceReferences.js";
+import { ERROR_PREFIX } from "../../../constants/constants.js";
+import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
+import { resolvePluginInstanceReferences } from "../../../plugins/dependencies/resolvePluginInstanceReferences.js";
 
-import type { PluginName } from "../../../../src/types";
+import type { PluginInstanceName } from "../../../types";
 
 import type { TestDependencyAInstance } from "./fixtures/pluginRegistry";
 import "./fixtures/pluginRegistry";
 
 function createPlugins(
-  entries: readonly [PluginName, unknown][],
-): ReadonlyMap<PluginName, unknown> {
+  entries: readonly (readonly [PluginInstanceName, unknown])[],
+): ReadonlyMap<PluginInstanceName, unknown> {
   return new Map(entries);
 }
 
@@ -307,7 +307,7 @@ describe("resolvePluginInstanceReferences", () => {
         dependency: fromPluginInstance("dependencyA", (instance) => instance.value),
       };
 
-      const createdPlugins = new Map([
+      const createdPlugins = createPlugins([
         [
           "dependencyA",
           {

@@ -2,12 +2,7 @@ import { ERROR_PREFIX, OPAQUE_PLUGIN_CONFIG_KEY_SET } from "../../constants/cons
 import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 
-import type {
-  PluginInstanceMap,
-  PluginInstanceName,
-  PluginInstanceReference,
-  PluginName,
-} from "../../types";
+import type { PluginInstanceMap, PluginInstanceName, PluginInstanceReference } from "../../types";
 
 /*
  * Resolves deferred plugin instance references within a mount-scoped
@@ -28,7 +23,7 @@ import type {
  */
 export function resolvePluginInstanceReferences<T>(
   value: T,
-  createdPlugins: ReadonlyMap<PluginName, unknown>,
+  createdPlugins: ReadonlyMap<PluginInstanceName, unknown>,
 ): T {
   const resolved = new WeakMap<object, unknown>();
 
@@ -125,7 +120,7 @@ export function resolvePluginInstanceReferences<T>(
  */
 function resolveReference<TPluginName extends PluginInstanceName>(
   reference: PluginInstanceReference<TPluginName, unknown>,
-  createdPluginInstances: ReadonlyMap<PluginName, unknown>,
+  createdPluginInstances: ReadonlyMap<PluginInstanceName, unknown>,
 ): unknown {
   if (!createdPluginInstances.has(reference.pluginName)) {
     throw new Error(
