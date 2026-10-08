@@ -35,6 +35,20 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolver).toHaveBeenCalledWith(instance);
     });
 
+    it("should resolve a root reference to the plugin instance itself", () => {
+      const instance = {
+        value: "resolved",
+      };
+
+      const reference = fromPluginInstance("dependencyA", (pluginInstance) => pluginInstance);
+
+      const createdPlugins = createPlugins([["dependencyA", instance]]);
+
+      const resolved = resolvePluginInstanceReferences(reference, createdPlugins);
+
+      expect(resolved).toBe(instance);
+    });
+
     it("should resolve references in nested objects and arrays", () => {
       const createdPlugins = createPlugins([
         [
@@ -349,6 +363,24 @@ describe("resolvePluginInstanceReferences", () => {
       expect(config.dependency).toBe(reference);
       expect(config.__sharedInstance).toBe(sharedInstance);
     });
+
+    it("should reject cycles spanning plain objects and arrays", () => {
+      interface CyclicConfig {
+        items: unknown[];
+      }
+
+      const config: CyclicConfig = {
+        items: [],
+      };
+
+      config.items.push(config);
+
+      expect(() => resolvePluginInstanceReferences(config, createPlugins([]))).toThrow(
+        CIRCULAR_REFERENCE_ERROR,
+      );
+
+      expect(config.items[0]).toBe(config);
+    });
   });
 
   describe("copy-on-write semantics", () => {
@@ -511,6 +543,82 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolved.__sharedInstance).toBe(sharedInstance);
       expect(resolved.dependency).toBe("resolved");
     });
+
+    it("should resolve references in a root array without mutating the source", () => {
+      const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+      const unchanged = {
+        value: "unchanged",
+      };
+
+      const config = [reference, unchanged];
+
+      const createdPlugins = createPlugins([["dependencyA", { value: "resolved" }]]);
+
+      const resolved = resolvePluginInstanceReferences(config, createdPlugins);
+
+      expect(resolved).not.toBe(config);
+
+      expect(resolved[0]).toBe("resolved");
+      expect(resolved[1]).toBe(unchanged);
+
+      expect(config[0]).toBe(reference);
+      expect(config[1]).toBe(unchanged);
+    });
+  });
+
+  describe("resolution isolation", () => {
+    it("should resolve the same configuration independently across calls", () => {
+      const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+      const unchanged = {
+        value: "shared",
+      };
+
+      const config = {
+        nested: {
+          dependency: reference,
+        },
+        unchanged,
+      };
+
+      const firstInstance = {
+        value: "first-instance",
+      };
+
+      const secondInstance = {
+        value: "second-instance",
+      };
+
+      const firstPlugins = createPlugins([["dependencyA", firstInstance]]);
+
+      const secondPlugins = createPlugins([["dependencyA", secondInstance]]);
+
+      const firstResolved = resolvePluginInstanceReferences(config, firstPlugins);
+
+      const secondResolved = resolvePluginInstanceReferences(config, secondPlugins);
+
+      // Resolve references independently for each call.
+      expect(firstResolved.nested.dependency).toBe("first-instance");
+      expect(secondResolved.nested.dependency).toBe("second-instance");
+
+      // Create independent copies of affected branches.
+      expect(firstResolved).not.toBe(secondResolved);
+      expect(firstResolved.nested).not.toBe(secondResolved.nested);
+
+      expect(firstResolved.nested).not.toBe(config.nested);
+      expect(secondResolved.nested).not.toBe(config.nested);
+
+      // Preserve unchanged branches through structural sharing.
+      expect(firstResolved.unchanged).toBe(unchanged);
+      expect(secondResolved.unchanged).toBe(unchanged);
+
+      // The second resolution must not affect the first result.
+      expect(firstResolved.nested.dependency).toBe("first-instance");
+
+      // Never mutate the original configuration.
+      expect(config.nested.dependency).toBe(reference);
+    });
   });
 
   describe("error handling", () => {
@@ -522,6 +630,30 @@ describe("resolvePluginInstanceReferences", () => {
       expect(() => resolvePluginInstanceReferences(reference, createdPlugins)).toThrow(
         `${ERROR_PREFIX} Cannot resolve plugin instance reference "dependencyA" before the plugin has been created.`,
       );
+    });
+
+    it("should preserve the source configuration when resolution fails", () => {
+      const validReference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+      const missingReference = fromPluginInstance("dependencyB", (instance) => instance.count);
+
+      const config = {
+        first: {
+          dependency: validReference,
+        },
+        second: {
+          dependency: missingReference,
+        },
+      };
+
+      const createdPlugins = createPlugins([["dependencyA", { value: "resolved" }]]);
+
+      expect(() => resolvePluginInstanceReferences(config, createdPlugins)).toThrow(
+        `${ERROR_PREFIX} Cannot resolve plugin instance reference "dependencyB" before the plugin has been created.`,
+      );
+
+      expect(config.first.dependency).toBe(validReference);
+      expect(config.second.dependency).toBe(missingReference);
     });
   });
 });
