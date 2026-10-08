@@ -14,7 +14,7 @@ export interface TestInactiveDependencyInstance {
   active: boolean;
 }
 
-declare module "../../../../../src/types" {
+declare module "../../../../types" {
   interface PluginOptionsMap {
     sourcePlugin: object;
     dependencyA: object;

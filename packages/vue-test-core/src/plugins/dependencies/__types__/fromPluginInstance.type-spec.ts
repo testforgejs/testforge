@@ -1,6 +1,6 @@
-import { fromPluginInstance } from "../../../../src/plugins/dependencies/fromPluginInstance.js";
+import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
 
-import type { PluginInstanceReference } from "../../../../src/types";
+import type { PluginInstanceReference } from "../../../types";
 
 import type { Equal, Expect } from "../../../../tests/utils/type-utils.js";
 
@@ -12,7 +12,7 @@ interface OtherPluginInstance {
   count: number;
 }
 
-declare module "../../../../src/types" {
+declare module "../../../types" {
   interface PluginOptionsMap {
     testPlugin: object;
     otherPlugin: object;

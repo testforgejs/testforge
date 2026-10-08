@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { ERROR_PREFIX } from "../../../../src/constants/constants.js";
-import { buildPluginDependencyGraph } from "../../../../src/plugins/dependencies/buildPluginDependencyGraph.js";
+import { ERROR_PREFIX } from "../../../constants/constants.js";
+import { buildPluginDependencyGraph } from "../../../plugins/dependencies/buildPluginDependencyGraph.js";
 
-import type { PluginDependency } from "../../../../src/plugins/dependencies/types";
+import type { PluginDependency } from "../../../plugins/dependencies/types";
 
 import "./fixtures/pluginRegistry";
 

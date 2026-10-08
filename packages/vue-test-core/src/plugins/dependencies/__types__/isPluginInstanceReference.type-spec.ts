@@ -1,6 +1,6 @@
-import { isPluginInstanceReference } from "../../../../src/plugins/dependencies/isPluginInstanceReference.js";
+import { isPluginInstanceReference } from "../../../plugins/dependencies/isPluginInstanceReference.js";
 
-import type { PluginInstanceName, PluginInstanceReference } from "../../../../src/types";
+import type { PluginInstanceName, PluginInstanceReference } from "../../../types";
 
 import type { Equal, Expect } from "../../../../tests/utils/type-utils.js";
 
@@ -8,7 +8,7 @@ interface TestPluginInstance {
   value: string;
 }
 
-declare module "../../../../src/types" {
+declare module "../../../types" {
   interface PluginOptionsMap {
     testPlugin: object;
   }

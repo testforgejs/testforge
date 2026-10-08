@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { collectPluginDependencies } from "../../../../src/plugins/dependencies/collectPluginDependencies.js";
-import { fromPluginInstance } from "../../../../src/plugins/dependencies/fromPluginInstance.js";
+import { collectPluginDependencies } from "../../../plugins/dependencies/collectPluginDependencies.js";
+import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
 
 import "./fixtures/pluginRegistry";
 
