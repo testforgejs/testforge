@@ -1,4 +1,4 @@
-import { ERROR_PREFIX } from "../../constants/constants.js";
+import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
 
 import type { Plugin } from "vue";
 import type { RuntimePluginOptions } from "../../types";
@@ -24,9 +24,9 @@ export function createVuePlugin<TPlugin extends Plugin, TOptions extends object>
   plugin: TPlugin,
   options: RuntimePluginOptions<[TPlugin, TOptions], TOptions>,
 ): [TPlugin, TOptions] {
-  if (options.__sharedInstance) {
+  if (options[SHARED_PLUGIN_INSTANCE_KEY]) {
     throw new Error(
-      `${ERROR_PREFIX} __sharedInstance is not supported for non-instance Vue plugins. ` +
+      `${ERROR_PREFIX} ${SHARED_PLUGIN_INSTANCE_KEY} is not supported for non-instance Vue plugins. ` +
         "Shared instances are only supported for stateful plugin factories such as Router, Pinia or vue-i18n.",
     );
   }

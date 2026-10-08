@@ -1,6 +1,7 @@
-import type { RuntimePluginOptions } from "../../types";
-
+import { SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
 import { exposeInstance } from "./exposeInstance.js";
+
+import type { RuntimePluginOptions } from "../../types";
 
 /*
  * Creates (or reuses) a plugin instance using the provided factory.
@@ -18,7 +19,7 @@ export function createPluginInstance<TInstance, TOptions extends object>(
   factory: (options: TOptions) => TInstance,
   options: RuntimePluginOptions<TInstance, TOptions>,
 ): TInstance {
-  const instance = options.__sharedInstance ?? factory(options);
+  const instance = options[SHARED_PLUGIN_INSTANCE_KEY] ?? factory(options);
   exposeInstance<TInstance>(instance, options);
   return instance;
 }
