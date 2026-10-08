@@ -127,6 +127,24 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolver).not.toHaveBeenCalled();
     });
 
+    it("should allow cyclic references inside non-plain objects", () => {
+      class RuntimeInstance {
+        self = this;
+      }
+
+      const instance = new RuntimeInstance();
+
+      const config = {
+        instance,
+      };
+
+      const resolved = resolvePluginInstanceReferences(config, createPlugins([]));
+
+      expect(resolved).toBe(config);
+      expect(resolved.instance).toBe(instance);
+      expect(resolved.instance.self).toBe(instance);
+    });
+
     it("should treat pre-created plugin instances as opaque", () => {
       const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
 
@@ -189,6 +207,147 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolved.__sharedInstance.nested).toBe(opaqueReference);
 
       expect(config.dependency).toBe(regularReference);
+    });
+  });
+
+  describe("cyclic configurations", () => {
+    const CIRCULAR_REFERENCE_ERROR = `${ERROR_PREFIX} Circular plugin configuration reference detected.`;
+
+    it("should reject a self-referencing plain object", () => {
+      interface CyclicConfig {
+        value: string;
+        self?: CyclicConfig;
+      }
+
+      const config: CyclicConfig = {
+        value: "original",
+      };
+
+      config.self = config;
+
+      expect(() => resolvePluginInstanceReferences(config, createPlugins([]))).toThrow(
+        CIRCULAR_REFERENCE_ERROR,
+      );
+
+      // The source must remain unchanged.
+      expect(config.self).toBe(config);
+      expect(config.value).toBe("original");
+    });
+
+    it("should reject mutually referencing plain objects", () => {
+      interface ConfigNode {
+        value: string;
+        next?: ConfigNode;
+      }
+
+      const first: ConfigNode = {
+        value: "first",
+      };
+
+      const second: ConfigNode = {
+        value: "second",
+      };
+
+      first.next = second;
+      second.next = first;
+
+      const config = {
+        first,
+        second,
+      };
+
+      expect(() => resolvePluginInstanceReferences(config, createPlugins([]))).toThrow(
+        CIRCULAR_REFERENCE_ERROR,
+      );
+
+      expect(first.next).toBe(second);
+      expect(second.next).toBe(first);
+    });
+
+    it("should reject a self-referencing array", () => {
+      const config: unknown[] = [];
+
+      config.push(config);
+
+      expect(() => resolvePluginInstanceReferences(config, createPlugins([]))).toThrow(
+        CIRCULAR_REFERENCE_ERROR,
+      );
+
+      expect(config[0]).toBe(config);
+    });
+
+    it("should reject cyclic configurations containing plugin instance references", () => {
+      const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+      interface CyclicConfig {
+        dependency: typeof reference;
+        self?: CyclicConfig;
+      }
+
+      const config: CyclicConfig = {
+        dependency: reference,
+      };
+
+      config.self = config;
+
+      const createdPlugins = createPlugins([["dependencyA", { value: "resolved" }]]);
+
+      expect(() => resolvePluginInstanceReferences(config, createdPlugins)).toThrow(
+        CIRCULAR_REFERENCE_ERROR,
+      );
+
+      // Even when a reference was encountered, the source is not mutated.
+      expect(config.dependency).toBe(reference);
+      expect(config.self).toBe(config);
+    });
+
+    it("should allow shared references without cycles", () => {
+      const shared = {
+        value: "shared",
+      };
+
+      const config = {
+        first: shared,
+        second: shared,
+      };
+
+      const resolved = resolvePluginInstanceReferences(config, createPlugins([]));
+
+      expect(resolved).toBe(config);
+      expect(resolved.first).toBe(shared);
+      expect(resolved.second).toBe(shared);
+    });
+
+    it("should allow cyclic references inside opaque runtime values", () => {
+      interface SharedInstance {
+        self?: SharedInstance;
+      }
+
+      const sharedInstance: SharedInstance = {};
+
+      sharedInstance.self = sharedInstance;
+
+      const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+      const config = {
+        __sharedInstance: sharedInstance,
+        dependency: reference,
+      };
+
+      const createdPlugins = createPlugins([["dependencyA", { value: "resolved" }]]);
+
+      const resolved = resolvePluginInstanceReferences(config, createdPlugins);
+
+      expect(resolved).not.toBe(config);
+      expect(resolved.dependency).toBe("resolved");
+
+      // The cyclic runtime instance is opaque and preserves its identity.
+      expect(resolved.__sharedInstance).toBe(sharedInstance);
+      expect(resolved.__sharedInstance.self).toBe(sharedInstance);
+
+      // The original configuration remains unchanged.
+      expect(config.dependency).toBe(reference);
+      expect(config.__sharedInstance).toBe(sharedInstance);
     });
   });
 
@@ -259,6 +418,37 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolved).toBe(config);
       expect(resolved.nested).toBe(nested);
       expect(resolved.items).toBe(items);
+    });
+
+    it("should preserve the original array when no references are resolved", () => {
+      const nested = {
+        value: "nested",
+      };
+
+      const config = [1, 2, nested];
+
+      const resolved = resolvePluginInstanceReferences(config, createPlugins([]));
+
+      expect(resolved).toBe(config);
+      expect(resolved[2]).toBe(nested);
+    });
+
+    it("should preserve a non-plain root object without traversing it", () => {
+      class CustomConfig {
+        value = "original";
+
+        getValue() {
+          return this.value;
+        }
+      }
+
+      const config = new CustomConfig();
+
+      const resolved = resolvePluginInstanceReferences(config, createPlugins([]));
+
+      expect(resolved).toBe(config);
+      expect(resolved.value).toBe("original");
+      expect(resolved.getValue()).toBe("original");
     });
 
     it("should preserve shared object references when a shared branch is copied", () => {

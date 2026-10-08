@@ -15,17 +15,24 @@ import type { PluginInstanceMap, PluginInstanceName, PluginInstanceReference } f
  * The source configuration is never mutated.
  *
  * Non-plain objects and values stored under opaque plugin config keys are
- * treated as runtime values and are not traversed. Shared object references
- * are preserved through WeakMap-based resolution tracking.
+ * treated as runtime values and are not traversed.
+ *
+ * Shared object references are preserved through WeakMap-based resolution
+ * tracking. Circular references between traversable configuration objects
+ * are rejected.
  *
  * If the root value itself is a PluginInstanceReference, its resolved
  * value is returned directly.
+ *
+ * @throws When a circular configuration reference is detected or a
+ * referenced plugin instance has not been created.
  */
 export function resolvePluginInstanceReferences<T>(
   value: T,
   createdPlugins: ReadonlyMap<PluginInstanceName, unknown>,
 ): T {
   const resolved = new WeakMap<object, unknown>();
+  const visiting = new WeakSet<object>();
 
   const visit = (current: unknown): unknown => {
     if (isPluginInstanceReference(current)) {
@@ -36,14 +43,60 @@ export function resolvePluginInstanceReferences<T>(
       return current;
     }
 
-    if (Array.isArray(current)) {
-      if (resolved.has(current)) {
-        return resolved.get(current);
+    // Only arrays and plain objects are traversed.
+    if (!Array.isArray(current) && !isPlainObject(current)) {
+      return current;
+    }
+
+    // Detect cycles in the current traversal path.
+    if (visiting.has(current)) {
+      throw new Error(`${ERROR_PREFIX} Circular plugin configuration reference detected.`);
+    }
+
+    // Reuse already resolved objects to preserve shared references.
+    if (resolved.has(current)) {
+      return resolved.get(current);
+    }
+
+    visiting.add(current);
+
+    try {
+      if (Array.isArray(current)) {
+        let result: unknown[] | undefined;
+
+        for (const [index, item] of current.entries()) {
+          const resolvedItem = visit(item);
+
+          if (resolvedItem === item) {
+            continue;
+          }
+
+          if (result === undefined) {
+            const clone = current.slice();
+
+            clone[index] = resolvedItem;
+            result = clone;
+
+            continue;
+          }
+
+          result[index] = resolvedItem;
+        }
+
+        const resolvedArray = result ?? current;
+
+        resolved.set(current, resolvedArray);
+
+        return resolvedArray;
       }
 
-      let result: unknown[] | undefined;
+      let result: Record<string, unknown> | undefined;
 
-      for (const [index, item] of current.entries()) {
+      for (const [key, item] of Object.entries(current)) {
+        if (OPAQUE_PLUGIN_CONFIG_KEY_SET.has(key)) {
+          continue;
+        }
+
         const resolvedItem = visit(item);
 
         if (resolvedItem === item) {
@@ -51,65 +104,28 @@ export function resolvePluginInstanceReferences<T>(
         }
 
         if (result === undefined) {
-          const clone = current.slice();
+          const clone = Object.assign(
+            Object.create(Object.getPrototypeOf(current)) as Record<string, unknown>,
+            current,
+          );
 
-          clone[index] = resolvedItem;
+          clone[key] = resolvedItem;
           result = clone;
 
           continue;
         }
 
-        result[index] = resolvedItem;
+        result[key] = resolvedItem;
       }
 
-      const resolvedArray = result ?? current;
+      const resolvedObject = result ?? current;
 
-      resolved.set(current, resolvedArray);
+      resolved.set(current, resolvedObject);
 
-      return resolvedArray;
+      return resolvedObject;
+    } finally {
+      visiting.delete(current);
     }
-
-    if (!isPlainObject(current)) {
-      return current;
-    }
-
-    if (resolved.has(current)) {
-      return resolved.get(current);
-    }
-
-    let result: Record<string, unknown> | undefined;
-
-    for (const [key, item] of Object.entries(current)) {
-      if (OPAQUE_PLUGIN_CONFIG_KEY_SET.has(key)) {
-        continue;
-      }
-
-      const resolvedItem = visit(item);
-
-      if (resolvedItem === item) {
-        continue;
-      }
-
-      if (result === undefined) {
-        const clone = Object.assign(
-          Object.create(Object.getPrototypeOf(current)) as Record<string, unknown>,
-          current,
-        );
-
-        clone[key] = resolvedItem;
-        result = clone;
-
-        continue;
-      }
-
-      result[key] = resolvedItem;
-    }
-
-    const resolvedObject = result ?? current;
-
-    resolved.set(current, resolvedObject);
-
-    return resolvedObject;
   };
 
   return visit(value) as T;
