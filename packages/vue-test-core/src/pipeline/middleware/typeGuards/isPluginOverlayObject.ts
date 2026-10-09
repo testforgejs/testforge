@@ -1,29 +1,39 @@
 import type { PluginMeta } from "../../../types";
 
 /*
- * Type guard that checks whether a value is a valid plugin overlay object.
+ * Checks whether a value is a valid PluginMeta object.
  *
- * In the framework, a plugin overlay (from `extraOptions[pluginName]`) can be:
+ * Since `instance` is optional and accepts any value, only the
+ * non-null, non-array object shape needs to be validated.
+ */
+function isPluginMeta(val: unknown): val is PluginMeta {
+  return typeof val === "object" && val !== null && !Array.isArray(val);
+}
+
+/*
+ * Checks whether a value is a valid plugin overlay object.
+ *
+ * A plugin overlay (from `extraOptions.plugins[pluginName]`) can be:
  * - an object with optional `__meta`
  * - `false` (explicit plugin disable)
  * - `undefined`
  *
- * This guard narrows the value to the object case only, allowing safe access
- * to overlay fields such as `__meta` without unsafe casts.
+ * Narrows the value to the object case and validates that `__meta`,
+ * when provided, is a non-null, non-array object.
  *
- * IMPORTANT:
- * This guard does NOT validate the shape of the overlay itself.
- * It only ensures that the value is a non-null, non-array object.
- *
- * Runtime purpose:
- *   Safely distinguish between `{ ...overlay }` and `false | undefined`.
- *
- * Type-level purpose:
- *   Narrow `unknown | false | undefined` to
- *   `Record<string, unknown> & { __meta?: PluginMeta }`.
+ * Does not validate other overlay properties or `__meta.instance`.
  */
 export function isPluginOverlayObject(
   val: unknown,
 ): val is Record<string, unknown> & { __meta?: PluginMeta } {
-  return typeof val === "object" && val !== null && !Array.isArray(val);
+  if (typeof val !== "object" || val === null || Array.isArray(val)) {
+    return false;
+  }
+
+  // Validate metadata only when explicitly provided.
+  if ("__meta" in val && val.__meta !== undefined) {
+    return isPluginMeta(val.__meta);
+  }
+
+  return true;
 }
