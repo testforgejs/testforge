@@ -1,4 +1,8 @@
-import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/constants.js";
+import {
+  ERROR_PREFIX,
+  PLUGIN_META_KEY,
+  SHARED_PLUGIN_INSTANCE_KEY,
+} from "../../../constants/constants.js";
 import { isPluginInstanceReference } from "../../../plugins/dependencies/isPluginInstanceReference.js";
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 
@@ -48,13 +52,13 @@ export function resolveRuntimePluginState(
   };
 
   if (isPluginOverlayObject(overlay)) {
-    const instance = overlay.__meta?.instance;
+    const instance = overlay[PLUGIN_META_KEY]?.instance;
 
     if (instance !== undefined) {
       if (isPluginInstanceReference(instance)) {
         throw new Error(
-          `${ERROR_PREFIX} Plugin "${pluginName}" cannot use fromPluginInstance() as "__meta.instance". ` +
-            `"__meta.instance" must contain a pre-created plugin instance.`,
+          `${ERROR_PREFIX} Plugin "${pluginName}" cannot use fromPluginInstance() as "${PLUGIN_META_KEY}.instance". ` +
+            `"${PLUGIN_META_KEY}.instance" must contain a pre-created plugin instance.`,
         );
       }
 
@@ -62,7 +66,7 @@ export function resolveRuntimePluginState(
     }
   }
 
-  delete runtimeConfig.__meta;
+  delete runtimeConfig[PLUGIN_META_KEY];
 
   return runtimeConfig;
 }
