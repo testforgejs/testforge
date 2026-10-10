@@ -1,22 +1,22 @@
 # ⚙️ Configuration & Advanced Usage
 
-This guide explains TestForge's configuration model and advanced runtime controls.
+This guide explains how TestForge resolves configuration and provides advanced controls for component tests.
 
 It covers:
 
-- the `testComponentFactory` API;
-- the four-tier configuration layering model;
-- merge strategies for Vue Test Utils and managed plugin options;
-- execution controls and runtime overlays;
-- managed plugin configuration and validation;
-- preset composition;
-- third-party Vue Test Utils plugins;
+- the `testComponentFactory` API
+- the four-tier configuration layering model
+- merge strategies for Vue Test Utils and managed plugin options
+- execution controls and runtime overlays
+- managed plugin configuration and validation
+- preset composition
+- third-party Vue Test Utils plugins
 - advanced plugin instance handling.
 
 If you are new to TestForge, start with the [Getting Started Guide](getting-started.md).
 
 > [!NOTE]
-> This guide focuses on TestForge configuration and advanced usage rather than package installation.
+> This guide covers configuration and advanced usage, not package installation.
 >
 > TestForge plugin packages imported directly by project code must be installed as direct project dependencies.
 >
@@ -27,10 +27,10 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
 - [1. `testComponentFactory` Signature](#testcomponentfactory-signature)
 - [2. The 4-Tier Configuration Layering Model](#configuration-layers)
 - [3. Merge Strategies](#merge-strategies)
-  - [3.1. Flat Vue Test Utils Options](#flat-vtu-options)
+  - [3.1. Top-Level Vue Test Utils Options](#flat-vtu-options)
   - [3.2. The `global` Section](#global-options)
   - [3.3. Managed Plugin Configuration](#managed-plugin-configuration)
-  - [3.4. Props & Slots Priority](#props-slots-priority)
+  - [3.4. Props and Slots Priority](#props-slots-priority)
 - [4. Execution Flags](#execution-flags)
 - [5. Managed Plugins](#managed-plugins)
   - [5.1. Preset Manifest Declaration](#51-preset-manifest-declaration)
@@ -49,20 +49,20 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
 
 `testComponentFactory` creates a reusable factory for mounting a specific component.
 
-You can define common props, slots, Vue Test Utils options, and plugin configuration once and override them for individual tests.
+Define shared props, slots, Vue Test Utils options, and plugin configuration once, then override them for individual tests.
 
 ### Factory Creation
 
 ```typescript
 const factory = testComponentFactory(
   Component,
-  defaultProps?,
-  defaultMountOptions?,
-  defaultSlots?,
+  defaultProps, // optional
+  defaultMountOptions, // optional
+  defaultSlots, // optional
 );
 ```
 
-The arguments are applied as factory-level defaults for every invocation of the resulting factory.
+These arguments define factory-level defaults applied to every mount created by the factory.
 
 - `Component` — the Vue component to mount.
 - `defaultProps` — default component props.
@@ -73,21 +73,21 @@ The arguments are applied as factory-level defaults for every invocation of the 
 
 ```typescript
 const wrapper = factory(
-  props?,
-  mountOptions?,
-  slots?,
-  extraOptions?,
+  props, // optional
+  mountOptions, // optional
+  slots, // optional
+  extraOptions, // optional
 );
 ```
 
-The arguments configure an individual component mount.
+These arguments configure a single component mount.
 
 - `props` — test-specific component props.
 - `mountOptions` — test-specific Vue Test Utils options and managed plugin configuration.
 - `slots` — test-specific component slots.
 - `extraOptions` — advanced framework controls and runtime plugin overlays.
 
-The exact resolution and merge behavior of these arguments is described in the following sections.
+The following sections explain how these options are resolved and merged.
 
 ---
 
@@ -95,28 +95,40 @@ The exact resolution and merge behavior of these arguments is described in the f
 
 ## 2. 🥞 The 4-Tier Configuration Layering Model
 
-TestForge resolves configuration across four distinct layers.
+TestForge combines configuration from four sources, each with its own scope and purpose. For managed plugins, these sources do **not** form a simple sequence of four full replacements.
 
-Each layer represents a different configuration scope and is designed for a different purpose.
+Instead, TestForge resolves the runtime options from Layers 2–4, then performs a **final shallow merge** with the preset defaults from Layer 1. The resolved runtime options take precedence over matching preset properties.
 
-| Layer                               | Defined At               | Scope                  | Managed Plugin Behavior                       |
-| :---------------------------------- | :----------------------- | :--------------------- | :-------------------------------------------- |
-| **Layer 1: Preset Defaults**        | `createTestFramework()`  | Project-wide baseline  | Baseline configuration                        |
-| **Layer 2: `defaultMountOptions`**  | `testComponentFactory()` | Factory-level baseline | Full replacement of the plugin configuration  |
-| **Layer 3: `mountOptions`**         | `factory()`              | Individual test        | Full replacement of the plugin configuration  |
-| **Layer 4: `extraOptions.plugins`** | `factory()` 4th argument | Individual test        | Shallow overlay on the resolved configuration |
+| Layer                               | Defined At                    | Scope                 | Managed Plugin Behavior                                               |
+| :---------------------------------- | :---------------------------- | :-------------------- | :-------------------------------------------------------------------- |
+| **Layer 1: Preset Defaults**        | `createTestFramework()`       | Project-wide baseline | Provides the base configuration for managed plugins                   |
+| **Layer 2: `defaultMountOptions`**  | `testComponentFactory()`      | Component factory     | Provides factory-level plugin options that can override preset values |
+| **Layer 3: `mountOptions`**         | `factory()`                   | Individual mount      | Replaces Layer 2 options for the same plugin                          |
+| **Layer 4: `extraOptions.plugins`** | `factory()` (fourth argument) | Individual mount      | Applies a shallow overlay to the resolved runtime plugin options      |
+
+> [!IMPORTANT]
+> Layer 3 replaces **Layer 2 configuration for the same plugin**, not
+> that plugin's preset defaults.
+>
+> A plugin declared with `enabled: false` in the preset manifest can
+> still be activated through `defaultMountOptions.plugins`,
+> `mountOptions.plugins`, or `extraOptions.plugins`.
+> Once activated, its preset defaults remain available as the base
+> configuration during the final merge.
+>
+> An explicit runtime configuration value of `false` disables the
+> plugin and prevents its preset defaults from being merged.
+>
+> See [Managed Plugin Configuration](#managed-plugin-configuration) for the full resolution rules and an example using all four layers.
 
 ### Layer 1: Preset Defaults
 
-Preset defaults provide the baseline configuration for managed plugins in the active runtime environment.
+Preset defaults establish the baseline options for managed plugins in the active runtime environment.
 
-Each default is defined as a `PluginOptionsFactory`. TestForge invokes the factory when resolving the active preset configuration.
-
-For example, a project-owned Pinia preset can materialize its Vitest configuration explicitly:
+Each default is a `PluginOptionsFactory`, which TestForge invokes when resolving the active preset. For example, a project-owned preset can configure Pinia for Vitest:
 
 ```typescript
 import { vi } from "vitest";
-
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
@@ -127,7 +139,6 @@ const preset = {
       enabled: true,
     },
   ],
-
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
@@ -140,9 +151,7 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-Using a factory ensures that plugin options are created for the current pipeline context rather than shared as one mutable configuration object.
-
-For example:
+Preset factories allow TestForge to obtain fresh options for each resolution instead of relying on a single mutable configuration object. To create independent values, the factory must actually return new objects:
 
 ```typescript
 const defaultPinia = () => ({
@@ -156,17 +165,24 @@ const second = defaultPinia();
 first !== second; // true
 ```
 
-This is particularly important for plugins with nested or mutable configuration such as Pinia state, Vue Router routes and history configuration, and Vue I18n messages.
+This is especially useful for mutable options such as Pinia state, Vue Router routes, and Vue I18n messages. A preset factory can also create fresh runtime objects, such as a new Router history, on each invocation.
 
-Managed plugins must be declared in the active preset manifest before they can be configured through TestForge's managed `plugins` API.
+However, only objects created inside the factory are necessarily new. If the factory returns references to objects created elsewhere, those objects retain their identity and may be shared across mounts.
+TestForge does not automatically clone or recreate them.
 
-Preset composition is a separate concern and is described later in [Section 5.2](#52-preset-composition-with-extendpreset).
+See [Instance Isolation](#instance-isolation) for details on reference sharing and mount-specific objects.
+
+During the final plugin configuration merge, TestForge combines preset defaults with the already resolved runtime options. Properties from the preset remain available unless they are overridden by runtime options. The merge is shallow: matching nested values are replaced rather than recursively merged.
+
+If a plugin is explicitly disabled with `false`, it remains disabled and its preset defaults are not applied.
+
+Managed plugins must be declared in the active preset manifest before they can be configured through the managed `plugins` API. Preset composition is covered separately in [Section 5.2](#52-preset-composition-with-extendpreset).
 
 ---
 
 ### Layer 2: `defaultMountOptions`
 
-Factory-level defaults are defined when creating a component factory.
+Define factory-level defaults when creating a component factory:
 
 ```typescript
 const factory = testComponentFactory(
@@ -184,15 +200,16 @@ const factory = testComponentFactory(
 );
 ```
 
-This configuration becomes the baseline for all tests created from this factory.
+This configuration serves as the baseline for every mount created by the component factory. For managed plugins, its properties can override matching preset values while unrelated preset properties remain available during the final merge.
 
-For managed plugins, a plugin configuration provided at this layer replaces the corresponding configuration inherited from the preset.
+> [!NOTE]
+> Stateful objects supplied through `defaultMountOptions` may be shared across mounts. TestForge does not automatically clone or recreate them. See [Instance Isolation](#instance-isolation) for details.
 
 ---
 
 ### Layer 3: `mountOptions`
 
-Test-level configuration is provided when invoking the factory.
+Provide test-specific configuration when invoking a component factory:
 
 ```typescript
 factory(
@@ -209,15 +226,17 @@ factory(
 );
 ```
 
-For managed plugins, a plugin configuration provided here replaces the corresponding factory-level configuration.
+For managed plugins, configuration supplied at this layer **replaces the corresponding Layer 2 configuration as a whole**. Properties from the factory-level configuration that are not repeated at Layer 3 are discarded for that plugin.
 
-This replacement behavior prevents test-specific state from accidentally inheriting unrelated state from the factory configuration.
+This replacement does **not** discard the preset defaults. They are still used as the base during the final merge, except where overridden by the resolved runtime options.
+
+Replacement prevents an individual test from unintentionally inheriting unrelated factory-level plugin settings.
 
 ---
 
 ### Layer 4: `extraOptions.plugins`
 
-The fourth layer provides a fine-grained overlay for managed plugin configuration.
+The fourth layer makes targeted adjustments to managed plugin options:
 
 ```typescript
 factory(
@@ -234,11 +253,9 @@ factory(
 );
 ```
 
-Unlike `mountOptions.plugins`, `extraOptions.plugins` does not replace the already resolved plugin configuration.
+Unlike `mountOptions.plugins`, this layer does not replace the entire configuration for a plugin. It applies a **shallow overlay** to the runtime configuration resolved from Layers 2 and 3, **before** the final merge with preset defaults.
 
-Instead, it applies a shallow overlay to the resolved configuration.
-
-For example, if previous layers established:
+For example, if the runtime options contain:
 
 ```typescript
 {
@@ -249,7 +266,7 @@ For example, if previous layers established:
 }
 ```
 
-the Layer 4 overlay:
+and the Layer 4 overlay specifies:
 
 ```typescript
 {
@@ -257,7 +274,7 @@ the Layer 4 overlay:
 }
 ```
 
-produces an effective configuration equivalent to:
+the overlaid runtime configuration becomes:
 
 ```typescript
 {
@@ -268,12 +285,12 @@ produces an effective configuration equivalent to:
 }
 ```
 
-The inherited `initialState` is preserved.
+The existing `initialState` is preserved. The final merge then adds any preset properties that are still missing from these runtime options.
 
 > [!NOTE]
-> Use `mountOptions.plugins` when you want to replace the managed plugin configuration for a test.
+> Use `mountOptions.plugins` to replace a plugin's factory-level configuration for a specific test.
 >
-> Use `extraOptions.plugins` when you want to adjust specific properties without redeclaring the entire configuration.
+> Use `extraOptions.plugins` to override individual top-level properties without redeclaring the entire runtime configuration.
 
 ---
 
@@ -281,27 +298,22 @@ The inherited `initialState` is preserved.
 
 ## 3. 🔄 Merge Strategies
 
-Not all configuration is merged in the same way.
-
-TestForge uses different strategies depending on the type of configuration being resolved.
+TestForge uses different strategies depending on the part of the configuration being resolved. Standard top-level Vue Test Utils options, `global`, and managed plugin options do not all follow the same rules.
 
 <a id="flat-vtu-options"></a>
 
-### 3.1. Flat Vue Test Utils Options
+### 3.1. Top-Level Vue Test Utils Options
 
-Standard flat Vue Test Utils options are resolved between factory-level `defaultMountOptions` and test-level `mountOptions`.
-
-These options are merged using a shallow merge strategy.
-
-When the same option is provided at both the factory level (`defaultMountOptions`) and the test level (`mountOptions`), the test-level value takes precedence.
+Top-level Vue Test Utils options are resolved from factory-level `defaultMountOptions` and test-level `mountOptions` using a **shallow merge**. When both layers specify the same option, the test-level value takes precedence.
 
 Examples include:
 
-- `data`;
-- `attrs`;
-- `attachTo`;
-- `shallow`;
-- other top-level VTU mount options that are represented as flat values.
+- `data`
+- `attachTo`
+- `shallow`
+- other top-level VTU mounting options.
+
+The `attrs` option also participates in mount configuration resolution; TestForge processes it through a dedicated pipeline step.
 
 For example:
 
@@ -323,13 +335,13 @@ factory(
 );
 ```
 
-The effective configuration keeps `attachTo` from the factory defaults while the test-level `shallow` value overrides the factory value.
+The effective configuration retains `attachTo` from the factory defaults and uses `shallow: true` from the test-level options.
 
 #### The `shallow` Option
 
-`shallow` controls whether the component is mounted using `mount()` or `shallowMount()`.
+The `shallow` setting determines whether TestForge calls Vue Test Utils `mount()` or `shallowMount()`.
 
-The framework also provides a global `shallowByDefault` option:
+TestForge also supports a framework-level `shallowByDefault` option:
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
@@ -341,9 +353,7 @@ export const { testComponentFactory } = createTestFramework({
 });
 ```
 
-When `shallowByDefault` is enabled, factories use shallow mounting unless a more specific `shallow` value is provided.
-
-The resolution order is:
+When `shallowByDefault` is enabled, factories use shallow mounting unless a more specific `shallow` value is provided. The priority order, from highest to lowest, is:
 
 1. `mountOptions.shallow`
 2. `defaultMountOptions.shallow`
@@ -369,7 +379,7 @@ const factory = testComponentFactory(
 // Uses mount() because the factory explicitly sets shallow: false.
 factory();
 
-// Uses shallowMount() because the test-level option overrides the factory default.
+// Uses shallowMount() because test-level configuration takes precedence.
 factory(
   {},
   {
@@ -378,10 +388,8 @@ factory(
 );
 ```
 
-The most specific configuration wins.
-
 > [!NOTE]
-> This section covers flat VTU mount options. The `global` object and managed plugin configurations follow separate resolution rules and are described in the following sections.
+> The `global` object and managed plugin configuration have separate resolution rules, explained below.
 
 ---
 
@@ -389,15 +397,13 @@ The most specific configuration wins.
 
 ### 3.2. The `global` Section
 
-Standard VTU `global` options (`stubs`, `mocks`, `provide`) are processed using a **selective recursive merge** strategy across Layer 2 and Layer 3.
-
-This allows test-double infrastructure to be layered without removing unrelated factory-level configuration.
+Standard VTU `global` options, including `stubs`, `mocks`, and `provide`, use a **selective recursive merge** between Layer 2 (`defaultMountOptions`) and Layer 3 (`mountOptions`). This lets individual tests add mocks or stubs without removing unrelated factory-level configuration.
 
 #### Key Merge Rules
 
-- **Objects** — merged recursively only on intersecting keys. Non-intersecting objects retain their original references; they are not deep-cloned.
-- **Arrays** — combined into a unique set using union merge with deduplication.
-- **Primitives** — test-level values overwrite factory-level values.
+- **Objects** — recursively merged when corresponding keys exist in both configurations. Objects that do not require merging retain their references; they are not deep-cloned.
+- **Arrays** — combined using a union merge that removes duplicates.
+- **Primitives** — test-level values override factory-level values.
 
 For example:
 
@@ -436,7 +442,7 @@ factory(
 );
 ```
 
-The resulting `global` configuration preserves the factory-level setup while adding the test-specific configuration:
+The effective `global` configuration preserves the factory-level setup and adds the test-specific values:
 
 ```typescript
 {
@@ -453,10 +459,10 @@ The resulting `global` configuration preserves the factory-level setup while add
 }
 ```
 
-This behavior is useful when a factory defines shared test infrastructure and individual tests need to add or override only part of that infrastructure.
+This is useful when a component factory provides shared test infrastructure and individual tests need to modify only part of it.
 
 > [!NOTE]
-> The `global` section follows its own recursive merge rules. It should not be confused with managed plugin configuration, which intentionally uses replacement semantics at Layers 2 and 3.
+> Do not confuse the `global` merge strategy with managed plugin configuration. Managed plugins use replacement between Layers 2 and 3, a shallow Layer 4 overlay, and a separate final merge with preset defaults.
 
 ---
 
@@ -464,27 +470,24 @@ This behavior is useful when a factory defines shared test infrastructure and in
 
 ### 3.3. Managed Plugin Configuration
 
-Managed plugin configuration uses different rules from standard Vue Test Utils options.
+Managed plugin options have different resolution rules from standard Vue Test Utils options. They can include application state and references to runtime objects, so TestForge does not indiscriminately deep-merge or clone them.
 
 Managed plugins control plugin-specific configuration such as:
 
-- Pinia `initialState`;
-- Vue I18n `messages` and `locale`;
-- Vue Router `routes`;
+- Pinia `initialState`
+- Vue I18n `messages` and `locale`
+- Vue Router `routes`
 - plugin-specific options for Vuetify, PrimeVue, PrimeVue 3, and other supported integrations.
 
 Because these options can represent application state, blindly deep-merging them can produce unexpected test behavior.
 
-#### Layers 2 and 3: Full Replacement
+Managed plugin configuration is resolved in **three steps**: replacement between Layers 2 and 3, a shallow overlay from Layer 4, and a final shallow merge with preset defaults from Layer 1.
 
-When a managed plugin is configured through `defaultMountOptions.plugins` or `mountOptions.plugins`, the plugin configuration replaces the corresponding configuration from the previous layer.
+#### Step 1: Replace Layer 2 with Layer 3 When Provided
 
-> [!NOTE]
-> Plugin replacement occurs at the configuration object level, not per property.
->
-> Consequently, fields such as `expose`, `captureInstance`, and `__meta` are discarded when a plugin configuration is overridden in Layer 3. If they should remain active, they must be included in the overriding configuration.
+If `mountOptions.plugins` contains a configuration for a managed plugin, it replaces that plugin's configuration from `defaultMountOptions.plugins` **as a whole**. These two configurations are not deep-merged.
 
-For example, suppose the factory has:
+For example, a factory can define an initial Pinia state:
 
 ```typescript
 const factory = testComponentFactory(
@@ -502,7 +505,7 @@ const factory = testComponentFactory(
 );
 ```
 
-A test can explicitly provide a different state:
+An individual test can replace it:
 
 ```typescript
 factory(
@@ -519,23 +522,25 @@ factory(
 );
 ```
 
-The test-level configuration is not deep-merged with the factory-level `initialState`.
+The resolved test-level `initialState` contains `users: []`; it is not deep-merged with the factory-level array. This prevents stale or unrelated test data from leaking into another test.
 
-The resulting Pinia configuration uses the test-level state:
+> [!NOTE]
+> Replacement occurs at the **plugin configuration object** level, not per property. As a result, Layer 2 properties such as `expose` (including callbacks supplied by `captureInstance()`) or `__meta` are discarded if Layer 3 replaces that plugin's configuration. Include them again in Layer 3 if they must remain active.
+>
+> This replacement does **not** remove the plugin's preset defaults.
 
-```typescript
-{
-  initialState: {
-    users: [],
-  },
-}
-```
+Replacing Layer 2 configuration with Layer 3 helps prevent unintended state inheritance between tests and makes test-specific configuration explicit. When only individual plugin options need to change, use the Layer 4 shallow overlay instead.
 
-This prevents stale or unrelated test data from leaking into another test.
+#### Step 2: Apply the Layer 4 Shallow Overlay
 
-#### Layer 4: Shallow Overlay
+`extraOptions.plugins` lets a test adjust individual top-level properties
+of the runtime plugin configuration without replacing it entirely.
 
-`extraOptions.plugins` is intended for precise local adjustments.
+The overlay is applied to the plugin configuration already resolved
+from Layers 2 and 3. Matching top-level properties are overridden,
+while other properties are preserved.
+
+For example:
 
 ```typescript
 factory(
@@ -552,9 +557,7 @@ factory(
 );
 ```
 
-The overlay is applied to the already resolved managed plugin configuration.
-
-For example, if the previous layers provide:
+If the runtime configuration contains:
 
 ```typescript
 {
@@ -565,7 +568,7 @@ For example, if the previous layers provide:
 }
 ```
 
-the Layer 4 overlay:
+and the overlay supplies:
 
 ```typescript
 {
@@ -573,24 +576,131 @@ the Layer 4 overlay:
 }
 ```
 
-preserves the existing state while changing only the action-stubbing option.
+The resulting runtime configuration retains `initialState` and uses
+`stubActions: true`.
+
+The overlay is applied **before** the final merge with preset defaults.
+
+#### Step 3: Shallow-Merge Preset Defaults with Runtime Options
+
+After resolving Layers 2–4, TestForge performs a final shallow merge for each managed plugin:
+
+```typescript
+{
+  ...presetDefaults,
+  ...resolvedRuntimeOptions,
+}
+```
+
+This operation has the following rules:
+
+- Preset defaults form the base configuration.
+- Resolved runtime options take precedence over matching preset properties.
+- Preset properties that are not overridden remain available.
+- Nested objects are **replaced**, not recursively merged, when their top-level keys collide.
+- An explicitly disabled plugin (`false`) remains disabled; TestForge does not restore it from preset defaults.
+
+**Example: All Four Layers**
+
+Suppose preset defaults contain:
+
+```typescript
+{
+  presetOnly: true,
+  sharedOption: "preset",
+}
+```
+
+Layer 2 (`defaultMountOptions.plugins`) supplies:
+
+```typescript
+{
+  factoryOnly: true,
+  sharedOption: "factory",
+}
+```
+
+Layer 3 (`mountOptions.plugins`) supplies:
+
+```typescript
+{
+  mountOnly: true,
+  sharedOption: "mount",
+}
+```
+
+Layer 4 (`extraOptions.plugins`) supplies:
+
+```typescript
+{
+  extraOnly: true,
+  sharedOption: "extra",
+}
+```
+
+First, Layer 3 replaces Layer 2, so `factoryOnly` is discarded. Next, Layer 4 overlays the remaining runtime options. Finally, TestForge shallow-merges the result with the preset defaults.
+
+The effective configuration is:
+
+```typescript
+{
+  presetOnly: true,
+  mountOnly: true,
+  extraOnly: true,
+  sharedOption: "extra",
+}
+```
+
+Here, `presetOnly` survives from the preset; `mountOnly` and `extraOnly` come from the runtime layers; `factoryOnly` is absent; and the Layer 4 value of `sharedOption` takes precedence.
+
+**Example: Nested Values Are Not Deep-Merged**
+
+If the preset defines:
+
+```typescript
+{
+  nested: {
+    presetOnly: true,
+  },
+}
+```
+
+and the resolved runtime options define:
+
+```typescript
+{
+  nested: {
+    mountOnly: true,
+  },
+}
+```
+
+the final result is:
+
+```typescript
+{
+  nested: {
+    mountOnly: true,
+  },
+}
+```
+
+The preset's nested `presetOnly` field does not survive because the entire `nested` value is replaced.
 
 > [!IMPORTANT]
-> Layers 2 and 3 intentionally use replacement semantics for managed plugin configuration.
+> **Managed plugin precedence:** Layer 3 replaces Layer 2 for the same plugin, Layer 4 overlays the resolved runtime options, and the final shallow merge adds non-overridden preset defaults.
 >
-> This prevents test data pollution and makes test-specific state explicit.
->
-> Use Layer 4 when you need to patch an already resolved configuration without replacing it.
+> None of these steps automatically clones arbitrary user-provided runtime objects. See [Instance Isolation](#instance-isolation) for the implications of shared references.
 
 ---
 
 <a id="props-slots-priority"></a>
 
-### 3.4. Props & Slots Priority
+### 3.4. Props and Slots Priority
 
-Component props and slots follow a separate resolution model.
+Component props and slots follow their own resolution rules, independently of the managed plugin configuration layers.
 
-Direct `props` and `slots` arguments passed to `factory()` represent the immediate intent of the individual test.
+Values passed directly to `factory()` take precedence over the factory-level defaults.
 
 For props:
 
@@ -604,13 +714,7 @@ factory({
 });
 ```
 
-The direct test-level `props` override the factory-level default props.
-
-The same principle applies to slots.
-
-Direct `slots` passed to `factory()` take precedence over factory-level `defaultSlots`.
-
-Props and slots are therefore resolved separately from the managed plugin configuration layering model described above.
+The test-level `props` override the factory's `defaultProps`. Similarly, the `slots` passed to `factory()` take precedence over `defaultSlots`.
 
 ---
 
@@ -618,11 +722,11 @@ Props and slots are therefore resolved separately from the managed plugin config
 
 ## 4. 🎛️ Execution Flags
 
-TestForge provides advanced flags for cases where the default configuration flow needs to be adjusted for a specific factory invocation.
+TestForge provides execution flags for adjusting configuration resolution and plugin initialization for an individual mount.
 
 These flags are split between:
 
-- `extraOptions` — the fourth argument of `factory()`;
+- `extraOptions` — the fourth argument of `factory()`
 - selected execution options inside `mountOptions` — the second argument of `factory()`.
 
 ### 4.1. `extraOptions`
@@ -633,7 +737,7 @@ These flags are split between:
 factory(props, mountOptions, slots, extraOptions);
 ```
 
-#### The `preset` Property
+#### The `preset` Option
 
 - **Type:** `keyof TestFrameworkPresets`
 
@@ -659,7 +763,7 @@ This allows a single factory to execute against a different registered runtime p
 
 ---
 
-#### The `skipDefaultProps` Flag
+#### `skipDefaultProps`
 
 - **Type:** `boolean`
 - **Default:** `false`
@@ -681,7 +785,7 @@ Use this when a test needs to start without the factory-level default props.
 
 ---
 
-#### The `skipDefaultSlots` Flag
+#### `skipDefaultSlots`
 
 - **Type:** `boolean`
 - **Default:** `false`
@@ -701,14 +805,14 @@ factory(
 
 ---
 
-#### The `skipDefaultOptions` Flag
+#### `skipDefaultOptions`
 
 - **Type:** `boolean`
 - **Default:** `false`
 
 When set to `true`, the factory ignores `defaultMountOptions` defined when the factory was created.
 
-This allows the current test to resolve its mount configuration without inheriting factory-level default mount options.
+This allows a test to mount a component without inheriting factory-level mount options.
 
 ```typescript
 factory(
@@ -728,18 +832,18 @@ factory(
 
 ### 4.2. `mountOptions`
 
-Most `mountOptions` are standard Vue Test Utils options.
+Most properties in `mountOptions` are standard Vue Test Utils options.
 
-However, TestForge also supports framework-specific execution flags inside this second argument.
+TestForge also supports framework-specific execution flags in this argument.
 
-#### The `skipManagedPlugins` Flag
+#### `skipManagedPlugins`
 
 - **Type:** `boolean`
 - **Default:** `false`
 
 When set to `true`, TestForge disables managed plugin orchestration for the current mount.
 
-This allows the test to take full manual control over plugin initialization using standard Vue Test Utils `global.plugins`.
+The test can then initialize plugins manually through Vue Test Utils `global.plugins`.
 
 ```typescript
 const wrapper = factory(
@@ -755,9 +859,9 @@ const wrapper = factory(
 
 This is useful when:
 
-- the automatically created managed plugin instance does not match the test requirements;
-- a pre-created or mocked plugin instance must be used;
-- plugins need to be registered in a custom order;
+- the automatically created managed plugin instance does not match the test requirements
+- a pre-created or mocked plugin instance must be used
+- plugins need to be registered in a custom order
 - the test requires non-standard plugin initialization.
 
 > [!IMPORTANT]
@@ -769,29 +873,27 @@ This is useful when:
 
 ## 5. 🛠 Managed Plugins
 
-Managed plugins are Vue ecosystem integrations that participate in TestForge's managed plugin lifecycle.
+Managed plugins are Vue integrations that participate in TestForge's plugin lifecycle.
 
 Examples include:
 
-- Pinia;
-- Vue Router;
-- Vue I18n;
-- Vuetify;
-- PrimeVue;
+- Pinia
+- Vue Router
+- Vue I18n
+- Vuetify
+- PrimeVue
 - PrimeVue 3.
 
-Managed plugins differ from Vue plugins registered directly through Vue Test Utils.
+Unlike plugins registered directly through Vue Test Utils, managed plugins:
 
-They:
-
-- are declared in the active preset manifest;
-- can be configured through TestForge's managed `plugins` API;
-- support automatic plugin instance creation;
-- support factory-level and test-level configuration;
-- support Layer 4 runtime overlays;
+- are declared in the active preset manifest
+- can be configured through TestForge's managed `plugins` API
+- support managed plugin initialization and, where applicable, automatic instance creation
+- support factory-level and test-level configuration
+- support Layer 4 runtime overlays
 - are validated against the active preset.
 
-Every managed plugin has a stable identifier exported by its package through `PLUGIN_NAME`.
+Each managed plugin package exports a stable identifier as `PLUGIN_NAME`.
 
 Preset authors use the exported constant when declaring `defaults`, while runtime configuration normally uses the corresponding string key:
 
@@ -813,7 +915,7 @@ plugins: {
 }
 ```
 
-The Pinia package exports `PLUGIN_NAME` with the value `"pinia"`, which is why runtime configuration uses `plugins.pinia`.
+The Pinia package exports `PLUGIN_NAME` as `"pinia"`, so runtime configuration uses `plugins.pinia`.
 
 See [Getting Started → Managed Plugin Identifiers](./getting-started.md#managed-plugin-identifiers) for the canonical list of official TestForge plugin identifiers.
 
@@ -837,15 +939,14 @@ plugins: {
 
 ### 5.1. Preset Manifest Declaration
 
-Managed plugins are available only when they are registered in the active preset manifest.
+A managed plugin must be declared in the active preset manifest before it can be configured.
 
-The core runtime does not automatically discover or activate managed plugins.
+TestForge does not automatically discover or activate managed plugins.
 
 For example, a project-owned Pinia preset can declare the plugin and its explicit configuration:
 
 ```typescript
 import { vi } from "vitest";
-
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
@@ -856,7 +957,6 @@ const preset = {
       enabled: true,
     },
   ],
-
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
@@ -871,15 +971,13 @@ const { testComponentFactory } = createTestFramework({
 export { testComponentFactory };
 ```
 
-The same identifier is represented differently at the two API levels:
+The same identifier appears in two forms:
 
 ```text
 PINIA_PLUGIN_NAME
 → "pinia"
-
 preset authoring
 → [PINIA_PLUGIN_NAME]
-
 runtime configuration
 → plugins.pinia
 ```
@@ -899,9 +997,9 @@ factory(
 );
 ```
 
-If a managed plugin is not part of the active preset manifest, TestForge rejects configuration attempts for that plugin.
+TestForge rejects configuration for plugins not declared in the active preset manifest.
 
-A package being installed is not enough. The managed plugin must belong to the active runtime profile.
+Installing the package alone does not make it available in the active runtime profile.
 
 ---
 
@@ -911,20 +1009,19 @@ A project-owned preset does not need to extend an existing TestForge preset.
 
 It can be defined independently with an explicit `PresetDefinition`, as shown in the previous section.
 
-TestForge also provides `extendPreset()` when intentional reuse of another preset is useful.
+Use `extendPreset()` when you want to reuse an existing preset.
 
-Preset extension is a **composition mechanism**.
+Preset extension is a **composition mechanism**, not another runtime configuration layer.
 
 It creates a new complete preset from an existing preset plus explicit manifest or default-configuration changes.
 
-It does not introduce inheritance between runtime configuration layers.
+It does not change the inheritance rules between runtime configuration layers.
 
 Conceptually:
 
 ```text
 direct project preset
 → independent explicit configuration
-
 extendPreset(sourcePreset, ...)
 → reuse source preset
 → non-replaced configuration remains coupled to sourcePreset
@@ -936,7 +1033,6 @@ For example, a project can reuse the composition of the recommended Vitest prese
 
 ```typescript
 import { vi } from "vitest";
-
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
@@ -962,7 +1058,7 @@ The resulting project-owned configuration is visible directly in source:
 }
 ```
 
-This is normally preferable when the project wants that configuration to remain explicit and stable across changes to the source preset's Pinia defaults.
+This is preferable when the project needs explicit Pinia defaults that remain stable even if the source preset changes.
 
 The resulting preset can be used directly:
 
@@ -989,25 +1085,24 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 });
 ```
 
-Because preset defaults are `PluginOptionsFactory` functions, the source factory must be invoked explicitly when its returned options should be reused.
+Since preset defaults are `PluginOptionsFactory` functions, call the source factory explicitly to reuse its returned options.
 
 This has different ownership semantics:
 
 ```text
 explicit materialized factory
 → project owns configuration
-
 spread source preset factory
 → project intentionally follows source preset behavior
 ```
 
-If the source factory changes after a dependency update, the effective project configuration can change as well.
+If a dependency update changes the source factory, it can also change the effective project configuration.
 
 Use this form only when that coupling is intentional.
 
 #### Manifest Extensions
 
-An extension can also modify the managed plugin capability boundary.
+An extension can also change which managed plugins are available.
 
 For example, it can add a managed plugin:
 
@@ -1019,7 +1114,6 @@ const extendedPreset = extendPreset(basePreset, {
       enabled: true,
     },
   ],
-
   defaults: {
     [CUSTOM_PLUGIN_NAME]: () => ({
       // Explicit plugin configuration
@@ -1048,7 +1142,6 @@ This changes the plugin's default activation state without requiring the entire 
 ```text
 manifest
 → capability + default activation
-
 defaults
 → baseline configuration
 ```
@@ -1096,7 +1189,7 @@ The `initialState` and `stubActions` returned by the source factory are not auto
 
 This is intentional.
 
-Once a project explicitly replaces a plugin factory, the resulting configuration does not silently acquire additional options from the source preset.
+Once a project replaces a plugin factory, it does not implicitly inherit additional options from the source factory.
 
 If following the source factory is intentional, invoke it explicitly as shown above.
 
@@ -1111,11 +1204,11 @@ If following the source factory is intentional, invoke it explicitly as shown ab
 
 The following rules apply:
 
-- a new plugin added to `manifest` must explicitly define `enabled`;
-- `defaults` may only contain plugins declared in the resulting manifest;
-- plugin defaults must be `PluginOptionsFactory` functions that return valid plugin options;
-- `false` is not allowed in preset defaults;
-- to disable a plugin by default, use `enabled: false` in the manifest;
+- a new plugin added to `manifest` must explicitly define `enabled`
+- `defaults` may only contain plugins declared in the resulting manifest
+- plugin defaults must be `PluginOptionsFactory` functions that return valid plugin options
+- `false` is not allowed in preset defaults
+- to disable a plugin by default, use `enabled: false` in the manifest
 - duplicate plugin entries inside the extension manifest are rejected.
 
 If a newly added plugin requires baseline configuration, provide its factory explicitly:
@@ -1128,7 +1221,6 @@ extendPreset(basePreset, {
       enabled: true,
     },
   ],
-
   defaults: {
     [CUSTOM_PLUGIN_NAME]: () => ({
       // Explicit plugin configuration
@@ -1154,11 +1246,11 @@ TestForge validates managed plugin configuration against the active preset.
 
 #### Manifest Binding
 
-Plugin keys passed into TestForge configuration points must correspond to plugins declared in the active preset manifest:
+Plugin keys at the following configuration points must refer to plugins declared in the active preset manifest:
 
-- preset `defaults`;
-- `defaultMountOptions.plugins`;
-- `mountOptions.plugins`;
+- preset `defaults`
+- `defaultMountOptions.plugins`
+- `mountOptions.plugins`
 - `extraOptions.plugins`.
 
 For example, if the manifest contains:
@@ -1184,13 +1276,13 @@ the following configuration is valid:
 
 Any unknown plugin key is rejected.
 
-The manifest therefore acts as the capability boundary for managed plugin configuration.
+The manifest defines which managed plugins can be configured.
 
 #### Plugin Configuration Values
 
 Runtime managed plugin configuration values can be:
 
-- an options object;
+- an options object
 - `false`, to explicitly disable the plugin for the current mount.
 
 For example:
@@ -1212,7 +1304,7 @@ To make a managed plugin available but disabled by default, use `enabled: false`
 
 #### Unmanaged Third-Party Plugins
 
-Vue plugins that are not registered as managed TestForge integrations must not be passed through the managed `plugins` object.
+Plugins that are not registered as TestForge-managed integrations must not be passed through the managed `plugins` object.
 
 Use standard Vue Test Utils configuration instead:
 
@@ -1227,17 +1319,17 @@ factory(
 );
 ```
 
-This keeps TestForge-managed plugin configuration separate from raw Vue Test Utils plugin registration.
+This separates TestForge-managed plugin configuration from direct Vue Test Utils registration.
 
 Managed plugins participate in TestForge's preset, validation, and lifecycle pipeline.
 
-Manually registered Vue plugins bypass that pipeline and are passed directly to Vue Test Utils.
+Manually registered plugins bypass that pipeline and are passed directly to Vue Test Utils.
 
 ---
 
 ### 5.4. Practical Examples
 
-A plugin declared in a preset manifest can be dynamically enabled or disabled depending on test requirements.
+A plugin declared in the preset manifest can be enabled or disabled for individual tests.
 
 #### Disabling a Managed Plugin Completely
 
@@ -1260,7 +1352,7 @@ This can be useful when the test does not need Router or when the test intends t
 
 #### Enabling a Plugin Disabled by Default
 
-If a plugin is declared in the active preset manifest with `enabled: false`, you can activate it for an individual test by passing an empty configuration object:
+If a plugin is declared with `enabled: false` in the active preset manifest, pass an empty options object to enable it for an individual test:
 
 ```typescript
 factory(
@@ -1273,7 +1365,7 @@ factory(
 );
 ```
 
-This allows a preset to make an integration available without initializing it for every component test.
+This makes the integration available without activating it for every component test.
 
 ---
 
@@ -1281,7 +1373,7 @@ This allows a preset to make an integration available without initializing it fo
 
 ## 6. 🔌 Third-Party Plugins
 
-TestForge-managed plugins are integrated into the framework's configuration and preset lifecycle pipeline.
+TestForge-managed plugins participate in the configuration and preset lifecycle pipeline.
 
 Vue plugins that are not managed by TestForge can be registered using standard Vue Test Utils options inside the `global` section.
 
@@ -1302,9 +1394,9 @@ const wrapper = factory(
 );
 ```
 
-Plugins registered through `global.plugins` bypass TestForge's managed plugin processing.
+Plugins registered through `global.plugins` bypass TestForge's managed plugin pipeline.
 
-### Managed vs Manually Registered Plugins Quick Reference
+### Managed vs. Manually Registered Plugins
 
 | Configuration Key | Allowed Plugins                                                       | Pipeline Integration                                                  |
 | :---------------- | :-------------------------------------------------------------------- | :-------------------------------------------------------------------- |
@@ -1319,8 +1411,8 @@ See [Getting Started → Managed Plugin Identifiers](./getting-started.md#manage
 
 Use the standard Vue Test Utils array when:
 
-- the Vue plugin is not supported or managed by TestForge;
-- the test requires a custom, manually pre-instantiated plugin;
+- the Vue plugin is not supported or managed by TestForge
+- the test requires a custom, manually pre-instantiated plugin
 - you need to bypass TestForge's managed lifecycle pipeline for a specific dependency.
 
 > [!TIP]
@@ -1332,17 +1424,17 @@ Use the standard Vue Test Utils array when:
 
 ## 7. 🛡 Advanced: Working with Plugin Instances
 
-In most cases, you do not need to interact directly with plugin instances.
+You usually do not need to interact directly with plugin instances.
 
-However, doing so is useful when you need to assert the internal state of **Pinia**, **Vue Router**, or **Vue I18n** after a component has performed an action.
+Direct access is useful when asserting the state of **Pinia**, **Vue Router**, or **Vue I18n** after a component action.
 
 <a id="precreated-plugin-instances"></a>
 
 ### 7.1. Using Pre-created Instances (`__meta.instance`)
 
-Sometimes a test requires an **already existing** plugin instance — for example, a Pinia instance pre-populated with mock state via `@pinia/testing`, or a fully configured Router — instead of letting the framework initialize a new one.
+Some tests need a **pre-created** plugin instance, such as a Pinia instance configured with `@pinia/testing` or a fully configured Router, rather than a new instance created by TestForge.
 
-For this purpose, managed plugins support a protected `__meta.instance` property inside `extraOptions.plugins`:
+For this purpose, managed plugins support the special `__meta.instance` field inside `extraOptions.plugins`:
 
 ```typescript
 import { createTestingPinia } from "@pinia/testing";
@@ -1369,26 +1461,26 @@ factory(
 
 **When `__meta.instance` is provided:**
 
-- managed plugin lifecycle creation is completely skipped;
-- standard plugin options specified alongside it are ignored;
-- the supplied instance is injected directly into the Vue Test Utils mounting pipeline.
+- the plugin factory is not called to create a new instance
+- standard plugin options specified alongside it are ignored
+- the supplied instance is injected directly into the Vue Test Utils mounting pipeline
 
 > [!WARNING]
 > Any other plugin options specified alongside `__meta.instance` will be ignored because the provided instance takes precedence.
 
-#### Why is this better than `global.plugins`?
+#### Why use `__meta.instance` instead of `global.plugins`?
 
-Using `__meta.instance` allows TestForge to recognize that the managed plugin already exists.
+With `__meta.instance`, TestForge knows that the managed plugin instance already exists.
 
-This prevents the framework from creating a second instance and keeps the plugin inside the managed preset lifecycle.
+TestForge reuses that instance without removing the plugin from the managed pipeline.
 
 > [!NOTE]
-> **Choosing Between `__meta.instance` and `skipManagedPlugins`:**
+> **Choosing between `__meta.instance` and `skipManagedPlugins`:**
 >
 > - Use `__meta.instance` when you want to provide a custom instance for **one specific managed plugin** while still allowing TestForge to orchestrate the other managed plugins from the active preset.
 > - Use `skipManagedPlugins: true` when you want to **completely opt out** of TestForge's managed plugin pipeline for the current mount and manually construct the environment through Vue Test Utils.
 
-#### When should `__meta.instance` be used?
+#### When to use `__meta.instance`
 
 - **State Sharing** — when you need to share the exact same plugin instance across multiple helpers or assertions.
 - **Complex Preparation** — when you want to manually prepare complex runtime state before mounting the component.
@@ -1404,15 +1496,14 @@ This prevents the framework from creating a second instance and keeps the plugin
 
 ### 7.2. Accessing Plugin Instances
 
-Sometimes tests need direct access to the actual plugin instance created by the framework pipeline to run assertions against its runtime state.
+Some tests need direct access to a plugin instance to assert its runtime state.
 
 #### Option A: Using `expose`
 
-You can pass an `expose` callback that receives the freshly created instance immediately before the component mounts.
+Provide an `expose` callback to receive the plugin instance before the component mounts.
 
 ```typescript
 import type { TestingPinia } from "@pinia/testing";
-
 let piniaInstance: TestingPinia;
 
 const factory = testComponentFactory(MyComponent);
@@ -1437,7 +1528,7 @@ expect(piniaInstance).toBeDefined();
 
 #### Option B: Using `captureInstance` (Recommended)
 
-`captureInstance()` is a convenient helper built on top of `expose` that stores the instance reference inside a wrapper object for clean access in assertions.
+`captureInstance()` builds on `expose` and stores the instance in a wrapper object for convenient assertions.
 
 ```typescript
 const piniaCapture = captureInstance();
@@ -1458,13 +1549,13 @@ factory(
 expect(piniaCapture.instance).toBeDefined();
 ```
 
-After mounting, the captured instance can be inspected or manipulated directly in the test.
+After mounting, the test can inspect or manipulate the captured instance.
 
 > [!TIP]
-> **Full TypeScript Support:** You do not need to pass explicit generic types to `captureInstance()`. The framework automatically infers the correct plugin type (`Pinia`, `Router`, etc.) based on the context object key where the capture helper is spread.
+> **TypeScript inference:** You do not need to pass explicit generic types to `captureInstance()`. The framework automatically infers the correct plugin type (`Pinia`, `Router`, etc.) based on the context object key where the capture helper is spread.
 
 > [!NOTE]
-> Plugin instances are created before component mounting. Both the `expose` callback and `captureInstance()` receive the instance immediately before `mount()` or `shallowMount()` is executed.
+> Plugin instances are created before component mounting. Both `expose` and `captureInstance()` make the instance available before `mount()` or `shallowMount()` is called.
 
 ---
 
@@ -1472,18 +1563,19 @@ After mounting, the captured instance can be inspected or manipulated directly i
 
 ### 7.3. Instance Isolation
 
-By default, each component factory invocation creates an isolated runtime environment.
+By default, each factory invocation creates a separate runtime environment.
 
-Managed plugin instances created for one mount are not automatically shared with another factory invocation.
+Managed plugin instances created by TestForge for one mount are not automatically shared with another mount. Plugin dependency references are also resolved independently for each invocation.
 
-This prevents state from leaking between tests.
+However, this isolation does not extend to arbitrary objects provided by the user. TestForge preserves their identity and does not automatically clone or recreate them.
 
-Instance isolation applies to plugin instances created by TestForge. User-provided pre-created instances retain their identity and may intentionally be shared across mounts.
+As a result, user-provided objects may share state across mounts if the same references are reused.
 
 For example:
 
 ```typescript
 const firstCapture = captureInstance<Pinia>();
+
 const secondCapture = captureInstance<Pinia>();
 
 const factory = testComponentFactory(MyComponent);
@@ -1517,6 +1609,120 @@ const second = factory(
 expect(firstCapture.instance).not.toBe(secondCapture.instance);
 ```
 
-When a test intentionally requires a shared plugin instance — for example, to share state across multiple mounts or helpers — do not rely on automatic managed instance creation.
+To share a plugin instance across mounts or helpers, provide a pre-created instance rather than relying on automatic creation.
 
-Instead, explicitly create the instance and pass it through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances). The supplied instance is reused as-is rather than recreated by TestForge, so its identity and any shared runtime state are preserved across mounts that use it.
+Pass the instance through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances). TestForge reuses it without changing its identity or resetting its state.
+
+#### User-Provided Objects and Reference Sharing
+
+TestForge does not automatically clone or recreate objects provided in `defaultMountOptions`.
+
+Because `defaultMountOptions` is defined once when a component factory is created, object references supplied at this level may be reused across multiple mounts.
+
+This is especially important for stateful objects, such as:
+
+- Vue Router history instances
+- pre-created Vue plugin instances
+- services and adapters with internal state
+- objects shared between multiple plugins.
+
+TestForge preserves these references because cloning arbitrary runtime objects could break their internal state, closures, or relationships with other plugins.
+
+#### Example: Shared Router History
+
+Consider a component factory configured with a custom Router history:
+
+```typescript
+import { createMemoryHistory } from "vue-router";
+
+const customHistory = createMemoryHistory();
+
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {
+    plugins: {
+      router: {
+        history: customHistory,
+      },
+    },
+  },
+);
+```
+
+Every invocation of `factory()` receives the same `customHistory` reference unless the Router configuration is overridden.
+
+```typescript
+const first = factory();
+
+const second = factory();
+```
+
+Although TestForge creates a new managed Router instance for each mount, both instances receive the same history object.
+
+Changes to its internal state may therefore affect subsequent tests.
+
+This is intentional: TestForge does not clone or reset user-provided objects.
+
+#### Example: Creating a Fresh History for Each Mount
+
+When each test requires an independent history instance, provide it through test-level `mountOptions`:
+
+```typescript
+const factory = testComponentFactory(MyComponent);
+
+const first = factory(
+  {},
+  {
+    plugins: {
+      router: {
+        history: createMemoryHistory(),
+      },
+    },
+  },
+);
+
+const second = factory(
+  {},
+  {
+    plugins: {
+      router: {
+        history: createMemoryHistory(),
+      },
+    },
+  },
+);
+```
+
+Each call to `createMemoryHistory()` creates a distinct history instance.
+
+For repeated setup, a small test helper can avoid duplication:
+
+```typescript
+const mountWithHistory = () =>
+  factory(
+    {},
+    {
+      plugins: {
+        router: {
+          history: createMemoryHistory(),
+        },
+      },
+    },
+  );
+
+const first = mountWithHistory();
+
+const second = mountWithHistory();
+```
+
+If the Router integration's default history is sufficient, there is no need to provide a custom history. The integration creates its default history separately for each Router instance.
+
+> [!IMPORTANT]
+> **Object identity and test isolation**
+>
+> Objects supplied through `defaultMountOptions` may be shared across mounts. TestForge preserves user-provided runtime object references and does not automatically clone, recreate, or reset them.
+>
+> To obtain mount-specific instances, create fresh objects in `mountOptions` or rely on plugin integrations that create them automatically.
+>
+> TestForge isolates its own runtime state, but the lifecycle of explicitly supplied objects remains under the user's control.

@@ -1,14 +1,16 @@
 import type { PipelineContext, PluginName } from "../../../types";
 
 /*
- * Merges plugin presets with the current plugin configuration.
+ * Shallow-merges plugin preset defaults with the resolved runtime configuration.
  *
  * Rules:
- * - Preset acts as a base layer
- * - Existing plugin config has priority over preset
- * - If plugin is explicitly disabled (`false`), it remains disabled
+ * - Preset defaults provide the base configuration.
+ * - Runtime configuration takes precedence over matching preset properties.
+ * - Nested values are replaced, not recursively merged.
+ * - Explicitly disabled plugins (`false`) remain disabled.
  *
- * This function mutates `ctx.result.plugins[name]`.
+ * Creates a new top-level plugin configuration without cloning nested values.
+ * Updates `ctx.result.plugins[name]` in place.
  */
 export function mergePluginDefaults<T extends PipelineContext>(ctx: T, name: PluginName): T {
   const { result } = ctx;
