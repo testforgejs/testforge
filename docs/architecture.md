@@ -880,45 +880,72 @@ These mechanisms should not be treated as equivalent forms of inheritance.
 
 ## Presets and the Runtime Configuration Pipeline
 
-Preset defaults provide the initial managed-plugin configuration for the selected runtime environment.
+Presets define the managed plugins available in a runtime environment
+and provide their baseline configuration through defaults factories.
 
-Once a preset has been selected, TestForge resolves more local configuration through the factory invocation.
+Once a preset has been selected, TestForge resolves the runtime plugin
+configuration from the factory-level and mount-level options.
 
 Conceptually:
 
 ```text
-Preset definition
-      │
-      │ selects manifest + default factories
-      ▼
-Preset defaults
-      │
-      ▼
-defaultMountOptions
-      │
-      ▼
-mountOptions
-      │
-      ▼
-extraOptions.plugins
-      │
-      ▼
-Resolved runtime environment
-      │
-      ▼
-Vue Test Utils mount
+                       Preset definition
+                              │
+                 ┌────────────┴────────────┐
+                 ▼                         ▼
+              manifest              defaults factories
+                 │                         │
+                 ▼                         ▼
+       Plugin availability          Layer 1 defaults
+       and default activation              │
+                                           │
+                                           │
+      Layer 2: defaultMountOptions.plugins │
+                      │                    │
+                      ▼                    │
+      Layer 3: mountOptions.plugins        │
+      (replaces Layer 2 per plugin)        │
+                      │                    │
+                      ▼                    │
+      Layer 4: extraOptions.plugins        │
+      (shallow overlay)                    │
+                      │                    │
+                      ▼                    │
+      Resolved runtime configuration       │
+                      │                    │
+                      └────────┬───────────┘
+                               ▼
+                     Final shallow merge
+                  (runtime options take
+                   precedence over defaults)
+                               │
+                               ▼
+                    Managed plugin instances
+                               │
+                               ▼
+                      Vue Test Utils mount
 ```
 
-The layers do not all use the same merge strategy.
+The four layers do not form a sequence of four full replacements.
 
-In particular:
+For managed plugins:
 
-- preset defaults establish the baseline configuration;
-- `defaultMountOptions.plugins` replaces the corresponding managed plugin configuration at the factory-default layer;
-- `mountOptions.plugins` replaces the corresponding managed plugin configuration at the mount layer;
-- `extraOptions.plugins` provides a shallow overlay on the already resolved managed plugin configuration.
+- **Layer 1 — Preset defaults:** establishes the baseline configuration
+  through the selected preset's defaults factories.
+- **Layer 2 — `defaultMountOptions.plugins`:** provides factory-level
+  runtime configuration.
+- **Layer 3 — `mountOptions.plugins`:** replaces Layer 2 configuration
+  for the same plugin when explicitly provided.
+- **Layer 4 — `extraOptions.plugins`:** applies a shallow overlay to
+  the runtime configuration resolved from Layers 2 and 3.
 
-This distinction allows TestForge to combine stable runtime profiles with explicit test-specific configuration without turning every configuration layer into implicit deep inheritance.
+After resolving Layers 2–4, TestForge performs a **final shallow merge**
+with Layer 1. The resolved runtime options take precedence over matching
+preset properties.
+
+This distinction allows TestForge to combine stable runtime profiles
+with explicit test-specific configuration without turning every
+configuration layer into implicit deep inheritance.
 
 For example, a project preset may define:
 
@@ -940,11 +967,15 @@ plugins: {
 
 through `extraOptions.plugins`.
 
+The resulting configuration retains `createSpy` from the preset defaults
+and applies `stubActions: false` from the test-level overlay.
+
 The preset owns the baseline.
 
 The test expresses only its local delta.
 
----
+For detailed configuration precedence and merge rules, see
+[The 4-Tier Configuration Layering Model](./configuration.md#configuration-layers).
 
 ## Framework Configuration: Single Preset vs Preset Registry
 

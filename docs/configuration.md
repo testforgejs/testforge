@@ -41,7 +41,8 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
 - [7. Advanced: Working with Plugin Instances](#plugin-instances)
   - [7.1. Using Pre-created Instances (`__meta.instance`)](#precreated-plugin-instances)
   - [7.2. Accessing Plugin Instances](#accessing-plugin-instances)
-  - [7.3. Instance Isolation](#instance-isolation)
+  - [7.3. Plugin Instance Dependencies](#plugin-instance-dependencies)
+  - [7.4. Instance Isolation](#instance-isolation)
 
 <a id="testcomponentfactory-signature"></a>
 
@@ -99,6 +100,10 @@ TestForge combines configuration from four sources, each with its own scope and 
 
 Instead, TestForge resolves the runtime options from Layers 2–4, then performs a **final shallow merge** with the preset defaults from Layer 1. The resolved runtime options take precedence over matching preset properties.
 
+For a broader architectural perspective on how presets and runtime
+configuration work together, see
+[Presets and the Runtime Configuration Pipeline](./architecture.md#presets-and-the-runtime-configuration-pipeline).
+
 | Layer                               | Defined At                    | Scope                 | Managed Plugin Behavior                                               |
 | :---------------------------------- | :---------------------------- | :-------------------- | :-------------------------------------------------------------------- |
 | **Layer 1: Preset Defaults**        | `createTestFramework()`       | Project-wide baseline | Provides the base configuration for managed plugins                   |
@@ -107,17 +112,11 @@ Instead, TestForge resolves the runtime options from Layers 2–4, then performs
 | **Layer 4: `extraOptions.plugins`** | `factory()` (fourth argument) | Individual mount      | Applies a shallow overlay to the resolved runtime plugin options      |
 
 > [!IMPORTANT]
-> Layer 3 replaces **Layer 2 configuration for the same plugin**, not
-> that plugin's preset defaults.
+> Layer 3 replaces **Layer 2 configuration for the same plugin**, not that plugin's preset defaults.
 >
-> A plugin declared with `enabled: false` in the preset manifest can
-> still be activated through `defaultMountOptions.plugins`,
-> `mountOptions.plugins`, or `extraOptions.plugins`.
-> Once activated, its preset defaults remain available as the base
-> configuration during the final merge.
+> A plugin declared with `enabled: false` in the preset manifest can still be activated through `defaultMountOptions.plugins`, `mountOptions.plugins`, or `extraOptions.plugins`. Once activated, its preset defaults remain available as the base configuration during the final merge.
 >
-> An explicit runtime configuration value of `false` disables the
-> plugin and prevents its preset defaults from being merged.
+> An explicit runtime configuration value of `false` disables the plugin and prevents its preset defaults from being merged.
 >
 > See [Managed Plugin Configuration](#managed-plugin-configuration) for the full resolution rules and an example using all four layers.
 
@@ -167,8 +166,7 @@ first !== second; // true
 
 This is especially useful for mutable options such as Pinia state, Vue Router routes, and Vue I18n messages. A preset factory can also create fresh runtime objects, such as a new Router history, on each invocation.
 
-However, only objects created inside the factory are necessarily new. If the factory returns references to objects created elsewhere, those objects retain their identity and may be shared across mounts.
-TestForge does not automatically clone or recreate them.
+However, only objects created inside the factory are necessarily new. If the factory returns references to objects created elsewhere, those objects retain their identity and may be shared across mounts. TestForge does not automatically clone or recreate them.
 
 See [Instance Isolation](#instance-isolation) for details on reference sharing and mount-specific objects.
 
@@ -481,7 +479,7 @@ Managed plugins control plugin-specific configuration such as:
 
 Because these options can represent application state, blindly deep-merging them can produce unexpected test behavior.
 
-Managed plugin configuration is resolved in **three steps**: replacement between Layers 2 and 3, a shallow overlay from Layer 4, and a final shallow merge with preset defaults from Layer 1.
+Managed plugin configuration is resolved in **three steps**: replacement between Layers 2 and 3, a shallow overlay from Layer 4, and a final shallow merge with preset defaults from Layer 1. Instance references declared with `fromPluginInstance()` are resolved after these steps, using only the effective configuration. See [Plugin Instance Dependencies](#plugin-instance-dependencies).
 
 #### Step 1: Replace Layer 2 with Layer 3 When Provided
 
@@ -533,12 +531,9 @@ Replacing Layer 2 configuration with Layer 3 helps prevent unintended state inhe
 
 #### Step 2: Apply the Layer 4 Shallow Overlay
 
-`extraOptions.plugins` lets a test adjust individual top-level properties
-of the runtime plugin configuration without replacing it entirely.
+`extraOptions.plugins` lets a test adjust individual top-level properties of the runtime plugin configuration without replacing it entirely.
 
-The overlay is applied to the plugin configuration already resolved
-from Layers 2 and 3. Matching top-level properties are overridden,
-while other properties are preserved.
+The overlay is applied to the plugin configuration already resolved from Layers 2 and 3. Matching top-level properties are overridden, while other properties are preserved.
 
 For example:
 
@@ -576,8 +571,7 @@ and the overlay supplies:
 }
 ```
 
-The resulting runtime configuration retains `initialState` and uses
-`stubActions: true`.
+The resulting runtime configuration retains `initialState` and uses `stubActions: true`.
 
 The overlay is applied **before** the final merge with preset defaults.
 
@@ -1000,6 +994,10 @@ factory(
 TestForge rejects configuration for plugins not declared in the active preset manifest.
 
 Installing the package alone does not make it available in the active runtime profile.
+
+For the architectural role of presets as runtime environment profiles
+and plugin capability boundaries, see
+[Presets as Runtime Environment Profiles](./architecture.md#presets-as-runtime-environment-profiles).
 
 ---
 
@@ -1426,7 +1424,7 @@ Use the standard Vue Test Utils array when:
 
 You usually do not need to interact directly with plugin instances.
 
-Direct access is useful when asserting the state of **Pinia**, **Vue Router**, or **Vue I18n** after a component action.
+Direct access is useful when asserting the state of **Pinia**, **Vue Router**, or **Vue I18n** after a component action. The same section also explains how one managed plugin can depend on another plugin's instance.
 
 <a id="precreated-plugin-instances"></a>
 
@@ -1559,9 +1557,113 @@ After mounting, the test can inspect or manipulate the captured instance.
 
 ---
 
+<a id="plugin-instance-dependencies"></a>
+
+### 7.3. Plugin Instance Dependencies
+
+Some managed plugins need access to an instance created by another managed plugin. For example, Vuetify can use the Vue I18n instance created for the same component mount to configure its locale adapter.
+
+Use `fromPluginInstance()` to declare this relationship in a managed plugin's options. TestForge resolves the reference **at mount time**, creates dependencies before their consumers, and passes the resolved value to the consuming plugin. You do not need to create a second instance or depend on the order of entries in the preset manifest.
+
+#### Declaring a Dependency with `fromPluginInstance()`
+
+```typescript
+fromPluginInstance(pluginName, (instance) => value);
+```
+
+- `pluginName` identifies the managed plugin that provides the instance.
+- The resolver receives that plugin's instance and returns either the instance itself or a value derived from it.
+- `fromPluginInstance()` creates a deferred reference. The resolver is **not** executed when the configuration is declared.
+
+Use the referenced plugin package's `PLUGIN_NAME` export where available. The resolver's instance type is inferred from the plugin's registered instance type when TypeScript metadata is provided by the integration.
+
+**Example: Sharing Vue I18n with Vuetify**
+
+```typescript
+import { fromPluginInstance } from "@testforgejs/vue-test-core";
+import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+
+import { useI18n } from "vue-i18n";
+import { createVueI18nAdapter } from "vuetify/locale/adapters/vue-i18n";
+
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {
+    plugins: {
+      i18n: {
+        legacy: false,
+      },
+      vuetify: {
+        locale: {
+          adapter: fromPluginInstance(I18N_PLUGIN_NAME, (i18n) =>
+            createVueI18nAdapter({ i18n, useI18n }),
+          ),
+        },
+      },
+    },
+  },
+);
+
+factory();
+```
+
+The resolver receives the Vue I18n instance created by TestForge for the current mount.
+
+`createVueI18nAdapter()` expects the complete I18n instance, not its `global` Composer. The adapter accesses `i18n.global` internally.
+
+This allows Vuetify to use the same Vue I18n instance as the mounted component without creating or sharing a separate instance.
+
+This example assumes that both integrations are declared in the active preset manifest and that the Vue I18n integration supports instance references. TestForge creates the managed Vue I18n instance first, resolves the Vuetify adapter from **that same instance**, and then creates Vuetify. The reference does not create another Vue I18n instance.
+
+You can declare references in preset defaults, `defaultMountOptions.plugins`, `mountOptions.plugins`, or `extraOptions.plugins`. References may also appear inside nested plain objects and arrays in plugin options. TestForge does not recursively inspect arbitrary class instances or other non-plain runtime objects.
+
+#### Resolution Order and Lifecycle
+
+TestForge determines dependencies from the **effective plugin configuration**, after applying the rules described in [Managed Plugin Configuration](#managed-plugin-configuration): Layer 3 replaces Layer 2 for the same plugin, Layer 4 applies its overlay, and preset defaults provide the base for the final shallow merge.
+
+For each mount, TestForge then:
+
+1. Discovers instance references in the effective managed plugin options and validates the dependency graph.
+2. Creates provider plugins before consumers, even if a consumer appears earlier in the preset manifest. Transitive dependencies are handled in the same way.
+3. Resolves a consumer's references using instances created for the current mount.
+4. Invokes the consumer's `beforeCreate` hook with **resolved options**, then creates the consumer instance and invokes `afterCreate`.
+
+A provider's `afterCreate` hook runs before a dependent consumer's `beforeCreate` hook. Both plugin creation and installation follow the resolved dependency order.
+
+> [!NOTE]
+> References are resolved **only if they survive configuration layering**. A reference replaced by Layer 3 or overridden by Layer 4 is not evaluated. This also means a discarded reference does not create a dependency on its former provider.
+
+#### Supported Providers and Validation
+
+The referenced plugin must be part of the active preset manifest, active for the current mount, and implemented with instance-reference support. Plugin authors opt in by setting `supportsInstanceReferences: true` in the **provider's** plugin definition; the consuming plugin does not need this flag merely to use a reference.
+
+TestForge rejects invalid dependency graphs, including:
+
+- a reference to a disabled or unavailable provider
+- a reference to a plugin that does not support instance references
+- circular dependencies between managed plugins.
+
+These dependency errors are detected before plugin instances are created or the component is mounted. A provider declared with `enabled: false` in the preset can still participate once it has been activated through supported runtime plugin configuration.
+
+> [!WARNING]
+> `fromPluginInstance()` must **not** be used as the value of `__meta.instance`. That field accepts a **pre-created instance**, not a deferred dependency reference. See [Using Pre-created Instances](#precreated-plugin-instances).
+
+#### Pre-created Instances and Mount Isolation
+
+A provider supplied through `extraOptions.plugins.<name>.__meta.instance` can also satisfy a dependency. The resolver receives that **same supplied instance**; TestForge does not recreate it.
+
+References are evaluated separately for every mount. Normally, each mount resolves to its own TestForge-created provider instance; when a pre-created provider is intentionally shared, each mount's resolver receives that shared instance instead.
+
+References stored in reusable factory defaults remain as references: resolving a nested value for one mount does **not** overwrite the source configuration or cause later mounts to reuse the previous mount's resolved instance.
+
+TestForge creates new configuration containers where needed to resolve references, but preserves the identity of unrelated user-provided runtime objects. See [Instance Isolation](#instance-isolation) for the distinction between framework-managed instances and explicitly shared objects.
+
+---
+
 <a id="instance-isolation"></a>
 
-### 7.3. Instance Isolation
+### 7.4. Instance Isolation
 
 By default, each factory invocation creates a separate runtime environment.
 
@@ -1726,3 +1828,7 @@ If the Router integration's default history is sufficient, there is no need to p
 > To obtain mount-specific instances, create fresh objects in `mountOptions` or rely on plugin integrations that create them automatically.
 >
 > TestForge isolates its own runtime state, but the lifecycle of explicitly supplied objects remains under the user's control.
+
+---
+
+**Back to:** [Project README](../README.md)
