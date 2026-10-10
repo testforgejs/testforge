@@ -2555,27 +2555,55 @@ describe("testComponentFactory Integration (Universal)", () => {
         expect(options.global.plugins).toHaveLength(3);
       });
 
-      it("should enable router via extraOptions (4th argument)", () => {
-        const factory = testComponentFactory(MockComponent);
+      it("should enable router via extraOptions and preserve preset defaults", async () => {
+        const { presets } = await import("./utils/presets/mockPresets.js");
+
+        const presetLinkActiveClass = "preset-router-active";
+
+        // Create a local preset with an additional Router default.
+        const preset = {
+          ...presets.default,
+          defaults: {
+            ...presets.default.defaults,
+            router: () => ({
+              ...presets.default.defaults.router?.(),
+              linkActiveClass: presetLinkActiveClass,
+            }),
+          },
+        };
+
+        // Ensure Router is disabled by default in the preset manifest.
+        const routerEntry = preset.manifest.find(({ module }) => module.getName() === "router");
+
+        expect(routerEntry?.enabled).toBe(false);
+
+        const { testComponentFactory: createFactory } = createTestFramework({
+          preset,
+        });
+
+        const factory = createFactory(MockComponent);
 
         const customRoutes = [{ path: "/", component: { render: () => null } }];
 
-        // Enable the router using the 4th argument (extraOptions)
+        // Enable Router through Layer 4.
         factory({}, {}, {}, { plugins: { router: { routes: customRoutes } } });
 
-        // 1. Verify that the contract for creating the router is invoked with our custom routes
+        // Verify that Router receives both the runtime options
+        // and the defaults from the disabled preset entry.
+        expect(mockRouterCreate).toHaveBeenCalledTimes(1);
+
         expect(mockRouterCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             routes: customRoutes,
             history: expect.any(Object),
+            linkActiveClass: presetLinkActiveClass,
           }),
         );
 
-        // 2. Verify that the router instance has been added to the plugins
+        // Verify that Router is installed alongside the default plugins.
         const [, options] = mockMount.mock.calls[0];
-        expect(options.global.plugins).toContain(mockRouterInstance);
 
-        // Also, check that the default plugins (i18n, pinia) are still there
+        expect(options.global.plugins).toContain(mockRouterInstance);
         expect(options.global.plugins).toContain(mockI18nInstance);
         expect(options.global.plugins).toContain(mockPiniaInstance);
         expect(options.global.plugins).toHaveLength(3);
