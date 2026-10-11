@@ -1,58 +1,75 @@
+import { test } from "vitest";
+
 import { assertIsPlainObject } from "../assertIsPlainObject.js";
 
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
-
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "../../../tests/utils/type-utils.js";
 
 /**
- * 1. Verification of Successful Type Preservation (Positive Test)
- * The function must preserve the object's original structure after the assert
+ * Verification of successful type preservation.
+ *
+ * The assertion must preserve the object's original type without
+ * widening it to a generic `object`.
  */
-interface User {
-  id: number;
-  name: string;
-}
+test("should preserve the original object type", () => {
+  interface User {
+    id: number;
+    name: string;
+  }
 
-const userObj = { id: 1, name: "Alice" } as User;
+  const userObj = { id: 1, name: "Alice" } as User;
 
-// Calling an assert
-assertIsPlainObject(userObj);
+  assertIsPlainObject(userObj);
 
-// Check that the type remains strictly `User` and has not been converted to an abstract `object`
-type _t1 = Expect<Equal<typeof userObj, User>>;
+  // The type must remain exactly `User`.
+  type _Result = Expect<Equal<typeof userObj, User>>;
+});
 
 /**
- * 2. Testing operations with Record<string, unknown>
+ * Verification of Record<string, unknown> type preservation.
+ *
+ * The assertion must preserve the existing Record type without
+ * changing its index signature or value type.
  */
-const dynamicObj = {} as Record<string, unknown>;
-assertIsPlainObject(dynamicObj);
-type _t2 = Expect<Equal<typeof dynamicObj, Record<string, unknown>>>;
+test("should preserve Record<string, unknown>", () => {
+  const dynamicObj = {} as Record<string, unknown>;
+
+  assertIsPlainObject(dynamicObj);
+
+  type _Result = Expect<Equal<typeof dynamicObj, Record<string, unknown>>>;
+});
 
 /**
- * 3. Verification of Object.create(null) type preservation
- * It should accept objects without a prototype and treat them as an object type
+ * Verification of Object.create(null) type preservation.
+ *
+ * Objects without a prototype must be accepted by the TypeScript API
+ * because they satisfy the `T extends object` constraint.
+ *
+ * The assertion must preserve their original type.
  */
-const noProtoObj = Object.create(null) as Record<string, any>;
+test("should preserve the type of objects without a prototype", () => {
+  const noProtoObj = Object.create(null) as Record<string, any>;
 
-// Function must accept it without compilation errors because it satisfies `T extends object`
-assertIsPlainObject(noProtoObj);
+  assertIsPlainObject(noProtoObj);
 
-// Check that the type remains strictly preserved
-type _t3 = Expect<Equal<typeof noProtoObj, Record<string, any>>>;
+  type _Result = Expect<Equal<typeof noProtoObj, Record<string, any>>>;
+});
 
 /**
- * 4. Negative test: Prohibiting the passing of primitives
- * The function requires `T extends object`, so primitives should cause a compilation error
+ * Negative test: primitive arguments must be rejected.
+ *
+ * The function requires `T extends object`, so primitive values
+ * must produce TypeScript compilation errors.
  */
-// @ts-expect-error Argument of type 'string' is not assignable to parameter of type 'object'
-assertIsPlainObject("abc");
+test("should reject primitive arguments", () => {
+  // @ts-expect-error Argument of type 'string' is not assignable to parameter of type 'object'
+  assertIsPlainObject("abc");
 
-// @ts-expect-error Argument of type 'number' is not assignable to parameter of type 'object'
-assertIsPlainObject(42);
+  // @ts-expect-error Argument of type 'number' is not assignable to parameter of type 'object'
+  assertIsPlainObject(42);
 
-// @ts-expect-error Argument of type 'boolean' is not assignable to parameter of type 'object'
-assertIsPlainObject(true);
+  // @ts-expect-error Argument of type 'boolean' is not assignable to parameter of type 'object'
+  assertIsPlainObject(true);
 
-// @ts-expect-error Argument of type 'null' is not assignable to parameter of type 'object'
-assertIsPlainObject(null);
+  // @ts-expect-error Argument of type 'null' is not assignable to parameter of type 'object'
+  assertIsPlainObject(null);
+});

@@ -1,15 +1,21 @@
-import { assertPluginValue } from "../assertPluginValue";
+import { test } from "vitest";
 
-declare const value: unknown;
+import { assertPluginValue } from "../assertPluginValue.js";
 
-assertPluginValue(value, "i18n", "plugins");
+test("should narrow unknown to a valid plugin configuration value", () => {
+  const value: unknown = {};
 
-// Type is now: Record<string, unknown> | false | undefined
-value satisfies Record<string, unknown> | false | undefined;
+  assertPluginValue(value, "i18n", "plugins");
 
-// @ts-expect-error
-const s: string = value;
+  // Type is now: Record<string, unknown> | false | undefined
+  value satisfies Record<string, unknown> | false | undefined;
 
-if (value) {
-  void value["key"];
-}
+  // The narrowed value must not be assignable to a string.
+  // @ts-expect-error
+  const s: string = value;
+
+  // Object properties must be accessible after narrowing.
+  if (value) {
+    void value["key"];
+  }
+});

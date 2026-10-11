@@ -10,7 +10,7 @@ export default defineConfig({
 
     typecheck: {
       enabled: true,
-      include: ["**/*.type-spec.ts", "**/*.test.ts"],
+      include: ["**/*.type-spec.ts"],
     },
 
     server: {

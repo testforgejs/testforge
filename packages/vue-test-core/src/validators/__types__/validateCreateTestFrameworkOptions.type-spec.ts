@@ -1,109 +1,107 @@
+import { test } from "vitest";
+
 import { validateCreateTestFrameworkOptions } from "../validateCreateTestFrameworkOptions.js";
 
 import type { CreateTestFrameworkOptions } from "../../types";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
-
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "../../../tests/utils/type-utils.js";
 
 /**
- * 1. Verification of unknown narrowing
- *
  * The validator must narrow unknown options to CreateTestFrameworkOptions
  * after successful validation.
  */
-const unknownOptions: unknown = {};
+test("should narrow unknown to CreateTestFrameworkOptions", () => {
+  const unknownOptions: unknown = {};
 
-validateCreateTestFrameworkOptions(unknownOptions);
+  validateCreateTestFrameworkOptions(unknownOptions);
 
-type _t1 = Expect<Equal<typeof unknownOptions, CreateTestFrameworkOptions>>;
+  type _Result = Expect<Equal<typeof unknownOptions, CreateTestFrameworkOptions>>;
+});
 
 /**
- * 2. Verification of single-preset options
- *
  * A configuration containing `preset` must be accepted as
  * CreateTestFrameworkOptions.
  */
-const singlePresetOptions: unknown = {
-  preset: {
-    manifest: [],
-    defaults: {},
-  },
-};
+test("should narrow single-preset options to CreateTestFrameworkOptions", () => {
+  const singlePresetOptions: unknown = {
+    preset: {
+      manifest: [],
+      defaults: {},
+    },
+  };
 
-validateCreateTestFrameworkOptions(singlePresetOptions);
+  validateCreateTestFrameworkOptions(singlePresetOptions);
 
-type _t2 = Expect<Equal<typeof singlePresetOptions, CreateTestFrameworkOptions>>;
+  type _Result = Expect<Equal<typeof singlePresetOptions, CreateTestFrameworkOptions>>;
+});
 
 /**
- * 3. Verification of multiple-preset options
- *
  * A configuration containing `presets` must be accepted as
  * CreateTestFrameworkOptions.
  */
-const multiplePresetOptions: unknown = {
-  presets: {
-    default: {
-      manifest: [],
-      defaults: {},
+test("should narrow multiple-preset options to CreateTestFrameworkOptions", () => {
+  const multiplePresetOptions: unknown = {
+    presets: {
+      default: {
+        manifest: [],
+        defaults: {},
+      },
+      custom: {
+        manifest: [],
+        defaults: {},
+      },
     },
-    custom: {
-      manifest: [],
-      defaults: {},
-    },
-  },
-};
+  };
 
-validateCreateTestFrameworkOptions(multiplePresetOptions);
+  validateCreateTestFrameworkOptions(multiplePresetOptions);
 
-type _t3 = Expect<Equal<typeof multiplePresetOptions, CreateTestFrameworkOptions>>;
+  type _Result = Expect<Equal<typeof multiplePresetOptions, CreateTestFrameworkOptions>>;
+});
 
 /**
- * 4. Verification of shallowByDefault
- *
  * `shallowByDefault` is available on both variants of the options union.
  */
-const shallowOptions: unknown = {
-  shallowByDefault: true,
-};
+test("should narrow options with shallowByDefault", () => {
+  const shallowOptions: unknown = {
+    shallowByDefault: true,
+  };
 
-validateCreateTestFrameworkOptions(shallowOptions);
+  validateCreateTestFrameworkOptions(shallowOptions);
 
-type _t4 = Expect<Equal<typeof shallowOptions, CreateTestFrameworkOptions>>;
+  type _Result = Expect<Equal<typeof shallowOptions, CreateTestFrameworkOptions>>;
+});
 
 /**
- * 5. Verification of combined single-preset options
- *
  * `preset` and `shallowByDefault` can be used together.
  */
-const singlePresetWithShallow: unknown = {
-  preset: {
-    manifest: [],
-    defaults: {},
-  },
-  shallowByDefault: true,
-};
-
-validateCreateTestFrameworkOptions(singlePresetWithShallow);
-
-type _t5 = Expect<Equal<typeof singlePresetWithShallow, CreateTestFrameworkOptions>>;
-
-/**
- * 6. Verification of combined multiple-preset options
- *
- * `presets` and `shallowByDefault` can be used together.
- */
-const multiplePresetsWithShallow: unknown = {
-  presets: {
-    default: {
+test("should narrow single-preset options with shallowByDefault", () => {
+  const singlePresetWithShallow: unknown = {
+    preset: {
       manifest: [],
       defaults: {},
     },
-  },
-  shallowByDefault: false,
-};
+    shallowByDefault: true,
+  };
 
-validateCreateTestFrameworkOptions(multiplePresetsWithShallow);
+  validateCreateTestFrameworkOptions(singlePresetWithShallow);
 
-type _t6 = Expect<Equal<typeof multiplePresetsWithShallow, CreateTestFrameworkOptions>>;
+  type _Result = Expect<Equal<typeof singlePresetWithShallow, CreateTestFrameworkOptions>>;
+});
+
+/**
+ * `presets` and `shallowByDefault` can be used together.
+ */
+test("should narrow multiple-preset options with shallowByDefault", () => {
+  const multiplePresetsWithShallow: unknown = {
+    presets: {
+      default: {
+        manifest: [],
+        defaults: {},
+      },
+    },
+    shallowByDefault: false,
+  };
+
+  validateCreateTestFrameworkOptions(multiplePresetsWithShallow);
+
+  type _Result = Expect<Equal<typeof multiplePresetsWithShallow, CreateTestFrameworkOptions>>;
+});

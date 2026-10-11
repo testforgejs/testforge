@@ -1,39 +1,62 @@
+import { test } from "vitest";
+
 import { supportsPluginInstanceReferences } from "../supportsPluginInstanceReferences.js";
 
 import type { PluginDefinition, PluginInstanceName, PluginName } from "../../../../types";
 import type { Equal, Expect } from "../../../../../tests/utils/type-utils.js";
 
-declare const name: PluginName;
-declare const definition: PluginDefinition;
+test("should narrow PluginName to PluginInstanceName when supported", () => {
+  const name = "i18n" as PluginName;
 
-if (supportsPluginInstanceReferences(name, definition)) {
-  type _NameIsPluginInstanceName = Expect<Equal<typeof name, PluginInstanceName>>;
-}
+  const definition: PluginDefinition = {
+    create: () => ({
+      install: () => {},
+    }),
+    supportsInstanceReferences: true,
+  };
 
-declare const anotherName: PluginName;
-declare const anotherDefinition: PluginDefinition;
+  if (supportsPluginInstanceReferences(name, definition)) {
+    type _NameIsPluginInstanceName = Expect<Equal<typeof name, PluginInstanceName>>;
+  }
+});
 
-if (!supportsPluginInstanceReferences(anotherName, anotherDefinition)) {
-  type _NameRemainsPluginName = Expect<Equal<typeof anotherName, PluginName>>;
-}
+test("should preserve PluginName when instance references are not supported", () => {
+  const name = "i18n" as PluginName;
 
-const supportedDefinition = {
-  create: () => ({
-    install: () => {},
-  }),
-  supportsInstanceReferences: true,
-} satisfies PluginDefinition;
+  const definition: PluginDefinition = {
+    create: () => ({
+      install: () => {},
+    }),
+  };
 
-const unsupportedDefinition = {
-  create: () => ({
-    install: () => {},
-  }),
-} satisfies PluginDefinition;
+  if (!supportsPluginInstanceReferences(name, definition)) {
+    type _NameRemainsPluginName = Expect<Equal<typeof name, PluginName>>;
+  }
+});
 
-const invalidDefinition: PluginDefinition = {
-  create: () => ({
-    install: () => {},
-  }),
-  // @ts-expect-error supportsInstanceReferences is a capability marker and may only be true
-  supportsInstanceReferences: false,
-};
+test("should accept only true as the supportsInstanceReferences capability marker", () => {
+  const supportedDefinition = {
+    create: () => ({
+      install: () => {},
+    }),
+    supportsInstanceReferences: true,
+  } satisfies PluginDefinition;
+
+  const unsupportedDefinition = {
+    create: () => ({
+      install: () => {},
+    }),
+  } satisfies PluginDefinition;
+
+  const invalidDefinition: PluginDefinition = {
+    create: () => ({
+      install: () => {},
+    }),
+    // @ts-expect-error supportsInstanceReferences is a capability marker and may only be true
+    supportsInstanceReferences: false,
+  };
+
+  void supportedDefinition;
+  void unsupportedDefinition;
+  void invalidDefinition;
+});

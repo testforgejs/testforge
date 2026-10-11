@@ -55,11 +55,11 @@
   "peerDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "@testforgejs/vue-test-preset-base": "workspace:*",
-    "vitest": "^3.0.0 || ^4.0.0"
+    "vitest": "^3.0.0 || ^4.0.0 || ^5.0.0"
   },
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "@testforgejs/vue-test-preset-base": "workspace:*",
-    "vitest": "^3.0.0 || ^4.0.0"
+    "vitest": "5.0.3"
   }
 }

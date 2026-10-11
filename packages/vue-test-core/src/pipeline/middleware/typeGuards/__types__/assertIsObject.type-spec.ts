@@ -1,12 +1,17 @@
-import { assertIsObject } from "../assertIsObject";
+import { test } from "vitest";
 
-declare const value: unknown;
+import { assertIsObject } from "../assertIsObject.js";
 
-assertIsObject(value, "value");
+test("should narrow unknown to an object with accessible properties", () => {
+  const value: unknown = {};
 
-// Type narrowing check
-void value.foo;
-void value["bar"];
+  assertIsObject(value, "value");
 
-// @ts-expect-error value is not string
-const s: string = value;
+  // Type narrowing check
+  void value.foo;
+  void value["bar"];
+
+  // The narrowed value must not be assignable to a string.
+  // @ts-expect-error value is not string
+  const s: string = value;
+});

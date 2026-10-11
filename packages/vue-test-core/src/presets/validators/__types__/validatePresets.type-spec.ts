@@ -1,113 +1,113 @@
+import { test } from "vitest";
+
 import { validatePresets } from "../validatePresets.js";
 
 import type { PresetDefinition, TestFrameworkPresets } from "../../../types";
-
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
-
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "../../../../tests/utils/type-utils.js";
 
 /**
- * 1. Verification of unknown narrowing
- *
  * The validator must narrow an unknown value to TestFrameworkPresets
  * after successful validation.
  */
-const unknownPresets: unknown = {
-  default: {
-    manifest: [],
-    defaults: {},
-  },
-};
+test("should narrow unknown to TestFrameworkPresets", () => {
+  const unknownPresets: unknown = {
+    default: {
+      manifest: [],
+      defaults: {},
+    },
+  };
 
-validatePresets(unknownPresets);
+  validatePresets(unknownPresets);
 
-type _t1 = Expect<Equal<typeof unknownPresets, TestFrameworkPresets>>;
+  type _Result = Expect<Equal<typeof unknownPresets, TestFrameworkPresets>>;
+});
 
 /**
- * 2. Verification of preset access
- *
  * After validation, individual presets must be available as
  * PresetDefinition values.
  */
-const presetsValue: unknown = {
-  default: {
-    manifest: [],
-    defaults: {},
-  },
-};
+test("should allow accessing presets as PresetDefinition", () => {
+  const presetsValue: unknown = {
+    default: {
+      manifest: [],
+      defaults: {},
+    },
+  };
 
-validatePresets(presetsValue);
+  validatePresets(presetsValue);
 
-const defaultPreset = presetsValue.default;
+  const defaultPreset = presetsValue.default;
 
-type _t2 = Expect<Equal<typeof defaultPreset, PresetDefinition>>;
+  type _Result = Expect<Equal<typeof defaultPreset, PresetDefinition>>;
+});
 
 /**
- * 3. Verification of multiple presets
- *
  * The registry must support arbitrary string preset names.
  */
-const multiplePresets: unknown = {
-  default: {
-    manifest: [],
-    defaults: {},
-  },
-  piniaPreset: {
-    manifest: [],
-    defaults: {},
-  },
-  i18nPreset: {
-    manifest: [],
-    defaults: {},
-  },
-};
+test("should support multiple named presets", () => {
+  const multiplePresets: unknown = {
+    default: {
+      manifest: [],
+      defaults: {},
+    },
+    piniaPreset: {
+      manifest: [],
+      defaults: {},
+    },
+    i18nPreset: {
+      manifest: [],
+      defaults: {},
+    },
+  };
 
-validatePresets(multiplePresets);
+  validatePresets(multiplePresets);
 
-type _t3 = Expect<Equal<typeof multiplePresets, TestFrameworkPresets>>;
+  type _Registry = Expect<Equal<typeof multiplePresets, TestFrameworkPresets>>;
 
-type _t4 = Expect<Equal<typeof multiplePresets.piniaPreset, PresetDefinition>>;
+  type _PiniaPreset = Expect<Equal<typeof multiplePresets.piniaPreset, PresetDefinition>>;
 
-type _t5 = Expect<Equal<typeof multiplePresets.i18nPreset, PresetDefinition>>;
+  type _I18nPreset = Expect<Equal<typeof multiplePresets.i18nPreset, PresetDefinition>>;
+});
 
 /**
- * 4. Verification with an already typed registry
- *
  * Existing TestFrameworkPresets information must remain intact.
  */
-const typedPresets: TestFrameworkPresets = {
-  default: {
-    manifest: [],
-    defaults: {},
-  },
-};
+test("should preserve the type of an already typed preset registry", () => {
+  const typedPresets: TestFrameworkPresets = {
+    default: {
+      manifest: [],
+      defaults: {},
+    },
+  };
 
-validatePresets(typedPresets);
+  validatePresets(typedPresets);
 
-type _t6 = Expect<Equal<typeof typedPresets, TestFrameworkPresets>>;
+  type _Result = Expect<Equal<typeof typedPresets, TestFrameworkPresets>>;
+});
 
 /**
- * 5. Empty preset registry
- *
  * An empty registry is a valid TestFrameworkPresets value.
  */
-const emptyPresets: unknown = {};
+test("should accept an empty preset registry", () => {
+  const emptyPresets: unknown = {};
 
-validatePresets(emptyPresets);
+  validatePresets(emptyPresets);
 
-type _t7 = Expect<Equal<typeof emptyPresets, TestFrameworkPresets>>;
+  type _Result = Expect<Equal<typeof emptyPresets, TestFrameworkPresets>>;
+});
 
 /**
- * 6. No restrictions on PresetName
+ * Preset names are not restricted to predefined identifiers.
  */
-const customPresets: unknown = {
-  "my-project-preset": {
-    manifest: [],
-    defaults: {},
-  },
-};
+test("should support custom preset names", () => {
+  const customPresets: unknown = {
+    "my-project-preset": {
+      manifest: [],
+      defaults: {},
+    },
+  };
 
-validatePresets(customPresets);
+  validatePresets(customPresets);
 
-type _t8 = Expect<Equal<typeof customPresets, TestFrameworkPresets>>;
+  type _Result = Expect<Equal<typeof customPresets, TestFrameworkPresets>>;
+});
