@@ -60,6 +60,6 @@
   "devDependencies": {
     "@testforgejs/vue-test-core": "workspace:*",
     "@testforgejs/vue-test-preset-base": "workspace:*",
-    "vitest": "5.0.3"
+    "vitest": "catalog:"
   }
 }

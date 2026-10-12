@@ -1,0 +1,20 @@
+{
+  "name": "@testforgejs/browser-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser integration tests for the TestForge framework",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@testforgejs/vue-test-core": "workspace:*",
+    "@testforgejs/vue-test-plugin-i18n": "workspace:*",
+    "@testforgejs/vue-test-plugin-vuetify": "workspace:*",
+    "@vitest/browser-playwright": "catalog:",
+    "vitest": "catalog:",
+    "vue-i18n": "^11.4.8",
+    "vuetify": "^4.0.0"
+  }
+}
