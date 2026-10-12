@@ -181,8 +181,40 @@ export interface PluginInstanceReference<TPluginName extends PluginInstanceName,
   readonly resolve: (instance: PluginInstanceMap[TPluginName]) => TResult;
 }
 
+/**
+ * Represents a deferred value resolved from any supported plugin instance.
+ */
+type AnyPluginInstanceReference<TResult> = {
+  [K in PluginInstanceName]: PluginInstanceReference<K, TResult>;
+}[PluginInstanceName];
+
+/**
+ * Allows a value to be provided directly or resolved from a plugin instance.
+ *
+ * Nested objects and arrays may also contain deferred references.
+ */
+export type ResolvablePluginValue<T> =
+  | T
+  | AnyPluginInstanceReference<T>
+  | (T extends (...args: never[]) => unknown
+      ? never
+      : T extends object
+        ? { [K in keyof T]: ResolvablePluginValue<T[K]> }
+        : never);
+
+/**
+ * Allows deferred instance references within plugin configuration fields,
+ * while preserving the top-level configuration object structure.
+ */
+export type ResolvablePluginOptions<T> = T extends object
+  ? { [K in keyof T]: ResolvablePluginValue<T[K]> }
+  : T;
+
+/**
+ * Managed plugin configuration accepted by TestForge.
+ */
 export type PluginOptionsInput = {
-  [K in keyof PluginOptionsMap]?: PluginOptionsMap[K] | false;
+  [K in keyof PluginOptionsMap]?: ResolvablePluginOptions<PluginOptionsMap[K]> | false;
 };
 
 export interface PluginControlOptions<TInstance> {
@@ -191,8 +223,8 @@ export interface PluginControlOptions<TInstance> {
 
 export type PluginOverride<T = unknown> =
   | (T extends Record<string, any>
-      ? Partial<T> & { __meta?: PluginMeta }
-      : T & { __meta?: PluginMeta })
+      ? ResolvablePluginOptions<Partial<T>> & { __meta?: PluginMeta }
+      : ResolvablePluginOptions<T> & { __meta?: PluginMeta })
   | false;
 
 export type PluginOverridesInput = {
