@@ -7,5 +7,5 @@
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@testforgejs/testforge-integration"]
+  "ignore": ["@testforgejs/testforge-integration", "@testforgejs/browser-tests"]
 }
