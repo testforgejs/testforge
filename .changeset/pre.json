@@ -12,12 +12,14 @@
     "@testforgejs/vue-test-preset-base": "1.0.0-beta.0",
     "@testforgejs/vue-test-preset-recommended-jest": "1.0.0-beta.0",
     "@testforgejs/testforge-integration": "0.0.0",
-    "@testforgejs/vue-test-plugin-primevue-v3": "1.0.0-beta.2"
+    "@testforgejs/vue-test-plugin-primevue-v3": "1.0.0-beta.2",
+    "@testforgejs/browser-tests": "0.0.0"
   },
   "changesets": [
     "better-gifts-run",
     "bumpy-files-vanish",
     "calm-glasses-take",
+    "chatty-cooks-decide",
     "chatty-foxes-travel",
     "chilly-cats-study",
     "clean-parents-dream",
@@ -33,6 +35,7 @@
     "fluffy-clowns-carry",
     "full-geckos-switch",
     "full-words-admire",
+    "funny-results-say",
     "humble-dingos-deny",
     "itchy-dancers-lose",
     "khaki-bottles-kneel",

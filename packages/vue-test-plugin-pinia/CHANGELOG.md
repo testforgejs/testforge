@@ -1,5 +1,29 @@
 # @testforgejs/vue-test-plugin-pinia
 
+## 1.0.0-beta.5
+
+### Minor Changes
+
+- ce97ea4: Add support for managed plugin instance dependencies.
+
+  - Introduce `fromPluginInstance()` for referencing runtime instances of managed plugins.
+  - Resolve nested instance references in dependency order, independently of manifest order.
+  - Detect invalid and circular plugin dependencies.
+  - Preserve instance isolation across component mounts.
+  - Register runtime instance types for supported plugins, enabling type-safe dependency resolution.
+
+### Patch Changes
+
+- cfd229f: Add runtime capability metadata for plugin instance references.
+
+  `PluginDefinition` now supports the optional `supportsInstanceReferences` flag, allowing TestForge to distinguish plugins that expose addressable runtime instances from install-based plugins.
+
+  Instance-based I18n, Pinia, Router, and Vuetify integrations now declare this capability.
+
+- Updated dependencies [ce97ea4]
+- Updated dependencies [cfd229f]
+  - @testforgejs/vue-test-core@1.0.0-beta.4
+
 ## 1.0.0-beta.4
 
 ### Patch Changes
