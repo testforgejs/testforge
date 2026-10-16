@@ -83,63 +83,8 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
     captureInstance = core.captureInstance;
   });
 
-  describe("Expose Instance", () => {
-    it("should provide access to plugin instances via expose callback", () => {
-      let capturedI18n;
-      let capturedPinia;
-      let capturedRouter;
-
-      const BASE_MOUNT_OPTIONS = {
-        plugins: {
-          i18n: {
-            locale: "en",
-            messages: {},
-            expose: (instance) => {
-              capturedI18n = instance;
-            },
-          },
-          pinia: {
-            expose: (instance) => {
-              capturedPinia = instance;
-            },
-          },
-          router: {
-            routes: [
-              {
-                path: "/",
-                component: { render: () => null },
-              },
-            ],
-            expose: (instance) => {
-              capturedRouter = instance;
-            },
-          },
-        },
-      };
-
-      const factory = testComponentFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
-
-      factory();
-
-      // 2. Verify the connection using mock spies (check what the `create` call returned)
-      // The results of Jest/Vitest calls are stored in mock.results
-      expect(mocks.i18nCreate.mock.results[0].value).toBe(capturedI18n);
-      expect(mocks.piniaCreate.mock.results[0].value).toBe(capturedPinia);
-      expect(mocks.routerCreate.mock.results[0].value).toBe(capturedRouter);
-
-      // Verify that these are real instances (for example, by checking for characteristic properties)
-      expect(capturedI18n.mode).toBe("composition");
-      expect(typeof capturedPinia.install).toBe("function");
-
-      // Verifying synchronization with Vue Test Utils
-      const [, options] = mocks.mount.mock.calls[0];
-      expect(options.global.plugins).toContain(capturedI18n);
-      expect(options.global.plugins).toContain(capturedPinia);
-      expect(options.global.plugins).toContain(capturedRouter);
-    });
-
-    it("should capture plugin instances using captureInstance helper", () => {
-      // 1. Creating Real Captures
+  describe("Instance Capturing", () => {
+    it("should capture real plugin instances and pass them to Vue Test Utils", () => {
       const i18nCapture = captureInstance();
       const piniaCapture = captureInstance();
       const routerCapture = captureInstance();
@@ -149,36 +94,47 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
           i18n: {
             locale: "en",
             messages: {},
-            ...i18nCapture, // Pass to the actual plugin
+            ...i18nCapture,
           },
           pinia: {
             ...piniaCapture,
           },
           router: {
-            routes: [{ path: "/", component: { render: () => null } }],
+            routes: [
+              {
+                path: "/",
+                component: { render: () => null },
+              },
+            ],
             ...routerCapture,
           },
         },
       };
 
       const factory = testComponentFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
+
       factory();
 
-      // 2. Verify the connection using mock spies (verify the return value of the `create` call)
-      // In Jest/Vitest, the results of the calls are stored in `mock.results`
+      // Verify that native plugin factories were called
+      expect(mocks.i18nCreate).toHaveBeenCalledTimes(1);
+      expect(mocks.piniaCreate).toHaveBeenCalledTimes(1);
+      expect(mocks.routerCreate).toHaveBeenCalledTimes(1);
+
+      // Verify that captureInstance received the actual created instances
       expect(mocks.i18nCreate.mock.results[0].value).toBe(i18nCapture.instance);
       expect(mocks.piniaCreate.mock.results[0].value).toBe(piniaCapture.instance);
       expect(mocks.routerCreate.mock.results[0].value).toBe(routerCapture.instance);
 
-      // 3. Additional guarantee: instances must be actual plugin objects
+      // Verify that captured instances are real plugin instances
       expect(i18nCapture.instance.mode).toBe("composition");
+      expect(typeof piniaCapture.instance.install).toBe("function");
       expect(typeof routerCapture.instance.resolve).toBe("function");
 
-      // Checking the mock call
-      expect(mocks.mount).toHaveBeenCalled();
+      // Verify that Vue Test Utils received all captured instances
+      expect(mocks.mount).toHaveBeenCalledTimes(1);
 
-      // 4. Verify that these captured instances were added to the final shallowMount
       const [, options] = mocks.mount.mock.calls[0];
+
       expect(options.global.plugins).toContain(i18nCapture.instance);
       expect(options.global.plugins).toContain(piniaCapture.instance);
       expect(options.global.plugins).toContain(routerCapture.instance);

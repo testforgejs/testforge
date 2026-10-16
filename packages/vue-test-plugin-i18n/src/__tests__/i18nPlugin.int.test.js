@@ -81,38 +81,19 @@ describe("i18nPlugin integration", () => {
 
     const wrapper = factory();
 
+    // Verify the captured instance
+    expect(i18nCapture.instance).toBeDefined();
+    expect(i18nCapture.instance.global.locale.value).toBe("en");
+    expect(i18nCapture.instance.global.t("hello")).toBe("Hello World");
+
+    // Verify the initial translation
     expect(wrapper.text()).toBe("Hello World");
+
+    // Verify reactive locale switching
     i18nCapture.instance.global.locale.value = "de";
+
     await wrapper.vm.$nextTick();
+
     expect(wrapper.text()).toBe("Hallo Welt");
-  });
-
-  it("should expose i18n instance", () => {
-    let exposedInstance;
-
-    const factory = framework.testComponentFactory(
-      Component,
-      {},
-      {
-        plugins: {
-          i18n: {
-            locale: "en",
-            messages: {
-              en: {
-                hello: "Hello World",
-              },
-            },
-            expose: (instance) => {
-              exposedInstance = instance;
-            },
-          },
-        },
-      },
-    );
-
-    factory();
-
-    expect(exposedInstance.global.locale.value).toBe("en");
-    expect(exposedInstance.global.t("hello")).toBe("Hello World");
   });
 });

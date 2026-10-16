@@ -1,55 +1,86 @@
-import { describe, it, expect, vi } from "vitest";
-import { exposeInstance } from "../../../plugins/instances/exposeInstance.js";
+// packages/vue-test-core/src/plugins/instances/__tests__/exposeInstance.test.ts
 
-import type { PluginRuntimeMeta } from "../../../types";
+import { describe, it, expect, vi } from "vitest";
+
+import { exposeInstance } from "../exposeInstance.js";
+import { PLUGIN_EXPOSE } from "../../../constants/constants.js";
+
+import type { ExposeOption } from "../../../types";
 
 describe("exposeInstance", () => {
-  describe("when expose callback is provided", () => {
-    it("should call expose with the plugin instance", () => {
+  describe("when capture callback is provided", () => {
+    it("should call the capture callback with the plugin instance", () => {
       const instance = { id: "plugin-instance" };
-      const expose = vi.fn();
+      const capture = vi.fn();
 
-      exposeInstance(instance, { expose });
+      exposeInstance(instance, {
+        [PLUGIN_EXPOSE]: capture,
+      });
 
-      expect(expose).toHaveBeenCalledTimes(1);
-      expect(expose).toHaveBeenCalledWith(instance);
+      expect(capture).toHaveBeenCalledTimes(1);
+      expect(capture).toHaveBeenCalledWith(instance);
     });
   });
 
-  describe("when expose is missing or invalid", () => {
+  describe("when capture callback is missing or invalid", () => {
     it("should do nothing when options is undefined", () => {
       expect(() => exposeInstance({}, undefined)).not.toThrow();
     });
 
-    it("should do nothing when expose is not a function", () => {
-      expect(() =>
-        exposeInstance({}, { expose: "not-a-function" } as unknown as PluginRuntimeMeta<any>),
-      ).not.toThrow();
+    it("should do nothing when capture callback is not a function", () => {
+      const instance = {};
+
+      const options = {
+        [PLUGIN_EXPOSE]: "not-a-function",
+      } as unknown as ExposeOption<typeof instance>;
+
+      expect(() => exposeInstance(instance, options)).not.toThrow();
     });
 
-    it("should do nothing when expose is null", () => {
-      expect(() =>
-        exposeInstance({}, { expose: null } as unknown as PluginRuntimeMeta<any>),
-      ).not.toThrow();
+    it("should do nothing when capture callback is null", () => {
+      const instance = {};
+
+      const options = {
+        [PLUGIN_EXPOSE]: null,
+      } as unknown as ExposeOption<typeof instance>;
+
+      expect(() => exposeInstance(instance, options)).not.toThrow();
+    });
+
+    it("should ignore native expose while invoking the internal capture callback", () => {
+      const instance = { id: "plugin-instance" };
+
+      const nativeExpose = vi.fn();
+      const capture = vi.fn();
+
+      const options = {
+        expose: nativeExpose,
+        [PLUGIN_EXPOSE]: capture,
+      };
+
+      exposeInstance(instance, options);
+
+      expect(capture).toHaveBeenCalledExactlyOnceWith(instance);
+      expect(nativeExpose).not.toHaveBeenCalled();
     });
   });
 
   describe("immutability contract", () => {
     it("should not mutate instance or options", () => {
       const instance = { a: 1 };
-      const expose = vi.fn();
-      const options = { expose };
+      const capture = vi.fn();
 
-      const instanceRef = instance;
-      const optionsRef = options;
+      const options = {
+        [PLUGIN_EXPOSE]: capture,
+      };
 
       exposeInstance(instance, options);
 
-      expect(instance).toBe(instanceRef);
-      expect(options).toBe(optionsRef);
-
       expect(instance).toEqual({ a: 1 });
-      expect(options.expose).toBe(expose);
+      expect(Reflect.ownKeys(options)).toEqual([PLUGIN_EXPOSE]);
+      expect(options[PLUGIN_EXPOSE]).toBe(capture);
+
+      expect(capture).toHaveBeenCalledExactlyOnceWith(instance);
     });
   });
 });

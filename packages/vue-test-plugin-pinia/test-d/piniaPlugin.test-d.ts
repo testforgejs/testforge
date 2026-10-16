@@ -25,10 +25,17 @@ expectAssignable<VueTestPiniaOptions>({
     const store = useCounterStore(pinia);
     store.count = 20;
   },
-  expose(instance) {
-    expectType<TestingPinia>(instance);
-  },
 });
+
+/*
+ * The legacy expose callback must not be accepted
+ * as a VueTestPiniaOptions property.
+ */
+expectError(
+  expectAssignable<VueTestPiniaOptions>({
+    expose(_instance: TestingPinia) {},
+  }),
+);
 
 /*
  * captureInstance should preserve the provided Pinia instance type.
@@ -86,9 +93,8 @@ const wrapper = factory(
         mockStores: (pinia) => {
           expectType<TestingPinia>(pinia);
         },
-        expose: (instance) => {
-          expectType<TestingPinia>(instance);
-        },
+
+        ...capture,
       },
     },
   },
@@ -113,6 +119,8 @@ expectError(
 );
 
 // Verify extraOptions
+const extraCapture = captureInstance<TestingPinia>();
+
 factory(
   {},
   {},
@@ -121,6 +129,7 @@ factory(
     plugins: {
       pinia: {
         stubActions: true,
+        ...extraCapture,
       },
     },
   },
@@ -142,6 +151,8 @@ expectError(
 );
 
 // Verify defaultMountOptions
+const defaultCapture = captureInstance<TestingPinia>();
+
 framework.testComponentFactory(
   TypedComponent,
   {},
@@ -151,9 +162,8 @@ framework.testComponentFactory(
         mockStores: (pinia) => {
           expectType<TestingPinia>(pinia);
         },
-        expose: (instance) => {
-          expectType<TestingPinia>(instance);
-        },
+
+        ...defaultCapture,
       },
     },
   },

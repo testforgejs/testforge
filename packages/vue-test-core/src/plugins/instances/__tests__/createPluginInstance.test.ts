@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { createPluginInstance } from "../../../plugins/instances/createPluginInstance.js";
 
-import type { PluginRuntimeMeta } from "../../../types";
+import { createPluginInstance } from "../createPluginInstance.js";
+import { captureInstance } from "../captureInstance.js";
+
+import { PLUGIN_EXPOSE } from "../../../constants/constants.js";
 
 describe("createPluginInstance", () => {
   describe("factory usage", () => {
@@ -22,7 +24,7 @@ describe("createPluginInstance", () => {
 
       const result = createPluginInstance(factory, {});
 
-      expect(result).toBe(instance); // the same link
+      expect(result).toBe(instance);
     });
   });
 
@@ -39,50 +41,99 @@ describe("createPluginInstance", () => {
       expect(result).toBe(shared);
     });
 
-    it("should expose the shared instance via expose function", () => {
+    it("should capture the shared instance when __sharedInstance is provided", () => {
       const shared = { x: 1 };
-      const expose = vi.fn();
+      const capture = captureInstance<typeof shared>();
 
-      createPluginInstance(
-        () => {
-          throw new Error("factory should not be called");
-        },
-        {
-          __sharedInstance: shared,
-          expose,
-        },
-      );
+      const factory = vi.fn(() => {
+        throw new Error("factory should not be called");
+      });
 
-      expect(expose).toHaveBeenCalledWith(shared);
+      const result = createPluginInstance(factory, {
+        __sharedInstance: shared,
+        ...capture,
+      });
+
+      expect(factory).not.toHaveBeenCalled();
+      expect(result).toBe(shared);
+      expect(capture.instance).toBe(shared);
     });
   });
 
-  describe("expose contract", () => {
-    it("should call expose with created instance when provided", () => {
+  describe("instance capturing", () => {
+    it("should capture the created instance when captureInstance is provided", () => {
       const instance = { a: 1 };
       const factory = vi.fn(() => instance);
-      const expose = vi.fn();
+      const capture = captureInstance<typeof instance>();
 
-      createPluginInstance(factory, { expose });
+      const result = createPluginInstance(factory, {
+        ...capture,
+      });
 
-      expect(expose).toHaveBeenCalledTimes(1);
-      expect(expose).toHaveBeenCalledWith(instance);
+      expect(factory).toHaveBeenCalledTimes(1);
+      expect(result).toBe(instance);
+      expect(capture.instance).toBe(instance);
     });
 
-    it("should do nothing when expose is missing", () => {
+    it("should not capture the instance when captureInstance is not provided", () => {
       const instance = { a: 1 };
       const factory = vi.fn(() => instance);
 
-      expect(() => createPluginInstance(factory, {})).not.toThrow();
+      const result = createPluginInstance(factory, {});
+
+      expect(factory).toHaveBeenCalledTimes(1);
+      expect(result).toBe(instance);
     });
 
-    it("should do nothing when expose is not a function", () => {
+    it("should ignore an invalid internal capture callback", () => {
       const instance = { a: 1 };
       const factory = vi.fn(() => instance);
 
-      expect(() =>
-        createPluginInstance(factory, { expose: 123 } as unknown as PluginRuntimeMeta<any>),
-      ).not.toThrow();
+      const options = {
+        [PLUGIN_EXPOSE]: 123,
+      };
+
+      expect(() => createPluginInstance(factory, options as never)).not.toThrow();
+
+      expect(factory).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not pass internal capture options to the native factory", () => {
+      const instance = { a: 1 };
+      const factory = vi.fn(() => instance);
+      const capture = captureInstance<typeof instance>();
+
+      createPluginInstance(factory, {
+        nativeOption: "value",
+        ...capture,
+      });
+
+      expect(factory).toHaveBeenCalledExactlyOnceWith({
+        nativeOption: "value",
+      });
+
+      expect(capture.instance).toBe(instance);
+    });
+  });
+
+  describe("native options compatibility", () => {
+    it("should preserve native expose without invoking it as a capture callback", () => {
+      const instance = { a: 1 };
+      const factory = vi.fn(() => instance);
+      const nativeExpose = vi.fn();
+      const capture = captureInstance<typeof instance>();
+
+      createPluginInstance(factory, {
+        expose: nativeExpose,
+        ...capture,
+      });
+
+      expect(factory).toHaveBeenCalledExactlyOnceWith({
+        expose: nativeExpose,
+      });
+
+      expect(nativeExpose).not.toHaveBeenCalled();
+      expect(capture.instance).toBe(instance);
     });
   });
 
@@ -95,6 +146,26 @@ describe("createPluginInstance", () => {
       createPluginInstance(factory, options);
 
       expect(options).toEqual(snapshot);
+    });
+
+    it("should not remove the capture callback from the original options", () => {
+      const instance = { a: 1 };
+      const factory = vi.fn(() => instance);
+      const capture = captureInstance<typeof instance>();
+
+      const options = {
+        a: 1,
+        ...capture,
+      };
+
+      const originalKeys = Reflect.ownKeys(options);
+      const originalCallback = options[PLUGIN_EXPOSE];
+
+      createPluginInstance(factory, options);
+
+      expect(Reflect.ownKeys(options)).toEqual(originalKeys);
+      expect(options[PLUGIN_EXPOSE]).toBe(originalCallback);
+      expect(capture.instance).toBe(instance);
     });
   });
 });

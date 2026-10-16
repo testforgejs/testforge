@@ -85,6 +85,7 @@ describe("piniaPlugin integration", () => {
   it("should capture pinia instance and reflect updates when state is modified externally", async () => {
     // Arrange
     const piniaCapture = captureInstance<TestingPinia>();
+
     const factory = framework.testComponentFactory(
       Component,
       {},
@@ -104,45 +105,19 @@ describe("piniaPlugin integration", () => {
       throw new Error("Expected pinia instance to be captured");
     }
 
-    // Assert
+    // Assert initial state
+    const store = useCounterStore(piniaCapture.instance);
+
+    expect(store.count).toBe(0);
     expect(wrapper.text()).toBe("0");
 
-    // Call the store action via the context of the captured Pinia instance
-    const store = useCounterStore(piniaCapture.instance);
+    // Call the store action via the captured Pinia instance
     store.increment();
 
     await wrapper.vm.$nextTick();
+
+    // Assert updated state
+    expect(store.count).toBe(1);
     expect(wrapper.text()).toBe("1");
-  });
-
-  it("should expose pinia instance through callback when expose option is provided", () => {
-    // Arrange
-    let exposedInstance: TestingPinia | undefined;
-
-    const factory = framework.testComponentFactory(
-      Component,
-      {},
-      {
-        plugins: {
-          pinia: {
-            expose: (instance) => {
-              exposedInstance = instance;
-            },
-          },
-        },
-      },
-    );
-
-    // Act
-    factory();
-
-    // Guard assertion for type narrowing
-    if (!exposedInstance) {
-      throw new Error("Expected pinia instance to be exposed");
-    }
-
-    // Assert
-    const store = useCounterStore(exposedInstance);
-    expect(store.count).toBe(0);
   });
 });

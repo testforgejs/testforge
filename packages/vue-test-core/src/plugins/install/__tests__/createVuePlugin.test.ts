@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createVuePlugin } from "../../../plugins/install/createVuePlugin";
+import { createVuePlugin } from "../../../plugins/install/createVuePlugin.js";
+import { captureInstance } from "../../instances/captureInstance.js";
 
 import type { Plugin } from "vue";
 
@@ -54,19 +55,42 @@ describe("createVuePlugin", () => {
     );
   });
 
-  it("should throw when expose callback is provided", () => {
+  it("should throw when instance capture is provided", () => {
     // Arrange
     const plugin = {
       install: vi.fn(),
     } satisfies Plugin;
 
+    const capture = captureInstance();
+
     const options = {
-      expose: vi.fn(),
+      ...capture,
     };
 
     // Act & Assert
-    expect(() => createVuePlugin(plugin, options as any)).toThrow(
-      "[TestForge] expose() is not supported for non-instance Vue plugins",
+    expect(() => createVuePlugin(plugin, options)).toThrow(
+      "[TestForge] Instance capture is not supported for non-instance Vue plugins",
     );
+  });
+
+  it("should preserve native expose option for install-based Vue plugins", () => {
+    // Arrange
+    const plugin = {
+      install: vi.fn(),
+    } satisfies Plugin;
+
+    const expose = vi.fn();
+
+    const options = {
+      expose,
+    };
+
+    // Act
+    const result = createVuePlugin(plugin, options);
+
+    // Assert
+    expect(result[0]).toBe(plugin);
+    expect(result[1]).toBe(options);
+    expect(expose).not.toHaveBeenCalled();
   });
 });

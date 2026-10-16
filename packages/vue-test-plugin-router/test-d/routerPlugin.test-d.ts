@@ -15,10 +15,17 @@ import type { VueTestRouterOptions } from "../dist/index.js";
 expectAssignable<VueTestRouterOptions>({
   history: createMemoryHistory(),
   routes: [],
-  expose(instance) {
-    expectType<Router>(instance);
-  },
 });
+
+/*
+ * The legacy expose callback must not be accepted
+ * as a VueTestRouterOptions property.
+ */
+expectError(
+  expectAssignable<VueTestRouterOptions>({
+    expose(_instance: Router) {},
+  }),
+);
 
 /*
  * captureInstance should preserve the provided instance type.
@@ -75,9 +82,7 @@ const wrapper = factory(
       router: {
         history: createMemoryHistory(),
         routes: [{ path: "/", component: TypedComponent }],
-        expose: (instance) => {
-          expectType<Router>(instance);
-        },
+        ...capture,
       },
     },
   },
@@ -111,6 +116,8 @@ expectError(
 );
 
 // Verify extraOptions
+const extraCapture = captureInstance<Router>();
+
 factory(
   {},
   {},
@@ -119,6 +126,7 @@ factory(
     plugins: {
       router: {
         routes: [],
+        ...extraCapture,
       },
     },
   },
@@ -140,6 +148,8 @@ expectError(
 );
 
 // Verify defaultMountOptions
+const defaultCapture = captureInstance<Router>();
+
 framework.testComponentFactory(
   TypedComponent,
   {},
@@ -148,9 +158,7 @@ framework.testComponentFactory(
       router: {
         history: createMemoryHistory(),
         routes: [],
-        expose: (instance) => {
-          expectType<Router>(instance);
-        },
+        ...defaultCapture,
       },
     },
   },
@@ -173,3 +181,36 @@ expectError(
 
 // Verify that invalid property access triggers a type error
 expectError(captureInstance<Router>().instance?.unknownProperty);
+
+/*
+ * captureInstance without an explicit generic defaults to unknown.
+ * Spreading the capture into router options must not change its type.
+ */
+const untypedCapture = captureInstance();
+
+expectType<unknown>(untypedCapture.instance);
+
+factory(
+  {},
+  {
+    plugins: {
+      router: {
+        history: createMemoryHistory(),
+        routes: [],
+        ...untypedCapture,
+      },
+    },
+  },
+);
+
+expectType<unknown>(untypedCapture.instance);
+
+// Router-specific methods are unavailable on an unknown instance.
+expectError(untypedCapture.instance?.push("/about"));
+
+/*
+ * An explicit generic preserves the Router instance type.
+ */
+const typedCapture = captureInstance<Router>();
+
+expectType<Router | undefined>(typedCapture.instance);

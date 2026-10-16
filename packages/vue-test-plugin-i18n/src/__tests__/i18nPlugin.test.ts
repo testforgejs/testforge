@@ -86,48 +86,28 @@ describe("i18nPlugin integration", () => {
     const wrapper = factory();
 
     const i18n = i18nCapture.instance;
+
     if (!i18n) {
-      throw new Error("Expected i18n instance");
+      throw new Error("Expected i18n instance to be captured");
     }
 
-    expect(wrapper.text()).toBe("Hello World");
-    (i18n!.global.locale as WritableComputedRef<string>).value = "de";
-    await wrapper.vm.$nextTick();
-    expect(wrapper.text()).toBe("Hallo Welt");
-  });
+    const composer = i18n.global as Composer;
 
-  it("should expose i18n instance", () => {
-    let exposedInstance: I18n | undefined;
-
-    const factory = framework.testComponentFactory(
-      Component,
-      {},
-      {
-        plugins: {
-          i18n: {
-            locale: "en",
-            messages: {
-              en: {
-                hello: "Hello World",
-              },
-            },
-            expose: (instance) => {
-              exposedInstance = instance;
-            },
-          },
-        },
-      },
-    );
-
-    factory();
-
-    if (!exposedInstance) {
-      throw new Error("Expected i18n instance");
-    }
-
-    const composer = exposedInstance.global as Composer;
-
+    // Verify the captured instance and its initial configuration
     expect(composer.locale.value).toBe("en");
     expect(composer.t("hello")).toBe("Hello World");
+
+    // Verify the initial translation
+    expect(wrapper.text()).toBe("Hello World");
+
+    // Change the locale through the captured instance
+    (composer.locale as WritableComputedRef<string>).value = "de";
+
+    await wrapper.vm.$nextTick();
+
+    // Verify the updated locale and translation
+    expect(composer.locale.value).toBe("de");
+    expect(composer.t("hello")).toBe("Hallo Welt");
+    expect(wrapper.text()).toBe("Hallo Welt");
   });
 });

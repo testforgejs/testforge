@@ -52,38 +52,11 @@ describe("vuetifyPlugin integration", () => {
       },
     );
 
-    factory();
+    const wrapper = factory();
+
     expect(vuetifyCapture.instance).toBeDefined();
-    if (!vuetifyCapture.instance) {
-      throw Error("instance should be defined");
-    }
-    expect(typeof vuetifyCapture.instance.install).toBe("function");
-  });
+    expect(vuetifyCapture.instance?.install).toBeTypeOf("function");
 
-  it("should expose vuetify instance through callback when expose option is provided", () => {
-    let exposedInstance: VuetifyInstance | undefined;
-
-    const factory = framework.testComponentFactory(
-      Component,
-      {},
-      {
-        plugins: {
-          vuetify: {
-            expose(instance) {
-              exposedInstance = instance;
-            },
-          },
-        },
-      },
-    );
-
-    factory();
-
-    expect(exposedInstance).toBeDefined();
-
-    if (!exposedInstance) {
-      throw Error("exposedInstance should be defined");
-    }
-    expect(exposedInstance.install).toBeTypeOf("function");
+    expect(wrapper.html()).toContain("Hello");
   });
 });

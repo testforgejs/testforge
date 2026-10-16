@@ -523,7 +523,7 @@ factory(
 The resolved test-level `initialState` contains `users: []`; it is not deep-merged with the factory-level array. This prevents stale or unrelated test data from leaking into another test.
 
 > [!NOTE]
-> Replacement occurs at the **plugin configuration object** level, not per property. As a result, Layer 2 properties such as `expose` (including callbacks supplied by `captureInstance()`) or `__meta` are discarded if Layer 3 replaces that plugin's configuration. Include them again in Layer 3 if they must remain active.
+> Replacement occurs at the **plugin configuration object** level, not per property. If Layer 3 replaces a managed plugin's Layer 2 configuration, it also replaces any capture callback supplied through `...captureInstance()` and any `__meta` settings from Layer 2. Supply a capture object again in Layer 3 if you need to access the instance for that mount.
 >
 > This replacement does **not** remove the plugin's preset defaults.
 
@@ -1494,46 +1494,20 @@ TestForge reuses that instance without removing the plugin from the managed pipe
 
 ### 7.2. Accessing Plugin Instances
 
-Some tests need direct access to a plugin instance to assert its runtime state.
+Some tests need direct access to a managed plugin instance to inspect its runtime state or invoke its API. Use **`captureInstance<T>()`**, the supported TestForge mechanism for accessing instances created or reused by the managed plugin pipeline.
 
-#### Option A: Using `expose`
+#### Capturing an Instance with `captureInstance()`
 
-Provide an `expose` callback to receive the plugin instance before the component mounts.
+Create a capture object, spread it into the managed plugin's configuration, and read its `instance` property after calling the component factory:
 
 ```typescript
+import { captureInstance } from "@testforgejs/vue-test-core";
 import type { TestingPinia } from "@pinia/testing";
-let piniaInstance: TestingPinia;
 
 const factory = testComponentFactory(MyComponent);
 
-factory(
-  {},
-  {
-    plugins: {
-      pinia: {
-        expose(instance) {
-          piniaInstance = instance as TestingPinia;
-        },
-      },
-    },
-  },
-);
-
-expect(piniaInstance).toBeDefined();
-```
-
----
-
-#### Option B: Using `captureInstance` (Recommended)
-
-`captureInstance()` builds on `expose` and stores the instance in a wrapper object for convenient assertions.
-
-```typescript
-const piniaCapture = captureInstance();
-
-const factory = testComponentFactory(MyComponent);
-
-factory(
+const piniaCapture = captureInstance<TestingPinia>();
+const wrapper = factory(
   {},
   {
     plugins: {
@@ -1545,15 +1519,44 @@ factory(
 );
 
 expect(piniaCapture.instance).toBeDefined();
+
+if (!piniaCapture.instance) {
+  throw new Error("Expected the Pinia instance to be captured");
+}
+
+expect(typeof piniaCapture.instance.install).toBe("function");
 ```
 
-After mounting, the test can inspect or manipulate the captured instance.
+The capture receives the **same instance** used for the component mount. The instance is available after `factory()` returns, because the managed plugin is created or reused before Vue Test Utils mounts the component. You can use it for assertions or for manipulating plugin state.
 
 > [!TIP]
-> **TypeScript inference:** You do not need to pass explicit generic types to `captureInstance()`. The framework automatically infers the correct plugin type (`Pinia`, `Router`, etc.) based on the context object key where the capture helper is spread.
+> **TypeScript:** Pass the expected instance type explicitly, for example `captureInstance<TestingPinia>()`, `captureInstance<Router>()`, or `captureInstance<I18n>()`. The `instance` property is typed as `T | undefined` until you narrow it. Calling `captureInstance()` without a type argument defaults to `unknown`; spreading its result into a plugin's options does **not** retroactively infer the generic type from that plugin's name.
 
-> [!NOTE]
-> Plugin instances are created before component mounting. Both `expose` and `captureInstance()` make the instance available before `mount()` or `shallowMount()` is called.
+#### How Capturing Works
+
+`captureInstance()` exposes an **internal, symbol-keyed callback** when its result is spread into plugin options. Its public `instance` getter is non-enumerable, so it is not copied by the object spread. TestForge invokes the callback with the created or reused instance and **excludes the internal callback from the options passed to the underlying native plugin factory**.
+
+The former string-keyed `expose` callback is **not a TestForge instance-capture API**. Do not use `plugins.<name>.expose` to capture a managed plugin instance. An `expose` option belonging to an underlying plugin, if any, remains an ordinary native plugin option; TestForge does not invoke it as a capture callback.
+
+#### Configuration Layers and Multiple Mounts
+
+You can spread a capture object into a managed plugin's options in `defaultMountOptions`, per-call `mountOptions`, or `extraOptions`. Remember that a per-call `mountOptions.plugins.<name>` configuration **replaces** the entire `defaultMountOptions.plugins.<name>` configuration. If the factory-level capture is replaced, include a capture object in the per-call configuration when you still need to capture the instance. See [Managed Plugin Configuration](#managed-plugin-configuration).
+
+For **independent captures across mounts**, create a new capture object for each mount:
+
+```typescript
+const firstCapture = captureInstance<TestingPinia>();
+const secondCapture = captureInstance<TestingPinia>();
+
+factory({}, { plugins: { pinia: { ...firstCapture } } });
+factory({}, { plugins: { pinia: { ...secondCapture } } });
+
+expect(firstCapture.instance).toBeDefined();
+expect(secondCapture.instance).toBeDefined();
+expect(firstCapture.instance).not.toBe(secondCapture.instance);
+```
+
+Reusing the **same capture object** across mounts means its `instance` property is updated with the instance from the most recent mount. For more on instance lifetime and explicitly shared objects, see [Instance Isolation](#instance-isolation). To reuse a **pre-created** instance, pass it via [`__meta.instance`](#precreated-plugin-instances); it can also be captured with `captureInstance()`.
 
 ---
 

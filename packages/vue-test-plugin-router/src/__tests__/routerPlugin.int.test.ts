@@ -68,6 +68,7 @@ describe("routerPlugin integration", () => {
   it("should capture router instance and allow navigation when captureInstance helper is used", async () => {
     // Arrange
     const routerCapture = captureInstance<Router>();
+
     const factory = framework.testComponentFactory(
       App,
       {},
@@ -94,43 +95,15 @@ describe("routerPlugin integration", () => {
 
     await routerCapture.instance.isReady();
 
-    // Assert
+    // Assert initial route
+    expect(routerCapture.instance.currentRoute.value.path).toBe("/");
     expect(wrapper.text()).toBe("/");
 
-    // Switch to another route via the captured instance
+    // Navigate through the captured router instance
     await routerCapture.instance.push("/about");
+
+    // Assert navigation
+    expect(routerCapture.instance.currentRoute.value.path).toBe("/about");
     expect(wrapper.text()).toBe("/about");
-  });
-
-  it("should expose router instance through callback when expose option is provided", async () => {
-    // Arrange
-    let exposedInstance: Router | undefined;
-
-    const factory = framework.testComponentFactory(
-      App,
-      {},
-      {
-        plugins: {
-          router: {
-            history: createMemoryHistory(),
-            routes: [{ path: "/", component: Component }],
-            expose: (instance) => {
-              exposedInstance = instance;
-            },
-          },
-        },
-      },
-    );
-
-    // Act
-    factory();
-
-    // Guard assertion for type narrowing
-    if (!exposedInstance) {
-      throw new Error("Expected router instance to be exposed");
-    }
-
-    // Assert
-    expect(exposedInstance.currentRoute.value.path).toBe("/");
   });
 });

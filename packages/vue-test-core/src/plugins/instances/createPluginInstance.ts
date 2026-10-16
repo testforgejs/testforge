@@ -1,25 +1,28 @@
-import { SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
+import { PLUGIN_EXPOSE, SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
+
 import { exposeInstance } from "./exposeInstance.js";
 
 import type { RuntimePluginOptions } from "../../types";
 
 /*
- * Creates (or reuses) a plugin instance using the provided factory.
+ * Creates or reuses a managed plugin instance.
  *
- * If `options.__sharedInstance` is present, the factory is NOT called
- * and the shared instance is reused instead. This is primarily used
- * in test environments to avoid recreating the same plugin instance
- * across multiple mounts.
- *
- * After instance creation (or reuse), the instance is passed to
- * {@link exposeInstance} to allow tests to capture it via
- * the optional `options.expose` callback.
+ * Internal TestForge options are excluded from the native
+ * plugin factory options.
  */
 export function createPluginInstance<TInstance, TOptions extends object>(
   factory: (options: TOptions) => TInstance,
   options: RuntimePluginOptions<TInstance, TOptions>,
 ): TInstance {
-  const instance = options[SHARED_PLUGIN_INSTANCE_KEY] ?? factory(options);
-  exposeInstance<TInstance>(instance, options);
+  const {
+    [PLUGIN_EXPOSE]: _expose,
+    [SHARED_PLUGIN_INSTANCE_KEY]: sharedInstance,
+    ...nativeOptions
+  } = options;
+
+  const instance = sharedInstance ?? factory(nativeOptions as TOptions);
+
+  exposeInstance(instance, options);
+
   return instance;
 }

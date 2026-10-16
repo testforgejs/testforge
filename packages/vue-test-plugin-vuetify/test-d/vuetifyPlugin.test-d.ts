@@ -1,5 +1,7 @@
+// packages/vue-test-plugin-vuetify/test-d/vuetifyPlugin.test-d.ts
+
 import { expectType, expectAssignable, expectError } from "tsd";
-import { createTestFramework } from "@testforgejs/vue-test-core";
+import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
 import { vuetifyPlugin } from "../dist/index.js";
 import { defineComponent } from "vue";
 
@@ -11,10 +13,27 @@ import type { VueTestVuetifyOptions, VuetifyInstance } from "../dist/index.js";
  * and TestForge plugin control options.
  */
 expectAssignable<VueTestVuetifyOptions>({
-  expose(instance) {
-    expectType<VuetifyInstance>(instance);
+  locale: {
+    locale: "en",
   },
 });
+
+/*
+ * The legacy expose callback must not be accepted
+ * as a VueTestVuetifyOptions property.
+ */
+expectError(
+  expectAssignable<VueTestVuetifyOptions>({
+    expose(_instance: VuetifyInstance) {},
+  }),
+);
+
+/*
+ * captureInstance should preserve the provided instance type.
+ */
+const capture = captureInstance<VuetifyInstance>();
+
+expectType<VuetifyInstance | undefined>(capture.instance);
 
 /*
  * Module augmentation should register "vuetify"
@@ -61,12 +80,23 @@ const wrapper = factory(
   {
     plugins: {
       vuetify: {
-        expose(instance) {
-          expectType<VuetifyInstance>(instance);
-        },
+        ...capture,
       },
     },
   },
+);
+
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        vuetify: {
+          expose(_instance: VuetifyInstance) {},
+        },
+      },
+    },
+  ),
 );
 
 // Verify factory return type
@@ -86,13 +116,17 @@ expectError(
 );
 
 // Verify extraOptions
+const extraCapture = captureInstance<VuetifyInstance>();
+
 factory(
   {},
   {},
   {},
   {
     plugins: {
-      vuetify: {},
+      vuetify: {
+        ...extraCapture,
+      },
     },
   },
 );
@@ -111,15 +145,15 @@ expectError(
 );
 
 // Verify defaultMountOptions
+const defaultCapture = captureInstance<VuetifyInstance>();
+
 framework.testComponentFactory(
   TypedComponent,
   {},
   {
     plugins: {
       vuetify: {
-        expose(instance) {
-          expectType<VuetifyInstance>(instance);
-        },
+        ...defaultCapture,
       },
     },
   },
@@ -136,3 +170,6 @@ expectError(
     },
   ),
 );
+
+// Verify that invalid property access triggers a type error
+expectError(captureInstance<VuetifyInstance>().instance?.unknownProperty);

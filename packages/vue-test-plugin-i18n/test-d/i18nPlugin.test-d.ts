@@ -14,10 +14,17 @@ import type { VueTestI18nOptions } from "../dist/index.js";
 expectAssignable<VueTestI18nOptions>({
   locale: "en",
   messages: {},
-  expose(instance) {
-    expectType<I18n>(instance);
-  },
 });
+
+/*
+ * The legacy expose callback must not be accepted
+ * as a VueTestI18nOptions property.
+ */
+expectError(
+  expectAssignable<VueTestI18nOptions>({
+    expose(_instance: I18n) {},
+  }),
+);
 
 /*
  * captureInstance should preserve the provided instance type.
@@ -78,35 +85,15 @@ const wrapper = factory(
             hello: "Hello World",
           },
         },
-        expose: (instance) => {
-          expectType<I18n>(instance);
-        },
-      },
-    },
-  },
-);
-
-// Verify captured instance type
-const i18nCapture = captureInstance();
-
-factory(
-  {},
-  {
-    plugins: {
-      i18n: {
-        locale: "en",
-        messages: {
-          en: {
-            hello: "Hello World",
-          },
-        },
-        ...i18nCapture,
+        ...capture,
       },
     },
   },
 );
 
 expectType<I18n | undefined>(capture.instance);
+
+expectError(capture.expose);
 
 // Verify factory return type
 expectType<ReturnType<typeof mount<typeof TypedComponent>>>(wrapper);
@@ -146,6 +133,8 @@ expectError(
 );
 
 // Verify extraOptions
+const extraCapture = captureInstance<I18n>();
+
 factory(
   {},
   {},
@@ -154,6 +143,7 @@ factory(
     plugins: {
       i18n: {
         locale: "de",
+        ...extraCapture,
       },
     },
   },
@@ -175,6 +165,8 @@ expectError(
 );
 
 // Verify defaultMountOptions
+const defaultCapture = captureInstance<I18n>();
+
 framework.testComponentFactory(
   TypedComponent,
   {},
@@ -187,10 +179,7 @@ framework.testComponentFactory(
             hello: "Hello World",
           },
         },
-        expose: (instance) => {
-          expectType<I18n>(instance);
-          //exposedInstance = instance;
-        },
+        ...defaultCapture,
       },
     },
   },

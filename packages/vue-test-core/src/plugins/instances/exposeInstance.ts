@@ -1,14 +1,15 @@
+import { PLUGIN_EXPOSE } from "../../constants/constants.js";
+
 import type { ExposeOption } from "../../types";
 
 /*
- * Passes the created plugin instance to the `expose` callback
- * if it is provided in plugin options.
- *
- * This allows tests to capture plugin instances that are created
- * internally by the test plugin factory.
+ * Passes the created plugin instance to the internal
+ * capture callback when one is provided.
  */
 export function exposeInstance<T>(instance: T, options?: ExposeOption<T>): void {
-  if (typeof options?.expose === "function") {
-    options.expose(instance);
+  const expose = options?.[PLUGIN_EXPOSE];
+
+  if (typeof expose === "function") {
+    expose(instance);
   }
 }

@@ -2,6 +2,8 @@ import type { Component, Plugin } from "vue";
 import type { MountingOptions, mount } from "@vue/test-utils";
 import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers";
 
+import { PLUGIN_EXPOSE } from "./constants/constants.js";
+
 // === 1. Core Plugin Model ===
 
 /** Plugin name (e.g., ‘pinia’, ‘i18n’, ‘router’) */
@@ -110,19 +112,20 @@ export type RuntimePluginState = RuntimePluginConfig & {
 
 export interface PluginRuntimeMeta<TInstance> {
   __sharedInstance?: TInstance;
-  expose?: (instance: TInstance) => void;
+  [PLUGIN_EXPOSE]?: (instance: TInstance) => void;
 }
 
 export type RuntimePluginOptions<TInstance, TOptions = object> = TOptions &
   PluginRuntimeMeta<TInstance>;
 
 export interface InstanceCapture<TInstance> {
-  expose(instance: TInstance): void;
   readonly instance: TInstance | undefined;
+
+  [PLUGIN_EXPOSE](instance: TInstance): void;
 }
 
 export interface ExposeOption<TInstance> {
-  expose?: (instance: TInstance) => void;
+  [PLUGIN_EXPOSE]?: (instance: TInstance) => void;
 }
 
 export type RuntimeExtraOptions = {
@@ -218,7 +221,7 @@ export type PluginOptionsInput = {
 };
 
 export interface PluginControlOptions<TInstance> {
-  expose?: (instance: TInstance) => void;
+  [PLUGIN_EXPOSE]?: (instance: TInstance) => void;
 }
 
 export type PluginOverride<T = unknown> =

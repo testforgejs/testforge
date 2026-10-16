@@ -452,6 +452,33 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolved.items).toBe(items);
     });
 
+    it("should preserve symbol-keyed properties when resolving instance references", () => {
+      const symbol = Symbol("plugin-expose");
+      const expose = vi.fn();
+
+      const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
+
+      const config = {
+        dependency: reference,
+        [symbol]: expose,
+      };
+
+      const createdPlugins = createPlugins([["dependencyA", { value: "resolved" }]]);
+
+      const resolved = resolvePluginInstanceReferences(config, createdPlugins);
+
+      // Resolving the reference creates a new configuration object.
+      expect(resolved).not.toBe(config);
+      expect(resolved.dependency).toBe("resolved");
+
+      // Symbol-keyed properties must survive the copy.
+      expect(resolved[symbol]).toBe(expose);
+
+      // The original configuration must remain unchanged.
+      expect(config.dependency).toBe(reference);
+      expect(config[symbol]).toBe(expose);
+    });
+
     it("should preserve the original array when no references are resolved", () => {
       const nested = {
         value: "nested",

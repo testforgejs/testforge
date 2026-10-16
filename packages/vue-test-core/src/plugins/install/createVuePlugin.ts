@@ -1,4 +1,8 @@
-import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
+import {
+  ERROR_PREFIX,
+  PLUGIN_EXPOSE,
+  SHARED_PLUGIN_INSTANCE_KEY,
+} from "../../constants/constants.js";
 
 import type { Plugin } from "vue";
 import type { RuntimePluginOptions } from "../../types";
@@ -15,7 +19,7 @@ import type { RuntimePluginOptions } from "../../types";
  * runtime instances and therefore does not support:
  *
  * - `__sharedInstance`
- * - `expose()`
+ * - instance capture via `PLUGIN_EXPOSE`
  *
  * Stateful plugin factories such as Router, Pinia or vue-i18n should use
  * `createPluginInstance()` instead.
@@ -31,10 +35,10 @@ export function createVuePlugin<TPlugin extends Plugin, TOptions extends object>
     );
   }
 
-  if (options.expose) {
+  if (options[PLUGIN_EXPOSE]) {
     throw new Error(
-      `${ERROR_PREFIX} expose() is not supported for non-instance Vue plugins because they do not produce a runtime instance. ` +
-        "The expose callback is only available for stateful plugin factories such as Router, Pinia or vue-i18n.",
+      `${ERROR_PREFIX} Instance capture is not supported for non-instance Vue plugins because they do not produce a runtime instance. ` +
+        "Instance capture is only available for stateful plugin factories such as Router, Pinia or vue-i18n.",
     );
   }
 

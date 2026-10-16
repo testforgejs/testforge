@@ -2,7 +2,7 @@
 export { createTestFramework } from "./core/createTestFramework.js";
 export { createPluginInstance } from "./plugins/instances/createPluginInstance.js";
 export { createVuePlugin } from "./plugins/install/createVuePlugin.js";
-export { captureInstance } from "./utils/captureInstance.js";
+export { captureInstance } from "./plugins/instances/captureInstance.js";
 export { extendPreset } from "./presets/extendPreset.js";
 export { fromPluginInstance } from "./plugins/dependencies/fromPluginInstance.js";
 export { validatePreset } from "./presets/validators/validatePreset.js";
