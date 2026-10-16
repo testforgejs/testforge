@@ -205,3 +205,29 @@ expectError(
 );
 
 expectError(captureInstance<I18n>().instance?.unknownProperty);
+
+// Reject instance capture with an incompatible plugin instance type.
+type IncompatibleInstance = {
+  readonly incompatibleInstance: unique symbol;
+};
+
+const incompatibleCapture = captureInstance<IncompatibleInstance>();
+
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        i18n: {
+          locale: "en",
+          messages: {
+            en: {
+              hello: "Hello World",
+            },
+          },
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);

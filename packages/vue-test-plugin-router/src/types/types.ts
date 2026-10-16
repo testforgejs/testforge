@@ -4,8 +4,11 @@ import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 /**
  * Configuration options for the Vue Router test plugin.
  *
- * Combines standard Vue Router configuration (`RouterOptions` from `vue-router`)
- * with TestForge plugin control options.
+ * Combines native Vue Router options with TestForge-specific
+ * controls for managed plugin instances.
+ *
+ * TestForge control options are handled internally and are not
+ * forwarded to the native Vue Router factory.
  *
  * @example
  * Configure the managed Vue Router plugin for a component test:
@@ -21,7 +24,7 @@ import type { PluginControlOptions } from "@testforgejs/vue-test-core";
  * });
  * ```
  *
- * @see `RouterOptions` from `vue-router` for configuring routes and history.
- * @see `PluginControlOptions` from `@testforgejs/vue-test-core` for instance capturing and exposure mechanisms.
+ * @see `RouterOptions` from `vue-router` for native Vue Router configuration.
+ * @see `PluginControlOptions` from `@testforgejs/vue-test-core` for type-safe instance capturing.
  */
 export type VueTestRouterOptions = RouterOptions & PluginControlOptions<Router>;

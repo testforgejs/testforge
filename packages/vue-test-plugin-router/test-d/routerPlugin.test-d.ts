@@ -214,3 +214,25 @@ expectError(untypedCapture.instance?.push("/about"));
 const typedCapture = captureInstance<Router>();
 
 expectType<Router | undefined>(typedCapture.instance);
+
+// Reject instance capture with an incompatible plugin instance type.
+type IncompatibleInstance = {
+  readonly incompatibleInstance: unique symbol;
+};
+
+const incompatibleCapture = captureInstance<IncompatibleInstance>();
+
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        router: {
+          history: createMemoryHistory(),
+          routes: [],
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);

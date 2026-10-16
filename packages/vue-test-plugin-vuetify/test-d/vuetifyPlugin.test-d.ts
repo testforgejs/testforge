@@ -173,3 +173,23 @@ expectError(
 
 // Verify that invalid property access triggers a type error
 expectError(captureInstance<VuetifyInstance>().instance?.unknownProperty);
+
+// Reject instance capture with an incompatible plugin instance type.
+type IncompatibleInstance = {
+  readonly incompatibleInstance: unique symbol;
+};
+
+const incompatibleCapture = captureInstance<IncompatibleInstance>();
+
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        vuetify: {
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);

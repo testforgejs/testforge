@@ -4,7 +4,7 @@
 
 > `const` **routerPlugin**: `PluginModuleWithDefaults`\<`Router`, [`VueTestRouterOptions`](../type-aliases/VueTestRouterOptions.md)\>
 
-Defined in: [module/routerPlugin.ts:15](https://github.com/testforgejs/testforge/blob/6d5145f0835b1e50a32714930b42fa9c71c487ff/packages/vue-test-plugin-router/src/module/routerPlugin.ts#L15)
+Defined in: [module/routerPlugin.ts:15](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-router/src/module/routerPlugin.ts#L15)
 
 Managed Vue Router plugin module for TestForge.
 

@@ -4,7 +4,7 @@
 
 > `const` **PLUGIN\_NAME**: `"i18n"`
 
-Defined in: [constants/constants.ts:7](https://github.com/testforgejs/testforge/blob/1053183d328cec8560724e18b9e24c3d225082e9/packages/vue-test-plugin-i18n/src/constants/constants.ts#L7)
+Defined in: [constants/constants.ts:7](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-i18n/src/constants/constants.ts#L7)
 
 Stable TestForge identifier for the Vue I18n plugin.
 

@@ -185,3 +185,24 @@ expectError(
 
 // Verify that invalid property access triggers a type error
 expectError(captureInstance<TestingPinia>().instance?.unknownProperty);
+
+// Reject instance capture with an incompatible plugin instance type.
+type IncompatibleInstance = {
+  readonly incompatibleInstance: unique symbol;
+};
+
+const incompatibleCapture = captureInstance<IncompatibleInstance>();
+
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        pinia: {
+          stubActions: true,
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);

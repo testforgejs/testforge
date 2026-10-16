@@ -2,23 +2,48 @@
 
 ***
 
-Defined in: [packages/vue-test-plugin-pinia/src/types/types.ts:23](https://github.com/testforgejs/testforge/blob/f33f94ae27bd629953d819b81fc4c9eb7753baa6/packages/vue-test-plugin-pinia/src/types/types.ts#L23)
+Defined in: [packages/vue-test-plugin-pinia/src/types/types.ts:26](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-pinia/src/types/types.ts#L26)
 
 Configuration options for the Pinia test plugin.
 
-Combines standard Pinia testing configuration (`TestingOptions` from `@pinia/testing`)
-with TestForge plugin control options.
+Combines native Pinia testing options with TestForge-specific
+controls for managed plugin instances and store initialization.
+
+TestForge-specific options are handled internally and are not
+forwarded to the native Pinia testing factory.
 
 ## See
 
- - TestingOptions for configuring action stubs, initial state, and Pinia plugins.
- - PluginControlOptions for instance capturing and exposure mechanisms.
+ - `TestingOptions` from `@pinia/testing` for native Pinia testing configuration.
+ - `PluginControlOptions` from `@testforgejs/vue-test-core` for type-safe instance capturing.
 
 ## Extends
 
 - `TestingOptions`.`PluginControlOptions`\<`TestingPinia`\>
 
 ## Properties
+
+### \[PLUGIN\_EXPOSE\]?
+
+> `optional` **\[PLUGIN\_EXPOSE\]?**: (`instance`) => `void`
+
+Defined in: [packages/vue-test-core/src/types.ts:224](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-core/src/types.ts#L224)
+
+#### Parameters
+
+##### instance
+
+`TestingPinia`
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`PluginControlOptions.[PLUGIN_EXPOSE]`
+
+***
 
 ### createSpy?
 
@@ -43,28 +68,6 @@ with `jest.fn` in Jest projects or `vi.fn` in Vitest projects if
 #### Inherited from
 
 `TestingOptions.createSpy`
-
-***
-
-### expose?
-
-> `optional` **expose?**: (`instance`) => `void`
-
-Defined in: [packages/vue-test-core/src/types.ts:188](https://github.com/testforgejs/testforge/blob/f33f94ae27bd629953d819b81fc4c9eb7753baa6/packages/vue-test-core/src/types.ts#L188)
-
-#### Parameters
-
-##### instance
-
-`TestingPinia`
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-`PluginControlOptions.expose`
 
 ***
 
@@ -104,9 +107,10 @@ allowing you to only set a few properties that are required in your test.
 
 > `optional` **mockStores?**: [`MockStoresFn`](../type-aliases/MockStoresFn.md)
 
-Defined in: [packages/vue-test-plugin-pinia/src/types/types.ts:41](https://github.com/testforgejs/testforge/blob/f33f94ae27bd629953d819b81fc4c9eb7753baa6/packages/vue-test-plugin-pinia/src/types/types.ts#L41)
+Defined in: [packages/vue-test-plugin-pinia/src/types/types.ts:45](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-pinia/src/types/types.ts#L45)
 
-A callback function to modify the state of stores before a component is mounted.
+A callback for initializing or modifying Pinia stores after the
+testing Pinia instance is created and before the component is mounted.
 
 #### Example
 
@@ -117,9 +121,9 @@ factory({}, {
       mockStores: (pinia) => {
         const store = useCounterStore(pinia);
         store.count = 42;
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 

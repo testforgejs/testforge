@@ -4,7 +4,7 @@
 
 > `const` **primeVuePlugin**: `PluginModuleWithDefaults`\<[`PrimeVueMountPlugin`](../type-aliases/PrimeVueMountPlugin.md), [`VueTestPrimeVueOptions`](../type-aliases/VueTestPrimeVueOptions.md)\>
 
-Defined in: [module/primeVuePlugin.ts:14](https://github.com/testforgejs/testforge/blob/9cfd3a2e112de126cbfa15198961d9b37823b7d1/packages/vue-test-plugin-primevue-v3/src/module/primeVuePlugin.ts#L14)
+Defined in: [module/primeVuePlugin.ts:14](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-primevue-v3/src/module/primeVuePlugin.ts#L14)
 
 Managed PrimeVue plugin module for TestForge.
 

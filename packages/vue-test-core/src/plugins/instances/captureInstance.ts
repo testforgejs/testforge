@@ -11,6 +11,11 @@ import type { InstanceCapture } from "../../types";
  *
  * The public `instance` getter is non-enumerable
  * and is not included in spread options.
+ *
+ * Specify `T` explicitly to enable type-safe instance capturing.
+ * Without an explicit type, the captured instance is typed as `unknown`.
+ *
+ * @typeParam T - The expected type of the managed plugin instance.
  */
 export function captureInstance<T = unknown>(): InstanceCapture<T> {
   let instance: T | undefined;

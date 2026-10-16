@@ -4,12 +4,15 @@
 
 > **VueTestI18nOptions** = `I18nOptions` & `PluginControlOptions`\<`I18n`\>
 
-Defined in: [types/types.ts:31](https://github.com/testforgejs/testforge/blob/1053183d328cec8560724e18b9e24c3d225082e9/packages/vue-test-plugin-i18n/src/types/types.ts#L31)
+Defined in: [types/types.ts:34](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-i18n/src/types/types.ts#L34)
 
 Configuration options for the Vue I18n test plugin.
 
-Combines standard Vue I18n configuration (`I18nOptions` from `vue-i18n`)
-with TestForge plugin control options.
+Combines native Vue I18n options with TestForge-specific
+controls for managed plugin instances.
+
+TestForge control options are validated as part of the plugin
+configuration and are not forwarded to the native Vue I18n factory.
 
 ## Example
 
@@ -32,5 +35,5 @@ factory({}, {
 
 ## See
 
- - I18nOptions for configuring locales, fallback languages, and translation messages.
- - PluginControlOptions for instance capturing and exposure mechanisms.
+ - `I18nOptions` from `vue-i18n` for configuring locales, fallback languages, and translation messages.
+ - `PluginControlOptions` from `@testforgejs/vue-test-core` for instance capturing and exposure mechanisms.
