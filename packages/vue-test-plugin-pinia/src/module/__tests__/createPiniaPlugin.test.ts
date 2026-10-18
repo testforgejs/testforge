@@ -32,12 +32,11 @@ describe("createPiniaPlugin", () => {
     expect(createPluginInstance).toHaveBeenCalledWith(createTestingPinia, mockOptions);
   });
 
-  it("should call mockStores with pinia instance when mockStores is provided and __sharedInstance is false", () => {
+  it("should call mockStores with pinia instance when mockStores is provided and shared instance is not provided", () => {
     // Arrange
     const mockStores = vi.fn();
     const mockOptions = {
       mockStores,
-      __sharedInstance: false,
     };
 
     // Act

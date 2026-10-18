@@ -3,11 +3,11 @@ import { describe, it, expect, vi } from "vitest";
 import { createPluginInstance } from "../createPluginInstance.js";
 import { captureInstance } from "../captureInstance.js";
 
-import { PLUGIN_EXPOSE } from "../../../constants/constants.js";
+import { PLUGIN_EXPOSE, SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/constants.js";
 
 describe("createPluginInstance", () => {
   describe("factory usage", () => {
-    it("should call factory with options when __sharedInstance is not provided", () => {
+    it("should call factory with options when shared instance is not provided", () => {
       const factory = vi.fn(() => ({ id: 1 }));
       const options = { a: 123 };
 
@@ -28,20 +28,20 @@ describe("createPluginInstance", () => {
     });
   });
 
-  describe("__sharedInstance reuse", () => {
-    it("should NOT call factory when __sharedInstance is provided", () => {
+  describe("shared instance reuse", () => {
+    it("should NOT call factory when shared instance is provided", () => {
       const shared = { shared: true };
       const factory = vi.fn();
 
       const result = createPluginInstance(factory, {
-        __sharedInstance: shared,
+        [SHARED_PLUGIN_INSTANCE_KEY]: shared,
       });
 
       expect(factory).not.toHaveBeenCalled();
       expect(result).toBe(shared);
     });
 
-    it("should capture the shared instance when __sharedInstance is provided", () => {
+    it("should capture the shared instance when shared instance is provided", () => {
       const shared = { x: 1 };
       const capture = captureInstance<typeof shared>();
 
@@ -50,13 +50,29 @@ describe("createPluginInstance", () => {
       });
 
       const result = createPluginInstance(factory, {
-        __sharedInstance: shared,
+        [SHARED_PLUGIN_INSTANCE_KEY]: shared,
         ...capture,
       });
 
       expect(factory).not.toHaveBeenCalled();
       expect(result).toBe(shared);
       expect(capture.instance).toBe(shared);
+    });
+
+    it("should not pass the internal shared-instance symbol to the native factory", () => {
+      const instance = { a: 1 };
+      const factory = vi.fn(() => instance);
+
+      const result = createPluginInstance(factory, {
+        nativeOption: "value",
+        [SHARED_PLUGIN_INSTANCE_KEY]: undefined,
+      });
+
+      expect(factory).toHaveBeenCalledExactlyOnceWith({
+        nativeOption: "value",
+      });
+
+      expect(result).toBe(instance);
     });
   });
 
@@ -134,6 +150,21 @@ describe("createPluginInstance", () => {
 
       expect(nativeExpose).not.toHaveBeenCalled();
       expect(capture.instance).toBe(instance);
+    });
+
+    it("should preserve native __sharedInstance without treating it as a shared instance", () => {
+      const instance = { a: 1 };
+      const factory = vi.fn(() => instance);
+
+      const result = createPluginInstance(factory, {
+        __sharedInstance: "native-value",
+      });
+
+      expect(factory).toHaveBeenCalledExactlyOnceWith({
+        __sharedInstance: "native-value",
+      });
+
+      expect(result).toBe(instance);
     });
   });
 

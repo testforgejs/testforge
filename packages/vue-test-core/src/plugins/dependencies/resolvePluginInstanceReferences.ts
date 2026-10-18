@@ -1,6 +1,7 @@
-import { ERROR_PREFIX, OPAQUE_PLUGIN_CONFIG_KEY_SET } from "../../constants/constants.js";
+import { ERROR_PREFIX } from "../../constants/constants.js";
 import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
+import { getTraversablePluginConfigKeys } from "./getTraversablePluginConfigKeys.js";
 
 import type { PluginInstanceMap, PluginInstanceName, PluginInstanceReference } from "../../types";
 
@@ -90,13 +91,12 @@ export function resolvePluginInstanceReferences<T>(
         return resolvedArray;
       }
 
-      let result: Record<string, unknown> | undefined;
+      const configObject = current as Record<PropertyKey, unknown>;
 
-      for (const [key, item] of Object.entries(current)) {
-        if (OPAQUE_PLUGIN_CONFIG_KEY_SET.has(key)) {
-          continue;
-        }
+      let result: Record<PropertyKey, unknown> | undefined;
 
+      for (const key of getTraversablePluginConfigKeys(configObject)) {
+        const item = configObject[key];
         const resolvedItem = visit(item);
 
         if (resolvedItem === item) {
@@ -105,7 +105,7 @@ export function resolvePluginInstanceReferences<T>(
 
         if (result === undefined) {
           const clone = Object.assign(
-            Object.create(Object.getPrototypeOf(current)) as Record<string, unknown>,
+            Object.create(Object.getPrototypeOf(current)) as Record<PropertyKey, unknown>,
             current,
           );
 

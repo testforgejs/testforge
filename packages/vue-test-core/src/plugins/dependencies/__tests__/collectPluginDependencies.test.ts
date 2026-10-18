@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { collectPluginDependencies } from "../../../plugins/dependencies/collectPluginDependencies.js";
 import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
+import { SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/constants.js";
 
 import "./fixtures/pluginRegistry";
 
@@ -77,6 +78,23 @@ describe("collectPluginDependencies", () => {
         },
       ]);
     });
+
+    it("should collect dependencies from enumerable symbol-keyed properties", () => {
+      const symbolKey = Symbol("customPluginOption");
+
+      const config = {
+        [symbolKey]: fromPluginInstance("dependencyA", (instance) => instance),
+      };
+
+      const dependencies = collectPluginDependencies("consumer", config);
+
+      expect(dependencies).toEqual([
+        {
+          pluginName: "consumer",
+          dependsOn: "dependencyA",
+        },
+      ]);
+    });
   });
 
   describe("configuration traversal", () => {
@@ -117,7 +135,7 @@ describe("collectPluginDependencies", () => {
       };
 
       const dependencies = collectPluginDependencies("sourcePlugin", {
-        __sharedInstance: sharedInstance,
+        [SHARED_PLUGIN_INSTANCE_KEY]: sharedInstance,
       });
 
       expect(dependencies).toEqual([]);

@@ -2,7 +2,7 @@ import type { Component, Plugin } from "vue";
 import type { MountingOptions, mount } from "@vue/test-utils";
 import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers";
 
-import { PLUGIN_EXPOSE } from "./constants/constants.js";
+import { PLUGIN_EXPOSE, SHARED_PLUGIN_INSTANCE_KEY } from "./constants/constants.js";
 
 // === 1. Core Plugin Model ===
 
@@ -84,7 +84,7 @@ export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
 // Runtime state accumulated by middleware.
 // Component-specific generic information is intentionally erased.
 
-export type RuntimePluginConfig = Record<string, any>;
+export type RuntimePluginConfig = Record<PropertyKey, any>;
 
 export type RuntimePluginOption = RuntimePluginConfig | false;
 
@@ -107,11 +107,11 @@ export type ResolvedPluginConfig = RuntimePluginConfig & {
 export type PluginOverlay = ResolvedPluginConfig | false;
 
 export type RuntimePluginState = RuntimePluginConfig & {
-  __sharedInstance?: unknown;
+  [SHARED_PLUGIN_INSTANCE_KEY]?: unknown;
 };
 
 export interface PluginRuntimeMeta<TInstance> {
-  __sharedInstance?: TInstance;
+  [SHARED_PLUGIN_INSTANCE_KEY]?: TInstance;
   [PLUGIN_EXPOSE]?: (instance: TInstance) => void;
 }
 

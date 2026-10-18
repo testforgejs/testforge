@@ -1,4 +1,4 @@
-import { OPAQUE_PLUGIN_CONFIG_KEY_SET } from "../../constants/constants.js";
+import { getTraversablePluginConfigKeys } from "./getTraversablePluginConfigKeys.js";
 import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 
@@ -15,7 +15,7 @@ import type { PluginDependency } from "./types";
  *
  * Configuration values stored under opaque plugin config keys are treated as
  * runtime values and are not traversed. This includes pre-created plugin
- * instances stored in `__sharedInstance`.
+ * instances stored under the internal shared-instance symbol.
  *
  * Duplicate references to the same plugin produce a single dependency.
  *
@@ -58,12 +58,10 @@ export function collectPluginDependencies<TPluginName extends PluginName>(
 
     visited.add(value);
 
-    for (const [key, nestedValue] of Object.entries(value)) {
-      if (OPAQUE_PLUGIN_CONFIG_KEY_SET.has(key)) {
-        continue;
-      }
+    const configObject = value as Record<PropertyKey, unknown>;
 
-      visit(nestedValue);
+    for (const key of getTraversablePluginConfigKeys(configObject)) {
+      visit(configObject[key]);
     }
   };
 

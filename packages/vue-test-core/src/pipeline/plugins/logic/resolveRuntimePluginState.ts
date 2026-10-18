@@ -14,32 +14,38 @@ import type {
 } from "../../../types";
 
 /*
- * Resolves a user/plugin configuration into a runtime-ready plugin config.
+ * Resolves a plugin configuration into a runtime-ready state.
  *
  * Responsibilities:
- * - Creates a safe runtime copy of the incoming config
- * - Injects `__sharedInstance` from overlay metadata when present
- * - Removes internal `__meta` field before plugin factory execution
+ * - Creates a shallow copy of the incoming configuration
+ * - Extracts a pre-created plugin instance from overlay metadata
+ * - Stores the instance under an internal symbol-keyed property
+ * - Removes `__meta` from the runtime configuration
  *
  * Rules:
- * - Never mutates the original config
- * - Ignores overlay when it is `false` or `undefined`
- * - `__meta` is treated as internal pipeline metadata only
+ * - Never mutates the original configuration
+ * - Ignores overlays that are `false` or `undefined`
+ * - Rejects plugin instance references in `__meta.instance`
+ * - Treats `__meta` as internal pipeline metadata
  *
  * Runtime transformation:
  *
- * BEFORE:
+ * Config:
  * {
- *   locale: "en",
+ *   locale: "en"
+ * }
+ *
+ * Overlay:
+ * {
  *   __meta: {
  *     instance: i18nInstance
  *   }
  * }
  *
- * AFTER:
+ * Result:
  * {
  *   locale: "en",
- *   __sharedInstance: i18nInstance
+ *   [SHARED_PLUGIN_INSTANCE_KEY]: i18nInstance
  * }
  */
 export function resolveRuntimePluginState(

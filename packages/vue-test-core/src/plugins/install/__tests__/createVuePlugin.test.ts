@@ -3,6 +3,7 @@ import { createVuePlugin } from "../../../plugins/install/createVuePlugin.js";
 import { captureInstance } from "../../instances/captureInstance.js";
 
 import type { Plugin } from "vue";
+import { SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/constants.js";
 
 describe("createVuePlugin", () => {
   it("should return VTU compatible plugin tuple", () => {
@@ -39,19 +40,19 @@ describe("createVuePlugin", () => {
     expect(result).toEqual([plugin, options]);
   });
 
-  it("should throw when __sharedInstance is provided", () => {
+  it("should throw when shared instance is provided", () => {
     // Arrange
     const plugin = {
       install: vi.fn(),
     } satisfies Plugin;
 
     const options = {
-      __sharedInstance: {},
+      [SHARED_PLUGIN_INSTANCE_KEY]: {},
     };
 
     // Act & Assert
     expect(() => createVuePlugin(plugin, options as any)).toThrow(
-      "[TestForge] __sharedInstance is not supported for non-instance Vue plugins.",
+      "[TestForge] Shared instances are not supported for non-instance Vue plugins.",
     );
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ERROR_PREFIX } from "../../../../constants/constants.js";
+import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../../../constants/constants.js";
 import { fromPluginInstance } from "../../../../plugins/dependencies/fromPluginInstance.js";
 import { resolveRuntimePluginState } from "../resolveRuntimePluginState.js";
 
@@ -60,8 +60,8 @@ describe("resolveRuntimePluginState", () => {
     });
   });
 
-  describe("__sharedInstance injection", () => {
-    it("should inject __sharedInstance from overlay meta.instance", () => {
+  describe("shared instance injection", () => {
+    it("should inject shared instance from overlay meta.instance", () => {
       const instance = {};
 
       const config = {
@@ -76,7 +76,7 @@ describe("resolveRuntimePluginState", () => {
 
       const result = resolveRuntimePluginState("pinia", config, overlay);
 
-      expect(result.__sharedInstance).toBe(instance);
+      expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBe(instance);
     });
 
     it("should preserve pre-created instance identity", () => {
@@ -94,10 +94,10 @@ describe("resolveRuntimePluginState", () => {
         },
       );
 
-      expect(result.__sharedInstance).toBe(instance);
+      expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBe(instance);
     });
 
-    it("should override an existing __sharedInstance with overlay meta.instance", () => {
+    it("should override an existing [SHARED_PLUGIN_INSTANCE_KEY] with overlay meta.instance", () => {
       const existingInstance = {
         id: "existing",
       };
@@ -109,7 +109,7 @@ describe("resolveRuntimePluginState", () => {
       const result = resolveRuntimePluginState(
         "pinia",
         {
-          __sharedInstance: existingInstance,
+          [SHARED_PLUGIN_INSTANCE_KEY]: existingInstance,
         },
         {
           __meta: {
@@ -118,18 +118,18 @@ describe("resolveRuntimePluginState", () => {
         },
       );
 
-      expect(result.__sharedInstance).toBe(overlayInstance);
+      expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBe(overlayInstance);
     });
 
-    it("should not inject __sharedInstance when overlay is undefined", () => {
+    it("should not inject shared instance when overlay is undefined", () => {
       const result = resolveRuntimePluginState("pinia", {
         a: 1,
       });
 
-      expect(result.__sharedInstance).toBeUndefined();
+      expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBeUndefined();
     });
 
-    it("should not inject __sharedInstance when overlay is false", () => {
+    it("should not inject shared instance when overlay is false", () => {
       const result = resolveRuntimePluginState(
         "pinia",
         {
@@ -138,10 +138,10 @@ describe("resolveRuntimePluginState", () => {
         false,
       );
 
-      expect(result.__sharedInstance).toBeUndefined();
+      expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBeUndefined();
     });
 
-    it("should not inject __sharedInstance when meta.instance is missing", () => {
+    it("should not inject shared instance when meta.instance is missing", () => {
       const result = resolveRuntimePluginState(
         "pinia",
         {
@@ -152,7 +152,7 @@ describe("resolveRuntimePluginState", () => {
         },
       );
 
-      expect(result.__sharedInstance).toBeUndefined();
+      expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBeUndefined();
     });
 
     it("should reject plugin instance references used as pre-created instances", () => {

@@ -18,8 +18,8 @@ import type { RuntimePluginOptions } from "../../types";
  * Unlike `createPluginInstance()`, this helper does not create or manage
  * runtime instances and therefore does not support:
  *
- * - `__sharedInstance`
- * - instance capture via `PLUGIN_EXPOSE`
+ * - shared plugin instances
+ * - instance capturing
  *
  * Stateful plugin factories such as Router, Pinia or vue-i18n should use
  * `createPluginInstance()` instead.
@@ -30,7 +30,7 @@ export function createVuePlugin<TPlugin extends Plugin, TOptions extends object>
 ): [TPlugin, TOptions] {
   if (options[SHARED_PLUGIN_INSTANCE_KEY]) {
     throw new Error(
-      `${ERROR_PREFIX} ${SHARED_PLUGIN_INSTANCE_KEY} is not supported for non-instance Vue plugins. ` +
+      `${ERROR_PREFIX} Shared instances are not supported for non-instance Vue plugins. ` +
         "Shared instances are only supported for stateful plugin factories such as Router, Pinia or vue-i18n.",
     );
   }

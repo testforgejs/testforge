@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ERROR_PREFIX } from "../../../constants/constants.js";
+import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/constants.js";
 import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
 import { resolvePluginInstanceReferences } from "../../../plugins/dependencies/resolvePluginInstanceReferences.js";
 
@@ -110,6 +110,22 @@ describe("resolvePluginInstanceReferences", () => {
         second: 10,
       });
     });
+
+    it("should resolve references in enumerable symbol-keyed properties", () => {
+      const symbolKey = Symbol("customPluginOption");
+      const instance = { id: "dependency-instance" };
+
+      const config = {
+        [symbolKey]: fromPluginInstance("dependencyA", (instance) => instance),
+      };
+
+      const createdPlugins = new Map<PluginInstanceName, unknown>([["dependencyA", instance]]);
+
+      const resolved = resolvePluginInstanceReferences(config, createdPlugins);
+
+      expect(resolved[symbolKey]).toBe(instance);
+      expect(resolved).not.toBe(config);
+    });
   });
 
   describe("configuration traversal", () => {
@@ -167,7 +183,7 @@ describe("resolvePluginInstanceReferences", () => {
       };
 
       const config = {
-        __sharedInstance: sharedInstance,
+        [SHARED_PLUGIN_INSTANCE_KEY]: sharedInstance,
       };
 
       const resolved = resolvePluginInstanceReferences(
@@ -183,8 +199,8 @@ describe("resolvePluginInstanceReferences", () => {
       );
 
       expect(resolved).toBe(config);
-      expect(resolved.__sharedInstance).toBe(sharedInstance);
-      expect(resolved.__sharedInstance.nested).toBe(reference);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY]).toBe(sharedInstance);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY].nested).toBe(reference);
     });
 
     it("should resolve references outside opaque plugin configuration values", () => {
@@ -197,7 +213,7 @@ describe("resolvePluginInstanceReferences", () => {
       };
 
       const config = {
-        __sharedInstance: sharedInstance,
+        [SHARED_PLUGIN_INSTANCE_KEY]: sharedInstance,
         dependency: regularReference,
       };
 
@@ -217,8 +233,8 @@ describe("resolvePluginInstanceReferences", () => {
 
       expect(resolved.dependency).toBe("resolved");
 
-      expect(resolved.__sharedInstance).toBe(sharedInstance);
-      expect(resolved.__sharedInstance.nested).toBe(opaqueReference);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY]).toBe(sharedInstance);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY].nested).toBe(opaqueReference);
 
       expect(config.dependency).toBe(regularReference);
     });
@@ -344,7 +360,7 @@ describe("resolvePluginInstanceReferences", () => {
       const reference = fromPluginInstance("dependencyA", (instance) => instance.value);
 
       const config = {
-        __sharedInstance: sharedInstance,
+        [SHARED_PLUGIN_INSTANCE_KEY]: sharedInstance,
         dependency: reference,
       };
 
@@ -356,12 +372,12 @@ describe("resolvePluginInstanceReferences", () => {
       expect(resolved.dependency).toBe("resolved");
 
       // The cyclic runtime instance is opaque and preserves its identity.
-      expect(resolved.__sharedInstance).toBe(sharedInstance);
-      expect(resolved.__sharedInstance.self).toBe(sharedInstance);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY]).toBe(sharedInstance);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY].self).toBe(sharedInstance);
 
       // The original configuration remains unchanged.
       expect(config.dependency).toBe(reference);
-      expect(config.__sharedInstance).toBe(sharedInstance);
+      expect(config[SHARED_PLUGIN_INSTANCE_KEY]).toBe(sharedInstance);
     });
 
     it("should reject cycles spanning plain objects and arrays", () => {
@@ -552,7 +568,7 @@ describe("resolvePluginInstanceReferences", () => {
       };
 
       const config = {
-        __sharedInstance: sharedInstance,
+        [SHARED_PLUGIN_INSTANCE_KEY]: sharedInstance,
         dependency: fromPluginInstance("dependencyA", (instance) => instance.value),
       };
 
@@ -567,7 +583,7 @@ describe("resolvePluginInstanceReferences", () => {
 
       const resolved = resolvePluginInstanceReferences(config, createdPlugins);
 
-      expect(resolved.__sharedInstance).toBe(sharedInstance);
+      expect(resolved[SHARED_PLUGIN_INSTANCE_KEY]).toBe(sharedInstance);
       expect(resolved.dependency).toBe("resolved");
     });
 

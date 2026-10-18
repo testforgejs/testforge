@@ -3,12 +3,12 @@ import { createPipelineContext } from "../core/createPipelineContext.js";
 import { createPipeline } from "../core/createPipeline.js";
 import { createMountPipeline } from "../mount/createMountPipeline.js";
 import { presets } from "./mockPresets.js";
-import { ERROR_PREFIX } from "../../constants/constants.js";
+import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
 import { fromPluginInstance } from "../../plugins/dependencies/fromPluginInstance.js";
 import { isPluginInstanceReference } from "../../plugins/dependencies/isPluginInstanceReference.js";
 import { resolvePluginInstanceReferences } from "../../plugins/dependencies/resolvePluginInstanceReferences.js";
 
-import type { RuntimePluginConfig, TestFrameworkPresets } from "../../types";
+import type { RuntimePluginConfig, RuntimePluginState, TestFrameworkPresets } from "../../types";
 
 interface PipelineDependencyInstance {
   id: string;
@@ -147,7 +147,7 @@ describe("Mount Pipeline Integration", () => {
   });
 
   describe("Shared Instances (__meta)", () => {
-    it("should extract instance to __sharedInstance and remove __meta when provided in extraOptions", () => {
+    it("should extract instance to [SHARED_PLUGIN_INSTANCE_KEY] and remove __meta when provided in extraOptions", () => {
       const mockInstance = { id: "shared-router" };
       const extra = {
         plugins: {
@@ -160,9 +160,9 @@ describe("Mount Pipeline Integration", () => {
 
       const result = run(presets, {}, {}, extra);
 
-      const routerConfig = result.plugins.router as RuntimePluginConfig;
+      const routerConfig = result.plugins.router as RuntimePluginState;
 
-      expect(routerConfig.__sharedInstance).toBe(mockInstance);
+      expect(routerConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(mockInstance);
       expect(routerConfig.__meta).toBeUndefined();
       expect(routerConfig.routes).toEqual([]);
     });
@@ -440,7 +440,7 @@ describe("Mount Pipeline Integration", () => {
         const result = run(presets, {}, {}, extra);
 
         const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
-        expect(piniaConfig.__sharedInstance).toBeUndefined();
+        expect(piniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBeUndefined();
       });
     });
 
@@ -514,7 +514,7 @@ describe("Mount Pipeline Integration", () => {
 
         const routerConfig = result.plugins.router as RuntimePluginConfig;
 
-        expect(routerConfig.__sharedInstance).toBe(mockRouter);
+        expect(routerConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(mockRouter);
         expect(routerConfig.routes).toEqual(customRoutes);
       });
     });

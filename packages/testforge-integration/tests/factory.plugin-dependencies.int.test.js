@@ -6,12 +6,14 @@ describe("Plugin Instance Dependencies", () => {
   let MockComponent;
   let mockMount;
   let createTestFramework;
+  let createPluginInstance;
   let fromPluginInstance;
 
   beforeEach(async () => {
     const ctx = await setupFactoryTestContext(runner);
 
-    ({ MockComponent, mockMount, createTestFramework, fromPluginInstance } = ctx);
+    ({ MockComponent, mockMount, createTestFramework, createPluginInstance, fromPluginInstance } =
+      ctx);
   });
 
   /*
@@ -567,9 +569,9 @@ describe("Plugin Instance Dependencies", () => {
         install() {},
       }));
 
-      const providerCreate = runner.fn((options) => {
-        return options.__sharedInstance ?? createNewInstance();
-      });
+      const providerCreate = runner.fn((options) =>
+        createPluginInstance(createNewInstance, options),
+      );
 
       const consumerCreate = runner.fn(() => ({
         install() {},
@@ -611,13 +613,12 @@ describe("Plugin Instance Dependencies", () => {
         },
       );
 
+      // The provided instance must be reused instead of creating a new one.
       expect(providerCreate).toHaveBeenCalledTimes(1);
       expect(createNewInstance).not.toHaveBeenCalled();
+      expect(providerCreate.mock.results[0].value).toBe(providedInstance);
 
-      const [providerOptions] = providerCreate.mock.calls[0];
-
-      expect(providerOptions.__sharedInstance).toBe(providedInstance);
-
+      // Dependency references must resolve to the provided instance.
       expect(referenceResolver).toHaveBeenCalledTimes(1);
       expect(referenceResolver).toHaveBeenCalledWith(providedInstance);
 
@@ -625,6 +626,7 @@ describe("Plugin Instance Dependencies", () => {
 
       expect(consumerOptions.dependency).toBe(providedInstance);
 
+      // The same instance must be installed into the mounted component.
       const [, mountOptions] = mockMount.mock.calls[0];
 
       expect(mountOptions.global.plugins).toContain(providedInstance);

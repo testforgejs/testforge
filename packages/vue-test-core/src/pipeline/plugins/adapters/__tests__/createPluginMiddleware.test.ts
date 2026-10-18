@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SHARED_PLUGIN_INSTANCE_KEY } from "../../../../constants/constants.js";
 import { createMockCtx } from "../../../__tests__/fixtures.js";
 
 vi.mock("../../logic/getPluginConfig.js", () => ({
@@ -26,7 +27,7 @@ describe("createPluginMiddleware", () => {
     mockPatchPluginState.mockReturnValue(mergedResult);
   });
 
-  const name = "pinia";
+  const name = "testPlugin";
   const middleware = createPluginMiddleware(name);
 
   it("should return ctx when plugin is disabled", () => {
@@ -75,7 +76,7 @@ describe("createPluginMiddleware", () => {
     });
   });
 
-  it("should inject __sharedInstance from meta.instance", () => {
+  it("should inject shared instance from meta.instance", () => {
     const instance = {};
     const config = { a: 1 };
 
@@ -94,7 +95,7 @@ describe("createPluginMiddleware", () => {
 
     expect(patchPluginState).toHaveBeenCalledWith(ctx, name, {
       a: 1,
-      __sharedInstance: instance,
+      [SHARED_PLUGIN_INSTANCE_KEY]: instance,
     });
   });
 
