@@ -1,5 +1,24 @@
 # @testforgejs/vue-test-plugin-pinia
 
+## 1.0.0-beta.6
+
+### Minor Changes
+
+- f77204f: Change `VueTestPiniaOptions` from an interface to a type alias.
+
+  The new definition combines `TestingOptions`, `PluginControlOptions<TestingPinia>`, and the TestForge-specific `mockStores` option using an intersection type.
+
+  Existing plugin configuration and runtime behavior remain unchanged.
+
+  **TypeScript compatibility:** Declaration merging is no longer supported for `VueTestPiniaOptions`. Consumers augmenting this interface must migrate to explicit type extensions or intersections.
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies [3d72817]
+- Updated dependencies [b93acc9]
+  - @testforgejs/vue-test-core@1.0.0-beta.5
+
 ## 1.0.0-beta.5
 
 ### Minor Changes

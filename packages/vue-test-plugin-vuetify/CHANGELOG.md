@@ -1,5 +1,14 @@
 # @testforgejs/vue-test-plugin-vuetify
 
+## 1.0.0-beta.6
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies [3d72817]
+- Updated dependencies [b93acc9]
+  - @testforgejs/vue-test-core@1.0.0-beta.5
+
 ## 1.0.0-beta.5
 
 ### Minor Changes

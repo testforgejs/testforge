@@ -1,5 +1,14 @@
 # @testforgejs/vue-test-plugin-i18n
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies [3d72817]
+- Updated dependencies [b93acc9]
+  - @testforgejs/vue-test-core@1.0.0-beta.5
+
 ## 1.0.0-beta.4
 
 ### Minor Changes
