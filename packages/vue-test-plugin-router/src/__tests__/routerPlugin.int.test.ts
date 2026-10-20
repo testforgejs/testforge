@@ -69,8 +69,10 @@ describe("routerPlugin integration", () => {
     // Arrange
     const routerCapture = captureInstance<Router>();
 
-    const factory = framework.testComponentFactory(
-      App,
+    const factory = framework.testComponentFactory(App);
+
+    // Act
+    const wrapper = factory(
       {},
       {
         plugins: {
@@ -85,9 +87,6 @@ describe("routerPlugin integration", () => {
         },
       },
     );
-
-    // Act
-    const wrapper = factory();
 
     if (!routerCapture.instance) {
       throw new Error("Expected router instance to be captured");

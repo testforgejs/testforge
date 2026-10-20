@@ -58,8 +58,9 @@ describe("i18nPlugin integration", () => {
   it("should capture i18n instance", async () => {
     const i18nCapture = captureInstance();
 
-    const factory = framework.testComponentFactory(
-      Component,
+    const factory = framework.testComponentFactory(Component);
+
+    const wrapper = factory(
       {},
       {
         plugins: {
@@ -78,8 +79,6 @@ describe("i18nPlugin integration", () => {
         },
       },
     );
-
-    const wrapper = factory();
 
     // Verify the captured instance
     expect(i18nCapture.instance).toBeDefined();

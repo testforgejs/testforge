@@ -3,7 +3,7 @@ import { PLUGIN_EXPOSE } from "../../constants/constants.js";
 import type { InstanceCapture } from "../../types";
 
 /*
- * Creates a helper for capturing managed plugin instances.
+ * Creates a helper for capturing a managed plugin instance.
  *
  * The capture callback is exposed through an internal symbol
  * so it can be spread into plugin configuration without
@@ -11,6 +11,9 @@ import type { InstanceCapture } from "../../types";
  *
  * The public `instance` getter is non-enumerable
  * and is not included in spread options.
+ *
+ * Each capture helper should be used for a single component mount.
+ * Reusing it across mounts overwrites the previously captured instance.
  *
  * Specify `T` explicitly to enable type-safe instance capturing.
  * Without an explicit type, the captured instance is typed as `unknown`.

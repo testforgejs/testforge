@@ -62,8 +62,9 @@ describe("i18nPlugin integration", () => {
   it("should capture i18n instance", async () => {
     const i18nCapture = captureInstance<I18n>();
 
-    const factory = framework.testComponentFactory(
-      Component,
+    const factory = framework.testComponentFactory(Component);
+
+    const wrapper = factory(
       {},
       {
         plugins: {
@@ -82,8 +83,6 @@ describe("i18nPlugin integration", () => {
         },
       },
     );
-
-    const wrapper = factory();
 
     const i18n = i18nCapture.instance;
 

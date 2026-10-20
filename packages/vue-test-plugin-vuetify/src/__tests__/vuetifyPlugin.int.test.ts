@@ -40,8 +40,9 @@ describe("vuetifyPlugin integration", () => {
   it("should capture vuetify instance when captureInstance helper is used", async () => {
     const vuetifyCapture = captureInstance<VuetifyInstance>();
 
-    const factory = framework.testComponentFactory(
-      Component,
+    const factory = framework.testComponentFactory(Component);
+
+    const wrapper = factory(
       {},
       {
         plugins: {
@@ -51,8 +52,6 @@ describe("vuetifyPlugin integration", () => {
         },
       },
     );
-
-    const wrapper = factory();
 
     expect(vuetifyCapture.instance).toBeDefined();
     expect(vuetifyCapture.instance?.install).toBeTypeOf("function");

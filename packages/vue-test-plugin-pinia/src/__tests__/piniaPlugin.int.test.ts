@@ -86,8 +86,10 @@ describe("piniaPlugin integration", () => {
     // Arrange
     const piniaCapture = captureInstance<TestingPinia>();
 
-    const factory = framework.testComponentFactory(
-      Component,
+    const factory = framework.testComponentFactory(Component);
+
+    // Act
+    const wrapper = factory(
       {},
       {
         plugins: {
@@ -97,9 +99,6 @@ describe("piniaPlugin integration", () => {
         },
       },
     );
-
-    // Act
-    const wrapper = factory();
 
     if (!piniaCapture.instance) {
       throw new Error("Expected pinia instance to be captured");

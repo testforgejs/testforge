@@ -6,11 +6,13 @@ import { assertUnsupportedPlugins } from "./validators/assertUnsupportedPlugins"
 import { assertExtraOptionUnsupportedPlugins } from "./validators/assertExtraOptionUnsupportedPlugins";
 import { assertResolvedPluginValues } from "./validators/assertResolvedPluginValues";
 import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPluginValues";
+import { assertNoDefaultInstanceCapture } from "./validators/assertNoDefaultInstanceCapture";
 
 /*
  * Validates plugin configuration layers used by the pipeline.
  *
  * Ensures that:
+ * - instance capturing is not configured in factory-level defaults
  * - only plugins supported by the active preset are configured
  * - plugin runtime values have valid shape
  * - extra option overlays are runtime-safe
@@ -21,10 +23,12 @@ import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPlu
 export const assertPluginOptions: PipelineMiddleware<RuntimeContext, RuntimeContext> = (
   ctx,
 ): RuntimeContext => {
-  const { supportedPlugins, extraOptions } = ctx;
+  const { defaultMountOptions, supportedPlugins, extraOptions } = ctx;
   const { plugins } = ctx.result;
 
   const supported = new Set(Object.keys(supportedPlugins));
+
+  assertNoDefaultInstanceCapture(defaultMountOptions);
 
   assertUnsupportedPlugins(plugins || {}, supported);
 

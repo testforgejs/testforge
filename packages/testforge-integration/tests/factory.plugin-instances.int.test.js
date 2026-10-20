@@ -10,7 +10,7 @@ describe("Plugin Instances Integration", () => {
   });
 
   describe("Instance Exposing", () => {
-    it("should capture the created plugin instance when captureInstance is provided in defaultMountOptions", () => {
+    it("should reject instance capture in defaultMountOptions", () => {
       const { MockComponent, testComponentFactory, captureInstance, mockMount } = ctx;
       const capture = captureInstance();
 
@@ -19,15 +19,19 @@ describe("Plugin Instances Integration", () => {
         {},
         {
           plugins: {
-            pinia: { ...capture },
+            pinia: {
+              ...capture,
+            },
           },
         },
       );
-      factory();
-      const [, options] = mockMount.mock.calls[0];
-      expect(capture.instance).toBeDefined();
-      expect(typeof capture.instance.install).toBe("function");
-      expect(options.global.plugins).toContain(capture.instance);
+
+      expect(() => factory()).toThrow(
+        "Instance capture is not allowed in defaultMountOptions.plugins.pinia.",
+      );
+
+      expect(capture.instance).toBeUndefined();
+      expect(mockMount).not.toHaveBeenCalled();
     });
 
     it("should capture the created plugin instance when captureInstance is provided in mountOptions", () => {
@@ -78,8 +82,8 @@ describe("Plugin Instances Integration", () => {
       expect(options.global.plugins).toContain(capture.instance);
     });
 
-    it("should not capture the created plugin instance when plugin configuration is overridden", () => {
-      const { MockComponent, testComponentFactory, captureInstance } = ctx;
+    it("should reject default instance capture even when overridden by mountOptions", () => {
+      const { MockComponent, testComponentFactory, captureInstance, mockMount } = ctx;
       const capture = captureInstance();
 
       const factory = testComponentFactory(
@@ -87,24 +91,61 @@ describe("Plugin Instances Integration", () => {
         {},
         {
           plugins: {
-            pinia: { ...capture },
-          },
-        },
-      );
-      factory(
-        {},
-        {
-          plugins: {
             pinia: {
-              initialState: {
-                users: [],
-              },
+              ...capture,
             },
           },
         },
       );
 
-      expect(capture.instance).not.toBeDefined();
+      expect(() =>
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                initialState: {
+                  users: [],
+                },
+              },
+            },
+          },
+        ),
+      ).toThrow("Instance capture is not allowed in defaultMountOptions.plugins.pinia.");
+
+      expect(capture.instance).toBeUndefined();
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+
+    it("should reject instance capture in defaultMountOptions even when skipDefaultOptions is true", () => {
+      const { MockComponent, testComponentFactory, captureInstance, mockMount } = ctx;
+      const capture = captureInstance();
+
+      const factory = testComponentFactory(
+        MockComponent,
+        {},
+        {
+          plugins: {
+            pinia: {
+              ...capture,
+            },
+          },
+        },
+      );
+
+      expect(() =>
+        factory(
+          {},
+          {},
+          {},
+          {
+            skipDefaultOptions: true,
+          },
+        ),
+      ).toThrow("Instance capture is not allowed in defaultMountOptions.plugins.pinia.");
+
+      expect(capture.instance).toBeUndefined();
+      expect(mockMount).not.toHaveBeenCalled();
     });
 
     it("should not pass instance capture options to the underlying plugin factory", () => {
@@ -266,8 +307,9 @@ describe("Plugin Instances Integration", () => {
       };
       const capture = captureInstance();
 
-      const factory = testComponentFactory(
-        MockComponent,
+      const factory = testComponentFactory(MockComponent);
+
+      factory(
         {},
         {
           plugins: {
@@ -276,10 +318,6 @@ describe("Plugin Instances Integration", () => {
             },
           },
         },
-      );
-      factory(
-        {},
-        {},
         {},
         {
           plugins: {

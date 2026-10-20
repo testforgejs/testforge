@@ -150,7 +150,7 @@ describe("Plugin Integration", () => {
   });
 
   describe("Plugin Configuration Replacement", () => {
-    it("should not preserve captureInstance from defaultMountOptions when plugin configuration is overridden", () => {
+    it("should reject instance capture in defaultMountOptions even when plugin configuration is overridden", () => {
       const capture = captureInstance();
 
       const factory = testComponentFactory(
@@ -165,22 +165,26 @@ describe("Plugin Integration", () => {
         },
       );
 
-      factory(
-        {},
-        {
-          plugins: {
-            pinia: {
-              initialState: {
-                user: {
-                  id: 1,
+      expect(() =>
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                initialState: {
+                  user: {
+                    id: 1,
+                  },
                 },
               },
             },
           },
-        },
-      );
+        ),
+      ).toThrow("Instance capture is not allowed in defaultMountOptions.plugins.pinia.");
 
       expect(capture.instance).toBeUndefined();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount).not.toHaveBeenCalled();
     });
 
     it("should completely replace plugin configuration before invoking plugin factory", () => {

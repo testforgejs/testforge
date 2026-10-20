@@ -89,7 +89,7 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
       const piniaCapture = captureInstance();
       const routerCapture = captureInstance();
 
-      const BASE_MOUNT_OPTIONS = {
+      const MOUNT_OPTIONS = {
         plugins: {
           i18n: {
             locale: "en",
@@ -111,9 +111,9 @@ describe("testComponentFactory Integration (Expose Instance)", () => {
         },
       };
 
-      const factory = testComponentFactory(MockComponent, {}, BASE_MOUNT_OPTIONS);
+      const factory = testComponentFactory(MockComponent);
 
-      factory();
+      factory({}, MOUNT_OPTIONS);
 
       // Verify that native plugin factories were called
       expect(mocks.i18nCreate).toHaveBeenCalledTimes(1);

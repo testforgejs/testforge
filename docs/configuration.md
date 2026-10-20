@@ -67,7 +67,7 @@ These arguments define factory-level defaults applied to every mount created by 
 
 - `Component` — the Vue component to mount.
 - `defaultProps` — default component props.
-- `defaultMountOptions` — default Vue Test Utils mounting options and managed plugin configuration.
+- `defaultMountOptions` — default Vue Test Utils mounting options and managed plugin configuration. Instance capturing is not allowed at this shared factory level.
 - `defaultSlots` — default component slots.
 
 ### Factory Execution
@@ -102,6 +102,7 @@ Instead, TestForge resolves the runtime options from Layers 2–4, then performs
 
 For a broader architectural perspective on how presets and runtime
 configuration work together, see
+
 [Presets and the Runtime Configuration Pipeline](./architecture.md#presets-and-the-runtime-configuration-pipeline).
 
 | Layer                               | Defined At                    | Scope                 | Managed Plugin Behavior                                               |
@@ -202,6 +203,8 @@ This configuration serves as the baseline for every mount created by the compone
 
 > [!NOTE]
 > Stateful objects supplied through `defaultMountOptions` may be shared across mounts. TestForge does not automatically clone or recreate them. See [Instance Isolation](#instance-isolation) for details.
+>
+> **Instance capture is not allowed in `defaultMountOptions.plugins`.** Create a fresh `captureInstance<T>()` for each mount and provide it through `mountOptions.plugins` or `extraOptions.plugins`.
 
 ---
 
@@ -523,7 +526,7 @@ factory(
 The resolved test-level `initialState` contains `users: []`; it is not deep-merged with the factory-level array. This prevents stale or unrelated test data from leaking into another test.
 
 > [!NOTE]
-> Replacement occurs at the **plugin configuration object** level, not per property. If Layer 3 replaces a managed plugin's Layer 2 configuration, it also replaces any capture callback supplied through `...captureInstance()` and any `__meta` settings from Layer 2. Supply a capture object again in Layer 3 if you need to access the instance for that mount.
+> Replacement occurs at the **plugin configuration object** level, not per property. Instance capture is not permitted in Layer 2; configure `captureInstance()` per mount in Layer 3 (`mountOptions.plugins`) or Layer 4 (`extraOptions.plugins`).
 >
 > This replacement does **not** remove the plugin's preset defaults.
 
@@ -997,6 +1000,7 @@ Installing the package alone does not make it available in the active runtime pr
 
 For the architectural role of presets as runtime environment profiles
 and plugin capability boundaries, see
+
 [Presets as Runtime Environment Profiles](./architecture.md#presets-as-runtime-environment-profiles).
 
 ---
@@ -1300,6 +1304,39 @@ Preset defaults follow a different rule: they are `PluginOptionsFactory` functio
 
 To make a managed plugin available but disabled by default, use `enabled: false` in the preset manifest and activate it through runtime configuration when needed.
 
+#### Instance Capture in Factory Defaults
+
+`captureInstance<T>()` must be configured **per mount**, through `mountOptions.plugins` or `extraOptions.plugins`. Do not spread a capture object into `defaultMountOptions.plugins`: factory defaults are reused across mounts, and subsequent captures would overwrite the reference held by earlier tests.
+
+TestForge rejects an instance-capture callback in `defaultMountOptions.plugins.<name>` at runtime, **even if** the plugin configuration is replaced by `mountOptions.plugins.<name>` or factory defaults are skipped using `skipDefaultOptions`.
+
+```typescript
+const capture = captureInstance<TestingPinia>();
+
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {
+    plugins: {
+      pinia: { ...capture }, // Invalid: capture belongs to factory defaults.
+    },
+  },
+);
+
+factory(); // Throws: Instance capture is not allowed in defaultMountOptions.plugins.pinia.
+```
+
+Instead, create a capture object for the individual mount:
+
+```typescript
+const factory = testComponentFactory(MyComponent);
+const capture = captureInstance<TestingPinia>();
+
+factory({}, { plugins: { pinia: { ...capture } } }); // Valid.
+```
+
+Using one capture object across several `factory()` invocations is also discouraged: its `instance` getter points to the instance captured most recently. See [Accessing Plugin Instances](#accessing-plugin-instances) for guidance.
+
 #### Unmanaged Third-Party Plugins
 
 Plugins that are not registered as TestForge-managed integrations must not be passed through the managed `plugins` object.
@@ -1381,7 +1418,6 @@ For example:
 import ThirdPartyPlugin from "third-party-plugin";
 
 const factory = testComponentFactory(MyComponent);
-
 const wrapper = factory(
   {},
   {
@@ -1438,7 +1474,6 @@ For this purpose, managed plugins support the special `__meta.instance` field in
 import { createTestingPinia } from "@pinia/testing";
 
 const sharedPinia = createTestingPinia();
-
 const factory = testComponentFactory(MyComponent);
 
 factory(
@@ -1519,11 +1554,9 @@ const wrapper = factory(
 );
 
 expect(piniaCapture.instance).toBeDefined();
-
 if (!piniaCapture.instance) {
   throw new Error("Expected the Pinia instance to be captured");
 }
-
 expect(typeof piniaCapture.instance.install).toBe("function");
 ```
 
@@ -1540,7 +1573,11 @@ The former string-keyed `expose` callback is **not a TestForge instance-capture 
 
 #### Configuration Layers and Multiple Mounts
 
-You can spread a capture object into a managed plugin's options in `defaultMountOptions`, per-call `mountOptions`, or `extraOptions`. Remember that a per-call `mountOptions.plugins.<name>` configuration **replaces** the entire `defaultMountOptions.plugins.<name>` configuration. If the factory-level capture is replaced, include a capture object in the per-call configuration when you still need to capture the instance. See [Managed Plugin Configuration](#managed-plugin-configuration).
+**Use a new capture object for each component mount.** Pass it through `mountOptions.plugins` or `extraOptions.plugins` when calling `factory()`. These are per-mount configuration layers.
+
+**Do not pass `captureInstance()` through `defaultMountOptions.plugins`.** TestForge rejects it at runtime, including when `mountOptions.plugins.<name>` replaces that plugin's default configuration. Factory defaults are shared across mounts, whereas an instance capture must belong to a particular mount. See [Configuration Validation](#53-configuration-validation).
+
+A capture supplied through `mountOptions.plugins.<name>` can be combined with per-mount overrides from `extraOptions.plugins.<name>`. Remember that `mountOptions.plugins.<name>` **replaces** the `defaultMountOptions.plugins.<name>` configuration, while `extraOptions.plugins.<name>` applies a shallow overlay. See [Managed Plugin Configuration](#managed-plugin-configuration).
 
 For **independent captures across mounts**, create a new capture object for each mount:
 
@@ -1556,7 +1593,9 @@ expect(secondCapture.instance).toBeDefined();
 expect(firstCapture.instance).not.toBe(secondCapture.instance);
 ```
 
-Reusing the **same capture object** across mounts means its `instance` property is updated with the instance from the most recent mount. For more on instance lifetime and explicitly shared objects, see [Instance Isolation](#instance-isolation). To reuse a **pre-created** instance, pass it via [`__meta.instance`](#precreated-plugin-instances); it can also be captured with `captureInstance()`.
+Reusing the **same capture object** across mounts is incorrect usage: each capture callback updates the same `instance` property, so a subsequent mount can replace the reference before an earlier test reads it. In concurrent tests, this can cause tests to inspect another mount's instance. Create a fresh capture for each mount; if you need a stable reference, save `capture.instance` to a local variable immediately after mounting.
+
+To reuse a **pre-created** instance, pass it via [`__meta.instance`](#precreated-plugin-instances); it can also be captured with `captureInstance()` configured for that mount. For more on instance lifetime and explicitly shared objects, see [Instance Isolation](#instance-isolation).
 
 ---
 
@@ -1585,7 +1624,6 @@ Use the referenced plugin package's `PLUGIN_NAME` export where available. The re
 ```typescript
 import { fromPluginInstance } from "@testforgejs/vue-test-core";
 import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
-
 import { useI18n } from "vue-i18n";
 import { createVueI18nAdapter } from "vuetify/locale/adapters/vue-i18n";
 
@@ -1680,7 +1718,6 @@ For example:
 
 ```typescript
 const firstCapture = captureInstance<Pinia>();
-
 const secondCapture = captureInstance<Pinia>();
 
 const factory = testComponentFactory(MyComponent);
@@ -1722,7 +1759,7 @@ Pass the instance through `__meta.instance` as described in [Section 7.1](#precr
 
 TestForge does not automatically clone or recreate objects provided in `defaultMountOptions`.
 
-Because `defaultMountOptions` is defined once when a component factory is created, object references supplied at this level may be reused across multiple mounts.
+Because `defaultMountOptions` is defined once when a component factory is created, object references supplied at this level may be reused across multiple mounts. The exception is instance capture: `captureInstance()` must not be included in `defaultMountOptions.plugins` and is rejected by runtime validation. Configure it for each mount instead.
 
 This is especially important for stateful objects, such as:
 
@@ -1741,7 +1778,6 @@ Consider a component factory configured with a custom Router history:
 import { createMemoryHistory } from "vue-router";
 
 const customHistory = createMemoryHistory();
-
 const factory = testComponentFactory(
   MyComponent,
   {},
@@ -1759,7 +1795,6 @@ Every invocation of `factory()` receives the same `customHistory` reference unle
 
 ```typescript
 const first = factory();
-
 const second = factory();
 ```
 
@@ -1817,7 +1852,6 @@ const mountWithHistory = () =>
   );
 
 const first = mountWithHistory();
-
 const second = mountWithHistory();
 ```
 
