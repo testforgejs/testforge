@@ -2,10 +2,10 @@ import type { TestingPinia, TestingOptions } from "@pinia/testing";
 import type { PluginControlOptions } from "@testforgejs/vue-test-core";
 
 /**
- * A callback for configuring Pinia stores after the testing Pinia instance
- * is created and before the component is mounted.
+ * A callback for configuring stores on a resolved testing Pinia instance
+ * before the component is mounted.
  *
- * Use it to initialize or modify stores required by the test.
+ * The instance may be newly created or reused through `__meta.instance`.
  *
  * @param pinia - The testing Pinia instance used by the mounted component.
  */
@@ -26,8 +26,15 @@ export type MockStoresFn = (pinia: TestingPinia) => void;
 export type VueTestPiniaOptions = TestingOptions &
   PluginControlOptions<TestingPinia> & {
     /**
-     * A callback for initializing or modifying Pinia stores after the
-     * testing Pinia instance is created and before the component is mounted.
+     * A callback for initializing or modifying Pinia stores before the
+     * component is mounted.
+     *
+     * The callback runs after the Pinia instance has been resolved,
+     * regardless of whether it was newly created or provided through
+     * `__meta.instance`.
+     *
+     * When an existing Pinia instance is reused, the callback operates
+     * on that same instance and may modify its existing stores.
      *
      * @example
      * ```ts

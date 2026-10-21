@@ -4,12 +4,12 @@
 
 > **MockStoresFn** = (`pinia`) => `void`
 
-Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/7a79f4b4e191aaf8a669d44c60d1cc858d263ed5/packages/vue-test-plugin-pinia/src/types/types.ts#L12)
+Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/8c3ef83f30f0f5649f00dec51636fdc491be0cc0/packages/vue-test-plugin-pinia/src/types/types.ts#L12)
 
-A callback for configuring Pinia stores after the testing Pinia instance
-is created and before the component is mounted.
+A callback for configuring stores on a resolved testing Pinia instance
+before the component is mounted.
 
-Use it to initialize or modify stores required by the test.
+The instance may be newly created or reused through `__meta.instance`.
 
 ## Parameters
 
