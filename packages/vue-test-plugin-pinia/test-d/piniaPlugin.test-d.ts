@@ -1,6 +1,6 @@
 import { expectType, expectAssignable, expectError } from "tsd";
 import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "../dist/index.js";
+import { piniaPlugin, withMockStores } from "../dist/index.js";
 import { defineComponent } from "vue";
 import { defineStore } from "pinia";
 
@@ -14,26 +14,38 @@ const useCounterStore = defineStore("counter", {
 });
 
 /*
- * VueTestPiniaOptions should include @pinia/testing options,
- * TestForge plugin control options, and the custom mockStores function.
+ * VueTestPiniaOptions should combine native @pinia/testing options
+ * with TestForge plugin control options and support store initialization
+ * through the symbol-keyed withMockStores() helper.
  */
 expectAssignable<VueTestPiniaOptions>({
   stubActions: true,
   initialState: { counter: { count: 10 } },
-  mockStores(pinia) {
+  ...withMockStores((pinia) => {
     expectType<TestingPinia>(pinia);
+
     const store = useCounterStore(pinia);
     store.count = 20;
-  },
+  }),
 });
 
 /*
- * The legacy expose callback must not be accepted
- * as a VueTestPiniaOptions property.
+ * VueTestPiniaOptions should reject the legacy string-keyed mockStores
+ * option in favor of the symbol-based withMockStores() helper.
  */
+expectError<VueTestPiniaOptions>({
+  mockStores: (_pinia: TestingPinia) => {},
+});
+
+/*
+ * withMockStores() should reject non-function arguments and callbacks
+ * with incompatible Pinia instance types.
+ */
+expectError(withMockStores(123));
+
 expectError(
-  expectAssignable<VueTestPiniaOptions>({
-    expose(_instance: TestingPinia) {},
+  withMockStores((pinia: string) => {
+    console.log(pinia);
   }),
 );
 
@@ -81,7 +93,10 @@ const TypedComponent = defineComponent({
   },
 });
 
-// Verify mountOptions
+/*
+ * mountOptions should support native Pinia options, symbol-keyed store
+ * initialization, and type-safe plugin instance capturing.
+ */
 const factory = framework.testComponentFactory(TypedComponent);
 
 const wrapper = factory(
@@ -90,9 +105,10 @@ const wrapper = factory(
     plugins: {
       pinia: {
         stubActions: false,
-        mockStores: (pinia) => {
+
+        ...withMockStores((pinia) => {
           expectType<TestingPinia>(pinia);
-        },
+        }),
 
         ...capture,
       },
@@ -150,20 +166,24 @@ expectError(
   ),
 );
 
-// Verify defaultMountOptions
-const defaultCapture = captureInstance<TestingPinia>();
-
+/*
+ * defaultMountOptions should support native Pinia options and
+ * symbol-keyed store initialization through withMockStores().
+ *
+ * Instance capturing is intentionally omitted because it is
+ * prohibited in factory-level defaults at runtime.
+ */
 framework.testComponentFactory(
   TypedComponent,
   {},
   {
     plugins: {
       pinia: {
-        mockStores: (pinia) => {
-          expectType<TestingPinia>(pinia);
-        },
+        stubActions: false,
 
-        ...defaultCapture,
+        ...withMockStores((pinia) => {
+          expectType<TestingPinia>(pinia);
+        }),
       },
     },
   },

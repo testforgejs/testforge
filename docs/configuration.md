@@ -1499,6 +1499,22 @@ factory(
 - the supplied instance is injected directly into the Vue Test Utils mounting pipeline
 
 > [!WARNING]
+> **Shared instances and test isolation**
+>
+> Providing an existing plugin instance through `__meta.instance`
+> explicitly enables instance reuse.
+>
+> If the same instance is reused across independent tests, mutations
+> made by one test may affect subsequent tests. This can introduce
+> order-dependent behavior and compromise test isolation.
+>
+> For independent tests, prefer TestForge-managed plugin instances
+> or create a fresh pre-configured instance for each test.
+>
+> Reusing the same instance across tests is intended for specialized
+> testing scenarios where shared plugin state is explicitly required.
+
+> [!WARNING]
 > Any other plugin options specified alongside `__meta.instance` will be ignored because the provided instance takes precedence.
 
 #### Why use `__meta.instance` instead of `global.plugins`?
@@ -1754,6 +1770,20 @@ expect(firstCapture.instance).not.toBe(secondCapture.instance);
 To share a plugin instance across mounts or helpers, provide a pre-created instance rather than relying on automatic creation.
 
 Pass the instance through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances). TestForge reuses it without changing its identity or resetting its state.
+
+This behavior is intentional. The isolation guarantees provided by
+TestForge apply to plugin instances created independently for each
+mount, not to explicitly reused instances.
+
+When multiple component mounts use the same instance through
+`__meta.instance`, they may share mutable runtime state.
+
+If those mounts belong to different tests, changes made by one test
+may persist into another unless the instance is recreated or its state
+is explicitly reset.
+
+Explicit instance reuse should therefore be reserved for scenarios
+where shared state is part of the behavior being tested.
 
 #### User-Provided Objects and Reference Sharing
 

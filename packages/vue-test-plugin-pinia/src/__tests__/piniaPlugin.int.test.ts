@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { describe, beforeEach, it, expect } from "vitest";
+import { describe, beforeEach, it, expect, vi } from "vitest";
 import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "../index";
-import { h } from "vue";
+import { piniaPlugin, withMockStores } from "../index";
+import { createTestingPinia } from "@pinia/testing";
 import { defineStore } from "pinia";
+import { h } from "vue";
 
 import type { TestFramework } from "@testforgejs/vue-test-core";
 import type { TestingPinia } from "@pinia/testing";
@@ -37,8 +38,7 @@ describe("piniaPlugin integration", () => {
           manifest: [{ module: piniaPlugin, enabled: true }],
           defaults: {
             pinia: () => ({
-              // By default, @pinia/testing stubs (replaces with placeholders) all actions.
-              // Turn this off to test how the action actually behaves.
+              // Execute real store actions instead of stubbing them.
               stubActions: false,
             }),
           },
@@ -58,27 +58,34 @@ describe("piniaPlugin integration", () => {
     expect(wrapper.text()).toBe("0");
   });
 
-  it("should call mockStores callback to modify store state when option is provided", () => {
+  it("should call withMockStores callback to modify store state before mounting", () => {
     // Arrange
-    const factory = framework.testComponentFactory(
-      Component,
+    const piniaCapture = captureInstance<TestingPinia>();
+    const mockStores = vi.fn((pinia: TestingPinia) => {
+      const store = useCounterStore(pinia);
+      store.count = 42;
+    });
+
+    const factory = framework.testComponentFactory(Component);
+
+    // Act
+    const wrapper = factory(
       {},
       {
         plugins: {
           pinia: {
-            mockStores: () => {
-              const store = useCounterStore();
-              store.count = 42; // Mutation of the state before mounting
-            },
+            ...piniaCapture,
+            ...withMockStores(mockStores),
           },
         },
       },
     );
 
-    // Act
-    const wrapper = factory();
-
     // Assert
+    expect(mockStores).toHaveBeenCalledTimes(1);
+    expect(mockStores).toHaveBeenCalledWith(piniaCapture.instance);
+
+    expect(piniaCapture.instance).toBeDefined();
     expect(wrapper.text()).toBe("42");
   });
 
@@ -118,5 +125,100 @@ describe("piniaPlugin integration", () => {
     // Assert updated state
     expect(store.count).toBe(1);
     expect(wrapper.text()).toBe("1");
+  });
+
+  it("should call withMockStores for an existing Pinia instance provided through __meta.instance", () => {
+    // Arrange
+    const providedPinia = createTestingPinia({
+      createSpy: vi.fn,
+      stubActions: false,
+    });
+
+    const mockStores = vi.fn((pinia: TestingPinia) => {
+      const store = useCounterStore(pinia);
+      store.count = 42;
+    });
+
+    const piniaCapture = captureInstance<TestingPinia>();
+
+    const factory = framework.testComponentFactory(Component);
+
+    // Act
+    const wrapper = factory(
+      {},
+      {
+        plugins: {
+          pinia: {
+            ...piniaCapture,
+            ...withMockStores(mockStores),
+          },
+        },
+      },
+      {},
+      {
+        plugins: {
+          pinia: {
+            __meta: {
+              instance: providedPinia,
+            },
+          },
+        },
+      },
+    );
+
+    // Assert
+    expect(mockStores).toHaveBeenCalledTimes(1);
+    expect(mockStores).toHaveBeenCalledWith(providedPinia);
+
+    expect(piniaCapture.instance).toBe(providedPinia);
+
+    expect(useCounterStore(providedPinia).count).toBe(42);
+    expect(wrapper.text()).toBe("42");
+  });
+
+  it("should apply withMockStores on every mount while preserving shared Pinia state", async () => {
+    // Arrange
+    const providedPinia = createTestingPinia({
+      createSpy: vi.fn,
+      stubActions: false,
+    });
+
+    const mockStores = vi.fn((pinia: TestingPinia) => {
+      const store = useCounterStore(pinia);
+      store.count++;
+    });
+
+    const factory = framework.testComponentFactory(Component);
+
+    const extraOptions = {
+      plugins: {
+        pinia: {
+          __meta: {
+            instance: providedPinia,
+          },
+          ...withMockStores(mockStores),
+        },
+      },
+    };
+
+    // Act
+    const firstWrapper = factory({}, {}, {}, extraOptions);
+
+    expect(firstWrapper.text()).toBe("1");
+
+    const secondWrapper = factory({}, {}, {}, extraOptions);
+
+    await firstWrapper.vm.$nextTick();
+
+    // Assert
+    expect(mockStores).toHaveBeenCalledTimes(2);
+
+    expect(mockStores).toHaveBeenNthCalledWith(1, providedPinia);
+    expect(mockStores).toHaveBeenNthCalledWith(2, providedPinia);
+
+    expect(useCounterStore(providedPinia).count).toBe(2);
+
+    expect(firstWrapper.text()).toBe("2");
+    expect(secondWrapper.text()).toBe("2");
   });
 });

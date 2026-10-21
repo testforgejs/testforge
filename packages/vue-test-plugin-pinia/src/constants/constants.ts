@@ -5,3 +5,5 @@
  * in presets and other plugin-aware TestForge APIs.
  */
 export const PINIA_PLUGIN_NAME = "pinia" as const;
+
+export const MOCK_STORES = Symbol("TestForge.pinia.mockStores");

@@ -4,42 +4,32 @@
 
 > **VueTestPiniaOptions** = `TestingOptions` & `PluginControlOptions`\<`TestingPinia`\> & `object`
 
-Defined in: [types/types.ts:26](https://github.com/testforgejs/testforge/blob/8c3ef83f30f0f5649f00dec51636fdc491be0cc0/packages/vue-test-plugin-pinia/src/types/types.ts#L26)
+Defined in: [types/types.ts:48](https://github.com/testforgejs/testforge/blob/dc04789c621fa614ec1c13d55b27674bd4cdd4c9/packages/vue-test-plugin-pinia/src/types/types.ts#L48)
 
 Configuration options for the Pinia test plugin.
 
 Combines native Pinia testing options with TestForge-specific
 controls for managed plugin instances and store initialization.
 
-Instance capturing is handled internally by TestForge using
-`captureInstance<TestingPinia>()`.
+Use `withMockStores()` to initialize or modify Pinia stores before
+the component is mounted.
 
-## Type Declaration
+The store setup callback runs for both newly created Pinia instances
+and existing instances reused through `__meta.instance`.
 
-### mockStores?
-
-> `optional` **mockStores?**: [`MockStoresFn`](MockStoresFn.md)
-
-A callback for initializing or modifying Pinia stores before the
-component is mounted.
-
-The callback runs after the Pinia instance has been resolved,
-regardless of whether it was newly created or provided through
-`__meta.instance`.
-
-When an existing Pinia instance is reused, the callback operates
-on that same instance and may modify its existing stores.
-
-#### Example
+## Example
 
 ```ts
+import { withMockStores } from "@testforgejs/vue-test-plugin-pinia";
+
 factory({}, {
   plugins: {
     pinia: {
-      mockStores: (pinia) => {
+      stubActions: false,
+      ...withMockStores((pinia) => {
         const store = useCounterStore(pinia);
         store.count = 42;
-      },
+      }),
     },
   },
 });
@@ -47,5 +37,5 @@ factory({}, {
 
 ## See
 
- - `TestingOptions` from `@pinia/testing` for native Pinia testing configuration.
- - `PluginControlOptions` from `@testforgejs/vue-test-core` for type-safe instance capturing.
+ - `TestingOptions` from `@pinia/testing` for native Pinia configuration.
+ - `PluginControlOptions` from `@testforgejs/vue-test-core`.

@@ -1,6 +1,8 @@
 import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createTestingPinia } from "@pinia/testing";
 
+import { MOCK_STORES } from "../constants/constants.js";
+
 import type { TestingPinia } from "@pinia/testing";
 import type { VueTestPiniaOptions } from "../types/types";
 
@@ -11,12 +13,16 @@ import type { VueTestPiniaOptions } from "../types/types";
  * reused through __meta.instance.
  */
 export function createPiniaPlugin(options: VueTestPiniaOptions): TestingPinia {
+  const { [MOCK_STORES]: mockStores, ...pluginOptions } = options;
+
   const pinia = createPluginInstance<TestingPinia, VueTestPiniaOptions>(
     createTestingPinia,
-    options,
+    pluginOptions,
   );
-  if (options.mockStores) {
-    options.mockStores(pinia);
+
+  if (mockStores) {
+    mockStores(pinia);
   }
+
   return pinia;
 }

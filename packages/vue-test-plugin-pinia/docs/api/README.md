@@ -17,6 +17,10 @@ and the standardized TestForge plugin package contract.
 - [piniaPlugin](variables/piniaPlugin.md)
 - [PLUGIN\_NAME](variables/PLUGIN_NAME.md)
 
+## Functions
+
+- [withMockStores](functions/withMockStores.md)
+
 ## References
 
 ### plugin

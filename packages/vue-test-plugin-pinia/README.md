@@ -36,7 +36,6 @@ When using Vitest, you can pass `vi` as the runner:
 
 ```typescript
 import { vi } from "vitest";
-
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
 
@@ -95,7 +94,6 @@ You can define the Pinia testing configuration directly in the preset instead:
 
 ```typescript
 import { vi } from "vitest";
-
 import { createTestFramework } from "@testforgejs/vue-test-core";
 import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
 
@@ -148,49 +146,47 @@ TestForge does not redefine these Pinia testing options. The integration passes 
 
 Refer to the Pinia documentation for the complete set of `TestingOptions` and their behavior.
 
-For additional store initialization and modification before mounting, see [Configuring stores with `mockStores`](#configuring-stores-with-mockstores).
+For additional store initialization and modification before mounting, see [Configuring stores with `withMockStores()`](#configuring-stores-with-withmockstores).
 
-### Configuring stores with `mockStores`
+### Configuring stores with `withMockStores()`
 
-The TestForge Pinia plugin provides a `mockStores` callback for initializing or modifying stores before a component is mounted.
+The TestForge Pinia plugin provides the `withMockStores()` helper for configuring stores before a component is mounted. It accepts a callback that receives the testing Pinia instance used by the mounted component.
 
-Unlike the native `initialState` option, which initializes store state, `mockStores` allows you to access stores directly and perform additional setup, including calling store actions.
-
-The callback receives the testing Pinia instance used by the mounted component.
-
-For example:
+Unlike the native `initialState` option, which initializes store state, `withMockStores()` lets you access stores directly and perform additional setup, including calling store actions.
 
 ```typescript
+import { withMockStores } from "@testforgejs/vue-test-plugin-pinia";
+
 factory(
   {},
   {
     plugins: {
       pinia: {
         stubActions: false,
-        mockStores: (pinia) => {
+        ...withMockStores((pinia) => {
           const store = useCounterStore(pinia);
-
           store.setCount(42);
-        },
+        }),
       },
     },
   },
 );
 ```
 
-The callback runs after the Pinia instance has been resolved and before the component is mounted.
+The callback runs after the Pinia instance has been resolved and before the component is mounted. This applies to newly created instances and explicitly reused instances alike.
 
-When using store actions inside `mockStores`, configure `stubActions: false` if their implementations need to execute. By default, `createTestingPinia()` stubs store actions.
+When calling store actions inside `withMockStores()`, configure `stubActions: false` if their implementations need to execute. By default, `createTestingPinia()` stubs store actions.
+
+The configuration returned by `withMockStores()` can be used in per-mount plugin options or factory-level defaults. The callback is invoked for each mount that uses the configuration and receives that mount's resolved Pinia instance.
 
 #### Configuring an existing Pinia instance
 
-The `mockStores` callback also runs when an existing Pinia instance is provided through `__meta.instance`.
-
-This allows you to configure stores on a reused instance without creating a new Pinia instance.
+The `withMockStores()` callback also runs when an existing Pinia instance is supplied through `__meta.instance`. This allows you to configure stores on an explicitly reused instance without creating a new Pinia instance.
 
 ```typescript
 import { createTestingPinia } from "@pinia/testing";
 import { vi } from "vitest";
+import { withMockStores } from "@testforgejs/vue-test-plugin-pinia";
 
 const pinia = createTestingPinia({
   createSpy: vi.fn,
@@ -207,11 +203,10 @@ factory(
         __meta: {
           instance: pinia,
         },
-        mockStores: (pinia) => {
+        ...withMockStores((pinia) => {
           const store = useCounterStore(pinia);
-
           store.count = 42;
-        },
+        }),
       },
     },
   },
@@ -220,15 +215,21 @@ factory(
 
 In this example:
 
-- TestForge reuses the provided Pinia instance instead of creating a new one.
-- `mockStores` receives that same instance.
-- The callback configures the store before the component is mounted.
-
-**Important:** When an existing Pinia instance is reused across multiple mounts, `mockStores` runs for each mount that configures it.
-
-The callback operates on the existing instance and may modify previously initialized stores. TestForge does not automatically reset store state between mounts when the same Pinia instance is reused.
+- TestForge reuses the supplied Pinia instance instead of creating a new one.
+- The `withMockStores()` callback receives that same instance.
+- The callback modifies the store before the component is mounted.
 
 Native `createTestingPinia()` options should be configured when creating the instance. Providing `__meta.instance` reuses that instance rather than recreating it with new testing options.
+
+#### Shared instance isolation
+
+**Providing a Pinia instance through `__meta.instance` explicitly enables instance reuse.** When the same instance is reused across multiple mounts, the mounted components share its stores and reactive state. State changes made during one mount may affect other components using that instance.
+
+The `withMockStores()` callback runs for **each mount** that configures it and operates on the resolved instance. When that instance is shared, the callback can modify stores that were initialized during an earlier mount. TestForge does not automatically reset or clone explicitly reused plugin instances.
+
+For independent tests, let TestForge create a fresh Pinia instance for each mount. If a test requires `__meta.instance`, create the supplied Pinia instance separately for each test unless shared state is an intentional part of the scenario.
+
+Reusing the same `withMockStores()` configuration **does not itself share Pinia state**: it is the explicit reuse of an instance through `__meta.instance` that causes the mounts to share state, assuming the callback does not depend on other shared mutable data.
 
 ### TestForge plugin defaults
 
@@ -330,12 +331,21 @@ This allows presets to choose explicitly between:
 The package provides both descriptive and standardized plugin exports:
 
 ```typescript
-import { piniaPlugin, plugin, PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
+import {
+  piniaPlugin,
+  withMockStores,
+  plugin,
+  PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-pinia";
 ```
 
 ### `piniaPlugin`
 
 The descriptive Pinia plugin module export.
+
+### `withMockStores()`
+
+A helper that adds a symbol-keyed store setup callback to managed Pinia plugin options. See [Configuring stores with `withMockStores()`](#configuring-stores-with-withmockstores) for examples.
 
 ### `plugin`
 
