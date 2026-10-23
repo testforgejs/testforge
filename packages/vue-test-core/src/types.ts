@@ -2,7 +2,11 @@ import type { Component, Plugin } from "vue";
 import type { MountingOptions, mount } from "@vue/test-utils";
 import type { ComponentProps, ComponentSlots } from "vue-component-type-helpers";
 
-import { PLUGIN_EXPOSE, SHARED_PLUGIN_INSTANCE_KEY } from "./constants/constants.js";
+import {
+  PLUGIN_EXPOSE,
+  SHARED_PLUGIN_INSTANCE_KEY,
+  PLUGIN_META_KEY,
+} from "./constants/constants.js";
 
 // === 1. Core Plugin Model ===
 
@@ -100,9 +104,7 @@ export type PluginConfigDefaults = Record<PluginName, PluginOptionsFactory<Runti
 
 export type ResolvedPluginDefaults = Record<PluginName, RuntimePluginConfig>;
 
-export type ResolvedPluginConfig = RuntimePluginConfig & {
-  __meta?: PluginMeta;
-};
+export type ResolvedPluginConfig = RuntimePluginConfig & PluginMetaOptions;
 
 export type PluginOverlay = ResolvedPluginConfig | false;
 
@@ -162,8 +164,12 @@ export type RuntimeExtraOptions = {
  */
 export type OptionsContext = "defaultMountOptions" | "mountOptions" | "extraOptions";
 
-export interface PluginMeta {
-  instance?: unknown;
+export interface PluginMeta<TInstance = unknown> {
+  instance?: TInstance;
+}
+
+export interface PluginMetaOptions<TInstance = unknown> {
+  [PLUGIN_META_KEY]?: PluginMeta<TInstance>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -225,9 +231,10 @@ export interface PluginControlOptions<TInstance> {
 }
 
 export type PluginOverride<T = unknown> =
-  | (T extends Record<string, any>
-      ? ResolvablePluginOptions<Partial<T>> & { __meta?: PluginMeta }
-      : ResolvablePluginOptions<T> & { __meta?: PluginMeta })
+  | ((T extends Record<string, any>
+      ? ResolvablePluginOptions<Partial<T>>
+      : ResolvablePluginOptions<T>) &
+      PluginMetaOptions)
   | false;
 
 export type PluginOverridesInput = {

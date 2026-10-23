@@ -1,7 +1,11 @@
 /** @vitest-environment jsdom */
 
 import { describe, beforeEach, it, expect, vi } from "vitest";
-import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
+import {
+  createTestFramework,
+  captureInstance,
+  withPluginInstance,
+} from "@testforgejs/vue-test-core";
 import { piniaPlugin, withMockStores } from "../index";
 import { createTestingPinia } from "@pinia/testing";
 import { defineStore } from "pinia";
@@ -127,7 +131,7 @@ describe("piniaPlugin integration", () => {
     expect(wrapper.text()).toBe("1");
   });
 
-  it("should call withMockStores for an existing Pinia instance provided through __meta.instance", () => {
+  it("should call withMockStores for an existing Pinia instance provided through overlay metadata", () => {
     // Arrange
     const providedPinia = createTestingPinia({
       createSpy: vi.fn,
@@ -158,9 +162,7 @@ describe("piniaPlugin integration", () => {
       {
         plugins: {
           pinia: {
-            __meta: {
-              instance: providedPinia,
-            },
+            ...withPluginInstance(providedPinia),
           },
         },
       },
@@ -193,9 +195,7 @@ describe("piniaPlugin integration", () => {
     const extraOptions = {
       plugins: {
         pinia: {
-          __meta: {
-            instance: providedPinia,
-          },
+          ...withPluginInstance(providedPinia),
           ...withMockStores(mockStores),
         },
       },

@@ -4,7 +4,7 @@
 
 > **VueTestPiniaOptions** = `TestingOptions` & `PluginControlOptions`\<`TestingPinia`\> & `object`
 
-Defined in: [types/types.ts:48](https://github.com/testforgejs/testforge/blob/dc04789c621fa614ec1c13d55b27674bd4cdd4c9/packages/vue-test-plugin-pinia/src/types/types.ts#L48)
+Defined in: [types/types.ts:48](https://github.com/testforgejs/testforge/blob/15b7fe253d452c54fcef8aae7128adc59fceb969/packages/vue-test-plugin-pinia/src/types/types.ts#L48)
 
 Configuration options for the Pinia test plugin.
 
@@ -15,7 +15,7 @@ Use `withMockStores()` to initialize or modify Pinia stores before
 the component is mounted.
 
 The store setup callback runs for both newly created Pinia instances
-and existing instances reused through `__meta.instance`.
+and pre-created instances reused through `withPluginInstance()`.
 
 ## Example
 

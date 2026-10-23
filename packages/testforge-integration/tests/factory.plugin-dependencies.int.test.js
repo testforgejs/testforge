@@ -8,12 +8,19 @@ describe("Plugin Instance Dependencies", () => {
   let createTestFramework;
   let createPluginInstance;
   let fromPluginInstance;
+  let withPluginInstance;
 
   beforeEach(async () => {
     const ctx = await setupFactoryTestContext(runner);
 
-    ({ MockComponent, mockMount, createTestFramework, createPluginInstance, fromPluginInstance } =
-      ctx);
+    ({
+      MockComponent,
+      mockMount,
+      createTestFramework,
+      createPluginInstance,
+      fromPluginInstance,
+      withPluginInstance,
+    } = ctx);
   });
 
   /*
@@ -558,7 +565,7 @@ describe("Plugin Instance Dependencies", () => {
   });
 
   describe("Pre-created Plugin Instances", () => {
-    it("should resolve dependencies to an instance provided via __meta.instance", () => {
+    it("should resolve dependencies to an instance provided via withPluginInstance", () => {
       const providedInstance = {
         id: "pre-created-provider",
         install() {},
@@ -605,9 +612,7 @@ describe("Plugin Instance Dependencies", () => {
         {
           plugins: {
             provider: {
-              __meta: {
-                instance: providedInstance,
-              },
+              ...withPluginInstance(providedInstance),
             },
           },
         },
@@ -632,7 +637,7 @@ describe("Plugin Instance Dependencies", () => {
       expect(mountOptions.global.plugins).toContain(providedInstance);
     });
 
-    it("should reject plugin instance references used as __meta.instance", () => {
+    it("should reject plugin instance references passed to withPluginInstance", () => {
       const providerCreate = runner.fn(() => ({
         install() {},
       }));
@@ -646,6 +651,8 @@ describe("Plugin Instance Dependencies", () => {
 
       const factory = testComponentFactory(MockComponent);
 
+      const reference = fromPluginInstance("provider", (instance) => instance);
+
       expect(() => {
         factory(
           {},
@@ -654,14 +661,12 @@ describe("Plugin Instance Dependencies", () => {
           {
             plugins: {
               provider: {
-                __meta: {
-                  instance: fromPluginInstance("provider", (instance) => instance),
-                },
+                ...withPluginInstance(reference),
               },
             },
           },
         );
-      }).toThrow();
+      }).toThrow(/withPluginInstance\(\) requires a pre-created plugin instance/);
 
       expect(providerCreate).not.toHaveBeenCalled();
       expect(mockMount).not.toHaveBeenCalled();

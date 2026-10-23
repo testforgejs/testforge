@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
+
+import { PLUGIN_META_KEY } from "../../constants/constants.js";
 import { createPipelineContext } from "../core/createPipelineContext.js";
 import { createPipeline } from "../core/createPipeline.js";
 import { createMountPipeline } from "../mount/createMountPipeline.js";
@@ -146,13 +148,13 @@ describe("Mount Pipeline Integration", () => {
     });
   });
 
-  describe("Shared Instances (__meta)", () => {
-    it("should extract instance to [SHARED_PLUGIN_INSTANCE_KEY] and remove __meta when provided in extraOptions", () => {
+  describe("Shared Instances (symbol-keyed overlay metadata)", () => {
+    it("should extract instance to [SHARED_PLUGIN_INSTANCE_KEY] and remove overlay metadata when provided in extraOptions", () => {
       const mockInstance = { id: "shared-router" };
       const extra = {
         plugins: {
           router: {
-            __meta: { instance: mockInstance },
+            [PLUGIN_META_KEY]: { instance: mockInstance },
             routes: [],
           },
         },
@@ -163,7 +165,7 @@ describe("Mount Pipeline Integration", () => {
       const routerConfig = result.plugins.router as RuntimePluginState;
 
       expect(routerConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(mockInstance);
-      expect(routerConfig.__meta).toBeUndefined();
+      expect(routerConfig[PLUGIN_META_KEY]).toBeUndefined();
       expect(routerConfig.routes).toEqual([]);
     });
   });
@@ -435,8 +437,8 @@ describe("Mount Pipeline Integration", () => {
     });
 
     describe("Negative Scenarios & Edge Cases", () => {
-      it("should ignore __meta if it is not an object", () => {
-        const extra = { plugins: { pinia: { __meta: "not_an_object" } } };
+      it("should ignore overlay metadata if it is not an object", () => {
+        const extra = { plugins: { pinia: { [PLUGIN_META_KEY]: "not_an_object" } } };
         const result = run(presets, {}, {}, extra);
 
         const piniaConfig = result.plugins.pinia as RuntimePluginConfig;
@@ -498,14 +500,15 @@ describe("Mount Pipeline Integration", () => {
         expect(routerConfig.routes).not.toContainEqual(expect.objectContaining({ path: "/" }));
       });
 
-      it("should allow providing a shared router instance via __meta while keeping custom routes", () => {
+      it("should extract a provided plugin instance from overlay metadata", () => {
         const mockRouter = { push: vi.fn() };
-        const customRoutes = [{ path: "/test" }];
+
         const extra = {
           plugins: {
             router: {
-              __meta: { instance: mockRouter },
-              routes: customRoutes,
+              [PLUGIN_META_KEY]: {
+                instance: mockRouter,
+              },
             },
           },
         };
@@ -515,7 +518,7 @@ describe("Mount Pipeline Integration", () => {
         const routerConfig = result.plugins.router as RuntimePluginConfig;
 
         expect(routerConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(mockRouter);
-        expect(routerConfig.routes).toEqual(customRoutes);
+        expect(routerConfig[PLUGIN_META_KEY]).toBeUndefined();
       });
     });
   });

@@ -9,8 +9,8 @@ import type { VueTestPiniaOptions } from "../types/types";
 /*
  * Resolves a testing Pinia instance and applies optional store setup.
  *
- * Store setup runs for both newly created instances and existing instances
- * reused through __meta.instance.
+ * Store setup runs for both newly created instances and pre-created instances
+ * reused through withPluginInstance().
  */
 export function createPiniaPlugin(options: VueTestPiniaOptions): TestingPinia {
   const { [MOCK_STORES]: mockStores, ...pluginOptions } = options;

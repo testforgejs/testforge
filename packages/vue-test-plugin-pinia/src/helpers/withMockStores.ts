@@ -7,7 +7,7 @@ import type { MockStoresFn } from "../types/types";
  * before the component is mounted.
  *
  * The callback runs for both newly created Pinia instances and
- * existing instances reused through `__meta.instance`.
+ * pre-created instances reused through `withPluginInstance()`.
  *
  * @example
  * ```ts

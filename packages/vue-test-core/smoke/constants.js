@@ -8,4 +8,5 @@ export const EXPECTED_EXPORTS = [
   "fromPluginInstance",
   "validatePreset",
   "validatePresets",
+  "withPluginInstance",
 ];

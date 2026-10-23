@@ -39,7 +39,7 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
   - [5.4. Practical Examples](#54-practical-examples)
 - [6. Third-Party Plugins](#third-party-plugins)
 - [7. Advanced: Working with Plugin Instances](#plugin-instances)
-  - [7.1. Using Pre-created Instances (`__meta.instance`)](#precreated-plugin-instances)
+  - [7.1. Using Pre-created Instances (`withPluginInstance()`)](#precreated-plugin-instances)
   - [7.2. Accessing Plugin Instances](#accessing-plugin-instances)
   - [7.3. Plugin Instance Dependencies](#plugin-instance-dependencies)
   - [7.4. Instance Isolation](#instance-isolation)
@@ -1464,16 +1464,17 @@ Direct access is useful when asserting the state of **Pinia**, **Vue Router**, o
 
 <a id="precreated-plugin-instances"></a>
 
-### 7.1. Using Pre-created Instances (`__meta.instance`)
+### 7.1. Using Pre-created Instances (`withPluginInstance()`)
 
 Some tests need a **pre-created** plugin instance, such as a Pinia instance configured with `@pinia/testing` or a fully configured Router, rather than a new instance created by TestForge.
 
-For this purpose, managed plugins support the special `__meta.instance` field inside `extraOptions.plugins`:
+Use `withPluginInstance(instance)` to supply that instance to a managed plugin. Spread the result into the plugin's configuration (for example, in `extraOptions.plugins` for an individual mount):
 
 ```typescript
 import { createTestingPinia } from "@pinia/testing";
+import { withPluginInstance } from "@testforgejs/vue-test-core";
 
-const sharedPinia = createTestingPinia();
+const preparedPinia = createTestingPinia();
 const factory = testComponentFactory(MyComponent);
 
 factory(
@@ -1483,61 +1484,51 @@ factory(
   {
     plugins: {
       pinia: {
-        __meta: {
-          instance: sharedPinia,
-        },
+        ...withPluginInstance(preparedPinia),
       },
     },
   },
 );
 ```
 
-**When `__meta.instance` is provided:**
+**When `withPluginInstance()` is used:**
 
-- the plugin factory is not called to create a new instance
-- standard plugin options specified alongside it are ignored
-- the supplied instance is injected directly into the Vue Test Utils mounting pipeline
+- TestForge reuses the exact supplied instance rather than constructing a new one.
+- The managed plugin remains in the TestForge pipeline, including instance capture and dependency resolution where supported.
+- The supplied instance is installed into the component's Vue Test Utils mounting environment.
+
+`withPluginInstance()` adds **symbol-keyed TestForge metadata**, avoiding conflicts with native plugin option names. The former string-keyed `__meta.instance` syntax is no longer supported as a TestForge control option.
+
+> [!IMPORTANT]
+> **Configure the instance before passing it to TestForge.**
+>
+> Options used solely to **create** a plugin instance do not reconfigure an existing instance. For example, specifying `router.routes` alongside `withPluginInstance(existingRouter)` does not add routes to `existingRouter`; configure the router with those routes when creating it (or update it through its own API).
+>
+> TestForge may still retain other plugin configuration for managed integration behavior, so do not assume that _every_ accompanying option is discarded.
 
 > [!WARNING]
 > **Shared instances and test isolation**
 >
-> Providing an existing plugin instance through `__meta.instance`
-> explicitly enables instance reuse.
+> `withPluginInstance()` preserves the supplied instance's identity and state. If you reuse that same instance across independent tests, mutations in one test can affect later tests and introduce order-dependent failures.
 >
-> If the same instance is reused across independent tests, mutations
-> made by one test may affect subsequent tests. This can introduce
-> order-dependent behavior and compromise test isolation.
->
-> For independent tests, prefer TestForge-managed plugin instances
-> or create a fresh pre-configured instance for each test.
->
-> Reusing the same instance across tests is intended for specialized
-> testing scenarios where shared plugin state is explicitly required.
+> For independent tests, prefer instances created by TestForge or create a **fresh pre-configured instance for each test**. Share an instance across mounts only when shared state is intentional.
 
-> [!WARNING]
-> Any other plugin options specified alongside `__meta.instance` will be ignored because the provided instance takes precedence.
+#### Why use `withPluginInstance()` instead of `global.plugins`?
 
-#### Why use `__meta.instance` instead of `global.plugins`?
-
-With `__meta.instance`, TestForge knows that the managed plugin instance already exists.
-
-TestForge reuses that instance without removing the plugin from the managed pipeline.
+`withPluginInstance()` tells TestForge to reuse an existing instance **within its managed plugin pipeline**, rather than bypassing that pipeline. This lets TestForge coordinate it with other managed plugins, resolve supported instance dependencies, and expose it through `captureInstance()`.
 
 > [!NOTE]
-> **Choosing between `__meta.instance` and `skipManagedPlugins`:**
+> **Choosing between `withPluginInstance()` and `skipManagedPlugins`:**
 >
-> - Use `__meta.instance` when you want to provide a custom instance for **one specific managed plugin** while still allowing TestForge to orchestrate the other managed plugins from the active preset.
-> - Use `skipManagedPlugins: true` when you want to **completely opt out** of TestForge's managed plugin pipeline for the current mount and manually construct the environment through Vue Test Utils.
+> - Use `withPluginInstance()` to supply an instance for **one managed plugin** while TestForge continues orchestrating the other managed plugins in the active preset.
+> - Use `skipManagedPlugins: true` to **opt out of the managed plugin pipeline** for the current mount and configure plugins manually through Vue Test Utils.
 
-#### When to use `__meta.instance`
+#### When to use `withPluginInstance()`
 
-- **State Sharing** — when you need to share the exact same plugin instance across multiple helpers or assertions.
-- **Complex Preparation** — when you want to manually prepare complex runtime state before mounting the component.
+- **State sharing** — share the exact same instance across helpers or mounts when that is intentional.
+- **Complex preparation** — build or configure an instance before mounting a component.
 
-> [!NOTE]
-> Providing `__meta.instance` is mainly useful for plugins that maintain meaningful runtime state, such as **Pinia** or **Vue Router**.
->
-> Plugins implemented primarily as install objects, such as **Vuetify** or **PrimeVue**, generally do not benefit from instance reuse in the same way.
+Pre-created instances are especially useful for stateful integrations such as **Pinia** and **Vue Router**. See [Accessing Plugin Instances](#accessing-plugin-instances) to capture the reused instance, and [Plugin Instance Dependencies](#plugin-instance-dependencies) to reference it from another managed plugin.
 
 ---
 
@@ -1611,7 +1602,7 @@ expect(firstCapture.instance).not.toBe(secondCapture.instance);
 
 Reusing the **same capture object** across mounts is incorrect usage: each capture callback updates the same `instance` property, so a subsequent mount can replace the reference before an earlier test reads it. In concurrent tests, this can cause tests to inspect another mount's instance. Create a fresh capture for each mount; if you need a stable reference, save `capture.instance` to a local variable immediately after mounting.
 
-To reuse a **pre-created** instance, pass it via [`__meta.instance`](#precreated-plugin-instances); it can also be captured with `captureInstance()` configured for that mount. For more on instance lifetime and explicitly shared objects, see [Instance Isolation](#instance-isolation).
+To reuse a **pre-created** instance, provide it through [`withPluginInstance()`](#precreated-plugin-instances); it can also be captured with `captureInstance()` configured for that mount. For more on instance lifetime and explicitly shared objects, see [Instance Isolation](#instance-isolation).
 
 ---
 
@@ -1704,11 +1695,12 @@ TestForge rejects invalid dependency graphs, including:
 These dependency errors are detected before plugin instances are created or the component is mounted. A provider declared with `enabled: false` in the preset can still participate once it has been activated through supported runtime plugin configuration.
 
 > [!WARNING]
-> `fromPluginInstance()` must **not** be used as the value of `__meta.instance`. That field accepts a **pre-created instance**, not a deferred dependency reference. See [Using Pre-created Instances](#precreated-plugin-instances).
+
+> Do **not** pass `fromPluginInstance()` to `withPluginInstance()`. The latter requires a **pre-created instance**, not a deferred dependency reference. See [Using Pre-created Instances](#precreated-plugin-instances).
 
 #### Pre-created Instances and Mount Isolation
 
-A provider supplied through `extraOptions.plugins.<name>.__meta.instance` can also satisfy a dependency. The resolver receives that **same supplied instance**; TestForge does not recreate it.
+A provider supplied through `withPluginInstance()` in `extraOptions.plugins.<name>` can also satisfy a dependency. The resolver receives that **same supplied instance**; TestForge does not recreate it.
 
 References are evaluated separately for every mount. Normally, each mount resolves to its own TestForge-created provider instance; when a pre-created provider is intentionally shared, each mount's resolver receives that shared instance instead.
 
@@ -1769,14 +1761,14 @@ expect(firstCapture.instance).not.toBe(secondCapture.instance);
 
 To share a plugin instance across mounts or helpers, provide a pre-created instance rather than relying on automatic creation.
 
-Pass the instance through `__meta.instance` as described in [Section 7.1](#precreated-plugin-instances). TestForge reuses it without changing its identity or resetting its state.
+Pass the instance through `withPluginInstance()` as described in [Section 7.1](#precreated-plugin-instances). TestForge reuses it without changing its identity or resetting its state.
 
 This behavior is intentional. The isolation guarantees provided by
 TestForge apply to plugin instances created independently for each
 mount, not to explicitly reused instances.
 
 When multiple component mounts use the same instance through
-`__meta.instance`, they may share mutable runtime state.
+`withPluginInstance()`, they may share mutable runtime state.
 
 If those mounts belong to different tests, changes made by one test
 may persist into another unless the instance is recreated or its state

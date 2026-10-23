@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../../../constants/constants.js";
+import {
+  ERROR_PREFIX,
+  PLUGIN_META_KEY,
+  SHARED_PLUGIN_INSTANCE_KEY,
+} from "../../../../constants/constants.js";
 import { fromPluginInstance } from "../../../../plugins/dependencies/fromPluginInstance.js";
 import { resolveRuntimePluginState } from "../resolveRuntimePluginState.js";
 
@@ -61,15 +65,17 @@ describe("resolveRuntimePluginState", () => {
   });
 
   describe("shared instance injection", () => {
-    it("should inject shared instance from overlay meta.instance", () => {
-      const instance = {};
+    it("should inject shared instance from symbol-keyed overlay metadata", () => {
+      const instance = {
+        install() {},
+      };
 
       const config = {
         a: 1,
       };
 
       const overlay = {
-        __meta: {
+        [PLUGIN_META_KEY]: {
           instance,
         },
       };
@@ -77,6 +83,7 @@ describe("resolveRuntimePluginState", () => {
       const result = resolveRuntimePluginState("pinia", config, overlay);
 
       expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBe(instance);
+      expect(Reflect.ownKeys(result)).not.toContain(PLUGIN_META_KEY);
     });
 
     it("should preserve pre-created instance identity", () => {
@@ -88,7 +95,7 @@ describe("resolveRuntimePluginState", () => {
         "pinia",
         {},
         {
-          __meta: {
+          [PLUGIN_META_KEY]: {
             instance,
           },
         },
@@ -97,7 +104,7 @@ describe("resolveRuntimePluginState", () => {
       expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBe(instance);
     });
 
-    it("should override an existing [SHARED_PLUGIN_INSTANCE_KEY] with overlay meta.instance", () => {
+    it("should override an existing [SHARED_PLUGIN_INSTANCE_KEY] with instance from overlay metadata", () => {
       const existingInstance = {
         id: "existing",
       };
@@ -112,7 +119,7 @@ describe("resolveRuntimePluginState", () => {
           [SHARED_PLUGIN_INSTANCE_KEY]: existingInstance,
         },
         {
-          __meta: {
+          [PLUGIN_META_KEY]: {
             instance: overlayInstance,
           },
         },
@@ -141,14 +148,14 @@ describe("resolveRuntimePluginState", () => {
       expect(result[SHARED_PLUGIN_INSTANCE_KEY]).toBeUndefined();
     });
 
-    it("should not inject shared instance when meta.instance is missing", () => {
+    it("should not inject shared instance when instance is missing in overlay metadata", () => {
       const result = resolveRuntimePluginState(
         "pinia",
         {
           a: 1,
         },
         {
-          __meta: {},
+          [PLUGIN_META_KEY]: {},
         },
       );
 
@@ -163,36 +170,36 @@ describe("resolveRuntimePluginState", () => {
           "i18n",
           {},
           {
-            __meta: {
+            [PLUGIN_META_KEY]: {
               instance: reference,
             },
           },
         ),
       ).toThrow(
-        `${ERROR_PREFIX} Plugin "i18n" cannot use fromPluginInstance() as "__meta.instance". ` +
-          `"__meta.instance" must contain a pre-created plugin instance.`,
+        `${ERROR_PREFIX} Plugin "i18n" cannot use fromPluginInstance() as an argument to withPluginInstance(). ` +
+          `withPluginInstance() requires a pre-created plugin instance.`,
       );
     });
   });
 
-  describe("__meta cleanup", () => {
-    it("should remove __meta from runtime config", () => {
+  describe("symbol-keyed overlay metadata cleanup", () => {
+    it("should remove overlay metadata from runtime config", () => {
       const result = resolveRuntimePluginState("pinia", {
         a: 1,
-        __meta: {
+        [PLUGIN_META_KEY]: {
           instance: true,
         },
       });
 
-      expect(result.__meta).toBeUndefined();
+      expect(result[PLUGIN_META_KEY]).toBeUndefined();
     });
 
-    it("should remove config __meta even when overlay contains no metadata", () => {
+    it("should remove config overlay metadata even when overlay contains no correct metadata", () => {
       const result = resolveRuntimePluginState(
         "pinia",
         {
           a: 1,
-          __meta: {
+          [PLUGIN_META_KEY]: {
             instance: true,
           },
         },
@@ -211,19 +218,19 @@ describe("resolveRuntimePluginState", () => {
 
       const config = {
         a: 1,
-        __meta: meta,
+        [PLUGIN_META_KEY]: meta,
       };
 
       resolveRuntimePluginState("pinia", config);
 
       expect(config).toEqual({
         a: 1,
-        __meta: {
+        [PLUGIN_META_KEY]: {
           instance: true,
         },
       });
 
-      expect(config.__meta).toBe(meta);
+      expect(config[PLUGIN_META_KEY]).toBe(meta);
     });
 
     it("should not mutate overlay metadata", () => {
@@ -233,13 +240,13 @@ describe("resolveRuntimePluginState", () => {
       };
 
       const overlay = {
-        __meta: meta,
+        [PLUGIN_META_KEY]: meta,
       };
 
       resolveRuntimePluginState("pinia", {}, overlay);
 
-      expect(overlay.__meta).toBe(meta);
-      expect(overlay.__meta.instance).toBe(instance);
+      expect(overlay[PLUGIN_META_KEY]).toBe(meta);
+      expect(overlay[PLUGIN_META_KEY].instance).toBe(instance);
     });
   });
 });

@@ -271,9 +271,9 @@ describe("Plugin Instances Integration", () => {
     });
   });
 
-  describe("__meta.instance", () => {
-    it("should reuse the provided plugin instance when __meta.instance is provided", () => {
-      const { MockComponent, testComponentFactory, mockMount } = ctx;
+  describe("withPluginInstance", () => {
+    it("should reuse the provided plugin instance", () => {
+      const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
       const providedPinia = {
         id: "Mock Pinia Instance",
         install() {},
@@ -287,9 +287,7 @@ describe("Plugin Instances Integration", () => {
         {
           plugins: {
             pinia: {
-              __meta: {
-                instance: providedPinia,
-              },
+              ...withPluginInstance(providedPinia),
             },
           },
         },
@@ -299,8 +297,8 @@ describe("Plugin Instances Integration", () => {
       expect(options.global.plugins).toContain(providedPinia);
     });
 
-    it("should expose the reused plugin instance through captureInstance when it is provided via __meta.instance", () => {
-      const { MockComponent, testComponentFactory, captureInstance } = ctx;
+    it("should expose the reused instance through captureInstance", () => {
+      const { MockComponent, testComponentFactory, captureInstance, withPluginInstance } = ctx;
       const providedPinia = {
         id: "Mock Pinia Instance",
         install() {},
@@ -322,9 +320,7 @@ describe("Plugin Instances Integration", () => {
         {
           plugins: {
             pinia: {
-              __meta: {
-                instance: providedPinia,
-              },
+              ...withPluginInstance(providedPinia),
             },
           },
         },
@@ -333,8 +329,14 @@ describe("Plugin Instances Integration", () => {
       expect(capture.instance).toBe(providedPinia);
     });
 
-    it("should prioritize __meta.instance over native plugin options", () => {
-      const { MockComponent, createTestFramework, createPluginInstance, mockMount } = ctx;
+    it("should skip native instance creation when an instance is provided", () => {
+      const {
+        MockComponent,
+        createTestFramework,
+        createPluginInstance,
+        mockMount,
+        withPluginInstance,
+      } = ctx;
 
       const providedInstance = {
         id: "shared-instance",
@@ -375,9 +377,7 @@ describe("Plugin Instances Integration", () => {
         {
           plugins: {
             testPlugin: {
-              __meta: {
-                instance: providedInstance,
-              },
+              ...withPluginInstance(providedInstance),
             },
           },
         },
@@ -388,6 +388,50 @@ describe("Plugin Instances Integration", () => {
       const [, mountOptions] = mockMount.mock.calls[0];
 
       expect(mountOptions.global.plugins).toContain(providedInstance);
+    });
+
+    it("should apply withMockStores to a reused Pinia instance", async () => {
+      // Arrange
+      const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+      const { createTestingPinia } = await import("@pinia/testing");
+      const { withMockStores } = await import("@testforgejs/vue-test-plugin-pinia");
+
+      const existingPinia = createTestingPinia({
+        createSpy: runner.fn,
+      });
+
+      const mockStores = runner.fn();
+
+      const factory = testComponentFactory(MockComponent);
+
+      // Act
+      factory(
+        {},
+        {
+          plugins: {
+            pinia: {
+              ...withMockStores(mockStores),
+            },
+          },
+        },
+        {},
+        {
+          plugins: {
+            pinia: {
+              ...withPluginInstance(existingPinia),
+            },
+          },
+        },
+      );
+
+      // Assert
+      expect(mockStores).toHaveBeenCalledTimes(1);
+      expect(mockStores).toHaveBeenCalledWith(existingPinia);
+
+      const [, mountOptions] = mockMount.mock.calls[0];
+
+      expect(mountOptions.global.plugins).toContain(existingPinia);
     });
   });
 

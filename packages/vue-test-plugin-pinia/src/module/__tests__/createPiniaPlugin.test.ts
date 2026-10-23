@@ -108,9 +108,6 @@ describe("createPiniaPlugin", () => {
     const mockStores = vi.fn();
 
     const mockOptions = {
-      __meta: {
-        instance: existingPinia,
-      },
       ...withMockStores(mockStores),
     };
 
@@ -119,6 +116,8 @@ describe("createPiniaPlugin", () => {
 
     // Assert
     expect(pinia).toBe(existingPinia);
+
+    expect(createPluginInstance).toHaveBeenCalledExactlyOnceWith(createTestingPinia, {});
 
     expect(mockStores).toHaveBeenCalledExactlyOnceWith(existingPinia);
   });

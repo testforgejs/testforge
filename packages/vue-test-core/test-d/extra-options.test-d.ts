@@ -1,7 +1,9 @@
 import { expectType, expectError } from "tsd";
 // Registers PluginOptionsMap test augmentation
-import "./shared-plugin-types";
-import type { ComponentFactoryExtraOptions } from "../dist/index";
+import "./shared-plugin-types.js";
+import { withPluginInstance } from "../dist/index.js";
+
+import type { ComponentFactoryExtraOptions } from "../dist/index.js";
 
 const validOptions: ComponentFactoryExtraOptions = {
   plugins: {
@@ -21,14 +23,30 @@ const disabledPlugin: ComponentFactoryExtraOptions = {
 
 expectType<ComponentFactoryExtraOptions>(disabledPlugin);
 
+const existingPinia = {
+  install() {},
+};
+
 const withMeta: ComponentFactoryExtraOptions = {
   plugins: {
     pinia: {
-      __meta: {},
+      ...withPluginInstance(existingPinia),
       stubActions: true,
     },
   },
 };
+
+// Legacy string-keyed metadata is no longer supported.
+
+expectError<ComponentFactoryExtraOptions>({
+  plugins: {
+    pinia: {
+      __meta: {
+        instance: {},
+      },
+    },
+  },
+});
 
 expectType<ComponentFactoryExtraOptions>(withMeta);
 

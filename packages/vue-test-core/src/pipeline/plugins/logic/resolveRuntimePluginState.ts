@@ -18,15 +18,15 @@ import type {
  *
  * Responsibilities:
  * - Creates a shallow copy of the incoming configuration
- * - Extracts a pre-created plugin instance from overlay metadata
+ * - Extracts a pre-created plugin instance from symbol-keyed metadata
  * - Stores the instance under an internal symbol-keyed property
- * - Removes `__meta` from the runtime configuration
+ * - Removes plugin metadata from the runtime configuration
  *
  * Rules:
  * - Never mutates the original configuration
- * - Ignores overlays that are `false` or `undefined`
- * - Rejects plugin instance references in `__meta.instance`
- * - Treats `__meta` as internal pipeline metadata
+ * - Ignores overlays that are false or undefined
+ * - Rejects plugin instance references passed to withPluginInstance()
+ * - Treats plugin metadata as internal pipeline configuration
  *
  * Runtime transformation:
  *
@@ -37,9 +37,7 @@ import type {
  *
  * Overlay:
  * {
- *   __meta: {
- *     instance: i18nInstance
- *   }
+ *   ...withPluginInstance(i18nInstance)
  * }
  *
  * Result:
@@ -63,8 +61,9 @@ export function resolveRuntimePluginState(
     if (instance !== undefined) {
       if (isPluginInstanceReference(instance)) {
         throw new Error(
-          `${ERROR_PREFIX} Plugin "${pluginName}" cannot use fromPluginInstance() as "${PLUGIN_META_KEY}.instance". ` +
-            `"${PLUGIN_META_KEY}.instance" must contain a pre-created plugin instance.`,
+          `${ERROR_PREFIX} Plugin "${pluginName}" cannot use fromPluginInstance() ` +
+            "as an argument to withPluginInstance(). " +
+            "withPluginInstance() requires a pre-created plugin instance.",
         );
       }
 

@@ -1,7 +1,6 @@
-// packages/vue-test-core/src/pipeline/middleware/typeGuards/__tests__/isPluginOverlayObject.test.ts
-
 import { describe, it, expect } from "vitest";
 import { isPluginOverlayObject } from "../isPluginOverlayObject.js";
+import { PLUGIN_META_KEY } from "../../../../constants/constants.js";
 
 describe("isPluginOverlayObject (runtime)", () => {
   describe("when given a valid overlay object", () => {
@@ -13,33 +12,43 @@ describe("isPluginOverlayObject (runtime)", () => {
       expect(isPluginOverlayObject({ locale: "en", messages: {} })).toBe(true);
     });
 
-    describe("when __meta is provided", () => {
-      it("should return true if __meta is an empty object", () => {
-        expect(isPluginOverlayObject({ __meta: {} })).toBe(true);
+    it("should treat the legacy __meta key as a regular plugin option", () => {
+      const overlay = {
+        __meta: {
+          customOption: true,
+        },
+      };
+
+      expect(isPluginOverlayObject(overlay)).toBe(true);
+    });
+
+    describe("when plugin metadata is provided", () => {
+      it("should accept plugin metadata without an instance", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: {} })).toBe(true);
       });
 
-      it("should return true if __meta contains a plugin instance", () => {
+      it("should return true if plugin metadata contains a plugin instance", () => {
         const instance = {
           install() {},
         };
 
-        expect(isPluginOverlayObject({ __meta: { instance } })).toBe(true);
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: { instance } })).toBe(true);
       });
 
-      it("should return true if __meta is undefined", () => {
-        expect(isPluginOverlayObject({ __meta: undefined })).toBe(true);
+      it("should return true if plugin metadata is undefined", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: undefined })).toBe(true);
       });
 
-      it("should return true if __meta.instance is undefined", () => {
-        expect(isPluginOverlayObject({ __meta: { instance: undefined } })).toBe(true);
+      it("should return true if [PLUGIN_META_KEY].instance is undefined", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: { instance: undefined } })).toBe(true);
       });
 
-      it("should return true if __meta.instance is null", () => {
-        expect(isPluginOverlayObject({ __meta: { instance: null } })).toBe(true);
+      it("should return true if [PLUGIN_META_KEY].instance is null", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: { instance: null } })).toBe(true);
       });
 
-      it("should return true if __meta.instance is a primitive value", () => {
-        expect(isPluginOverlayObject({ __meta: { instance: 123 } })).toBe(true);
+      it("should return true if [PLUGIN_META_KEY].instance is a primitive value", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: { instance: 123 } })).toBe(true);
       });
     });
   });
@@ -70,26 +79,26 @@ describe("isPluginOverlayObject (runtime)", () => {
       expect(isPluginOverlayObject(undefined)).toBe(false);
     });
 
-    describe("when __meta is invalid", () => {
-      it("should return false if __meta is null", () => {
-        expect(isPluginOverlayObject({ __meta: null })).toBe(false);
+    describe("when plugin metadata is invalid", () => {
+      it("should return false if plugin metadata is null", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: null })).toBe(false);
       });
 
-      it("should return false if __meta is an array", () => {
-        expect(isPluginOverlayObject({ __meta: [] })).toBe(false);
+      it("should return false if plugin metadata is an array", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: [] })).toBe(false);
       });
 
-      it("should return false if __meta is a boolean", () => {
-        expect(isPluginOverlayObject({ __meta: false })).toBe(false);
-        expect(isPluginOverlayObject({ __meta: true })).toBe(false);
+      it("should return false if plugin metadata is a boolean", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: false })).toBe(false);
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: true })).toBe(false);
       });
 
-      it("should return false if __meta is a string", () => {
-        expect(isPluginOverlayObject({ __meta: "invalid" })).toBe(false);
+      it("should return false if plugin metadata is a string", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: "invalid" })).toBe(false);
       });
 
-      it("should return false if __meta is a number", () => {
-        expect(isPluginOverlayObject({ __meta: 123 })).toBe(false);
+      it("should return false if plugin metadata is a number", () => {
+        expect(isPluginOverlayObject({ [PLUGIN_META_KEY]: 123 })).toBe(false);
       });
     });
   });

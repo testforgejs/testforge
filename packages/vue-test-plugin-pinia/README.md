@@ -181,11 +181,12 @@ The configuration returned by `withMockStores()` can be used in per-mount plugin
 
 #### Configuring an existing Pinia instance
 
-The `withMockStores()` callback also runs when an existing Pinia instance is supplied through `__meta.instance`. This allows you to configure stores on an explicitly reused instance without creating a new Pinia instance.
+The `withMockStores()` callback also runs when an existing Pinia instance is supplied using `withPluginInstance()`. This allows you to configure stores on an explicitly reused instance without creating a new Pinia instance.
 
 ```typescript
 import { createTestingPinia } from "@pinia/testing";
 import { vi } from "vitest";
+import { withPluginInstance } from "@testforgejs/vue-test-core";
 import { withMockStores } from "@testforgejs/vue-test-plugin-pinia";
 
 const pinia = createTestingPinia({
@@ -200,9 +201,7 @@ factory(
   {
     plugins: {
       pinia: {
-        __meta: {
-          instance: pinia,
-        },
+        ...withPluginInstance(pinia),
         ...withMockStores((pinia) => {
           const store = useCounterStore(pinia);
           store.count = 42;
@@ -219,17 +218,17 @@ In this example:
 - The `withMockStores()` callback receives that same instance.
 - The callback modifies the store before the component is mounted.
 
-Native `createTestingPinia()` options should be configured when creating the instance. Providing `__meta.instance` reuses that instance rather than recreating it with new testing options.
+Native `createTestingPinia()` options should be configured when creating the instance. Using `withPluginInstance()` reuses that instance rather than recreating it with new testing options.
 
 #### Shared instance isolation
 
-**Providing a Pinia instance through `__meta.instance` explicitly enables instance reuse.** When the same instance is reused across multiple mounts, the mounted components share its stores and reactive state. State changes made during one mount may affect other components using that instance.
+**Using `withPluginInstance()` explicitly enables instance reuse.** When the same instance is reused across multiple mounts, the mounted components share its stores and reactive state. State changes made during one mount may affect other components using that instance.
 
 The `withMockStores()` callback runs for **each mount** that configures it and operates on the resolved instance. When that instance is shared, the callback can modify stores that were initialized during an earlier mount. TestForge does not automatically reset or clone explicitly reused plugin instances.
 
-For independent tests, let TestForge create a fresh Pinia instance for each mount. If a test requires `__meta.instance`, create the supplied Pinia instance separately for each test unless shared state is an intentional part of the scenario.
+For independent tests, let TestForge create a fresh Pinia instance for each mount. If a test requires `withPluginInstance()`, create the supplied Pinia instance separately for each test unless shared state is an intentional part of the scenario.
 
-Reusing the same `withMockStores()` configuration **does not itself share Pinia state**: it is the explicit reuse of an instance through `__meta.instance` that causes the mounts to share state, assuming the callback does not depend on other shared mutable data.
+Reusing the same `withMockStores()` configuration **does not itself share Pinia state**: it is the explicit reuse of an instance via `withPluginInstance()` that causes the mounts to share state, assuming the callback does not depend on other shared mutable data.
 
 ### TestForge plugin defaults
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SHARED_PLUGIN_INSTANCE_KEY } from "../../../../constants/constants.js";
 import { createMockCtx } from "../../../__tests__/fixtures.js";
+import { PLUGIN_META_KEY } from "../../../../constants/constants.js";
 
 vi.mock("../../logic/getPluginConfig.js", () => ({
   getPluginConfig: vi.fn(),
@@ -56,7 +57,7 @@ describe("createPluginMiddleware", () => {
     const instance = {};
     const config = {
       a: 1,
-      __meta: { instance: true },
+      [PLUGIN_META_KEY]: { instance: true },
     };
 
     mockGetPluginConfig.mockReturnValue(config);
@@ -64,7 +65,7 @@ describe("createPluginMiddleware", () => {
     const ctx = createMockCtx<RuntimeContext>({
       extraOptions: {
         [name]: {
-          __meta: { instance },
+          [PLUGIN_META_KEY]: { instance },
         },
       } as ComponentFactoryExtraOptions,
     });
@@ -72,11 +73,11 @@ describe("createPluginMiddleware", () => {
 
     expect(config).toEqual({
       a: 1,
-      __meta: { instance: true },
+      [PLUGIN_META_KEY]: { instance: true },
     });
   });
 
-  it("should inject shared instance from meta.instance", () => {
+  it("should inject shared instance from symbol-keyed overlay metadata", () => {
     const instance = {};
     const config = { a: 1 };
 
@@ -84,7 +85,7 @@ describe("createPluginMiddleware", () => {
       extraOptions: {
         plugins: {
           [name]: {
-            __meta: { instance },
+            [PLUGIN_META_KEY]: { instance },
           },
         },
       },
@@ -99,10 +100,10 @@ describe("createPluginMiddleware", () => {
     });
   });
 
-  it("should remove __meta from config before mergePlugin", () => {
+  it("should remove symbol-keyed overlay metadata from config before mergePlugin", () => {
     const config = {
       a: 1,
-      __meta: { instance: true },
+      [PLUGIN_META_KEY]: { instance: true },
     };
 
     const ctx = createMockCtx<RuntimeContext>({ extraOptions: {} });

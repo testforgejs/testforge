@@ -48,6 +48,7 @@ export async function setupFactoryTestContext(runner, { configureModules } = {})
     createPluginInstance: core.createPluginInstance,
     captureInstance: core.captureInstance,
     fromPluginInstance: core.fromPluginInstance,
+    withPluginInstance: core.withPluginInstance,
 
     createFactory,
     testComponentFactory: createFactory(),

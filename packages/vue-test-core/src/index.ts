@@ -7,6 +7,7 @@ export { extendPreset } from "./presets/extendPreset.js";
 export { fromPluginInstance } from "./plugins/dependencies/fromPluginInstance.js";
 export { validatePreset } from "./presets/validators/validatePreset.js";
 export { validatePresets } from "./presets/validators/validatePresets.js";
+export { withPluginInstance } from "./plugins/helpers/withPluginInstance.js";
 
 // Public types
 export type {

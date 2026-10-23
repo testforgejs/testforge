@@ -7,7 +7,7 @@ import { MOCK_STORES } from "../constants/constants.js";
  * A callback for configuring Pinia stores after the testing Pinia
  * instance has been resolved and before the component is mounted.
  *
- * The instance may be newly created or reused through `__meta.instance`.
+ * The instance may be newly created or reused through `withPluginInstance()`.
  *
  * @param pinia - The testing Pinia instance used by the mounted component.
  */
@@ -23,7 +23,7 @@ export type MockStoresFn = (pinia: TestingPinia) => void;
  * the component is mounted.
  *
  * The store setup callback runs for both newly created Pinia instances
- * and existing instances reused through `__meta.instance`.
+ * and pre-created instances reused through `withPluginInstance()`.
  *
  * @example
  * ```ts

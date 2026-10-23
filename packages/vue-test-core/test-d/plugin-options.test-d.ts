@@ -1,7 +1,9 @@
 import { expectType, expectError } from "tsd";
 // Registers PluginOptionsMap test augmentation
-import "./shared-plugin-types";
-import type { PluginOptionsInput, PluginOverridesInput } from "../dist/index";
+import "./shared-plugin-types.js";
+import { withPluginInstance } from "../dist/index.js";
+
+import type { PluginOptionsInput, PluginOverridesInput } from "../dist/index.js";
 
 // -----------------------------
 // PluginOptionsInput
@@ -56,12 +58,26 @@ const validOverrides: PluginOverridesInput = {
 
 expectType<PluginOverridesInput>(validOverrides);
 
+const existingPinia = {
+  install() {},
+};
+
 const validOverrideWithMeta: PluginOverridesInput = {
   pinia: {
-    __meta: {},
+    ...withPluginInstance(existingPinia),
     stubActions: true,
   },
 };
+
+// Legacy string-keyed metadata is no longer supported.
+
+expectError<PluginOverridesInput>({
+  pinia: {
+    __meta: {
+      instance: existingPinia,
+    },
+  },
+});
 
 expectType<PluginOverridesInput>(validOverrideWithMeta);
 

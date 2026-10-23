@@ -1,6 +1,7 @@
 import { test } from "vitest";
 
 import { isPluginOverlayObject } from "../isPluginOverlayObject.js";
+import { PLUGIN_META_KEY } from "../../../../constants/constants.js";
 
 import type { PluginMeta } from "../../../../types";
 
@@ -10,7 +11,7 @@ test("should narrow unknown to a plugin overlay object with valid metadata", () 
   if (isPluginOverlayObject(value)) {
     // Narrows unknown to a plugin overlay object.
     const overlay: Record<string, unknown> & {
-      __meta?: PluginMeta;
+      [PLUGIN_META_KEY]?: PluginMeta;
     } = value;
 
     void overlay;
@@ -19,7 +20,7 @@ test("should narrow unknown to a plugin overlay object with valid metadata", () 
     void value["key"];
 
     // Plugin metadata must be accessible with the correct type.
-    const meta: PluginMeta | undefined = value.__meta;
+    const meta: PluginMeta | undefined = value[PLUGIN_META_KEY];
 
     void meta;
 
@@ -27,27 +28,27 @@ test("should narrow unknown to a plugin overlay object with valid metadata", () 
     // @ts-expect-error
     const s: string = value;
 
-    // __meta must not accept arrays.
+    // [PLUGIN_META_KEY] must not accept arrays.
     // @ts-expect-error
-    value.__meta = [];
+    value[PLUGIN_META_KEY] = [];
 
-    // __meta must not accept null.
+    // [PLUGIN_META_KEY] must not accept null.
     // @ts-expect-error
-    value.__meta = null;
+    value[PLUGIN_META_KEY] = null;
 
-    // __meta must not accept primitive values.
+    // [PLUGIN_META_KEY] must not accept primitive values.
     // @ts-expect-error
-    value.__meta = "invalid";
+    value[PLUGIN_META_KEY] = "invalid";
 
-    // __meta is optional.
-    value.__meta = undefined;
+    // [PLUGIN_META_KEY] is optional.
+    value[PLUGIN_META_KEY] = undefined;
 
     // An empty PluginMeta object is valid.
-    value.__meta = {};
+    value[PLUGIN_META_KEY] = {};
 
     // PluginMeta.instance accepts unknown values.
-    value.__meta = { instance: {} };
-    value.__meta = { instance: null };
-    value.__meta = { instance: 123 };
+    value[PLUGIN_META_KEY] = { instance: {} };
+    value[PLUGIN_META_KEY] = { instance: null };
+    value[PLUGIN_META_KEY] = { instance: 123 };
   }
 });
