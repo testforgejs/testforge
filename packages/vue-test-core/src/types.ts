@@ -230,6 +230,12 @@ export interface PluginControlOptions<TInstance> {
   [PLUGIN_EXPOSE]?: (instance: TInstance) => void;
 }
 
+/**
+ * Per-mount plugin configuration override.
+ *
+ * Allows overriding plugin options, reusing a pre-created instance,
+ * or disabling the plugin for the current mount.
+ */
 export type PluginOverride<T = unknown> =
   | ((T extends Record<string, any>
       ? ResolvablePluginOptions<Partial<T>>

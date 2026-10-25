@@ -682,6 +682,37 @@ describe("Mount Pipeline Integration", () => {
       // extraOptions has the highest activation priority
       expect(piniaConfig.keyA).toBe(1);
     });
+
+    it("should disable plugin via extraOptions even if it was enabled in mountOptions", () => {
+      const defaults = {
+        plugins: {
+          pinia: {
+            stubActions: true,
+          },
+        },
+      };
+
+      const overrides = {
+        plugins: {
+          pinia: {
+            stubActions: false,
+          },
+        },
+      };
+
+      const extra = {
+        plugins: {
+          pinia: false,
+        },
+      };
+
+      const result = run(presets, defaults, overrides, extra);
+
+      expect(result.plugins.pinia).toBe(false);
+
+      // Other enabled plugins should remain unaffected.
+      expect(result.plugins.i18n).not.toBe(false);
+    });
   });
 
   describe("Default Activation (Empty Options Scenario)", () => {

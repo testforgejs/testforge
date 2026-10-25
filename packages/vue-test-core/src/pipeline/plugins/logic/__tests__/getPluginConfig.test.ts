@@ -22,7 +22,7 @@ describe("getPluginConfig helper", () => {
 
   it("should return false when extraOptions explicitly disables the plugin, overriding enabled state", () => {
     const ctx = createMockCtx<RuntimeContext>({
-      extraOptions: { plugins: { pinia: false } },
+      extraOptions: { plugins: { pinia: false } } as ComponentFactoryExtraOptions,
     });
 
     expect(getPluginConfig(ctx, "pinia")).toBe(false);
@@ -38,7 +38,9 @@ describe("getPluginConfig helper", () => {
 
   it("should extract configuration when plugin is defined only via extraOptions overrides", () => {
     const ctx = createMockCtx<RuntimeContext>({
-      extraOptions: { plugins: { pinia: { initialState: { b: 2 } } } },
+      extraOptions: {
+        plugins: { pinia: { initialState: { b: 2 } } },
+      } as ComponentFactoryExtraOptions,
     });
 
     expect(getPluginConfig(ctx, "pinia")).toEqual({ initialState: { b: 2 } });

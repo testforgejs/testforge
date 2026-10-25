@@ -219,6 +219,53 @@ describe("Plugin Integration", () => {
       expect(calledOptions.stubActions).not.toEqual(true);
       expect(calledOptions.initialState).toEqual({ user: { id: 123 } });
     });
+
+    it("should disable a plugin through extraOptions", () => {
+      const factory = testComponentFactory(
+        MockComponent,
+        {},
+        {
+          plugins: {
+            pinia: {
+              stubActions: true,
+            },
+          },
+        },
+      );
+
+      factory({}, {}, {}, { plugins: { pinia: false } });
+
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+
+      const [, options] = mockMount.mock.calls[0];
+
+      expect(options.global.plugins).not.toContain(mockPiniaInstance);
+      expect(options.global.plugins).toContain(mockI18nInstance);
+      expect(options.global.plugins).toHaveLength(1);
+    });
+
+    it("should disable a plugin only for the current mount", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      // Disable Pinia for the first mount.
+      factory({}, {}, {}, { plugins: { pinia: false } });
+
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+      const [, firstMountOptions] = mockMount.mock.calls[0];
+
+      expect(firstMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+
+      // Pinia should be enabled again for the next mount.
+      factory();
+
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+
+      const [, secondMountOptions] = mockMount.mock.calls[1];
+
+      expect(secondMountOptions.global.plugins).toContain(mockPiniaInstance);
+    });
   });
 
   describe("Enable router when it is disabled by default", () => {
