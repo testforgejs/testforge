@@ -16,6 +16,7 @@ import {
 } from "../middleware/transformers";
 import { createPluginsMiddlewares } from "../plugins/builders/createPluginsMiddlewares.js";
 import { createPluginsMergeMiddlewares } from "../plugins/builders/createPluginsMergeMiddlewares.js";
+import { withResolvedPluginInstances } from "../plugins/middleware/withResolvedPluginInstances.js";
 
 /**
  * Creates the mount processing pipeline.
@@ -37,6 +38,7 @@ export function createMountPipeline(ctx: PipelineContext) {
     assertPluginOptions,
     ...createPluginsMiddlewares(ctx.supportedPlugins),
     ...createPluginsMergeMiddlewares(ctx.supportedPlugins),
+    withResolvedPluginInstances(ctx.supportedPlugins),
     assertFinalResultShape,
   ] as const;
 }

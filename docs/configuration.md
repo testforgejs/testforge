@@ -67,7 +67,7 @@ These arguments define factory-level defaults applied to every mount created by 
 
 - `Component` — the Vue component to mount.
 - `defaultProps` — default component props.
-- `defaultMountOptions` — default Vue Test Utils mounting options and managed plugin configuration. Instance capturing is not allowed at this shared factory level.
+- `defaultMountOptions` — default Vue Test Utils mounting options and managed plugin configuration. Pre-created instances may be supplied with `withPluginInstance()`, but instance capturing is not allowed at this shared factory level.
 - `defaultSlots` — default component slots.
 
 ### Factory Execution
@@ -204,6 +204,8 @@ This configuration serves as the baseline for every mount created by the compone
 > [!NOTE]
 > Stateful objects supplied through `defaultMountOptions` may be shared across mounts. TestForge does not automatically clone or recreate them. See [Instance Isolation](#instance-isolation) for details.
 >
+> **Pre-created instances are allowed in `defaultMountOptions.plugins`.** Use `withPluginInstance(instance)` when a factory intentionally shares the same prepared instance across mounts. Its mutable state is shared too. See [Using Pre-created Instances](#precreated-plugin-instances).
+>
 > **Instance capture is not allowed in `defaultMountOptions.plugins`.** Create a fresh `captureInstance<T>()` for each mount and provide it through `mountOptions.plugins` or `extraOptions.plugins`.
 
 ---
@@ -232,6 +234,8 @@ For managed plugins, configuration supplied at this layer **replaces the corresp
 This replacement does **not** discard the preset defaults. They are still used as the base during the final merge, except where overridden by the resolved runtime options.
 
 Replacement prevents an individual test from unintentionally inheriting unrelated factory-level plugin settings.
+
+This also applies to pre-created instances. A `withPluginInstance()` value in `mountOptions.plugins.<name>` replaces one from `defaultMountOptions.plugins.<name>`. Supplying ordinary plugin options at Layer 3 instead removes the factory-level pre-created instance for that plugin; TestForge then uses its normal instance-creation path. See [Using Pre-created Instances](#precreated-plugin-instances).
 
 ---
 
@@ -287,6 +291,23 @@ the overlaid runtime configuration becomes:
 ```
 
 The existing `initialState` is preserved. The final merge then adds any preset properties that are still missing from these runtime options.
+
+To **disable an entire managed plugin**, use `false` as the value of that plugin entry (not as a property inside its options object):
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      pinia: false,
+    },
+  },
+);
+```
+
+This explicit Layer 4 `false` takes precedence over an enabled configuration or a `withPluginInstance()` value supplied by Layers 2 or 3. The plugin remains disabled for that mount, and its preset defaults are not merged. An options object at Layer 4, by contrast, acts as an overlay and can enable a plugin disabled by an earlier layer.
 
 > [!NOTE]
 > Use `mountOptions.plugins` to replace a plugin's factory-level configuration for a specific test.
@@ -482,7 +503,7 @@ Managed plugins control plugin-specific configuration such as:
 
 Because these options can represent application state, blindly deep-merging them can produce unexpected test behavior.
 
-Managed plugin configuration is resolved in **three steps**: replacement between Layers 2 and 3, a shallow overlay from Layer 4, and a final shallow merge with preset defaults from Layer 1. Instance references declared with `fromPluginInstance()` are resolved after these steps, using only the effective configuration. See [Plugin Instance Dependencies](#plugin-instance-dependencies).
+Managed plugin configuration is resolved in **three steps**: replacement between Layers 2 and 3, a shallow overlay (or explicit `false` override) from Layer 4, and a final shallow merge with preset defaults from Layer 1. After merging, TestForge normalizes `withPluginInstance()` metadata from the effective configuration, regardless of the layer that supplied it. Instance references declared with `fromPluginInstance()` are resolved using only that effective configuration. See [Plugin Instance Dependencies](#plugin-instance-dependencies).
 
 #### Step 1: Replace Layer 2 with Layer 3 When Provided
 
@@ -534,7 +555,7 @@ Replacing Layer 2 configuration with Layer 3 helps prevent unintended state inhe
 
 #### Step 2: Apply the Layer 4 Shallow Overlay
 
-`extraOptions.plugins` lets a test adjust individual top-level properties of the runtime plugin configuration without replacing it entirely.
+`extraOptions.plugins` lets a test adjust individual top-level properties of an enabled runtime plugin configuration without replacing it entirely. Assigning `false` to the plugin entry is an explicit disabling override, not an object overlay.
 
 The overlay is applied to the plugin configuration already resolved from Layers 2 and 3. Matching top-level properties are overridden, while other properties are preserved.
 
@@ -577,6 +598,8 @@ and the overlay supplies:
 The resulting runtime configuration retains `initialState` and uses `stubActions: true`.
 
 The overlay is applied **before** the final merge with preset defaults.
+
+To disable a plugin at this layer, use `extraOptions.plugins.<name> = false`. This takes precedence over any configuration from `defaultMountOptions` or `mountOptions`, including a pre-created instance. It also prevents the final preset-default merge from re-enabling the plugin.
 
 #### Step 3: Shallow-Merge Preset Defaults with Runtime Options
 
@@ -1008,15 +1031,11 @@ and plugin capability boundaries, see
 ### 5.2. Preset Composition with `extendPreset()`
 
 A project-owned preset does not need to extend an existing TestForge preset.
-
 It can be defined independently with an explicit `PresetDefinition`, as shown in the previous section.
-
 Use `extendPreset()` when you want to reuse an existing preset.
 
 Preset extension is a **composition mechanism**, not another runtime configuration layer.
-
 It creates a new complete preset from an existing preset plus explicit manifest or default-configuration changes.
-
 It does not change the inheritance rules between runtime configuration layers.
 
 Conceptually:
@@ -1282,10 +1301,12 @@ The manifest defines which managed plugins can be configured.
 
 #### Plugin Configuration Values
 
-Runtime managed plugin configuration values can be:
+Runtime managed plugin configuration values at `defaultMountOptions.plugins`, `mountOptions.plugins`, and `extraOptions.plugins` can be:
 
-- an options object
+- an options object, optionally including `withPluginInstance()` metadata
 - `false`, to explicitly disable the plugin for the current mount.
+
+In `extraOptions.plugins`, an object shallow-overlays the previous runtime configuration; `false` overrides it completely and disables the managed plugin.
 
 For example:
 
@@ -1355,9 +1376,7 @@ factory(
 ```
 
 This separates TestForge-managed plugin configuration from direct Vue Test Utils registration.
-
 Managed plugins participate in TestForge's preset, validation, and lifecycle pipeline.
-
 Manually registered plugins bypass that pipeline and are passed directly to Vue Test Utils.
 
 ---
@@ -1382,6 +1401,23 @@ factory(
 ```
 
 This disables the managed Router pipeline for the current mount.
+
+You can also disable Router through `extraOptions.plugins`, even if the factory or the current mount would otherwise enable it:
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      router: false,
+    },
+  },
+);
+```
+
+The Layer 4 `false` has the highest runtime precedence for that plugin. It prevents both managed instance creation (or reuse of a supplied instance) and the final merge of its preset defaults.
 
 This can be useful when the test does not need Router or when the test intends to take manual control over the environment.
 
@@ -1468,7 +1504,9 @@ Direct access is useful when asserting the state of **Pinia**, **Vue Router**, o
 
 Some tests need a **pre-created** plugin instance, such as a Pinia instance configured with `@pinia/testing` or a fully configured Router, rather than a new instance created by TestForge.
 
-Use `withPluginInstance(instance)` to supply that instance to a managed plugin. Spread the result into the plugin's configuration (for example, in `extraOptions.plugins` for an individual mount):
+Use `withPluginInstance(instance)` to supply that instance to a managed plugin. **It is supported in all three runtime configuration layers:** `defaultMountOptions.plugins`, `mountOptions.plugins`, and `extraOptions.plugins`. Spread its result into the configuration for the relevant managed plugin.
+
+For example, an individual mount can supply a prepared Pinia instance through `extraOptions.plugins`:
 
 ```typescript
 import { createTestingPinia } from "@pinia/testing";
@@ -1490,6 +1528,74 @@ factory(
   },
 );
 ```
+
+#### Choosing a Configuration Layer
+
+**Factory-level shared instance — `defaultMountOptions.plugins`**
+
+```typescript
+const sharedPinia = createTestingPinia();
+
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...withPluginInstance(sharedPinia),
+      },
+    },
+  },
+);
+
+factory();
+factory(); // Both mounts reuse sharedPinia.
+```
+
+Use this when sharing the same prepared instance is intentional. TestForge preserves its identity and state; it does **not** reset the instance between mounts. For independent tests, prefer creating a fresh instance per test.
+
+**Mount-specific instance — `mountOptions.plugins`**
+
+```typescript
+const preparedPinia = createTestingPinia();
+
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...withPluginInstance(preparedPinia),
+      },
+    },
+  },
+);
+```
+
+This replaces the entire factory-level `pinia` configuration for this mount. If the factory defined another pre-created Pinia instance, it is **not** inherited. Likewise, providing ordinary `pinia` options here without `withPluginInstance()` replaces the factory-level pre-created instance and uses normal managed creation.
+
+**Targeted override — `extraOptions.plugins`**
+
+As shown above, the fourth argument shallow-overlays the effective runtime plugin configuration. Its `withPluginInstance()` metadata overrides any instance supplied by `defaultMountOptions` or `mountOptions`, while unrelated runtime options are preserved.
+
+An explicit `false` in `extraOptions.plugins.<name>` instead disables the managed plugin entirely, including any previously supplied instance:
+
+```typescript
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      pinia: false,
+    },
+  },
+);
+```
+
+**Precedence summary:** Layer 3 replaces Layer 2 for the same plugin; Layer 4 overlays the result or disables it with `false`; non-overridden preset defaults are merged only for enabled plugins. TestForge then extracts `withPluginInstance()` metadata from the final enabled configuration.
+
+> [!IMPORTANT]
+> `withPluginInstance()` is allowed in factory defaults, but `captureInstance()` is **not**. Instance capture must be configured separately for each mount through `mountOptions.plugins` or `extraOptions.plugins`.
 
 **When `withPluginInstance()` is used:**
 
@@ -1700,7 +1806,7 @@ These dependency errors are detected before plugin instances are created or the 
 
 #### Pre-created Instances and Mount Isolation
 
-A provider supplied through `withPluginInstance()` in `extraOptions.plugins.<name>` can also satisfy a dependency. The resolver receives that **same supplied instance**; TestForge does not recreate it.
+A provider supplied through `withPluginInstance()` in `defaultMountOptions.plugins.<name>`, `mountOptions.plugins.<name>`, or `extraOptions.plugins.<name>` can also satisfy a dependency. The resolver receives the **effective supplied instance** after runtime configuration precedence is applied; TestForge does not recreate it.
 
 References are evaluated separately for every mount. Normally, each mount resolves to its own TestForge-created provider instance; when a pre-created provider is intentionally shared, each mount's resolver receives that shared instance instead.
 
@@ -1760,22 +1866,14 @@ expect(firstCapture.instance).not.toBe(secondCapture.instance);
 ```
 
 To share a plugin instance across mounts or helpers, provide a pre-created instance rather than relying on automatic creation.
+Pass the instance through `withPluginInstance()` in factory defaults or per-mount options as described in [Section 7.1](#precreated-plugin-instances).
+TestForge reuses it without changing its identity or resetting its state.
+An instance placed in `defaultMountOptions.plugins` is therefore shared by every mount that does not override or disable that plugin.
 
-Pass the instance through `withPluginInstance()` as described in [Section 7.1](#precreated-plugin-instances). TestForge reuses it without changing its identity or resetting its state.
-
-This behavior is intentional. The isolation guarantees provided by
-TestForge apply to plugin instances created independently for each
-mount, not to explicitly reused instances.
-
-When multiple component mounts use the same instance through
-`withPluginInstance()`, they may share mutable runtime state.
-
-If those mounts belong to different tests, changes made by one test
-may persist into another unless the instance is recreated or its state
-is explicitly reset.
-
-Explicit instance reuse should therefore be reserved for scenarios
-where shared state is part of the behavior being tested.
+TestForge's isolation guarantees apply to plugin instances created independently for each mount, not to explicitly reused instances.
+When multiple mounts use the same instance through `withPluginInstance()`, they may share mutable runtime state.
+Changes made by one test may persist into another unless the instance is recreated or its state is explicitly reset.
+Explicit instance reuse should therefore be reserved for scenarios where shared state is intentional.
 
 #### User-Provided Objects and Reference Sharing
 

@@ -433,6 +433,400 @@ describe("Plugin Instances Integration", () => {
 
       expect(mountOptions.global.plugins).toContain(existingPinia);
     });
+
+    describe("Configuration Layers and Precedence", () => {
+      const createInstance = (id) => ({
+        id,
+        install() {},
+      });
+
+      const getInstalledPlugins = (mockMount, callIndex = 0) => {
+        const [, mountOptions] = mockMount.mock.calls[callIndex];
+        return mountOptions.global.plugins;
+      };
+
+      it("should reuse an instance provided via mountOptions", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const instance = createInstance("mount-instance");
+        const factory = testComponentFactory(MockComponent);
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(instance),
+              },
+            },
+          },
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).toContain(instance);
+      });
+
+      it("should reuse an instance provided via defaultMountOptions", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const instance = createInstance("default-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(instance),
+              },
+            },
+          },
+        );
+
+        factory();
+        factory();
+
+        expect(mockMount).toHaveBeenCalledTimes(2);
+
+        expect(getInstalledPlugins(mockMount, 0)).toContain(instance);
+        expect(getInstalledPlugins(mockMount, 1)).toContain(instance);
+      });
+
+      it("should prefer a mountOptions instance over a defaultMountOptions instance", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+        const mountInstance = createInstance("mount-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(mountInstance),
+              },
+            },
+          },
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).toContain(mountInstance);
+        expect(plugins).not.toContain(defaultInstance);
+      });
+
+      it("should prefer an extraOptions instance over a defaultMountOptions instance", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+        const extraInstance = createInstance("extra-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {},
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(extraInstance),
+              },
+            },
+          },
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).toContain(extraInstance);
+        expect(plugins).not.toContain(defaultInstance);
+      });
+
+      it("should give extraOptions instance precedence over all previous layers", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+        const mountInstance = createInstance("mount-instance");
+        const extraInstance = createInstance("extra-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(mountInstance),
+              },
+            },
+          },
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(extraInstance),
+              },
+            },
+          },
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).toContain(extraInstance);
+        expect(plugins).not.toContain(defaultInstance);
+        expect(plugins).not.toContain(mountInstance);
+      });
+
+      it("should replace a default instance with native configuration from mountOptions", () => {
+        const {
+          MockComponent,
+          createTestFramework,
+          createPluginInstance,
+          mockMount,
+          withPluginInstance,
+        } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+        const createdInstance = createInstance("created-instance");
+
+        const nativePluginFactory = runner.fn(() => createdInstance);
+
+        const testPlugin = {
+          getName: () => "testPlugin",
+          getDefinition: () => ({
+            create: (options) => createPluginInstance(nativePluginFactory, options),
+          }),
+        };
+
+        const { testComponentFactory } = createTestFramework({
+          preset: {
+            manifest: [{ module: testPlugin, enabled: true }],
+            defaults: {},
+          },
+        });
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              testPlugin: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              testPlugin: {
+                nativeOption: "mount-value",
+              },
+            },
+          },
+        );
+
+        expect(nativePluginFactory).toHaveBeenCalledTimes(1);
+        expect(nativePluginFactory).toHaveBeenCalledWith(
+          expect.objectContaining({
+            nativeOption: "mount-value",
+          }),
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).toContain(createdInstance);
+        expect(plugins).not.toContain(defaultInstance);
+      });
+
+      it("should disable a default instance when mountOptions specifies false", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: false,
+            },
+          },
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).not.toContain(defaultInstance);
+        expect(plugins).toHaveLength(1);
+      });
+
+      it("should disable a default instance when extraOptions specifies false", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {},
+          {},
+          {
+            plugins: {
+              pinia: false,
+            },
+          },
+        );
+
+        const plugins = getInstalledPlugins(mockMount);
+
+        expect(plugins).not.toContain(defaultInstance);
+        expect(plugins).toHaveLength(1);
+      });
+
+      it("should preserve the default instance across independent factory calls", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = createInstance("default-instance");
+        const overrideInstance = createInstance("override-instance");
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        // First mount uses the default instance.
+        factory();
+
+        // Second mount overrides the default instance.
+        factory(
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(overrideInstance),
+              },
+            },
+          },
+        );
+
+        // Third mount should use the original default instance again.
+        factory();
+
+        expect(mockMount).toHaveBeenCalledTimes(3);
+
+        const firstPlugins = getInstalledPlugins(mockMount, 0);
+        const secondPlugins = getInstalledPlugins(mockMount, 1);
+        const thirdPlugins = getInstalledPlugins(mockMount, 2);
+
+        expect(firstPlugins).toContain(defaultInstance);
+        expect(secondPlugins).toContain(overrideInstance);
+        expect(secondPlugins).not.toContain(defaultInstance);
+        expect(thirdPlugins).toContain(defaultInstance);
+        expect(thirdPlugins).not.toContain(overrideInstance);
+      });
+
+      it("should preserve a default instance when extraOptions provides native options", () => {
+        const { MockComponent, testComponentFactory, mockMount, withPluginInstance } = ctx;
+
+        const defaultInstance = {
+          id: "default-instance",
+          install() {},
+        };
+
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                ...withPluginInstance(defaultInstance),
+              },
+            },
+          },
+        );
+
+        factory(
+          {},
+          {},
+          {},
+          {
+            plugins: {
+              pinia: {
+                stubActions: false,
+              },
+            },
+          },
+        );
+
+        const [, mountOptions] = mockMount.mock.calls[0];
+
+        expect(mountOptions.global.plugins).toContain(defaultInstance);
+      });
+    });
   });
 
   describe("Runtime Isolation", () => {

@@ -1,9 +1,9 @@
 import { expectError, expectType } from "tsd";
-import { createTestFramework } from "../dist/index";
+import { createTestFramework, withPluginInstance } from "../dist/index.js";
 import { defineComponent } from "vue";
 import { mount } from "@vue/test-utils";
 // Registers PluginOptionsMap test augmentation
-import "./shared-plugin-types";
+import "./shared-plugin-types.js";
 
 import type { SlotsType } from "vue";
 
@@ -159,6 +159,70 @@ factory(
   {
     plugins: {
       pinia: {
+        stubActions: true,
+      },
+    },
+  },
+);
+
+/**
+ * Verify withPluginInstance across configuration layers.
+ */
+
+const existingPinia = {
+  install() {},
+};
+
+// Verify defaultMountOptions.
+
+framework.testComponentFactory(
+  MockComponent,
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...withPluginInstance(existingPinia),
+      },
+    },
+  },
+);
+
+// Verify mountOptions.
+
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...withPluginInstance(existingPinia),
+      },
+    },
+  },
+);
+
+// Verify extraOptions.
+
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...withPluginInstance(existingPinia),
+      },
+    },
+  },
+);
+
+// Verify combining an instance with native plugin options.
+
+factory(
+  {},
+  {
+    plugins: {
+      pinia: {
+        ...withPluginInstance(existingPinia),
         stubActions: true,
       },
     },

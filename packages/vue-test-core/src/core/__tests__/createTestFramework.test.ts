@@ -351,15 +351,11 @@ describe("createTestFramework → testComponentFactory", () => {
 
           const { testComponentFactory } = createTestFramework({ presets });
 
-          testComponentFactory(
-            component,
-            {},
-            {
-              plugins: {
-                i18n: {},
-              },
+          testComponentFactory(component, {}, {
+            plugins: {
+              i18n: {},
             },
-          );
+          } as unknown as ComponentFactoryOptions);
 
           expect(warnSpy).not.toHaveBeenCalled();
         });
@@ -609,14 +605,11 @@ describe("createTestFramework → testComponentFactory", () => {
 
           const factory = testComponentFactory(component);
 
-          factory(
-            {},
-            {
-              plugins: {
-                i18n: {},
-              },
+          factory({}, {
+            plugins: {
+              i18n: {},
             },
-          );
+          } as unknown as ComponentFactoryOptions);
 
           expect(warnSpy).not.toHaveBeenCalled();
         });
@@ -683,11 +676,11 @@ describe("createTestFramework → testComponentFactory", () => {
           factory(
             {},
             {
-              // @ts-expect-error testing invalid configuration
               i18n: {},
+              // @ts-expect-error testing invalid configuration
               plugins: {
                 i18n: {},
-              },
+              } as unknown as ComponentFactoryOptions,
             },
           );
 
@@ -760,16 +753,11 @@ describe("createTestFramework → testComponentFactory", () => {
 
           const factory = testComponentFactory(component);
 
-          factory(
-            {},
-            {},
-            {},
-            {
-              plugins: {
-                i18n: {},
-              },
+          factory({}, {}, {}, {
+            plugins: {
+              i18n: {},
             },
-          );
+          } as unknown as ComponentFactoryOptions);
 
           expect(warnSpy).not.toHaveBeenCalled();
         });

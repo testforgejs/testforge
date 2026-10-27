@@ -172,6 +172,12 @@ export interface PluginMetaOptions<TInstance = unknown> {
   [PLUGIN_META_KEY]?: PluginMeta<TInstance>;
 }
 
+export interface PluginInstanceInput<TInstance = unknown> {
+  [PLUGIN_META_KEY]: {
+    instance: TInstance;
+  };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginOptionsMap {}
 
@@ -223,7 +229,10 @@ export type ResolvablePluginOptions<T> = T extends object
  * Managed plugin configuration accepted by TestForge.
  */
 export type PluginOptionsInput = {
-  [K in keyof PluginOptionsMap]?: ResolvablePluginOptions<PluginOptionsMap[K]> | false;
+  [K in keyof PluginOptionsMap]?:
+    | ResolvablePluginOptions<PluginOptionsMap[K]>
+    | (ResolvablePluginOptions<Partial<PluginOptionsMap[K]>> & PluginInstanceInput)
+    | false;
 };
 
 export interface PluginControlOptions<TInstance> {

@@ -9,6 +9,8 @@ import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/consta
 import { fromPluginInstance } from "../../plugins/dependencies/fromPluginInstance.js";
 import { isPluginInstanceReference } from "../../plugins/dependencies/isPluginInstanceReference.js";
 import { resolvePluginInstanceReferences } from "../../plugins/dependencies/resolvePluginInstanceReferences.js";
+import { withPluginInstance } from "../../plugins/helpers/withPluginInstance.js";
+import { isPluginOverlayObject } from "../middleware/typeGuards/isPluginOverlayObject.js";
 
 import type { RuntimePluginConfig, RuntimePluginState, TestFrameworkPresets } from "../../types";
 
@@ -146,9 +148,265 @@ describe("Mount Pipeline Integration", () => {
 
       expect(isPluginInstanceReference(secondPiniaConfig.nested.dependency)).toBe(true);
     });
+
+    it("should isolate plugin instances across pipeline runs sharing default options", () => {
+      const defaultInstance = {
+        id: "default-instance",
+        install() {},
+      };
+
+      const firstInstance = {
+        id: "first-instance",
+        install() {},
+      };
+
+      const secondInstance = {
+        id: "second-instance",
+        install() {},
+      };
+
+      const defaultMountOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(defaultInstance),
+          },
+        },
+      };
+
+      const firstExtraOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(firstInstance),
+          },
+        },
+      };
+
+      const secondExtraOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(secondInstance),
+          },
+        },
+      };
+
+      // Both runs intentionally reuse the same defaultMountOptions object.
+      const firstResult = run(presets, defaultMountOptions, {}, firstExtraOptions);
+
+      const firstPiniaConfig = firstResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(firstPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(firstInstance);
+      expect(Reflect.ownKeys(firstPiniaConfig)).not.toContain(PLUGIN_META_KEY);
+
+      const secondResult = run(presets, defaultMountOptions, {}, secondExtraOptions);
+
+      const secondPiniaConfig = secondResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(secondPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      expect(secondPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(secondInstance);
+      expect(Reflect.ownKeys(secondPiniaConfig)).not.toContain(PLUGIN_META_KEY);
+
+      // The second run must not mutate the first result.
+      expect(firstResult.plugins.pinia).toBe(firstPiniaConfig);
+
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(firstInstance);
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).not.toBe(secondInstance);
+
+      expect(firstPiniaConfig).not.toBe(secondPiniaConfig);
+
+      // Shared defaults must remain unchanged.
+      expect(defaultMountOptions.plugins.pinia[PLUGIN_META_KEY]?.instance).toBe(defaultInstance);
+
+      expect(Reflect.ownKeys(defaultMountOptions.plugins.pinia)).toContain(PLUGIN_META_KEY);
+
+      expect(Reflect.ownKeys(defaultMountOptions.plugins.pinia)).not.toContain(
+        SHARED_PLUGIN_INSTANCE_KEY,
+      );
+    });
+
+    it("should replace a default plugin instance with mountOptions configuration", () => {
+      const defaultInstance = {
+        id: "default-instance",
+        install() {},
+      };
+
+      const defaultMountOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(defaultInstance),
+          },
+        },
+      };
+
+      // First run uses the default pre-created instance.
+      const firstResult = run(presets, defaultMountOptions, {}, {});
+
+      const firstPiniaConfig = firstResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(firstPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(defaultInstance);
+
+      // Second run replaces the entire Pinia configuration.
+      const secondResult = run(
+        presets,
+        defaultMountOptions,
+        {
+          plugins: {
+            pinia: {
+              stubActions: true,
+            },
+          },
+        },
+        {},
+      );
+
+      const secondPiniaConfig = secondResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(secondPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      // Mount options must not inherit the default instance.
+      expect(secondPiniaConfig.stubActions).toBe(true);
+
+      expect(Reflect.ownKeys(secondPiniaConfig)).not.toContain(SHARED_PLUGIN_INSTANCE_KEY);
+
+      expect(Reflect.ownKeys(secondPiniaConfig)).not.toContain(PLUGIN_META_KEY);
+
+      // The second run must not affect the first result.
+      expect(firstResult.plugins.pinia).toBe(firstPiniaConfig);
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(defaultInstance);
+
+      expect(firstPiniaConfig).not.toBe(secondPiniaConfig);
+
+      // Shared defaults must remain unchanged.
+      expect(defaultMountOptions.plugins.pinia[PLUGIN_META_KEY]?.instance).toBe(defaultInstance);
+
+      expect(Reflect.ownKeys(defaultMountOptions.plugins.pinia)).not.toContain(
+        SHARED_PLUGIN_INSTANCE_KEY,
+      );
+
+      // A subsequent run without overrides must still use the default instance.
+      const thirdResult = run(presets, defaultMountOptions, {}, {});
+
+      const thirdPiniaConfig = thirdResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(thirdPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      expect(thirdPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(defaultInstance);
+      expect(thirdPiniaConfig).not.toBe(firstPiniaConfig);
+    });
+
+    it("should isolate mount-scoped plugin instances across pipeline runs sharing default options", () => {
+      const defaultInstance = {
+        id: "default-instance",
+        install() {},
+      };
+
+      const firstInstance = {
+        id: "first-instance",
+        install() {},
+      };
+
+      const secondInstance = {
+        id: "second-instance",
+        install() {},
+      };
+
+      const defaultMountOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(defaultInstance),
+          },
+        },
+      };
+
+      const firstMountOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(firstInstance),
+          },
+        },
+      };
+
+      const secondMountOptions = {
+        plugins: {
+          pinia: {
+            ...withPluginInstance(secondInstance),
+          },
+        },
+      };
+
+      // Both runs intentionally reuse the same defaultMountOptions object.
+      const firstResult = run(presets, defaultMountOptions, firstMountOptions, {});
+
+      const firstPiniaConfig = firstResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(firstPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(firstInstance);
+
+      expect(Reflect.ownKeys(firstPiniaConfig)).not.toContain(PLUGIN_META_KEY);
+
+      const secondResult = run(presets, defaultMountOptions, secondMountOptions, {});
+
+      const secondPiniaConfig = secondResult.plugins.pinia;
+
+      if (!isPluginOverlayObject(secondPiniaConfig)) {
+        throw new Error("Expected an enabled Pinia configuration.");
+      }
+
+      expect(secondPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(secondInstance);
+
+      expect(Reflect.ownKeys(secondPiniaConfig)).not.toContain(PLUGIN_META_KEY);
+
+      // The second run must not mutate the first result.
+      expect(firstResult.plugins.pinia).toBe(firstPiniaConfig);
+
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(firstInstance);
+      expect(firstPiniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).not.toBe(secondInstance);
+
+      // Runtime configurations must be independent.
+      expect(firstPiniaConfig).not.toBe(secondPiniaConfig);
+
+      // Shared defaults must remain unchanged.
+      expect(defaultMountOptions.plugins.pinia[PLUGIN_META_KEY]?.instance).toBe(defaultInstance);
+
+      expect(Reflect.ownKeys(defaultMountOptions.plugins.pinia)).toContain(PLUGIN_META_KEY);
+
+      expect(Reflect.ownKeys(defaultMountOptions.plugins.pinia)).not.toContain(
+        SHARED_PLUGIN_INSTANCE_KEY,
+      );
+
+      // Neither run must mutate its mount-scoped source configuration.
+      expect(firstMountOptions.plugins.pinia[PLUGIN_META_KEY]?.instance).toBe(firstInstance);
+
+      expect(secondMountOptions.plugins.pinia[PLUGIN_META_KEY]?.instance).toBe(secondInstance);
+
+      expect(Reflect.ownKeys(firstMountOptions.plugins.pinia)).not.toContain(
+        SHARED_PLUGIN_INSTANCE_KEY,
+      );
+
+      expect(Reflect.ownKeys(secondMountOptions.plugins.pinia)).not.toContain(
+        SHARED_PLUGIN_INSTANCE_KEY,
+      );
+    });
   });
 
-  describe("Shared Instances (symbol-keyed overlay metadata)", () => {
+  describe("Shared Plugin Instances", () => {
     it("should extract instance to [SHARED_PLUGIN_INSTANCE_KEY] and remove overlay metadata when provided in extraOptions", () => {
       const mockInstance = { id: "shared-router" };
       const extra = {
@@ -167,6 +425,52 @@ describe("Mount Pipeline Integration", () => {
       expect(routerConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(mockInstance);
       expect(routerConfig[PLUGIN_META_KEY]).toBeUndefined();
       expect(routerConfig.routes).toEqual([]);
+    });
+
+    it("should extract an instance from defaultMountOptions and remove plugin metadata", () => {
+      const instance = { id: "default-instance" };
+
+      const defaults = {
+        plugins: {
+          pinia: {
+            [PLUGIN_META_KEY]: {
+              instance,
+            },
+          },
+        },
+      };
+
+      const result = run(presets, defaults);
+
+      const piniaConfig = result.plugins.pinia as RuntimePluginState;
+
+      expect(piniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(instance);
+      expect(piniaConfig[PLUGIN_META_KEY]).toBeUndefined();
+
+      expect(Reflect.ownKeys(piniaConfig)).not.toContain(PLUGIN_META_KEY);
+    });
+
+    it("should extract an instance from mountOptions and remove plugin metadata", () => {
+      const instance = { id: "mount-instance" };
+
+      const overrides = {
+        plugins: {
+          pinia: {
+            [PLUGIN_META_KEY]: {
+              instance,
+            },
+          },
+        },
+      };
+
+      const result = run(presets, {}, overrides);
+
+      const piniaConfig = result.plugins.pinia as RuntimePluginState;
+
+      expect(piniaConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(instance);
+      expect(piniaConfig[PLUGIN_META_KEY]).toBeUndefined();
+
+      expect(Reflect.ownKeys(piniaConfig)).not.toContain(PLUGIN_META_KEY);
     });
   });
 

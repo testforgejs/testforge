@@ -606,11 +606,6 @@ describe("Plugin Instance Dependencies", () => {
             consumer: {
               dependency: fromPluginInstance("provider", referenceResolver),
             },
-          },
-        },
-        {},
-        {
-          plugins: {
             provider: {
               ...withPluginInstance(providedInstance),
             },

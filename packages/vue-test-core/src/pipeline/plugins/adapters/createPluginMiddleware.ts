@@ -6,21 +6,19 @@ import type {
 } from "../../../types";
 
 import { getPluginConfig } from "../logic/getPluginConfig.js";
-import { patchPluginState } from "../logic/patchPluginState.js";
-import { resolveRuntimePluginState } from "../logic/resolveRuntimePluginState.js";
-import { resolveExtraOptions } from "../logic/resolveExtraOptions.js";
 import { patchResultState } from "../../state/patchResultState.js";
-import { getExtraPluginOptions } from "../logic/getExtraPluginOptions.js";
 
 /*
- * Creates middleware that resolves and applies runtime plugin configuration.
+ * Creates middleware that resolves and applies the effective
+ * configuration for a single plugin.
  *
  * Responsibilities:
- * - resolve the effective plugin config across configuration layers
+ * - resolve plugin configuration across configuration layers
  * - apply explicit plugin disabling
- * - inject runtime-only fields (e.g. shared instances)
- * - normalize enabled plugin configurations into runtime-safe shape
- * - write the resolved plugin state into `ctx.result.plugins`
+ * - write the resolved configuration into `ctx.result.plugins`
+ *
+ * Runtime metadata normalization is handled by a separate
+ * pipeline middleware after plugin configuration merging.
  */
 export function createPluginMiddleware(
   pluginName: PluginName,
@@ -28,21 +26,10 @@ export function createPluginMiddleware(
   return <T extends PipelineContext>(ctx: T): T => {
     const config = getPluginConfig(ctx, pluginName);
 
-    if (config === false) {
-      return patchResultState(ctx, {
-        plugins: {
-          [pluginName]: false,
-        },
-      });
-    }
-
-    const extraOptions = resolveExtraOptions(ctx.extraOptions);
-    const runtimeConfig = resolveRuntimePluginState(
-      pluginName,
-      config,
-      getExtraPluginOptions(extraOptions, pluginName),
-    );
-
-    return patchPluginState(ctx, pluginName, runtimeConfig);
+    return patchResultState(ctx, {
+      plugins: {
+        [pluginName]: config,
+      },
+    });
   };
 }

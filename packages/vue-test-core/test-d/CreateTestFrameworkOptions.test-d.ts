@@ -1,6 +1,6 @@
 import { expectAssignable, expectError } from "tsd";
 
-import type { CreateTestFrameworkOptions } from "../dist/index";
+import type { CreateTestFrameworkOptions } from "../dist/index.js";
 
 expectAssignable<CreateTestFrameworkOptions>({
   preset: {
