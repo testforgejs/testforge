@@ -720,21 +720,130 @@ The preset's nested `presetOnly` field does not survive because the entire `nest
 
 Component props and slots follow their own resolution rules, independently of the managed plugin configuration layers.
 
-Values passed directly to `factory()` take precedence over the factory-level defaults.
+Factory-level defaults provide a reusable baseline, while values passed directly to `factory()` take precedence for the current invocation.
 
-For props:
+#### Props Resolution
+
+The `defaultProps` argument of `testComponentFactory()` defines the baseline props shared by all invocations of that component factory.
+
+For example:
 
 ```typescript
 const factory = testComponentFactory(MyComponent, {
   title: "Default title",
-});
-
-factory({
-  title: "Test title",
+  disabled: false,
+  size: "medium",
 });
 ```
 
-The test-level `props` override the factory's `defaultProps`. Similarly, the `slots` passed to `factory()` take precedence over `defaultSlots`.
+Each invocation can override only the props relevant to its test scenario:
+
+```typescript
+// Uses all default props.
+const defaultWrapper = factory();
+
+// Overrides only the title.
+const titleWrapper = factory({
+  title: "Test title",
+});
+
+// Overrides only the disabled state.
+const disabledWrapper = factory({
+  disabled: true,
+});
+```
+
+Test-specific props override matching `defaultProps`, while unspecified props retain their default values.
+
+The resulting props are:
+
+```typescript
+// defaultWrapper
+{
+  title: "Default title",
+  disabled: false,
+  size: "medium",
+}
+
+// titleWrapper
+{
+  title: "Test title",
+  disabled: false,
+  size: "medium",
+}
+
+// disabledWrapper
+{
+  title: "Default title",
+  disabled: true,
+  size: "medium",
+}
+```
+
+Props are merged by property name at the top level.
+If a prop contains an object, providing a new value for that prop replaces the entire previous value rather than deeply merging its nested properties.
+
+Each factory invocation resolves its props independently.
+Test-specific overrides do not modify the factory's `defaultProps` or affect subsequent invocations.
+
+This allows a component's common configuration to be defined once, while individual tests specify only the props needed to exercise a particular behavior.
+
+#### Slots Resolution
+
+Slots follow the same precedence principle.
+
+The `defaultSlots` argument of `testComponentFactory()` provides default slot content, while slots passed directly to `factory()` take precedence over matching defaults.
+
+For example:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {},
+  {
+    default: "Default content",
+  },
+);
+
+// Uses the default slot content.
+const defaultWrapper = factory();
+
+// Overrides the default slot content.
+const customWrapper = factory(
+  {},
+  {},
+  {
+    default: "Custom content",
+  },
+);
+```
+
+The first invocation uses `"Default content"`, while the second uses `"Custom content"`.
+
+Like props, slot overrides are resolved for the current factory invocation without modifying the factory-level defaults.
+
+#### Resolution Priority
+
+The precedence rules can be summarized as follows:
+
+```text
+Props:
+  defaultProps
+      ↓
+  factory(props)
+      → matching props are overridden
+
+Slots:
+  defaultSlots
+      ↓
+  factory(props, mountOptions, slots)
+      → matching slots are overridden
+```
+
+**Test-level values take precedence over factory-level defaults.**
+
+These rules apply independently of the managed plugin configuration hierarchy.
 
 ---
 
@@ -1444,6 +1553,7 @@ This makes the integration available without activating it for every component t
 
 ## 6. 🔌 Third-Party Plugins
 
+TestForge does not require a managed integration for every Vue plugin used by an application.
 TestForge-managed plugins participate in the configuration and preset lifecycle pipeline.
 
 Vue plugins that are not managed by TestForge can be registered using standard Vue Test Utils options inside the `global` section.

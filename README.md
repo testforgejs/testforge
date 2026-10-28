@@ -178,6 +178,12 @@ pnpm add -D @testforgejs/vue-test-plugin-pinia
 
 TestForge does not include plugin integrations in `@testforgejs/vue-test-core`. Each managed Vue ecosystem integration is provided by its own package.
 
+> [!NOTE]
+> TestForge does not require dedicated integrations for every Vue plugin used by your application.
+> Plugins without a TestForge integration can be registered through the standard Vue Test Utils `global.plugins` option.
+> Managed and unmanaged plugins can be used together.
+> See [Using Vue Plugins Without TestForge Integrations](#using-vue-plugins-without-testforge-integrations).
+
 ```typescript
 // tests/setup.ts
 
@@ -520,7 +526,7 @@ You define the infrastructure baseline **once** in a preset and reusable compone
 
 Individual tests then provide only the configuration they need to change.
 
-Managed plugin configuration is expressed through TestForge's `plugins` API rather than repeatedly rebuilding Vue Test Utils `global.plugins`.
+Managed plugin configuration is expressed through TestForge's `plugins` API, while standard Vue Test Utils `global.plugins` remains available for other Vue plugins.
 
 Different configuration layers have explicit semantics:
 
@@ -700,23 +706,39 @@ Individually they are simple. Together they remove most test setup noise.
 
 The **Test Component Factory** is the entry point used by component tests.
 
-Instead of repeatedly calling `mount()` with a large configuration object, create a reusable component factory:
+Instead of repeatedly calling `mount()` with a large configuration object, create a reusable component factory with shared default props:
 
 ```typescript
-const factory = testComponentFactory(MyComponent);
-```
-
-Then invoke it in tests:
-
-```typescript
-factory({
-  title: "Hello",
+const factory = testComponentFactory(MyComponent, {
+  title: "Default title",
+  disabled: false,
+  size: "medium",
 });
 ```
 
+Each test can then override only the props relevant to its scenario:
+
+```typescript
+// Scenario 1: Test a different title.
+const wrapper1 = factory({
+  title: "Custom title",
+});
+
+// Scenario 2: Test the disabled state.
+const wrapper2 = factory({
+  disabled: true,
+});
+```
+
+**Test-specific props override matching default props**, while all other default values are preserved.
+
+In the examples above, `wrapper1` receives the custom title with `disabled: false` and `size: "medium"`, while `wrapper2` receives `disabled: true` with the default title and size.
+
+This allows tests to focus on the behavior being verified without repeating the component's complete prop configuration.
+
 The component factory:
 
-- accepts test-specific props;
+- accepts shared `defaultProps` and test-specific prop overrides;
 - resolves the selected preset;
 - resolves managed plugin configuration;
 - builds Vue Test Utils `global` configuration;
@@ -730,13 +752,13 @@ The test describes what it needs rather than how to assemble the complete Vue ru
 A component factory can be invoked multiple times:
 
 ```typescript
-const factory = testComponentFactory(MyComponent);
-
 const first = factory();
 const second = factory();
 ```
 
-Each invocation creates its own runtime environment.
+Each invocation resolves its props independently and creates its own runtime environment.
+
+Test-specific prop overrides do not modify the factory's default props or affect subsequent invocations.
 
 Mutable plugin runtime state should not be shared between independent invocations unless the test explicitly requests shared behavior through the supported plugin or Vue Test Utils mechanisms.
 
@@ -780,6 +802,35 @@ Because plugin behavior is encapsulated, TestForge can:
 - resolve plugin configuration;
 - create isolated runtime instances;
 - allow explicit overrides without rebuilding the entire environment.
+
+### Using Vue Plugins Without TestForge Integrations
+
+TestForge is **not limited to Vue plugins with dedicated TestForge integrations**.
+
+Managed plugins provide additional capabilities such as preset-driven configuration, lifecycle management, and automatic instance creation. However, these integrations are optional.
+
+Vue plugins without a TestForge integration can be registered directly through the standard Vue Test Utils `global.plugins` option:
+
+```typescript
+const factory = testComponentFactory(MyComponent);
+
+const wrapper = factory(
+  {},
+  {
+    global: {
+      plugins: [customVuePlugin],
+    },
+  },
+);
+```
+
+These plugins are installed by Vue Test Utils and do not participate in TestForge's managed plugin pipeline.
+
+**Managed and unmanaged plugins can also be used together.** For example, an application can use TestForge-managed Pinia and Router integrations alongside other Vue plugins registered through `global.plugins`.
+
+This allows TestForge to work with existing Vue applications without requiring dedicated integrations for every library they use.
+
+For more details, see [Third-Party Plugins](docs/configuration.md#third-party-plugins).
 
 ### Plugin-Owned Defaults
 

@@ -15,6 +15,8 @@ The core package provides:
 
 The core package itself does **not** include or configure Vue ecosystem plugins. Plugin integrations are provided by separate TestForge packages and become available to the framework through presets.
 
+Vue plugins without a dedicated TestForge integration can still be registered through the standard Vue Test Utils `global.plugins` option.
+
 > Core defines the runtime. Plugins define integrations. Base presets define shared environments. Runner-specific recommended presets add runner-specific behavior. The host application provides Vue ecosystem dependencies.
 
 ## Installation
@@ -215,6 +217,86 @@ describe("MyComponent.vue", () => {
 For Jest projects, use `@testforgejs/vue-test-preset-recommended-jest` instead.
 
 👉 For a complete walkthrough, continue with the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md).
+
+### Default Props and Test-Specific Overrides
+
+TestForge allows you to define a shared set of component props once and override only the values relevant to each test scenario.
+
+Pass `defaultProps` as the second argument to `testComponentFactory()`:
+
+```typescript
+const factory = testComponentFactory(UserCard, {
+  name: "Alice",
+  role: "user",
+  isActive: true,
+});
+```
+
+Each factory invocation inherits these defaults unless a specific prop is overridden:
+
+```typescript
+// Uses all default props.
+const defaultWrapper = factory();
+
+// Overrides only the role.
+const adminWrapper = factory({
+  role: "admin",
+});
+
+// Overrides only the active state.
+const inactiveWrapper = factory({
+  isActive: false,
+});
+```
+
+Test-specific props take precedence over matching default props, while unspecified props retain their default values.
+
+For example, `adminWrapper` receives:
+
+```typescript
+{
+  name: "Alice",
+  role: "admin",
+  isActive: true,
+}
+```
+
+**Each test can focus on the prop that drives its scenario without repeating the component's complete configuration.**
+
+Overrides are resolved independently for each factory invocation, so changing a prop in one test does not change the defaults used by subsequent tests.
+
+For more details about props resolution and configuration precedence, see [Props and Slots Priority](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#props-slots-priority).
+
+---
+
+## Using Vue Plugins Without TestForge Integrations
+
+`@testforgejs/vue-test-core` builds on Vue Test Utils and does not restrict applications to plugins supported by TestForge-managed integrations.
+
+Any Vue plugin that can be registered through Vue Test Utils `global.plugins` can be used with TestForge in the same way:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  {},
+  {
+    global: {
+      plugins: [customVuePlugin],
+    },
+  },
+);
+
+const wrapper = factory();
+```
+
+Standard Vue plugins coexist with TestForge-managed plugins but remain outside the managed plugin lifecycle.
+
+Use the managed `plugins` configuration for integrations declared in the active TestForge preset.
+Use `global.plugins` for Vue plugins registered directly through Vue Test Utils.
+
+A dedicated TestForge integration is only needed when a plugin should participate in TestForge's managed configuration and lifecycle mechanisms.
+
+For more details, see [Third-Party Plugins](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#third-party-plugins).
 
 ---
 
