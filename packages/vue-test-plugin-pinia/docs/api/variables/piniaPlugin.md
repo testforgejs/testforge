@@ -4,7 +4,7 @@
 
 > `const` **piniaPlugin**: `PluginModuleWithDefaults`\<`TestingPinia`, [`VueTestPiniaOptions`](../type-aliases/VueTestPiniaOptions.md)\>
 
-Defined in: [module/piniaPlugin.ts:16](https://github.com/testforgejs/testforge/blob/15b7fe253d452c54fcef8aae7128adc59fceb969/packages/vue-test-plugin-pinia/src/module/piniaPlugin.ts#L16)
+Defined in: [module/piniaPlugin.ts:16](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-pinia/src/module/piniaPlugin.ts#L16)
 
 Managed Pinia testing plugin module for TestForge.
 

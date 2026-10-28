@@ -12,13 +12,16 @@ import type { PrimeVueConfiguration } from "primevue/config";
 export type PrimeVueMountPlugin = [typeof PrimeVue, PrimeVueConfiguration];
 
 /**
- * Configuration options for the managed PrimeVue 3 plugin.
+ * Configuration options for the managed PrimeVue plugin.
  *
- * Maps directly to the standard PrimeVue 3 configuration.
+ * Maps directly to the standard PrimeVue configuration.
  *
- * Unlike plugins that create a dedicated runtime instance, PrimeVue 3 uses
+ * Unlike plugins that create a dedicated runtime instance, PrimeVue uses
  * an install-based Vue plugin integration and therefore does not support
- * TestForge instance controls such as `captureInstance()`.
+ * TestForge instance management mechanisms:
+ * - captureInstance()
+ * - withPluginInstance()
+ * - fromPluginInstance()
  *
  * @example
  * Configure the managed PrimeVue 3 plugin for a component test:

@@ -1,5 +1,9 @@
 import { expectAssignable, expectError } from "tsd";
-import { createTestFramework } from "@testforgejs/vue-test-core";
+import {
+  createTestFramework,
+  captureInstance,
+  withPluginInstance,
+} from "@testforgejs/vue-test-core";
 import { primeVuePlugin } from "../dist/index.js";
 
 import type { VueTestPrimeVueOptions } from "../dist/index.js";
@@ -52,14 +56,112 @@ expectError(
   ),
 );
 
+/*
+ * PrimeVue does not support managed instance capture.
+ *
+ * captureInstance() must be rejected in mountOptions.plugins,
+ * even though it is supported by other managed plugins.
+ */
+const primeVueCapture = captureInstance<unknown>();
+
+const factory = framework.testComponentFactory({});
+
+/*
+ * mountOptions.plugins should accept native PrimeVue options.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      primevue: {
+        ripple: true,
+      },
+    },
+  },
+);
+
+/*
+ * extraOptions.plugins should accept native PrimeVue options.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      primevue: {
+        ripple: false,
+      },
+    },
+  },
+);
+
 expectError(
-  framework.testComponentFactory(
+  factory(
+    {},
+    {
+      plugins: {
+        primevue: {
+          ripple: true,
+          ...primeVueCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * PrimeVue instance capture must also be rejected
+ * in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
     {},
     {},
     {
       plugins: {
         primevue: {
-          expose(_instance: any) {},
+          ripple: true,
+          ...primeVueCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * PrimeVue does not support reusing pre-created instances
+ * through withPluginInstance().
+ */
+const sharedPrimeVueOptions = withPluginInstance({
+  install() {},
+});
+
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        primevue: {
+          ripple: true,
+          ...sharedPrimeVueOptions,
+        },
+      },
+    },
+  ),
+);
+
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        primevue: {
+          ripple: true,
+          ...sharedPrimeVueOptions,
         },
       },
     },

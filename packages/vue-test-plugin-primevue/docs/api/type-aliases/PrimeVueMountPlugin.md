@@ -4,7 +4,7 @@
 
 > **PrimeVueMountPlugin** = \[*typeof* `PrimeVue`, `PrimeVueConfiguration`\]
 
-Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-primevue/src/types/types.ts#L12)
+Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-primevue/src/types/types.ts#L12)
 
 Vue Test Utils-compatible plugin tuple for PrimeVue.
 

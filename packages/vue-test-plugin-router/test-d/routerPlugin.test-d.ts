@@ -1,5 +1,9 @@
 import { expectType, expectAssignable, expectError } from "tsd";
-import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
+import {
+  createTestFramework,
+  captureInstance,
+  withPluginInstance,
+} from "@testforgejs/vue-test-core";
 import { routerPlugin } from "../dist/index.js";
 import { defineComponent } from "vue";
 import { createMemoryHistory } from "vue-router";
@@ -9,8 +13,10 @@ import type { Router, RouteLocationNormalizedLoaded } from "vue-router";
 import type { VueTestRouterOptions } from "../dist/index.js";
 
 /*
- * VueTestRouterOptions should include vue-router options
- * and TestForge plugin control options.
+ * VueTestRouterOptions should represent native Vue Router options.
+ *
+ * Managed instance controls are provided separately by TestForge
+ * through PluginOptionsInput and PluginOverridesInput.
  */
 expectAssignable<VueTestRouterOptions>({
   history: createMemoryHistory(),
@@ -75,6 +81,109 @@ const TypedComponent = defineComponent({
 // Verify mountOptions
 const factory = framework.testComponentFactory(TypedComponent);
 
+/*
+ * mountOptions.plugins should require complete native Router options
+ * when no pre-created instance is supplied.
+ */
+
+// Missing history.
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        router: {
+          routes: [],
+        },
+      },
+    },
+  ),
+);
+
+// Missing routes.
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        router: {
+          history: createMemoryHistory(),
+        },
+      },
+    },
+  ),
+);
+
+// Both required options are missing.
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        router: {},
+      },
+    },
+  ),
+);
+
+/*
+ * Existing Router instance used to verify type-safe instance reuse.
+ */
+declare const existingRouter: Router;
+
+const sharedRouterOptions = withPluginInstance(existingRouter);
+
+/*
+ * mountOptions.plugins should accept a pre-created Router instance.
+ *
+ * Required native options can be omitted because the Router
+ * instance already exists.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      router: {
+        ...sharedRouterOptions,
+      },
+    },
+  },
+);
+
+/*
+ * A pre-created Router instance can be combined with
+ * partial native Router options.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      router: {
+        routes: [],
+        ...sharedRouterOptions,
+      },
+    },
+  },
+);
+
+/*
+ * extraOptions.plugins should support combining a pre-created
+ * Router instance with partial native options.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      router: {
+        routes: [],
+        ...sharedRouterOptions,
+      },
+    },
+  },
+);
+
 const wrapper = factory(
   {},
   {
@@ -132,6 +241,22 @@ factory(
   },
 );
 
+/*
+ * extraOptions.plugins should accept a pre-created Router instance.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      router: {
+        ...sharedRouterOptions,
+      },
+    },
+  },
+);
+
 expectError(
   factory(
     {},
@@ -148,8 +273,13 @@ expectError(
 );
 
 // Verify defaultMountOptions
-const defaultCapture = captureInstance<Router>();
 
+/*
+ * defaultMountOptions should support native Router options.
+ *
+ * Instance capture is intentionally omitted because it is
+ * prohibited in factory-level defaults at runtime.
+ */
 framework.testComponentFactory(
   TypedComponent,
   {},
@@ -158,7 +288,6 @@ framework.testComponentFactory(
       router: {
         history: createMemoryHistory(),
         routes: [],
-        ...defaultCapture,
       },
     },
   },
@@ -231,6 +360,48 @@ expectError(
           history: createMemoryHistory(),
           routes: [],
           ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Reject incompatible instance capture in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        router: {
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * withPluginInstance() should reject an incompatible instance
+ * when used in the managed Router configuration.
+ */
+declare const incompatibleInstance: IncompatibleInstance;
+
+const incompatibleSharedOptions = withPluginInstance(incompatibleInstance);
+
+/*
+ * Reject incompatible pre-created instances in mountOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        router: {
+          ...incompatibleSharedOptions,
         },
       },
     },

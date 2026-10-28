@@ -2,17 +2,17 @@
 
 ***
 
-> **VueTestRouterOptions** = `RouterOptions` & `PluginControlOptions`\<`Router`\>
+> **VueTestRouterOptions** = `RouterOptions`
 
-Defined in: [types/types.ts:30](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-router/src/types/types.ts#L30)
+Defined in: [types/types.ts:29](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-router/src/types/types.ts#L29)
 
 Configuration options for the Vue Router test plugin.
 
-Combines native Vue Router options with TestForge-specific
-controls for managed plugin instances.
+Uses native Vue Router options for configuring the router instance
+created by TestForge.
 
-TestForge control options are handled internally and are not
-forwarded to the native Vue Router factory.
+Managed instance controls are provided separately by TestForge
+through its plugin configuration types.
 
 ## Example
 
@@ -31,5 +31,4 @@ factory({}, {
 
 ## See
 
- - `RouterOptions` from `vue-router` for native Vue Router configuration.
- - `PluginControlOptions` from `@testforgejs/vue-test-core` for type-safe instance capturing.
+`RouterOptions` from `vue-router` for native Vue Router configuration.

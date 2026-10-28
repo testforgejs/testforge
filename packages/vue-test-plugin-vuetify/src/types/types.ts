@@ -1,5 +1,5 @@
 import type { createVuetify, VuetifyOptions } from "vuetify";
-import type { PluginControlOptions } from "@testforgejs/vue-test-core";
+import type { RuntimePluginOptions } from "@testforgejs/vue-test-core";
 
 /**
  * Vuetify runtime instance created by `createVuetify()`.
@@ -14,11 +14,11 @@ export type VuetifyInstance = ReturnType<typeof createVuetify>;
 /**
  * Configuration options for the Vuetify test plugin.
  *
- * Combines native Vuetify options with TestForge-specific
- * controls for managed plugin instances.
+ * Uses native Vuetify options for configuring the Vuetify instance
+ * created by TestForge.
  *
- * TestForge control options are handled internally and are not
- * forwarded to the native Vuetify factory.
+ * Managed instance controls are provided separately by TestForge
+ * through its plugin configuration types.
  *
  * @example
  * Configure the managed Vuetify plugin for a component test:
@@ -36,6 +36,24 @@ export type VuetifyInstance = ReturnType<typeof createVuetify>;
  * ```
  *
  * @see `VuetifyOptions` from `vuetify` for native Vuetify configuration.
- * @see `PluginControlOptions` from `@testforgejs/vue-test-core` for type-safe instance capturing.
  */
-export type VueTestVuetifyOptions = VuetifyOptions & PluginControlOptions<VuetifyInstance>;
+export type VueTestVuetifyOptions = VuetifyOptions;
+
+/**
+ * Resolved runtime options for the managed Vuetify test plugin.
+ *
+ * Combines {@link VueTestVuetifyOptions} with the internal TestForge
+ * controls used to create, reuse, and expose a {@link VuetifyInstance}.
+ *
+ * These options are passed to `createVuetifyPlugin()` after the Mount Pipeline
+ * has resolved the plugin configuration.
+ *
+ * Input metadata provided through `withPluginInstance()` is processed
+ * before this stage and is not part of the resolved runtime options.
+ *
+ * @internal
+ *
+ * @see {@link VueTestVuetifyOptions}
+ * @see `RuntimePluginOptions` from `@testforgejs/vue-test-core`.
+ */
+export type VuetifyRuntimeOptions = RuntimePluginOptions<VuetifyInstance, VueTestVuetifyOptions>;

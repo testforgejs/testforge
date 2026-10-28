@@ -1,10 +1,8 @@
-// packages/vue-test-core/src/__types__/plugin-options.type-spec.ts
-
 import { describe, expectTypeOf, it } from "vitest";
 
 import { PLUGIN_META_KEY } from "../constants/constants.js";
 
-import type { PluginOptionsInput } from "../types.js";
+import type { PluginOptionsInput } from "../types";
 
 declare module "../types.js" {
   interface PluginOptionsMap {
@@ -12,6 +10,17 @@ declare module "../types.js" {
       apiKey: string;
       environment: "development" | "production";
       debug?: boolean;
+    };
+
+    optionsOnlyPluginTypeSpec: {
+      apiKey: string;
+      debug?: boolean;
+    };
+  }
+
+  interface PluginInstanceMap {
+    requiredPluginTypeSpec: {
+      install(): void;
     };
   }
 }
@@ -69,5 +78,51 @@ describe("PluginOptionsInput type assertions", () => {
     };
 
     expectTypeOf<CompleteNativeOptions>().toExtend<RequiredPluginInput>();
+  });
+
+  it("should reject incompatible plugin instances", () => {
+    type InvalidInstanceMetadata = {
+      [PLUGIN_META_KEY]: {
+        instance: {
+          id: string;
+        };
+      };
+    };
+
+    expectTypeOf<InvalidInstanceMetadata>().not.toExtend<RequiredPluginInput>();
+  });
+});
+
+type OptionsOnlyPluginInput = NonNullable<PluginOptionsInput["optionsOnlyPluginTypeSpec"]>;
+
+describe("PluginOptionsInput without instance support", () => {
+  it("should accept complete native options", () => {
+    type CompleteNativeOptions = {
+      apiKey: string;
+      debug: true;
+    };
+
+    expectTypeOf<CompleteNativeOptions>().toExtend<OptionsOnlyPluginInput>();
+  });
+
+  it("should reject instance metadata", () => {
+    type InstanceMetadata = {
+      apiKey: string;
+      [PLUGIN_META_KEY]: {
+        instance: {
+          install(): void;
+        };
+      };
+    };
+
+    expectTypeOf<InstanceMetadata>().not.toExtend<OptionsOnlyPluginInput>();
+  });
+
+  it("should require native options", () => {
+    type MissingRequiredOptions = {
+      debug: true;
+    };
+
+    expectTypeOf<MissingRequiredOptions>().not.toExtend<OptionsOnlyPluginInput>();
   });
 });

@@ -1,5 +1,5 @@
 import type { TestingPinia, TestingOptions } from "@pinia/testing";
-import type { PluginControlOptions } from "@testforgejs/vue-test-core";
+import type { RuntimePluginOptions } from "@testforgejs/vue-test-core";
 
 import { MOCK_STORES } from "../constants/constants.js";
 
@@ -16,8 +16,11 @@ export type MockStoresFn = (pinia: TestingPinia) => void;
 /**
  * Configuration options for the Pinia test plugin.
  *
- * Combines native Pinia testing options with TestForge-specific
- * controls for managed plugin instances and store initialization.
+ * Extends native Pinia testing options with TestForge-specific
+ * store initialization support.
+ *
+ * Managed instance controls are provided separately by TestForge
+ * through its plugin configuration types.
  *
  * Use `withMockStores()` to initialize or modify Pinia stores before
  * the component is mounted.
@@ -43,19 +46,36 @@ export type MockStoresFn = (pinia: TestingPinia) => void;
  * ```
  *
  * @see `TestingOptions` from `@pinia/testing` for native Pinia configuration.
- * @see `PluginControlOptions` from `@testforgejs/vue-test-core`.
  */
-export type VueTestPiniaOptions = TestingOptions &
-  PluginControlOptions<TestingPinia> & {
-    /**
-     * Internal callback for configuring Pinia stores before mounting.
-     *
-     * Use the public `withMockStores()` helper instead of accessing
-     * this property directly.
-     *
-     * The callback runs for both newly created and reused Pinia instances.
-     *
-     * @internal
-     */
-    [MOCK_STORES]?: MockStoresFn;
-  };
+export type VueTestPiniaOptions = TestingOptions & {
+  /**
+   * Internal callback for configuring Pinia stores before mounting.
+   *
+   * Use the public `withMockStores()` helper instead of accessing
+   * this property directly.
+   *
+   * The callback runs for both newly created and reused Pinia instances.
+   *
+   * @internal
+   */
+  [MOCK_STORES]?: MockStoresFn;
+};
+
+/**
+ * Resolved runtime options for the managed Pinia test plugin.
+ *
+ * Combines {@link VueTestPiniaOptions} with the internal TestForge
+ * controls used to create, reuse, and expose a {@link TestingPinia} instance.
+ *
+ * These options are passed to `createPiniaPlugin()` after the Mount Pipeline
+ * has resolved the plugin configuration.
+ *
+ * Input metadata provided through `withPluginInstance()` is processed
+ * before this stage and is not part of the resolved runtime options.
+ *
+ * @internal
+ *
+ * @see {@link VueTestPiniaOptions}
+ * @see `RuntimePluginOptions` from `@testforgejs/vue-test-core`.
+ */
+export type PiniaRuntimeOptions = RuntimePluginOptions<TestingPinia, VueTestPiniaOptions>;

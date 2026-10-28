@@ -2,14 +2,17 @@
 
 ***
 
-> **VueTestPiniaOptions** = `TestingOptions` & `PluginControlOptions`\<`TestingPinia`\> & `object`
+> **VueTestPiniaOptions** = `TestingOptions` & `object`
 
-Defined in: [types/types.ts:48](https://github.com/testforgejs/testforge/blob/15b7fe253d452c54fcef8aae7128adc59fceb969/packages/vue-test-plugin-pinia/src/types/types.ts#L48)
+Defined in: [types/types.ts:50](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-pinia/src/types/types.ts#L50)
 
 Configuration options for the Pinia test plugin.
 
-Combines native Pinia testing options with TestForge-specific
-controls for managed plugin instances and store initialization.
+Extends native Pinia testing options with TestForge-specific
+store initialization support.
+
+Managed instance controls are provided separately by TestForge
+through its plugin configuration types.
 
 Use `withMockStores()` to initialize or modify Pinia stores before
 the component is mounted.
@@ -37,5 +40,4 @@ factory({}, {
 
 ## See
 
- - `TestingOptions` from `@pinia/testing` for native Pinia configuration.
- - `PluginControlOptions` from `@testforgejs/vue-test-core`.
+`TestingOptions` from `@pinia/testing` for native Pinia configuration.

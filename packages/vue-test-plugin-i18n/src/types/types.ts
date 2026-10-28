@@ -1,14 +1,14 @@
 import type { I18n, I18nOptions } from "vue-i18n";
-import type { PluginControlOptions } from "@testforgejs/vue-test-core";
+import type { RuntimePluginOptions } from "@testforgejs/vue-test-core";
 
 /**
  * Configuration options for the Vue I18n test plugin.
  *
- * Combines native Vue I18n options with TestForge-specific
- * controls for managed plugin instances.
+ * Uses native Vue I18n options for configuring the i18n instance
+ * created by TestForge.
  *
- * TestForge control options are validated as part of the plugin
- * configuration and are not forwarded to the native Vue I18n factory.
+ * Managed instance controls are provided separately by TestForge
+ * through its plugin configuration types.
  *
  * @example
  * Configure the managed Vue I18n plugin for a component test:
@@ -28,7 +28,26 @@ import type { PluginControlOptions } from "@testforgejs/vue-test-core";
  * });
  * ```
  *
- * @see `I18nOptions` from `vue-i18n` for configuring locales, fallback languages, and translation messages.
- * @see `PluginControlOptions` from `@testforgejs/vue-test-core` for instance capturing and exposure mechanisms.
+ * @see `I18nOptions` from `vue-i18n` for configuring locales,
+ * fallback languages, and translation messages.
  */
-export type VueTestI18nOptions = I18nOptions & PluginControlOptions<I18n>;
+export type VueTestI18nOptions = I18nOptions;
+
+/**
+ * Resolved runtime options for the managed Vue I18n test plugin.
+ *
+ * Combines {@link VueTestI18nOptions} with the internal TestForge
+ * controls used to create, reuse, and expose an {@link I18n} instance.
+ *
+ * These options are passed to `createI18nPlugin()` after the Mount Pipeline
+ * has resolved the plugin configuration.
+ *
+ * Input metadata provided through `withPluginInstance()` is processed
+ * before this stage and is not part of the resolved runtime options.
+ *
+ * @internal
+ *
+ * @see {@link VueTestI18nOptions}
+ * @see `RuntimePluginOptions` from `@testforgejs/vue-test-core`.
+ */
+export type I18nRuntimeOptions = RuntimePluginOptions<I18n, VueTestI18nOptions>;

@@ -1,15 +1,22 @@
 import { expectType, expectAssignable, expectError } from "tsd";
-import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
+import {
+  createTestFramework,
+  captureInstance,
+  withPluginInstance,
+} from "@testforgejs/vue-test-core";
 import { i18nPlugin } from "../dist/index.js";
 import { defineComponent } from "vue";
 
 import type { VueWrapper, mount } from "@vue/test-utils";
 import type { I18n } from "vue-i18n";
 import type { VueTestI18nOptions } from "../dist/index.js";
+import type { PluginOptionsInput } from "@testforgejs/vue-test-core";
 
 /*
- * VueTestI18nOptions should include vue-i18n options
- * and TestForge plugin control options.
+ * VueTestI18nOptions should represent native Vue I18n options.
+ *
+ * Managed instance controls are provided separately by TestForge
+ * through PluginOptionsInput and PluginOverridesInput.
  */
 expectAssignable<VueTestI18nOptions>({
   locale: "en",
@@ -73,6 +80,51 @@ const TypedComponent = defineComponent({
 
 // Verify mountOptions
 const factory = framework.testComponentFactory(TypedComponent);
+
+/*
+ * withPluginInstance() should preserve the I18n instance type
+ * and allow reusing a pre-created Vue I18n instance.
+ */
+declare const existingI18n: I18n;
+
+const sharedI18nOptions = withPluginInstance(existingI18n);
+
+/*
+ * PluginOptionsInput should accept a pre-created I18n instance
+ * registered through PluginInstanceMap.
+ */
+expectAssignable<NonNullable<PluginOptionsInput["i18n"]>>(sharedI18nOptions);
+
+/*
+ * mountOptions.plugins should accept a pre-created I18n instance.
+ *
+ * Native options can be omitted because the instance already exists.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      i18n: {
+        ...sharedI18nOptions,
+      },
+    },
+  },
+);
+
+/*
+ * A pre-created I18n instance can be combined with native options.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      i18n: {
+        locale: "en",
+        ...sharedI18nOptions,
+      },
+    },
+  },
+);
 
 const wrapper = factory(
   {},
@@ -149,6 +201,40 @@ factory(
   },
 );
 
+/*
+ * extraOptions.plugins should accept a pre-created I18n instance.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      i18n: {
+        ...sharedI18nOptions,
+      },
+    },
+  },
+);
+
+/*
+ * extraOptions.plugins should support combining a pre-created
+ * I18n instance with native options.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      i18n: {
+        locale: "de",
+        ...sharedI18nOptions,
+      },
+    },
+  },
+);
+
 expectError(
   factory(
     {},
@@ -165,8 +251,13 @@ expectError(
 );
 
 // Verify defaultMountOptions
-const defaultCapture = captureInstance<I18n>();
 
+/*
+ * defaultMountOptions should support native I18n options.
+ *
+ * Instance capturing is intentionally omitted because it is
+ * prohibited in factory-level defaults at runtime.
+ */
 framework.testComponentFactory(
   TypedComponent,
   {},
@@ -179,7 +270,6 @@ framework.testComponentFactory(
             hello: "Hello World",
           },
         },
-        ...defaultCapture,
       },
     },
   },
@@ -226,6 +316,66 @@ expectError(
             },
           },
           ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Reject incompatible instance capture in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        i18n: {
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * withPluginInstance() should reject an incompatible instance
+ * when used in the managed I18n configuration.
+ */
+declare const incompatibleInstance: IncompatibleInstance;
+
+const incompatibleSharedOptions = withPluginInstance(incompatibleInstance);
+
+/*
+ * Reject incompatible pre-created instances in mountOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        i18n: {
+          ...incompatibleSharedOptions,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Reject incompatible pre-created instances in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        i18n: {
+          ...incompatibleSharedOptions,
         },
       },
     },

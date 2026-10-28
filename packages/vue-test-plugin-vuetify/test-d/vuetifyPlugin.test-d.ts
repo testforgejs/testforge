@@ -1,32 +1,27 @@
-// packages/vue-test-plugin-vuetify/test-d/vuetifyPlugin.test-d.ts
-
 import { expectType, expectAssignable, expectError } from "tsd";
-import { createTestFramework, captureInstance } from "@testforgejs/vue-test-core";
+import {
+  createTestFramework,
+  captureInstance,
+  withPluginInstance,
+} from "@testforgejs/vue-test-core";
 import { vuetifyPlugin } from "../dist/index.js";
 import { defineComponent } from "vue";
 
 import type { VueWrapper, mount } from "@vue/test-utils";
 import type { VueTestVuetifyOptions, VuetifyInstance } from "../dist/index.js";
+import type { PluginOptionsInput } from "@testforgejs/vue-test-core";
 
 /*
- * VueTestVuetifyOptions should include Vuetify options
- * and TestForge plugin control options.
+ * VueTestVuetifyOptions should represent native Vuetify options.
+ *
+ * Managed instance controls are provided separately by TestForge
+ * through PluginOptionsInput and PluginOverridesInput.
  */
 expectAssignable<VueTestVuetifyOptions>({
   locale: {
     locale: "en",
   },
 });
-
-/*
- * The legacy expose callback must not be accepted
- * as a VueTestVuetifyOptions property.
- */
-expectError(
-  expectAssignable<VueTestVuetifyOptions>({
-    expose(_instance: VuetifyInstance) {},
-  }),
-);
 
 /*
  * captureInstance should preserve the provided instance type.
@@ -74,6 +69,51 @@ const TypedComponent = defineComponent({
 
 // Verify mountOptions
 const factory = framework.testComponentFactory(TypedComponent);
+
+/*
+ * withPluginInstance() should preserve the Vuetify instance type
+ * and allow reusing a pre-created Vuetify instance.
+ */
+declare const existingVuetify: VuetifyInstance;
+
+const sharedVuetifyOptions = withPluginInstance(existingVuetify);
+
+/*
+ * PluginOptionsInput should accept a pre-created Vuetify instance
+ * registered through PluginInstanceMap.
+ */
+expectAssignable<NonNullable<PluginOptionsInput["vuetify"]>>(sharedVuetifyOptions);
+
+/*
+ * mountOptions.plugins should accept a pre-created Vuetify instance.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      vuetify: {
+        ...sharedVuetifyOptions,
+      },
+    },
+  },
+);
+
+/*
+ * A pre-created Vuetify instance can be combined with native options.
+ */
+factory(
+  {},
+  {
+    plugins: {
+      vuetify: {
+        locale: {
+          locale: "en",
+        },
+        ...sharedVuetifyOptions,
+      },
+    },
+  },
+);
 
 const wrapper = factory(
   {},
@@ -131,6 +171,42 @@ factory(
   },
 );
 
+/*
+ * extraOptions.plugins should accept a pre-created Vuetify instance.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      vuetify: {
+        ...sharedVuetifyOptions,
+      },
+    },
+  },
+);
+
+/*
+ * extraOptions.plugins should support combining a pre-created
+ * Vuetify instance with native options.
+ */
+factory(
+  {},
+  {},
+  {},
+  {
+    plugins: {
+      vuetify: {
+        locale: {
+          locale: "en",
+        },
+        ...sharedVuetifyOptions,
+      },
+    },
+  },
+);
+
 expectError(
   factory(
     {},
@@ -145,15 +221,22 @@ expectError(
 );
 
 // Verify defaultMountOptions
-const defaultCapture = captureInstance<VuetifyInstance>();
 
+/*
+ * defaultMountOptions should support native Vuetify options.
+ *
+ * Instance capturing is intentionally omitted because it is
+ * prohibited in factory-level defaults at runtime.
+ */
 framework.testComponentFactory(
   TypedComponent,
   {},
   {
     plugins: {
       vuetify: {
-        ...defaultCapture,
+        locale: {
+          locale: "en",
+        },
       },
     },
   },
@@ -188,6 +271,66 @@ expectError(
       plugins: {
         vuetify: {
           ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Reject incompatible instance capture in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        vuetify: {
+          ...incompatibleCapture,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * withPluginInstance() should reject an incompatible instance
+ * when used in the managed Vuetify configuration.
+ */
+declare const incompatibleInstance: IncompatibleInstance;
+
+const incompatibleSharedOptions = withPluginInstance(incompatibleInstance);
+
+/*
+ * Reject incompatible pre-created instances in mountOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        vuetify: {
+          ...incompatibleSharedOptions,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Reject incompatible pre-created instances in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        vuetify: {
+          ...incompatibleSharedOptions,
         },
       },
     },

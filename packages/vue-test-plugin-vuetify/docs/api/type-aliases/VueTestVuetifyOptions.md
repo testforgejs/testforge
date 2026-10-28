@@ -2,17 +2,17 @@
 
 ***
 
-> **VueTestVuetifyOptions** = `VuetifyOptions` & `PluginControlOptions`\<[`VuetifyInstance`](VuetifyInstance.md)\>
+> **VueTestVuetifyOptions** = `VuetifyOptions`
 
-Defined in: [types/types.ts:41](https://github.com/testforgejs/testforge/blob/3d728172a303d7e9d78fc42ed41f076e9b5d2096/packages/vue-test-plugin-vuetify/src/types/types.ts#L41)
+Defined in: [types/types.ts:40](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-vuetify/src/types/types.ts#L40)
 
 Configuration options for the Vuetify test plugin.
 
-Combines native Vuetify options with TestForge-specific
-controls for managed plugin instances.
+Uses native Vuetify options for configuring the Vuetify instance
+created by TestForge.
 
-TestForge control options are handled internally and are not
-forwarded to the native Vuetify factory.
+Managed instance controls are provided separately by TestForge
+through its plugin configuration types.
 
 ## Example
 
@@ -32,5 +32,4 @@ factory({}, {
 
 ## See
 
- - `VuetifyOptions` from `vuetify` for native Vuetify configuration.
- - `PluginControlOptions` from `@testforgejs/vue-test-core` for type-safe instance capturing.
+`VuetifyOptions` from `vuetify` for native Vuetify configuration.

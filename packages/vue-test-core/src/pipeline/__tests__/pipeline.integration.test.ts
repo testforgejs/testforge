@@ -423,7 +423,7 @@ describe("Mount Pipeline Integration", () => {
       const routerConfig = result.plugins.router as RuntimePluginState;
 
       expect(routerConfig[SHARED_PLUGIN_INSTANCE_KEY]).toBe(mockInstance);
-      expect(routerConfig[PLUGIN_META_KEY]).toBeUndefined();
+      expect(Object.hasOwn(routerConfig, PLUGIN_META_KEY)).toBe(false);
       expect(routerConfig.routes).toEqual([]);
     });
 

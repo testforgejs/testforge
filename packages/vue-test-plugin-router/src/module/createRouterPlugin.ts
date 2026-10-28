@@ -1,14 +1,15 @@
 import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createRouter } from "vue-router";
 
-import type { Router } from "vue-router";
-import type { VueTestRouterOptions } from "../types/types";
+import type { Router, RouterOptions } from "vue-router";
+import type { RouterRuntimeOptions } from "../types/types";
 
 /*
- * Creates a Vue Router instance.
+ * Creates or reuses a managed Vue Router instance.
  *
- * Extracted into a separate factory to simplify testing and mocking.
+ * Internal TestForge controls are excluded from the native
+ * createRouter() options by createPluginInstance().
  */
-export function createRouterPlugin(options: VueTestRouterOptions): Router {
-  return createPluginInstance<Router, VueTestRouterOptions>(createRouter, options);
+export function createRouterPlugin(options: RouterRuntimeOptions): Router {
+  return createPluginInstance<Router, RouterOptions>(createRouter, options);
 }

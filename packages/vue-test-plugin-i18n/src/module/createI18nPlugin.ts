@@ -1,14 +1,15 @@
 import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createI18n } from "vue-i18n";
 
-import type { I18n } from "vue-i18n";
-import type { VueTestI18nOptions } from "../types/types";
+import type { I18n, I18nOptions } from "vue-i18n";
+import type { I18nRuntimeOptions } from "../types/types";
 
 /*
- * Creates a Vue I18n plugin instance.
+ * Creates or reuses a managed Vue I18n instance.
  *
- * Extracted into a separate factory to simplify testing and mocking.
+ * Internal TestForge controls are excluded from the native
+ * createI18n() options by createPluginInstance().
  */
-export function createI18nPlugin(options: VueTestI18nOptions): I18n {
-  return createPluginInstance<I18n, VueTestI18nOptions>(createI18n, options);
+export function createI18nPlugin(options: I18nRuntimeOptions): I18n {
+  return createPluginInstance<I18n, I18nOptions>(createI18n, options);
 }

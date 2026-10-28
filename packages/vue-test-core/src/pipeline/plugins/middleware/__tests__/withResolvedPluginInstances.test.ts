@@ -13,7 +13,7 @@ import { isPluginOverlayObject } from "../../../middleware/typeGuards/isPluginOv
 
 import { withResolvedPluginInstances } from "../withResolvedPluginInstances.js";
 
-import type { RuntimeContext } from "../../../../types.js";
+import type { RuntimeContext } from "../../../../types";
 
 interface MiddlewareDependencyInstance {
   id: string;

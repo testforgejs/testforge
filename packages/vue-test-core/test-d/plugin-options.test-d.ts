@@ -1,7 +1,7 @@
-import { expectType, expectError } from "tsd";
+import { expectType, expectError, expectAssignable } from "tsd";
 // Registers PluginOptionsMap test augmentation
 import "./shared-plugin-types.js";
-import { withPluginInstance } from "../dist/index.js";
+import { captureInstance, withPluginInstance } from "../dist/index.js";
 
 import type {
   ComponentFactoryOptions,
@@ -154,6 +154,48 @@ expectError<PluginOptionsInput>({
 });
 
 // -----------------------------
+// PluginOptionsInput: Unknown Instance Type
+// -----------------------------
+
+type UnknownInstancePluginInput = NonNullable<PluginOptionsInput["unknownInstancePluginTypeSpec"]>;
+
+// A plugin explicitly registered with an unknown instance type
+// should accept pre-created instances of arbitrary types.
+
+expectAssignable<UnknownInstancePluginInput>({
+  ...withPluginInstance({
+    id: "custom-instance",
+  }),
+});
+
+expectAssignable<UnknownInstancePluginInput>({
+  ...withPluginInstance({
+    install() {},
+    customProperty: true,
+  }),
+});
+
+// Native options can be combined with a pre-created instance.
+
+expectAssignable<UnknownInstancePluginInput>({
+  apiKey: "test-key",
+  ...withPluginInstance({
+    id: "custom-instance",
+  }),
+});
+
+// Complete native options are accepted without instance metadata.
+
+expectAssignable<UnknownInstancePluginInput>({
+  apiKey: "test-key",
+});
+
+// Required native options must still be provided
+// when no pre-created instance is supplied.
+
+expectError<UnknownInstancePluginInput>({});
+
+// -----------------------------
 // PluginOverridesInput
 // -----------------------------
 
@@ -192,4 +234,44 @@ expectError<PluginOverridesInput>({
   pinia: {
     unknownProperty: true,
   },
+});
+
+// -----------------------------
+// PluginOverridesInput: Unknown Instance Type
+// -----------------------------
+
+type UnknownInstancePluginOverride = NonNullable<
+  PluginOverridesInput["unknownInstancePluginTypeSpec"]
+>;
+
+// Partial overrides can include pre-created instances
+// with an unknown registered instance type.
+
+expectAssignable<UnknownInstancePluginOverride>({
+  ...withPluginInstance({
+    id: "custom-instance",
+  }),
+});
+
+// Instance capture is also supported in overrides.
+
+expectAssignable<UnknownInstancePluginOverride>({
+  ...captureInstance<unknown>(),
+});
+
+// Partial native configuration remains valid.
+
+expectAssignable<UnknownInstancePluginOverride>({
+  apiKey: "test-key",
+});
+
+// Explicit unknown instance registration also enables captureInstance().
+
+const unknownCapture = captureInstance<unknown>();
+
+expectType<unknown>(unknownCapture.instance);
+
+expectAssignable<UnknownInstancePluginInput>({
+  apiKey: "test-key",
+  ...unknownCapture,
 });

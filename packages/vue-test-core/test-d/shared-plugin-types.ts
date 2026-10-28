@@ -24,5 +24,25 @@ declare module "../dist/index.js" {
     pinia: PiniaOptions;
     i18n: I18nOptions;
     requiredPlugin: RequiredPluginOptions;
+
+    unknownInstancePluginTypeSpec: {
+      apiKey: string;
+    };
+  }
+
+  interface PluginInstanceMap {
+    pinia: {
+      install(): void;
+    };
+
+    i18n: {
+      install(): void;
+    };
+
+    requiredPlugin: {
+      install(): void;
+    };
+
+    unknownInstancePluginTypeSpec: unknown;
   }
 }
