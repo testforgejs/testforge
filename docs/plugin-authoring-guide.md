@@ -500,16 +500,57 @@ Set it to `true` for managed plugins supporting deferred instance dependencies t
 
 ### Step 7: Export the Package API (`index.ts`)
 
-Import the augmentation module so it is included in the package declaration graph. Expose both the descriptive and standardized package APIs:
+Import the augmentation module so it is included in the package declaration graph. Keep the descriptive exports for consumers and expose three **standardized package exports** for presets and tooling:
 
 ```typescript
 import "./types/augmentation.js";
+
 export { customPlugin, customPlugin as plugin } from "./module/customPlugin.js";
 export { CUSTOM_PLUGIN_NAME as PLUGIN_NAME } from "./constants/constants.js";
+
 export * from "./types/types.js";
+export type { VueTestCustomOptions as PluginOptions } from "./types/types.js";
 ```
 
-Consumers can import `customPlugin` directly; generic tooling can rely on the standard `plugin` and `PLUGIN_NAME` exports. Every plugin package must expose both standardized names from its entry point.
+The standardized package contract is:
+
+| Export          | Kind          | Purpose                                                               |
+| --------------- | ------------- | --------------------------------------------------------------------- |
+| `plugin`        | Runtime value | The `PluginModule` used in preset manifests.                          |
+| `PLUGIN_NAME`   | Runtime value | The plugin identifier used as a configuration key.                    |
+| `PluginOptions` | Type-only     | The public configuration type used by presets and TypeScript tooling. |
+
+`PluginOptions` is an **alias of the existing public options type**, not a new options interface. Preserve descriptive exports such as `VueTestCustomOptions` for direct consumers. Both factory-based and install-based plugins expose `PluginOptions`; the alias must refer to their **public** options, never to `RuntimePluginOptions` or internal instance controls.
+
+#### Using standardized exports in preset generation
+
+A CLI generator can use the same import names for every plugin package and assign descriptive local aliases when generating an editable TypeScript preset. For example, for Vue Router:
+
+```typescript
+import {
+  plugin as routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
+import type { PluginOptions as RouterPluginOptions } from "@testforgejs/vue-test-plugin-router";
+import { createMemoryHistory } from "vue-router";
+
+const routerDefaults = () =>
+  ({
+    history: createMemoryHistory(),
+    routes: [],
+  }) satisfies RouterPluginOptions;
+
+export const preset = {
+  manifest: [{ module: routerPlugin, enabled: true }],
+  defaults: {
+    [ROUTER_PLUGIN_NAME]: routerDefaults,
+  },
+};
+```
+
+The generated code remains editable and type-checked against the plugin's native/public options. This does **not** require the CLI to know the package-specific name `VueTestRouterOptions`.
+
+`PluginOptions` is erased when TypeScript is compiled. It is suitable for **generating and checking TypeScript source**, but it is **not** runtime metadata: importing a plugin package cannot reveal its option keys, build an interactive configuration form, or validate an options object at runtime. Those tasks would require a separate runtime schema or metadata contract.
 
 ---
 
@@ -756,17 +797,12 @@ Install-based plugins cannot reuse or capture TestForge-managed instances. Avoid
 
 ## When Should I Use `beforeCreate()` and `afterCreate()`?
 
-| Hook | Typical usage |
-
+| Hook                  | Typical usage                                |
 | --------------------- | -------------------------------------------- |
-
 | `getDefaultOptions()` | Optional project-independent plugin baseline |
-
-| `beforeCreate()` | Runtime normalization or derivation |
-
-| `create()` | Return a managed instance or install tuple |
-
-| `afterCreate()` | Activate or synchronize the created instance |
+| `beforeCreate()`      | Runtime normalization or derivation          |
+| `create()`            | Return a managed instance or install tuple   |
+| `afterCreate()`       | Activate or synchronize the created instance |
 
 Examples:
 
@@ -872,5 +908,5 @@ Before publishing a plugin, verify:
 15. **Diagnostics remain useful:** Do not suppress upstream warnings without a specific integration reason.
 16. **Options factories return fresh values:** Avoid shared mutable options between pipeline executions.
 17. **Lifecycle responsibilities remain clear:** `beforeCreate()` does not silently inject defaults; `afterCreate()` is for runtime side effects.
-18. **Package exports are standardized:** Export both the descriptive plugin name and `plugin` / `PLUGIN_NAME`.
-19. **Tests run at the correct level:** Default options and native creation belong in plugin tests; mounted-component behavior belongs in integration tests.
+18. **Package exports are standardized:** Keep descriptive names and export `plugin`, `PLUGIN_NAME`, and the type-only `PluginOptions` alias of the public configuration type (not runtime options).
+19. **Tests run at the correct level:** Default options and native creation belong in plugin tests; mounted-component behavior belongs in integration tests. Verify that the built package exposes the `PluginOptions` type alias for consumers and generated presets.
