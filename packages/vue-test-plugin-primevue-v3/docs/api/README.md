@@ -4,7 +4,7 @@
 
 PrimeVue 3 integration for TestForge.
 
-Provides a managed PrimeVue 3 plugin module, typed PrimeVue 3 configuration,
+Provides an install-based PrimeVue 3 plugin module, typed configuration,
 and the standardized TestForge plugin package contract.
 
 ## Type Aliases
@@ -22,3 +22,9 @@ and the standardized TestForge plugin package contract.
 ### plugin
 
 Renames and re-exports [primeVuePlugin](variables/primeVuePlugin.md)
+
+***
+
+### PluginOptions
+
+Renames and re-exports [VueTestPrimeVueOptions](type-aliases/VueTestPrimeVueOptions.md)

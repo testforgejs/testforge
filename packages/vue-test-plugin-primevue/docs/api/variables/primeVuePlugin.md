@@ -4,9 +4,10 @@
 
 > `const` **primeVuePlugin**: `PluginModuleWithDefaults`\<[`PrimeVueMountPlugin`](../type-aliases/PrimeVueMountPlugin.md), [`VueTestPrimeVueOptions`](../type-aliases/VueTestPrimeVueOptions.md)\>
 
-Defined in: [module/primeVuePlugin.ts:14](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-primevue/src/module/primeVuePlugin.ts#L14)
+Defined in: [module/primeVuePlugin.ts:15](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-primevue/src/module/primeVuePlugin.ts#L15)
 
-Managed PrimeVue plugin module for TestForge.
+Install-based PrimeVue plugin module for TestForge.
 
-Provides the runtime integration for mounting PrimeVue as an install-based
-Vue plugin and exposes the default configuration used by TestForge-managed presets.
+Provides the runtime definition for mounting PrimeVue through
+Vue Test Utils and exposes a default configuration factory
+that presets can explicitly opt into.

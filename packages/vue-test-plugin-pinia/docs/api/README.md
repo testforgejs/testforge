@@ -26,3 +26,9 @@ and the standardized TestForge plugin package contract.
 ### plugin
 
 Renames and re-exports [piniaPlugin](variables/piniaPlugin.md)
+
+***
+
+### PluginOptions
+
+Renames and re-exports [VueTestPiniaOptions](type-aliases/VueTestPiniaOptions.md)

@@ -1,5 +1,5 @@
 /**
- * Stable TestForge identifier for the managed PrimeVue 3 plugin.
+ * Stable TestForge identifier for the install-based PrimeVue 3 plugin.
  *
  * Use this identifier when declaring PrimeVue 3 configuration
  * in presets and other plugin-aware TestForge APIs.

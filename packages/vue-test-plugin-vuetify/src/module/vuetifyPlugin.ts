@@ -8,8 +8,9 @@ import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types.js";
 /**
  * Managed Vuetify plugin module for TestForge.
  *
- * Provides the runtime definition for creating Vuetify instances
- * and exposes the default configuration used by TestForge-managed presets.
+ * Provides the runtime definition for creating or reusing Vuetify
+ * instances and exposes a default configuration factory
+ * that presets can explicitly opt into.
  */
 export const vuetifyPlugin: PluginModuleWithDefaults<VuetifyInstance, VueTestVuetifyOptions> = {
   getName: () => VUETIFY_PLUGIN_NAME,

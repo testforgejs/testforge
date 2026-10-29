@@ -22,3 +22,9 @@ and the standardized TestForge plugin package contract.
 ### plugin
 
 Renames and re-exports [vuetifyPlugin](variables/vuetifyPlugin.md)
+
+***
+
+### PluginOptions
+
+Renames and re-exports [VueTestVuetifyOptions](type-aliases/VueTestVuetifyOptions.md)

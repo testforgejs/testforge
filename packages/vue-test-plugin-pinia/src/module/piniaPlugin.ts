@@ -10,8 +10,9 @@ import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 /**
  * Managed Pinia testing plugin module for TestForge.
  *
- * Provides the runtime definition for creating testing Pinia instances
- * and exposes the default configuration used by TestForge-managed presets.
+ * Provides the runtime definition for creating or reusing testing Pinia
+ * instances and exposes a default configuration factory
+ * that presets can explicitly opt into.
  */
 export const piniaPlugin: PluginModuleWithDefaults<TestingPinia, VueTestPiniaOptions> = {
   getName: () => PINIA_PLUGIN_NAME,

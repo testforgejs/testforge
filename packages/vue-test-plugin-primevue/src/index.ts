@@ -1,7 +1,7 @@
 /**
  * PrimeVue integration for TestForge.
  *
- * Provides a managed PrimeVue plugin module, typed PrimeVue configuration,
+ * Provides an install-based PrimeVue plugin module, typed configuration,
  * and the standardized TestForge plugin package contract.
  *
  * @packageDocumentation

@@ -21,3 +21,9 @@ and the standardized TestForge plugin package contract.
 ### plugin
 
 Renames and re-exports [routerPlugin](variables/routerPlugin.md)
+
+***
+
+### PluginOptions
+
+Renames and re-exports [VueTestRouterOptions](type-aliases/VueTestRouterOptions.md)

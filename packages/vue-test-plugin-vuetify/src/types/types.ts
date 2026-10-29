@@ -2,10 +2,10 @@ import type { createVuetify, VuetifyOptions } from "vuetify";
 import type { RuntimePluginOptions } from "@testforgejs/vue-test-core";
 
 /**
- * Vuetify runtime instance created by `createVuetify()`.
+ * Vuetify runtime instance type returned by `createVuetify()`.
  *
- * Represents the managed Vuetify instance used by TestForge
- * during component mounting.
+ * Represents the managed Vuetify instance created or reused
+ * by TestForge during component mounting.
  *
  * @see `createVuetify` from `vuetify` for the native Vuetify instance factory.
  */

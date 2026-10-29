@@ -9,8 +9,9 @@ import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 /**
  * Managed Vue Router plugin module for TestForge.
  *
- * Provides the runtime definition for creating Vue Router instances
- * and exposes the default configuration used by TestForge-managed presets.
+ * Provides the runtime definition for creating or reusing Vue Router
+ * instances and exposes a default configuration factory
+ * that presets can explicitly opt into.
  */
 export const routerPlugin: PluginModuleWithDefaults<Router, VueTestRouterOptions> = {
   getName: () => ROUTER_PLUGIN_NAME,

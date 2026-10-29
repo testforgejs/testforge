@@ -4,9 +4,10 @@
 
 > `const` **routerPlugin**: `PluginModuleWithDefaults`\<`Router`, [`VueTestRouterOptions`](../type-aliases/VueTestRouterOptions.md)\>
 
-Defined in: [module/routerPlugin.ts:15](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-router/src/module/routerPlugin.ts#L15)
+Defined in: [module/routerPlugin.ts:16](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-router/src/module/routerPlugin.ts#L16)
 
 Managed Vue Router plugin module for TestForge.
 
-Provides the runtime definition for creating Vue Router instances
-and exposes the default configuration used by TestForge-managed presets.
+Provides the runtime definition for creating or reusing Vue Router
+instances and exposes a default configuration factory
+that presets can explicitly opt into.

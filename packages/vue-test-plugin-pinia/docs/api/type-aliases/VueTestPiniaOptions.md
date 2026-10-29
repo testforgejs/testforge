@@ -4,7 +4,7 @@
 
 > **VueTestPiniaOptions** = `TestingOptions` & `object`
 
-Defined in: [types/types.ts:50](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-pinia/src/types/types.ts#L50)
+Defined in: [types/types.ts:50](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-pinia/src/types/types.ts#L50)
 
 Configuration options for the Pinia test plugin.
 

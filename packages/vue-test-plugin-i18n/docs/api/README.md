@@ -21,3 +21,9 @@ and the standardized TestForge plugin package contract.
 ### plugin
 
 Renames and re-exports [i18nPlugin](variables/i18nPlugin.md)
+
+***
+
+### PluginOptions
+
+Renames and re-exports [VueTestI18nOptions](type-aliases/VueTestI18nOptions.md)

@@ -4,12 +4,12 @@
 
 > **VuetifyInstance** = `ReturnType`\<*typeof* `createVuetify`\>
 
-Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-vuetify/src/types/types.ts#L12)
+Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-vuetify/src/types/types.ts#L12)
 
-Vuetify runtime instance created by `createVuetify()`.
+Vuetify runtime instance type returned by `createVuetify()`.
 
-Represents the managed Vuetify instance used by TestForge
-during component mounting.
+Represents the managed Vuetify instance created or reused
+by TestForge during component mounting.
 
 ## See
 

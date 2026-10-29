@@ -4,22 +4,23 @@
 
 > **VueTestPrimeVueOptions** = `PrimeVueConfiguration`
 
-Defined in: [types/types.ts:41](https://github.com/testforgejs/testforge/blob/9fe06ed8809dd0c6a08450484b8c012e43032cd5/packages/vue-test-plugin-primevue-v3/src/types/types.ts#L41)
+Defined in: [types/types.ts:42](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-primevue-v3/src/types/types.ts#L42)
 
-Configuration options for the managed PrimeVue plugin.
+Configuration options for the PrimeVue 3 test plugin.
 
-Maps directly to the standard PrimeVue configuration.
+Maps directly to the native PrimeVue 3 configuration.
 
-Unlike plugins that create a dedicated runtime instance, PrimeVue uses
-an install-based Vue plugin integration and therefore does not support
-TestForge instance management mechanisms:
-- captureInstance()
-- withPluginInstance()
-- fromPluginInstance()
+PrimeVue 3 uses an install-based Vue plugin integration rather than
+a managed runtime instance. Therefore, TestForge instance management
+mechanisms are not supported:
+
+- `captureInstance()`
+- `withPluginInstance()`
+- `fromPluginInstance()`
 
 ## Example
 
-Configure the managed PrimeVue 3 plugin for a component test:
+Configure PrimeVue 3 for a component test:
 
 ```ts
 factory({}, {

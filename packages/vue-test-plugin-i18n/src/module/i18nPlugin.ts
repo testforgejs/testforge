@@ -9,8 +9,9 @@ import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 /**
  * Managed Vue I18n plugin module for TestForge.
  *
- * Provides the runtime definition for creating Vue I18n instances
- * and exposes the default configuration used by TestForge-managed presets.
+ * Provides the runtime definition for creating or reusing Vue I18n
+ * instances and exposes a default configuration factory
+ * that presets can explicitly opt into.
  */
 export const i18nPlugin: PluginModuleWithDefaults<I18n, VueTestI18nOptions> = {
   getName: () => I18N_PLUGIN_NAME,
