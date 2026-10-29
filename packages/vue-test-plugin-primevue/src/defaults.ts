@@ -1,5 +1,5 @@
 import type { PluginDefaultOptionsFactory } from "@testforgejs/vue-test-core";
-import type { VueTestPrimeVueOptions } from "./types/types";
+import type { VueTestPrimeVueOptions } from "./types/types.js";
 
 /**
  * Creates the default PrimeVue options used by TestForge.

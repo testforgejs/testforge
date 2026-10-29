@@ -9,7 +9,7 @@ import type {
   ComponentDataInput,
   TestFramework,
   MountRuntimeOptions,
-} from "../types";
+} from "../types.js";
 import type { Component } from "vue";
 
 import { mergeComponentData } from "../utils/mergeComponentData.js";

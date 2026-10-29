@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createSupportedPluginsState } from "../createSupportedPluginsState.js";
 
-import type { PluginManifestEntry, PluginModule, PresetDefinition } from "../../types";
+import type { PluginManifestEntry, PluginModule, PresetDefinition } from "../../types.js";
 
 const createMockPluginModule = (name: string) => ({
   getName: vi.fn(() => name),

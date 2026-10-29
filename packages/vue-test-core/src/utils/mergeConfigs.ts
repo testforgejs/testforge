@@ -1,7 +1,7 @@
 import { isPlainObject } from "../guards/isPlainObject.js";
 import { ERROR_PREFIX } from "../constants/constants.js";
 
-import type { Mergeable, PlainObject } from "../types";
+import type { Mergeable, PlainObject } from "../types.js";
 
 /*
  * IMPORTANT CONTRACT:

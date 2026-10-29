@@ -2,7 +2,7 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import { PLUGIN_META_KEY } from "../constants/constants.js";
 
-import type { PluginOptionsInput } from "../types";
+import type { PluginOptionsInput } from "../types.js";
 
 declare module "../types.js" {
   interface PluginOptionsMap {

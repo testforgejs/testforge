@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, Pipeline, PipelineContext, PipeResult } from "../../types";
+import type { PipelineMiddleware, Pipeline, PipelineContext, PipeResult } from "../../types.js";
 
 import { runPipeline } from "./runPipeline.js";
 

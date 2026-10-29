@@ -3,7 +3,7 @@ import { defaultOptions } from "../defaults.js";
 import { VUETIFY_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
-import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types";
+import type { VueTestVuetifyOptions, VuetifyInstance } from "../types/types.js";
 
 /**
  * Managed Vuetify plugin module for TestForge.

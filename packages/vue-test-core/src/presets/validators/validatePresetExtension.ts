@@ -1,6 +1,6 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 import { validatePluginDefaults } from "./validatePluginDefaults.js";
-import type { PresetDefinition, PresetExtension } from "../../types";
+import type { PresetDefinition, PresetExtension } from "../../types.js";
 
 /**
  * Validates the preset extension before applying it to the base preset.

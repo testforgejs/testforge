@@ -1,7 +1,7 @@
 import { PRIMEVUE_V3_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
-import type { VueTestPrimeVueOptions } from "./types";
+import type { VueTestPrimeVueOptions } from "./types.js";
 
 /**
  * TestForge core type augmentation for PrimeVue 3 integration.

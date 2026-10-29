@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { assertResolvedPluginValues } from "../assertResolvedPluginValues.js";
 
-import type { ResolvedPluginOptions } from "../../../../../types";
+import type { ResolvedPluginOptions } from "../../../../../types.js";
 
 describe("assertResolvedPluginValues", () => {
   it("should NOT throw for valid plugin objects", () => {

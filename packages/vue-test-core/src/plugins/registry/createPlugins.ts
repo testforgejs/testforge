@@ -10,7 +10,7 @@ import type {
   PluginInstanceName,
   PipelineContext,
   ResolvedPluginOptions,
-} from "../../types";
+} from "../../types.js";
 
 /*
  * Creates Vue plugins used for mounting components in tests.

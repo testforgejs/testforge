@@ -1,4 +1,4 @@
-import type { ComponentFactoryExtraOptions, PluginName, TestFrameworkPresets } from "../types";
+import type { ComponentFactoryExtraOptions, PluginName, TestFrameworkPresets } from "../types.js";
 
 import { getActivePreset } from "../presets/getActivePreset.js";
 import { getPresetManifest } from "./getPresetManifest.js";

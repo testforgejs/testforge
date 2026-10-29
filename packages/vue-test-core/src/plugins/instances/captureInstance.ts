@@ -1,6 +1,6 @@
 import { PLUGIN_EXPOSE } from "../../constants/constants.js";
 
-import type { InstanceCapture } from "../../types";
+import type { InstanceCapture } from "../../types.js";
 
 /*
  * Creates a helper for capturing a managed plugin instance.

@@ -4,7 +4,7 @@ import { ERROR_PREFIX, SHARED_PLUGIN_INSTANCE_KEY } from "../../../constants/con
 import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
 import { resolvePluginInstanceReferences } from "../../../plugins/dependencies/resolvePluginInstanceReferences.js";
 
-import type { PluginInstanceName } from "../../../types";
+import type { PluginInstanceName } from "../../../types.js";
 
 import type { TestDependencyAInstance } from "./fixtures/pluginRegistry";
 import "./fixtures/pluginRegistry";

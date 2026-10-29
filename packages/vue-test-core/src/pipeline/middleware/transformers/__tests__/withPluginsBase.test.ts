@@ -8,7 +8,7 @@ vi.mock("../../../state/patchResultState.js", () => ({
 import { patchResultState } from "../../../state/patchResultState.js";
 import { withPluginsBase } from "../withPluginsBase.js";
 
-import type { ComponentFactoryOptions, RuntimeContext } from "../../../../types";
+import type { ComponentFactoryOptions, RuntimeContext } from "../../../../types.js";
 
 const mockPatchResultState = vi.mocked(patchResultState);
 
@@ -18,17 +18,17 @@ describe("withPluginsBase middleware", () => {
     mockPatchResultState.mockImplementation((ctx) => ctx);
   });
 
-  const defaultMountOptions: ComponentFactoryOptions = {
+  const defaultMountOptions = {
     plugins: {
       pinia: { initialState: {} },
     },
-  };
+  } as unknown as ComponentFactoryOptions;
 
-  const mountOptions: ComponentFactoryOptions = {
+  const mountOptions = {
     plugins: {
       i18n: { messages: {} },
     },
-  };
+  } as unknown as ComponentFactoryOptions;
 
   it("should merge default and override plugins when skipDefaultOptions is false", () => {
     const ctx = createMockCtx<RuntimeContext>({

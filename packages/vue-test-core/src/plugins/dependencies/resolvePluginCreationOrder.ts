@@ -6,7 +6,7 @@ import { validatePluginInstanceReferenceTargets } from "./validatePluginInstance
 
 import type { createPluginRegistry } from "../registry/createPluginRegistry.js";
 import type { getActivePlugins } from "../registry/getActivePlugins.js";
-import type { PluginName } from "../../types";
+import type { PluginName } from "../../types.js";
 
 /*
  * Resolves the creation order of active plugins based on their

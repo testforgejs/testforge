@@ -8,7 +8,7 @@ vi.mock("../../../state/patchResultState.js", () => ({
 import { patchResultState } from "../../../state/patchResultState.js";
 import { withPreset } from "../withPreset.js";
 
-import { PresetDefinition, RuntimeContext } from "../../../../types";
+import { PresetDefinition, RuntimeContext } from "../../../../types.js";
 
 const mockPatchResultState = vi.mocked(patchResultState);
 

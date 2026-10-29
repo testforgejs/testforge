@@ -2,7 +2,7 @@ import { ROUTER_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { Router } from "vue-router";
-import type { VueTestRouterOptions } from "./types";
+import type { VueTestRouterOptions } from "./types.js";
 
 /**
  * TestForge core type augmentation for Vue Router integration.

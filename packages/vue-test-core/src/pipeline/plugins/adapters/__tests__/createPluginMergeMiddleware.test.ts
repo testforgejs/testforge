@@ -8,7 +8,7 @@ vi.mock("../../logic/mergePluginDefaults.js", () => ({
 import { mergePluginDefaults } from "../../logic/mergePluginDefaults.js";
 import { createPluginMergeMiddleware } from "../createPluginMergeMiddleware.js";
 
-import type { RuntimeContext } from "../../../../types";
+import type { RuntimeContext } from "../../../../types.js";
 
 describe("createPluginMergeMiddleware", () => {
   beforeEach(() => {

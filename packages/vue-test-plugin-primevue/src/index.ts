@@ -16,7 +16,7 @@ export { primeVuePlugin, primeVuePlugin as plugin } from "./module/primeVuePlugi
 export { PRIMEVUE_PLUGIN_NAME as PLUGIN_NAME } from "./constants/constants.js";
 
 // Plugin types
-export * from "./types/types";
+export * from "./types/types.js";
 
 // Standardized public options type
-export type { VueTestPrimeVueOptions as PluginOptions } from "./types/types";
+export type { VueTestPrimeVueOptions as PluginOptions } from "./types/types.js";

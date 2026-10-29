@@ -1,4 +1,4 @@
-import type { PresetDefinition, PluginManifestEntry } from "../types";
+import type { PresetDefinition, PluginManifestEntry } from "../types.js";
 
 /*
  * Returns the plugin manifest declared by a preset.

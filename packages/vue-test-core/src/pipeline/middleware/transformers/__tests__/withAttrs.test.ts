@@ -8,7 +8,7 @@ import { patchResultState } from "../../../state/patchResultState.js";
 import { withAttrs } from "../withAttrs.js";
 import { createMockCtx } from "../../../__tests__/fixtures.js";
 
-import type { RuntimeContext } from "../../../../types";
+import type { RuntimeContext } from "../../../../types.js";
 
 const mockPatchResultState = vi.mocked(patchResultState);
 

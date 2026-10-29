@@ -3,7 +3,7 @@ import type {
   PipelineContext,
   RuntimeContext,
   PluginName,
-} from "../../../types";
+} from "../../../types.js";
 
 import { getPluginConfig } from "../logic/getPluginConfig.js";
 import { patchResultState } from "../../state/patchResultState.js";

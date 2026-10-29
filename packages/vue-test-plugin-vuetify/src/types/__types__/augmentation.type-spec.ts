@@ -1,7 +1,7 @@
 import { describe, it, expectTypeOf } from "vitest";
 
 import type { PluginOptionsMap } from "@testforgejs/vue-test-core";
-import type { VueTestVuetifyOptions } from "../types";
+import type { VueTestVuetifyOptions } from "../types.js";
 import "../augmentation";
 
 describe("Vuetify Types Augmentation", () => {

@@ -1,4 +1,4 @@
-import type { RuntimeExtraOptions, RuntimePluginOption, PluginName } from "../../../types";
+import type { RuntimeExtraOptions, RuntimePluginOption, PluginName } from "../../../types.js";
 
 /*
  * Extracts runtime plugin override configuration from extraOptions.

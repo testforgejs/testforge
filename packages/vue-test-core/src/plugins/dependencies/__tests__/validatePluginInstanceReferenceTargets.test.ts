@@ -5,8 +5,8 @@ import { validatePluginInstanceReferenceTargets } from "../validatePluginInstanc
 
 import "./fixtures/pluginRegistry";
 
-import type { PluginDependency } from "../types";
-import type { PluginDefinition, PluginName, PluginRegistry } from "../../../types";
+import type { PluginDependency } from "../types.js";
+import type { PluginDefinition, PluginName, PluginRegistry } from "../../../types.js";
 
 describe("validatePluginInstanceReferenceTargets", () => {
   const createDefinition = (supportsInstanceReferences = false): PluginDefinition => ({

@@ -1,7 +1,7 @@
 import { PLUGIN_EXPOSE, SHARED_PLUGIN_INSTANCE_KEY } from "../../constants/constants.js";
 import { exposeInstance } from "./exposeInstance.js";
 
-import type { RuntimePluginOptions } from "../../types";
+import type { RuntimePluginOptions } from "../../types.js";
 
 /*
  * Creates or reuses a managed plugin instance.

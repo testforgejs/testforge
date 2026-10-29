@@ -5,7 +5,7 @@ import { captureInstance } from "../../../../../plugins/instances/captureInstanc
 
 import { assertNoDefaultInstanceCapture } from "../assertNoDefaultInstanceCapture.js";
 
-import type { ComponentFactoryOptions } from "../../../../../types";
+import type { ComponentFactoryOptions } from "../../../../../types.js";
 
 describe("assertNoDefaultInstanceCapture", () => {
   it("should allow default mount options without plugins", () => {

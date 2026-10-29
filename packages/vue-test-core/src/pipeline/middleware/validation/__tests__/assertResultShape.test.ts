@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { assertResultShape, assertFinalResultShape } from "../assertResultShape";
 import { ERROR_PREFIX } from "../../../../constants/constants.js";
 
-import type { RuntimeContext } from "../../../../types";
+import type { RuntimeContext } from "../../../../types.js";
 
 // Register the list of middleware to be tested for parameterization
 const middlewares = [

@@ -2,7 +2,7 @@ import { test } from "vitest";
 
 import { supportsPluginInstanceReferences } from "../supportsPluginInstanceReferences.js";
 
-import type { PluginDefinition, PluginInstanceName, PluginName } from "../../../../types";
+import type { PluginDefinition, PluginInstanceName, PluginName } from "../../../../types.js";
 import type { Equal, Expect } from "../../../../../tests/utils/type-utils.js";
 
 test("should narrow PluginName to PluginInstanceName when supported", () => {

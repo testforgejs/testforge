@@ -1,7 +1,7 @@
 import { test, expectTypeOf } from "vitest";
 import { captureInstance } from "../captureInstance.js";
 
-import type { InstanceCapture } from "../../../types";
+import type { InstanceCapture } from "../../../types.js";
 
 interface MockPluginInstance {
   id: string;

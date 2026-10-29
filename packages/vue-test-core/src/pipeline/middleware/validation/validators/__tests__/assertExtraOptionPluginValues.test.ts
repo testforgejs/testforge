@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { assertExtraOptionPluginValues } from "../assertExtraOptionPluginValues.js";
 
-import type { ResolvedPluginOptions } from "../../../../../types";
+import type { ResolvedPluginOptions } from "../../../../../types.js";
 
 describe("assertExtraOptionPluginValues", () => {
   it("should NOT throw for valid plugin objects in extraOptions", () => {

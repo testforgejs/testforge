@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import type { ResolvedPluginOptions } from "../../../../../types";
+import type { ResolvedPluginOptions } from "../../../../../types.js";
 
 import { ERROR_PREFIX } from "../../../../../constants/constants.js";
 

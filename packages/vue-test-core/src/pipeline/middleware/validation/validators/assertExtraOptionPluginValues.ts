@@ -1,4 +1,4 @@
-import type { RuntimeExtraOptions } from "../../../../types";
+import type { RuntimeExtraOptions } from "../../../../types.js";
 
 import { assertPluginValue } from "../../typeGuards/assertPluginValue";
 

@@ -17,7 +17,7 @@ interface CreatePluginsSourceInstance {
   id: string;
 }
 
-declare module "../../../types" {
+declare module "../../../types.js" {
   interface PluginOptionsMap {
     createPluginsDependencyA: object;
     createPluginsDependencyB: object;

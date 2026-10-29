@@ -16,7 +16,7 @@ export { routerPlugin, routerPlugin as plugin } from "./module/routerPlugin.js";
 export { ROUTER_PLUGIN_NAME as PLUGIN_NAME } from "./constants/constants.js";
 
 // Plugin types
-export * from "./types/types";
+export * from "./types/types.js";
 
 // Standardized public options type
-export type { VueTestRouterOptions as PluginOptions } from "./types/types";
+export type { VueTestRouterOptions as PluginOptions } from "./types/types.js";

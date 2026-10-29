@@ -10,7 +10,7 @@ import type {
   ComponentFactoryExtraOptions,
   ComponentFactoryOptions,
   CreateTestFrameworkOptions,
-} from "../../types";
+} from "../../types.js";
 
 vi.mock("../../utils/mergeComponentData.js", () => ({
   mergeComponentData: vi.fn((x) => x),

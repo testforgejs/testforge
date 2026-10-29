@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { supportsPluginInstanceReferences } from "../supportsPluginInstanceReferences.js";
 
-import type { MountPlugin, PluginDefinition, PluginName } from "../../../../types";
+import type { MountPlugin, PluginDefinition, PluginName } from "../../../../types.js";
 
 function createMountPlugin(): MountPlugin {
   return {

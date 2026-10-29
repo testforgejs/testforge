@@ -1,5 +1,5 @@
-import { PLUGIN_INSTANCE_REFERENCE_TYPE } from "../../types";
-import type { PluginInstanceName, PluginInstanceReference } from "../../types";
+import { PLUGIN_INSTANCE_REFERENCE_TYPE } from "../../types.js";
+import type { PluginInstanceName, PluginInstanceReference } from "../../types.js";
 
 /*
  * Checks whether a value is a deferred plugin instance reference.

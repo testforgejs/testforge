@@ -1,6 +1,6 @@
 import { MOCK_STORES } from "../constants/constants.js";
 
-import type { MockStoresFn } from "../types/types";
+import type { MockStoresFn } from "../types/types.js";
 
 /*
  * Configures a callback for initializing or modifying Pinia stores

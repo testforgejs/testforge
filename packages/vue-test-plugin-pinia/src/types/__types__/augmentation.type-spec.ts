@@ -1,7 +1,7 @@
 import { describe, it, expectTypeOf } from "vitest";
 
 import type { PluginOptionsMap } from "@testforgejs/vue-test-core";
-import type { VueTestPiniaOptions } from "../types";
+import type { VueTestPiniaOptions } from "../types.js";
 import "../augmentation";
 
 describe("Pinia Types Augmentation", () => {

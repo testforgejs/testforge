@@ -2,7 +2,7 @@
 
 import { PLUGIN_META_KEY } from "../../../constants/constants.js";
 
-import type { PluginMeta, ResolvedPluginConfig } from "../../../types";
+import type { PluginMeta, ResolvedPluginConfig } from "../../../types.js";
 
 /*
  * Checks whether a value is a valid PluginMeta object.

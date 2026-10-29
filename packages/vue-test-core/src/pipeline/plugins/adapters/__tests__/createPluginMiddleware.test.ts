@@ -8,7 +8,7 @@ import { getPluginConfig } from "../../logic/getPluginConfig.js";
 import { createPluginMiddleware } from "../createPluginMiddleware.js";
 import { isPluginOverlayObject } from "../../../middleware/typeGuards/isPluginOverlayObject.js";
 
-import type { RuntimeContext } from "../../../../types";
+import type { RuntimeContext } from "../../../../types.js";
 
 vi.mock("../../logic/getPluginConfig.js", () => ({
   getPluginConfig: vi.fn(),

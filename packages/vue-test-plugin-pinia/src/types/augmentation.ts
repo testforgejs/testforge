@@ -2,7 +2,7 @@ import { PINIA_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
 import type { TestingPinia } from "@pinia/testing";
-import type { VueTestPiniaOptions } from "./types";
+import type { VueTestPiniaOptions } from "./types.js";
 
 /**
  * TestForge core type augmentation for Pinia integration.

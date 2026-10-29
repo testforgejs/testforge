@@ -12,13 +12,13 @@ import { resolvePluginInstanceReferences } from "../../plugins/dependencies/reso
 import { withPluginInstance } from "../../plugins/helpers/withPluginInstance.js";
 import { isPluginOverlayObject } from "../middleware/typeGuards/isPluginOverlayObject.js";
 
-import type { RuntimePluginConfig, RuntimePluginState, TestFrameworkPresets } from "../../types";
+import type { RuntimePluginConfig, RuntimePluginState, TestFrameworkPresets } from "../../types.js";
 
 interface PipelineDependencyInstance {
   id: string;
 }
 
-declare module "../../types" {
+declare module "../../types.js" {
   interface PluginInstanceMap {
     pipelineDependency: PipelineDependencyInstance;
   }

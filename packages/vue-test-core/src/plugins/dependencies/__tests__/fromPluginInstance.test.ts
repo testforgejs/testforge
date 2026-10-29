@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { PLUGIN_INSTANCE_REFERENCE_TYPE } from "../../../types";
+import { PLUGIN_INSTANCE_REFERENCE_TYPE } from "../../../types.js";
 import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance";
 
-declare module "../../../types" {
+declare module "../../../types.js" {
   interface PluginInstanceMap {
     testPlugin: TestPluginInstance;
   }

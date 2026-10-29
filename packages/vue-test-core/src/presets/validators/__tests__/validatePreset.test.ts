@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { validatePreset } from "../validatePreset.js";
 import { DEFAULT_PRESET_NAME } from "../../../constants/constants.js";
 
-import type { PresetDefinition } from "../../../types";
+import type { PresetDefinition } from "../../../types.js";
 
 describe("validatePreset", () => {
   // Helpers for creating mock modules

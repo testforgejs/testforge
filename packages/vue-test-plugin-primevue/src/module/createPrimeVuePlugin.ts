@@ -1,7 +1,7 @@
 import PrimeVue from "primevue/config";
 import { createVuePlugin } from "@testforgejs/vue-test-core";
 
-import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types";
+import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types.js";
 
 /*
  * Creates a Vue Test Utils-compatible PrimeVue mount plugin.

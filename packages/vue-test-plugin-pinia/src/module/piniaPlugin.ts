@@ -4,7 +4,7 @@ import { defaultOptions } from "../defaults.js";
 import { PINIA_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { TestingPinia } from "@pinia/testing";
-import type { VueTestPiniaOptions } from "../types/types";
+import type { VueTestPiniaOptions } from "../types/types.js";
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 
 /**

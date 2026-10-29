@@ -1,4 +1,4 @@
-import type { PipelineContext, PluginName, RuntimePluginState } from "../../../types";
+import type { PipelineContext, PluginName, RuntimePluginState } from "../../../types.js";
 
 import { patchResultState } from "../../state/patchResultState.js";
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";

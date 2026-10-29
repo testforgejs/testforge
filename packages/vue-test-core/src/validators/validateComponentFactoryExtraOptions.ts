@@ -2,7 +2,7 @@ import { validatePlainObjectArgument } from "./validatePlainObjectArgument.js";
 import { validateBooleanOption } from "./validateBooleanOption.js";
 import { warnRootPluginOptions } from "./warnRootPluginOptions.js";
 
-import type { ComponentFactoryExtraOptions, TestFrameworkPresets } from "../types";
+import type { ComponentFactoryExtraOptions, TestFrameworkPresets } from "../types.js";
 
 /*
  * Validates ComponentFactoryExtraOptions objects used by TestForge.

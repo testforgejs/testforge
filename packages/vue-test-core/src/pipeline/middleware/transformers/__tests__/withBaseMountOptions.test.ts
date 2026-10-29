@@ -8,7 +8,7 @@ vi.mock("../../../state/patchResultState.js", () => ({
 import { patchResultState } from "../../../state/patchResultState.js";
 import { withBaseMountOptions } from "../withBaseMountOptions.js";
 
-import type { ComponentFactoryOptions, RuntimeContext } from "../../../../types";
+import type { ComponentFactoryOptions, RuntimeContext } from "../../../../types.js";
 
 const mockPatchResultState = vi.mocked(patchResultState);
 

@@ -3,7 +3,7 @@ import { defaultOptions } from "../defaults.js";
 import { ROUTER_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { Router } from "vue-router";
-import type { VueTestRouterOptions } from "../types/types";
+import type { VueTestRouterOptions } from "../types/types.js";
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
 
 /**

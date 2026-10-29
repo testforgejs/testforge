@@ -1,5 +1,5 @@
 import type { PluginDefaultOptionsFactory } from "@testforgejs/vue-test-core";
-import type { VueTestRouterOptions } from "./types/types";
+import type { VueTestRouterOptions } from "./types/types.js";
 
 import { createMemoryHistory } from "vue-router";
 

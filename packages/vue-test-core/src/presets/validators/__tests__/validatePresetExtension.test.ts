@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validatePresetExtension } from "../validatePresetExtension.js";
-import type { PresetDefinition, PresetExtension } from "../../../types";
+import type { PresetDefinition, PresetExtension } from "../../../types.js";
 
 const createPluginModule = (name: string) => ({
   getName: () => name,

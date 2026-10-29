@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
-import type { PlainObject } from "../../types";
+import type { PlainObject } from "../../types.js";
 import { isPlainObject } from "../isPlainObject.js";
 
 describe("isPlainObject type assertions", () => {

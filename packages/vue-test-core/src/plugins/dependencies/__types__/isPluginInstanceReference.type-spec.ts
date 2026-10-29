@@ -2,14 +2,14 @@ import { test } from "vitest";
 
 import { isPluginInstanceReference } from "../../../plugins/dependencies/isPluginInstanceReference.js";
 
-import type { PluginInstanceName, PluginInstanceReference } from "../../../types";
+import type { PluginInstanceName, PluginInstanceReference } from "../../../types.js";
 import type { Equal, Expect } from "../../../../tests/utils/type-utils.js";
 
 interface TestPluginInstance {
   value: string;
 }
 
-declare module "../../../types" {
+declare module "../../../types.js" {
   interface PluginOptionsMap {
     testPlugin: object;
   }

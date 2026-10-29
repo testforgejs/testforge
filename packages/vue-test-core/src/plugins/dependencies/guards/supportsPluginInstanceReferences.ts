@@ -1,4 +1,4 @@
-import type { PluginName, PluginDefinition, PluginInstanceName } from "../../../types";
+import type { PluginName, PluginDefinition, PluginInstanceName } from "../../../types.js";
 
 /*
  * Checks whether a plugin supports instance references.

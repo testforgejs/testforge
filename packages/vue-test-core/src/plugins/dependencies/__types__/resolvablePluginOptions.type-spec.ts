@@ -2,7 +2,7 @@ import { test } from "vitest";
 
 import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
 
-import type { PluginOptionsInput, PluginOverridesInput } from "../../../types";
+import type { PluginOptionsInput, PluginOverridesInput } from "../../../types.js";
 
 interface TestProviderInstance {
   currentLocale: string;
@@ -21,7 +21,7 @@ interface TestConsumerOptions {
   };
 }
 
-declare module "../../../types" {
+declare module "../../../types.js" {
   interface PluginOptionsMap {
     resolvableProvider: object;
     resolvableConsumer: TestConsumerOptions;

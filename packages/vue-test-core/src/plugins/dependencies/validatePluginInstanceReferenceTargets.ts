@@ -1,7 +1,7 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
-import type { PluginDependency } from "./types";
-import type { PluginName, PluginRegistry } from "../../types";
+import type { PluginDependency } from "./types.js";
+import type { PluginName, PluginRegistry } from "../../types.js";
 
 /*
  * Validates that every plugin targeted by an instance dependency

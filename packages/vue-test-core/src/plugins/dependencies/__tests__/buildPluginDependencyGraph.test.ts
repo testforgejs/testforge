@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ERROR_PREFIX } from "../../../constants/constants.js";
 import { buildPluginDependencyGraph } from "../../../plugins/dependencies/buildPluginDependencyGraph.js";
 
-import type { PluginDependency } from "../../../plugins/dependencies/types";
+import type { PluginDependency } from "../../../plugins/dependencies/types.js";
 
 import "./fixtures/pluginRegistry";
 

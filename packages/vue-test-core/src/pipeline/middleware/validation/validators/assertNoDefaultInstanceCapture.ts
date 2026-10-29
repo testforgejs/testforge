@@ -1,6 +1,6 @@
 import { ERROR_PREFIX, PLUGIN_EXPOSE } from "../../../../constants/constants.js";
 
-import type { ComponentFactoryOptions } from "../../../../types";
+import type { ComponentFactoryOptions } from "../../../../types.js";
 
 /*
  * Rejects instance capture callbacks in factory-level plugin defaults.

@@ -5,7 +5,7 @@ import type {
   SupportedPluginsMap,
   PluginName,
   ResolvedPluginOptions,
-} from "../../../types";
+} from "../../../types.js";
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 import { patchResultState } from "../../state/patchResultState.js";

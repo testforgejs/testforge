@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from "vitest";
-import type { PipelineContext, MountReadyContext } from "../../types";
+import type { PipelineContext, MountReadyContext } from "../../types.js";
 
 import { createPipelineContext } from "../core/createPipelineContext";
 import { createMountPipeline } from "../mount/createMountPipeline";

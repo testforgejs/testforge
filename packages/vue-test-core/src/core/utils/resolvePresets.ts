@@ -1,4 +1,4 @@
-import type { CreateTestFrameworkOptions, TestFrameworkPresets } from "../../types";
+import type { CreateTestFrameworkOptions, TestFrameworkPresets } from "../../types.js";
 
 /*
  * Resolves framework preset options into a normalized preset collection.

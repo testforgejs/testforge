@@ -1,4 +1,4 @@
-import type { ResolvedPluginOptions } from "../../../../types";
+import type { ResolvedPluginOptions } from "../../../../types.js";
 
 import { assertPluginValue } from "../../typeGuards/assertPluginValue";
 

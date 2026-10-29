@@ -6,7 +6,7 @@ import { resolvePluginCreationOrder } from "../resolvePluginCreationOrder.js";
 import { createPluginRegistry } from "../../registry/createPluginRegistry.js";
 import { getActivePlugins } from "../../registry/getActivePlugins.js";
 
-import type { PluginName, ResolvedPluginOptions } from "../../../types";
+import type { PluginName, ResolvedPluginOptions } from "../../../types.js";
 
 import "./fixtures/pluginRegistry";
 

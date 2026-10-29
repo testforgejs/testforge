@@ -1,7 +1,7 @@
 import { VUETIFY_PLUGIN_NAME } from "../constants/constants.js";
 
 import type {} from "@testforgejs/vue-test-core";
-import type { VueTestVuetifyOptions, VuetifyInstance } from "./types";
+import type { VueTestVuetifyOptions, VuetifyInstance } from "./types.js";
 
 /**
  * TestForge core type augmentation for Vuetify integration.

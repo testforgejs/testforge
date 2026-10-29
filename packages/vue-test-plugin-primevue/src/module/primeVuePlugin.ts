@@ -3,7 +3,7 @@ import { defaultOptions } from "../defaults.js";
 import { PRIMEVUE_PLUGIN_NAME } from "../constants/constants.js";
 
 import type { PluginModuleWithDefaults } from "@testforgejs/vue-test-core";
-import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types";
+import type { VueTestPrimeVueOptions, PrimeVueMountPlugin } from "../types/types.js";
 
 /**
  * Managed PrimeVue plugin module for TestForge.

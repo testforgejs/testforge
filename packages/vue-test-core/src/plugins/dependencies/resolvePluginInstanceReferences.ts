@@ -3,7 +3,11 @@ import { isPlainObject } from "../../guards/isPlainObject.js";
 import { isPluginInstanceReference } from "./isPluginInstanceReference.js";
 import { getTraversablePluginConfigKeys } from "./getTraversablePluginConfigKeys.js";
 
-import type { PluginInstanceMap, PluginInstanceName, PluginInstanceReference } from "../../types";
+import type {
+  PluginInstanceMap,
+  PluginInstanceName,
+  PluginInstanceReference,
+} from "../../types.js";
 
 /*
  * Resolves deferred plugin instance references within a mount-scoped

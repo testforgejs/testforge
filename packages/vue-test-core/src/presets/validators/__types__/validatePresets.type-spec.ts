@@ -2,7 +2,7 @@ import { test } from "vitest";
 
 import { validatePresets } from "../validatePresets.js";
 
-import type { PresetDefinition, TestFrameworkPresets } from "../../../types";
+import type { PresetDefinition, TestFrameworkPresets } from "../../../types.js";
 import type { Equal, Expect } from "../../../../tests/utils/type-utils.js";
 
 /**

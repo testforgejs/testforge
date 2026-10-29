@@ -1,4 +1,4 @@
-import type { PluginInstanceName, PluginName } from "../../types";
+import type { PluginInstanceName, PluginName } from "../../types.js";
 
 export interface PluginDependency<TPluginName extends PluginName = PluginName> {
   readonly pluginName: TPluginName;

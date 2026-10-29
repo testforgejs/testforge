@@ -2,7 +2,7 @@ import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 
 import type { PluginDefaultOptionsFactory } from "@testforgejs/vue-test-core";
-import type { VueTestVuetifyOptions } from "./types/types";
+import type { VueTestVuetifyOptions } from "./types/types.js";
 
 /**
  * Creates the default Vuetify options used by TestForge.

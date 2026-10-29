@@ -3,7 +3,7 @@ import { validatePresets } from "../presets/validators/validatePresets.js";
 import { assertIsPlainObjectValue } from "../assertions/assertIsPlainObjectValue.js";
 import { ERROR_PREFIX } from "../constants/constants.js";
 
-import type { CreateTestFrameworkOptions } from "../types";
+import type { CreateTestFrameworkOptions } from "../types.js";
 
 /*
  * Validates createTestFramework() options.

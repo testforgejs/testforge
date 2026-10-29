@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, RuntimeContext } from "../../../types";
+import type { PipelineMiddleware, RuntimeContext } from "../../../types.js";
 
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
 

@@ -1,4 +1,4 @@
-import type { PipelineContext } from "../../src/types";
+import type { PipelineContext } from "../../src/types.js";
 import type { DeepPartial } from "./DeepPartial";
 
 export function createTestPipelineContext(

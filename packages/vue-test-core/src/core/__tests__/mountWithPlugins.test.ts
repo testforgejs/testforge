@@ -13,7 +13,7 @@ import { mount, shallowMount } from "@vue/test-utils";
 import { createPlugins } from "../../plugins/registry/createPlugins.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
 
-import type { MountReadyContext } from "../../types";
+import type { MountReadyContext } from "../../types.js";
 
 const mockMount = vi.mocked(mount);
 

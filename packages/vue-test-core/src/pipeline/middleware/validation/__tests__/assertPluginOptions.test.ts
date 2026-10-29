@@ -7,7 +7,7 @@ import type {
   PluginOverridesInput,
   ResolvedPluginOptions,
   RuntimeContext,
-} from "../../../../types";
+} from "../../../../types.js";
 
 describe("assertPluginOptions middleware", () => {
   const supportedPlugins = {
@@ -70,7 +70,7 @@ describe("assertPluginOptions middleware", () => {
           plugins: {
             pinia: {},
           },
-        },
+        } as unknown as ComponentFactoryExtraOptions,
       });
 
       expect(() => assertPluginOptions(ctx)).not.toThrow();
@@ -128,7 +128,7 @@ describe("assertPluginOptions middleware", () => {
           plugins: {
             pinia: false,
           },
-        },
+        } as unknown as ComponentFactoryExtraOptions,
       });
 
       expect(() => assertPluginOptions(ctx)).not.toThrow();

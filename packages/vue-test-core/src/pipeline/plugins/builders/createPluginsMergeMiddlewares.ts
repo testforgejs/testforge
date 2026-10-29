@@ -3,7 +3,7 @@ import type {
   RuntimeContext,
   SupportedPluginsMap,
   PluginName,
-} from "../../../types";
+} from "../../../types.js";
 
 import { createPluginMergeMiddleware } from "../../plugins/adapters/createPluginMergeMiddleware.js";
 

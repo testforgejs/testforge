@@ -4,7 +4,7 @@ import { createTestingPinia } from "@pinia/testing";
 import { MOCK_STORES } from "../constants/constants.js";
 
 import type { TestingPinia, TestingOptions } from "@pinia/testing";
-import type { PiniaRuntimeOptions } from "../types/types";
+import type { PiniaRuntimeOptions } from "../types/types.js";
 
 /*
  * Resolves a testing Pinia instance and applies optional store setup.

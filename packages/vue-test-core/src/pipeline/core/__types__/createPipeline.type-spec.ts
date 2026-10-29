@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf } from "vitest";
 
-import type { PipelineContext, PipelineMiddleware } from "../../../types";
+import type { PipelineContext, PipelineMiddleware } from "../../../types.js";
 
 import { createPipeline } from "../createPipeline.js";
 

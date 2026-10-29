@@ -3,7 +3,7 @@ import type {
   PipelineContext,
   RuntimeContext,
   PluginName,
-} from "../../../types";
+} from "../../../types.js";
 
 import { mergePluginDefaults } from "../logic/mergePluginDefaults.js";
 

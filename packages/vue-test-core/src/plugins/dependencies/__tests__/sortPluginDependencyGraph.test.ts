@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { sortPluginDependencyGraph } from "../../../plugins/dependencies/sortPluginDependencyGraph.js";
 
-import type { PluginInstanceName, PluginName } from "../../../types";
-import type { PluginDependencyGraph } from "../../../plugins/dependencies/types";
+import type { PluginInstanceName, PluginName } from "../../../types.js";
+import type { PluginDependencyGraph } from "../../../plugins/dependencies/types.js";
 
 import "./fixtures/pluginRegistry";
 

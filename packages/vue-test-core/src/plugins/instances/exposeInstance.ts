@@ -1,6 +1,6 @@
 import { PLUGIN_EXPOSE } from "../../constants/constants.js";
 
-import type { ExposeOption } from "../../types";
+import type { ExposeOption } from "../../types.js";
 
 /*
  * Passes the created plugin instance to the internal

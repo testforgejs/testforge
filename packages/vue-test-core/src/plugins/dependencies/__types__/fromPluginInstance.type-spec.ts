@@ -2,7 +2,7 @@ import { test } from "vitest";
 
 import { fromPluginInstance } from "../../../plugins/dependencies/fromPluginInstance.js";
 
-import type { PluginInstanceReference } from "../../../types";
+import type { PluginInstanceReference } from "../../../types.js";
 import type { Equal, Expect } from "../../../../tests/utils/type-utils.js";
 
 interface TestPluginInstance {
@@ -13,7 +13,7 @@ interface OtherPluginInstance {
   count: number;
 }
 
-declare module "../../../types" {
+declare module "../../../types.js" {
   interface PluginOptionsMap {
     testPlugin: object;
     otherPlugin: object;

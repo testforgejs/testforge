@@ -1,4 +1,4 @@
-import type { MergeComponentDataParams } from "../types";
+import type { MergeComponentDataParams } from "../types.js";
 
 /*
  * Merges data (props or slots) according to a 4-level hierarchy.

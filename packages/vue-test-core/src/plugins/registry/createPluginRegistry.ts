@@ -3,7 +3,7 @@ import type {
   PluginRegistry,
   PluginDefinition,
   PluginName,
-} from "../../types";
+} from "../../types.js";
 
 /*
  * Creates a runtime registry for resolving plugin definitions by name.

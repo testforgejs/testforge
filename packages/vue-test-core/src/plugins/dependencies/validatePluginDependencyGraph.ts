@@ -1,7 +1,7 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
-import type { PluginName } from "../../types";
-import type { PluginDependencyGraph } from "./types";
+import type { PluginName } from "../../types.js";
+import type { PluginDependencyGraph } from "./types.js";
 
 /*
  * Validates a managed plugin dependency graph.

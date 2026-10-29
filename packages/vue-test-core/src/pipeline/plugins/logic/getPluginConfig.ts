@@ -1,4 +1,4 @@
-import type { PipelineContext, PluginName, ResolvedPluginConfig } from "../../../types";
+import type { PipelineContext, PluginName, ResolvedPluginConfig } from "../../../types.js";
 
 import { isPluginOverlayObject } from "../../middleware/typeGuards/isPluginOverlayObject.js";
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";

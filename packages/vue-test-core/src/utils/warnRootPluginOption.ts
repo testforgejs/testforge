@@ -1,6 +1,6 @@
 import { ERROR_PREFIX } from "../constants/constants.js";
 
-import type { OptionsContext } from "../types";
+import type { OptionsContext } from "../types.js";
 
 /*
  * Emits a warning when a plugin option is placed at the root

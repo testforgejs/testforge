@@ -1,5 +1,5 @@
 import { validatePresetExtension } from "./validators/validatePresetExtension.js";
-import type { PluginConfigDefaults, PresetDefinition, PresetExtension } from "../types";
+import type { PluginConfigDefaults, PresetDefinition, PresetExtension } from "../types.js";
 
 /*
  * Extends a base preset with project-specific configuration.

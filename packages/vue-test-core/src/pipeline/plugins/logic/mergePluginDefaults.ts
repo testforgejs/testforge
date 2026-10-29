@@ -1,4 +1,4 @@
-import type { PipelineContext, PluginName } from "../../../types";
+import type { PipelineContext, PluginName } from "../../../types.js";
 
 /*
  * Shallow-merges plugin preset defaults with the resolved runtime configuration.

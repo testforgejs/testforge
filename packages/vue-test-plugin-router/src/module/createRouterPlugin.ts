@@ -2,7 +2,7 @@ import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createRouter } from "vue-router";
 
 import type { Router, RouterOptions } from "vue-router";
-import type { RouterRuntimeOptions } from "../types/types";
+import type { RouterRuntimeOptions } from "../types/types.js";
 
 /*
  * Creates or reuses a managed Vue Router instance.

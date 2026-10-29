@@ -6,7 +6,7 @@ import type {
   PipelineContextResult,
   PipelineResultPatch,
   RuntimePluginConfig,
-} from "../../../types";
+} from "../../../types.js";
 import type { MountingOptions } from "@vue/test-utils";
 
 const createCtxResult = () => ({

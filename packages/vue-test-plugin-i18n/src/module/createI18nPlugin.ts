@@ -2,7 +2,7 @@ import { createPluginInstance } from "@testforgejs/vue-test-core";
 import { createI18n } from "vue-i18n";
 
 import type { I18n, I18nOptions } from "vue-i18n";
-import type { I18nRuntimeOptions } from "../types/types";
+import type { I18nRuntimeOptions } from "../types/types.js";
 
 /*
  * Creates or reuses a managed Vue I18n instance.

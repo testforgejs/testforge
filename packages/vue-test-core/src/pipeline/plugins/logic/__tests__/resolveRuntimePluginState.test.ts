@@ -13,7 +13,7 @@ interface RuntimeStateDependencyInstance {
   id: string;
 }
 
-declare module "../../../../types" {
+declare module "../../../../types.js" {
   interface PluginInstanceMap {
     runtimeStateDependency: RuntimeStateDependencyInstance;
   }

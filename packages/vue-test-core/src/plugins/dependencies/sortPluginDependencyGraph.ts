@@ -1,5 +1,5 @@
-import type { PluginName } from "../../types";
-import type { PluginDependencyGraph } from "./types";
+import type { PluginName } from "../../types.js";
+import type { PluginDependencyGraph } from "./types.js";
 
 /**
  * Sorts a validated plugin dependency graph into plugin creation order.

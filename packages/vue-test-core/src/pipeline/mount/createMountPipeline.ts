@@ -1,4 +1,4 @@
-import type { PipelineContext } from "../../types";
+import type { PipelineContext } from "../../types.js";
 
 import {
   assertConfigurationShape,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { RuntimeExtraOptions } from "../../../../types";
+import type { RuntimeExtraOptions } from "../../../../types.js";
 
 import { getExtraPluginOptions } from "../getExtraPluginOptions";
 

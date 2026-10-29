@@ -2,7 +2,7 @@ import type {
   ComponentFactoryExtraOptions,
   TestFrameworkPresets,
   PresetDefinition,
-} from "../types";
+} from "../types.js";
 
 import { validatePreset } from "./validators/validatePreset.js";
 import { DEFAULT_PRESET_NAME } from "../constants/constants.js";

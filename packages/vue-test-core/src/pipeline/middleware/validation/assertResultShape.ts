@@ -3,7 +3,7 @@ import type {
   PipelineContext,
   RuntimeContext,
   MountReadyContext,
-} from "../../../types";
+} from "../../../types.js";
 
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 

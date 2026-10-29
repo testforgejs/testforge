@@ -2,7 +2,7 @@ import { ERROR_PREFIX } from "../constants/constants.js";
 import { validatePlainObjectArgument } from "./validatePlainObjectArgument.js";
 import { validateComponentFactoryOptions } from "./validateComponentFactoryOptions.js";
 
-import type { ComponentFactoryOptions, TestFrameworkPresets } from "../types";
+import type { ComponentFactoryOptions, TestFrameworkPresets } from "../types.js";
 
 /*
  * Validates testComponentFactory() arguments.

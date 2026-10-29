@@ -2,7 +2,7 @@ import { createVuetify } from "vuetify";
 import { createPluginInstance } from "@testforgejs/vue-test-core";
 
 import type { VuetifyOptions } from "vuetify";
-import type { VuetifyInstance, VuetifyRuntimeOptions } from "../types/types";
+import type { VuetifyInstance, VuetifyRuntimeOptions } from "../types/types.js";
 
 /*
  * Creates or reuses a managed Vuetify instance.

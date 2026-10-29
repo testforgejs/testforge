@@ -1,4 +1,4 @@
-import type { PipelineMiddleware, PipelineContext, RuntimeContext } from "../../../types";
+import type { PipelineMiddleware, PipelineContext, RuntimeContext } from "../../../types.js";
 
 import { assertIsObject } from "../typeGuards/assertIsObject.js";
 

@@ -4,7 +4,7 @@ import type {
   PipelineMiddleware,
   RuntimeContext,
   MountReadyContext,
-} from "../../types";
+} from "../../types.js";
 
 import { assertConfigurationShape } from "../middleware/validation/assertConfigurationShape.js";
 import {
@@ -181,7 +181,7 @@ describe("Pipeline Type Transformation Flow", () => {
       typeof assertPluginOptions,
     ];
 
-    type InferredContext = import("../../types").PipeResult<PipelineContext, MiddlewareChain>;
+    type InferredContext = import("../../types.js").PipeResult<PipelineContext, MiddlewareChain>;
 
     expectTypeOf<InferredContext>().toEqualTypeOf<RuntimeContext>();
   });

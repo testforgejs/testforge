@@ -5,7 +5,7 @@ import {
 } from "../../constants/constants.js";
 
 import type { Plugin } from "vue";
-import type { RuntimePluginOptions } from "../../types";
+import type { RuntimePluginOptions } from "../../types.js";
 
 /*
  * Creates a Vue Test Utils compatible plugin tuple for install-based Vue plugins.

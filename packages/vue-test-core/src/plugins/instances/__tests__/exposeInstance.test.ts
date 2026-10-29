@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from "vitest";
 import { exposeInstance } from "../exposeInstance.js";
 import { PLUGIN_EXPOSE } from "../../../constants/constants.js";
 
-import type { ExposeOption } from "../../../types";
+import type { ExposeOption } from "../../../types.js";
 
 describe("exposeInstance", () => {
   describe("when capture callback is provided", () => {

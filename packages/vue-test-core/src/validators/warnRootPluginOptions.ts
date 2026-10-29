@@ -6,7 +6,7 @@ import type {
   ComponentFactoryExtraOptions,
   TestFrameworkPresets,
   OptionsContext,
-} from "../types";
+} from "../types.js";
 
 /*
  * Warns when plugin options are placed at the root level instead

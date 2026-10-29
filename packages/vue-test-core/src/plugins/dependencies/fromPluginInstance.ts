@@ -1,5 +1,9 @@
-import { PLUGIN_INSTANCE_REFERENCE_TYPE } from "../../types";
-import type { PluginInstanceMap, PluginInstanceName, PluginInstanceReference } from "../../types";
+import { PLUGIN_INSTANCE_REFERENCE_TYPE } from "../../types.js";
+import type {
+  PluginInstanceMap,
+  PluginInstanceName,
+  PluginInstanceReference,
+} from "../../types.js";
 
 /**
  * Creates a deferred reference to another managed plugin's runtime instance.

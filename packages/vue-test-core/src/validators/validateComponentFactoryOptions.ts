@@ -7,7 +7,7 @@ import type {
   ComponentFactoryExtraOptions,
   TestFrameworkPresets,
   OptionsContext,
-} from "../types";
+} from "../types.js";
 
 /*
  * Validates ComponentFactoryOptions objects used by TestForge.

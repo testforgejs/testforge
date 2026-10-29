@@ -1,4 +1,4 @@
-import type { ComponentFactoryExtraOptions, RuntimeExtraOptions } from "../../../types";
+import type { ComponentFactoryExtraOptions, RuntimeExtraOptions } from "../../../types.js";
 
 /*
  * Converts public extraOptions input into runtime-ready overlay state.

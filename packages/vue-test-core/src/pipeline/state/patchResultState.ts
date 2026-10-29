@@ -1,4 +1,4 @@
-import type { PipelineContext, PipelineResultPatch } from "../../types";
+import type { PipelineContext, PipelineResultPatch } from "../../types.js";
 
 import { mergeRecord } from "./mergeRecord.js";
 

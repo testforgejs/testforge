@@ -1,6 +1,6 @@
 import { getPresetManifest } from "./getPresetManifest.js";
 
-import type { PresetDefinition, SupportedPluginsMap } from "../types";
+import type { PresetDefinition, SupportedPluginsMap } from "../types.js";
 
 /*
  * Creates a capability map of plugins supported by the active preset.

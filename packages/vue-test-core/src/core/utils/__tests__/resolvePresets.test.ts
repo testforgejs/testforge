@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { PresetDefinition } from "../../../types";
+import type { PresetDefinition } from "../../../types.js";
 import { resolvePresets } from "../resolvePresets.js";
 
 describe("resolvePresets", () => {

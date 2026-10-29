@@ -6,7 +6,7 @@ import {
 
 import { isPluginInstanceReference } from "../../../plugins/dependencies/isPluginInstanceReference.js";
 
-import type { PluginName, ResolvedPluginConfig, RuntimePluginState } from "../../../types";
+import type { PluginName, ResolvedPluginConfig, RuntimePluginState } from "../../../types.js";
 
 /*
  * Converts a resolved plugin configuration into runtime state.

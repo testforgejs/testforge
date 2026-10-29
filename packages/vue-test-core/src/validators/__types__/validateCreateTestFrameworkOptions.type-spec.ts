@@ -2,7 +2,7 @@ import { test } from "vitest";
 
 import { validateCreateTestFrameworkOptions } from "../validateCreateTestFrameworkOptions.js";
 
-import type { CreateTestFrameworkOptions } from "../../types";
+import type { CreateTestFrameworkOptions } from "../../types.js";
 import type { Equal, Expect } from "../../../tests/utils/type-utils.js";
 
 /**

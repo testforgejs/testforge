@@ -1,6 +1,6 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 import { isPlainObject } from "../../guards/isPlainObject";
-import type { PluginOptionsFactory } from "../../types";
+import type { PluginOptionsFactory } from "../../types.js";
 
 /*
  * Builds plugin options from a validated options factory.

@@ -16,7 +16,7 @@ export { vuetifyPlugin, vuetifyPlugin as plugin } from "./module/vuetifyPlugin.j
 export { VUETIFY_PLUGIN_NAME as PLUGIN_NAME } from "./constants/constants.js";
 
 // Plugin types
-export * from "./types/types";
+export * from "./types/types.js";
 
 // Standardized public options type
-export type { VueTestVuetifyOptions as PluginOptions } from "./types/types";
+export type { VueTestVuetifyOptions as PluginOptions } from "./types/types.js";

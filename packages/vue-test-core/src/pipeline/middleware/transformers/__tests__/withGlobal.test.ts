@@ -13,7 +13,7 @@ import { mergeConfigs } from "../../../../utils/mergeConfigs.js";
 import { patchResultState } from "../../../state/patchResultState.js";
 import { withGlobal } from "../withGlobal.js";
 
-import type { RuntimeContext } from "../../../../types";
+import type { RuntimeContext } from "../../../../types.js";
 
 const mockMergeConfigs = vi.mocked(mergeConfigs);
 const mockPatchResultState = vi.mocked(patchResultState);

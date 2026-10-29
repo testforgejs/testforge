@@ -6,7 +6,7 @@ import type {
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
   TestFrameworkPresets,
-} from "../types";
+} from "../types.js";
 
 /*
  * Validates component factory invocation arguments.

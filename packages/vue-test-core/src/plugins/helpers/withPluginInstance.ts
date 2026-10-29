@@ -1,6 +1,6 @@
 import { PLUGIN_META_KEY } from "../../constants/constants.js";
 
-import type { PluginInstanceInput } from "../../types";
+import type { PluginInstanceInput } from "../../types.js";
 
 /*
  * Configures TestForge to reuse an existing managed plugin instance.

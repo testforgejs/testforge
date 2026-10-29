@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import type { PipelineContext } from "../../../types";
+import type { PipelineContext } from "../../../types.js";
 
 // mock BEFORE import
 vi.mock("../runPipeline.js", () => ({

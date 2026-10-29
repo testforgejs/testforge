@@ -1,5 +1,5 @@
 import { DeepPartial } from "packages/vue-test-core/tests/utils/DeepPartial";
-import type { PipelineContext, RuntimeContext } from "../../types";
+import type { PipelineContext, RuntimeContext } from "../../types.js";
 
 export const createMockCtx = <T extends PipelineContext = RuntimeContext>(
   overrides: DeepPartial<T> = {},

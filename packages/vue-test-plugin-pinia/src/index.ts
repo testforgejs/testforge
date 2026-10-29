@@ -18,7 +18,7 @@ export { PINIA_PLUGIN_NAME as PLUGIN_NAME } from "./constants/constants.js";
 export { withMockStores } from "./helpers/withMockStores.js";
 
 // Plugin types
-export * from "./types/types";
+export * from "./types/types.js";
 
 // Standardized public options type
-export type { VueTestPiniaOptions as PluginOptions } from "./types/types";
+export type { VueTestPiniaOptions as PluginOptions } from "./types/types.js";

@@ -3,7 +3,7 @@ import { test } from "vitest";
 import { isPluginOverlayObject } from "../isPluginOverlayObject.js";
 import { PLUGIN_META_KEY } from "../../../../constants/constants.js";
 
-import type { PluginMeta } from "../../../../types";
+import type { PluginMeta } from "../../../../types.js";
 
 test("should narrow unknown to a plugin overlay object with valid metadata", () => {
   const value: unknown = {};

@@ -1,4 +1,4 @@
-import type { ResolvedPluginOptions, SupportedPluginsMap } from "../../../types";
+import type { ResolvedPluginOptions, SupportedPluginsMap } from "../../../types.js";
 
 /*
  * Removes plugins that are not registered in the supported plugins map.

@@ -1,4 +1,4 @@
-import type { PluginName, ResolvedPluginOptions, RuntimePluginConfig } from "../../types";
+import type { PluginName, ResolvedPluginOptions, RuntimePluginConfig } from "../../types.js";
 
 export interface ActivePlugin {
   name: PluginName;

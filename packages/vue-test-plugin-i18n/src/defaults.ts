@@ -1,5 +1,5 @@
 import type { PluginDefaultOptionsFactory } from "@testforgejs/vue-test-core";
-import type { VueTestI18nOptions } from "./types/types";
+import type { VueTestI18nOptions } from "./types/types.js";
 
 /**
  * Creates the default Vue I18n options used by TestForge.

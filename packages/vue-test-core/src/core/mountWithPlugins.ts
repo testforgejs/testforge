@@ -5,7 +5,7 @@ import type {
   ComponentPropsInput,
   ComponentSlotsInput,
   ComponentDataInput,
-} from "../types";
+} from "../types.js";
 import type { Component } from "vue";
 
 import { mount, shallowMount } from "@vue/test-utils";

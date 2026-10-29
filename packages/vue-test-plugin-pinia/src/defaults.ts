@@ -1,5 +1,5 @@
 import type { PluginDefaultOptionsFactory } from "@testforgejs/vue-test-core";
-import type { VueTestPiniaOptions } from "./types/types";
+import type { VueTestPiniaOptions } from "./types/types.js";
 
 /**
  * Creates the default Pinia options used by TestForge.
