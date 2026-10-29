@@ -1,5 +1,67 @@
 # @testforgejs/vue-test-core
 
+## 1.0.0-beta.6
+
+### Major Changes
+
+- 88b28e0: **BREAKING CHANGE:** Replace string-keyed `__meta.instance` with the `withPluginInstance()` helper for reusing pre-created plugin instances.
+
+  Plugin instance metadata now uses an internal `Symbol` key instead of the reserved `__meta` property, preventing collisions with native plugin configuration options.
+
+  To migrate, replace:
+
+  ```ts
+  plugins: {
+    pinia: {
+      __meta: {
+        instance: existingPinia,
+      },
+    },
+  }
+  ```
+
+  with:
+
+  ```ts
+  import { withPluginInstance } from "@testforgejs/vue-test-core";
+
+  plugins: {
+    pinia: {
+      ...withPluginInstance(existingPinia),
+    },
+  }
+  ```
+
+  The `withPluginInstance()` helper requires a pre-created plugin instance and cannot accept deferred references created by `fromPluginInstance()`.
+
+  Existing integrations with `captureInstance()` and plugin-specific helpers such as Pinia's `withMockStores()` remain supported.
+
+### Minor Changes
+
+- d8d172f: Refine managed plugin instance typing and capabilities.
+
+  - Use `PluginInstanceMap` as the source of truth for managed instance support.
+  - Restrict `captureInstance()` and `withPluginInstance()` to plugins registered in `PluginInstanceMap`.
+  - Preserve type-safe instance capturing and reuse through registered instance types.
+  - Explicitly reject instance controls for install-based plugins without managed instances.
+  - Separate public plugin configuration types from internal runtime instance controls.
+  - Introduce dedicated runtime options for Pinia, Router, I18n, and Vuetify.
+  - Expand type tests covering supported, unsupported, and incompatible plugin instances.
+
+  - **BREAKING (TypeScript):** Remove the `PluginControlOptions`
+    export. Managed instance controls are now provided automatically
+    for plugins registered in `PluginInstanceMap`.
+
+- 59be31d: Extend `withPluginInstance()` support to `defaultMountOptions.plugins` and `mountOptions.plugins`, in addition to `extraOptions.plugins`.
+
+  Pre-created plugin instances can now be shared across mounts through factory defaults or overridden for individual mounts. Instance metadata is resolved from the effective plugin configuration while preserving existing configuration precedence and isolation between pipeline runs.
+
+### Patch Changes
+
+- 5251456: Fix plugin disabling via `extraOptions.plugins` by correctly applying explicit `false` overrides to the runtime plugin state.
+
+  Ensure disabled plugins remain disabled throughout subsequent pipeline stages.
+
 ## 1.0.0-beta.5
 
 ### Major Changes

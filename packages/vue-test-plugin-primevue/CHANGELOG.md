@@ -1,5 +1,24 @@
 # @testforgejs/vue-test-plugin-primevue
 
+## 1.0.0-beta.6
+
+### Minor Changes
+
+- 5218a01: Standardize the `PluginOptions` type export across all plugin packages.
+
+  - Expose public plugin configuration types under the consistent `PluginOptions` name.
+  - Preserve existing descriptive type exports for backward compatibility.
+  - Enable type-safe preset generation without plugin-specific knowledge of configuration type names.
+  - Support the same package-level contract for factory-based and install-based plugins.
+
+### Patch Changes
+
+- Updated dependencies [d8d172f]
+- Updated dependencies [88b28e0]
+- Updated dependencies [5251456]
+- Updated dependencies [59be31d]
+  - @testforgejs/vue-test-core@1.0.0-beta.6
+
 ## 1.0.0-beta.5
 
 ### Patch Changes

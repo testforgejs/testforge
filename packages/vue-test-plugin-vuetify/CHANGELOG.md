@@ -1,5 +1,38 @@
 # @testforgejs/vue-test-plugin-vuetify
 
+## 1.0.0-beta.7
+
+### Minor Changes
+
+- d8d172f: Refine managed plugin instance typing and capabilities.
+
+  - Use `PluginInstanceMap` as the source of truth for managed instance support.
+  - Restrict `captureInstance()` and `withPluginInstance()` to plugins registered in `PluginInstanceMap`.
+  - Preserve type-safe instance capturing and reuse through registered instance types.
+  - Explicitly reject instance controls for install-based plugins without managed instances.
+  - Separate public plugin configuration types from internal runtime instance controls.
+  - Introduce dedicated runtime options for Pinia, Router, I18n, and Vuetify.
+  - Expand type tests covering supported, unsupported, and incompatible plugin instances.
+
+  - **BREAKING (TypeScript):** Remove the `PluginControlOptions`
+    export. Managed instance controls are now provided automatically
+    for plugins registered in `PluginInstanceMap`.
+
+- 5218a01: Standardize the `PluginOptions` type export across all plugin packages.
+
+  - Expose public plugin configuration types under the consistent `PluginOptions` name.
+  - Preserve existing descriptive type exports for backward compatibility.
+  - Enable type-safe preset generation without plugin-specific knowledge of configuration type names.
+  - Support the same package-level contract for factory-based and install-based plugins.
+
+### Patch Changes
+
+- Updated dependencies [d8d172f]
+- Updated dependencies [88b28e0]
+- Updated dependencies [5251456]
+- Updated dependencies [59be31d]
+  - @testforgejs/vue-test-core@1.0.0-beta.6
+
 ## 1.0.0-beta.6
 
 ### Patch Changes
