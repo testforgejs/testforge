@@ -19,6 +19,11 @@ import type {
  * - skipDefaultProps must be a boolean when provided
  * - skipDefaultSlots must be a boolean when provided
  * - skipDefaultOptions must be a boolean when provided
+ *
+ * Preset selection:
+ * - extraOptions.presetKey contains the effective preset key
+ * - factory-level defaults are resolved by the caller
+ * - mountOptions validation uses the effective preset
  */
 export function validateComponentFactoryArguments(
   props: unknown,
@@ -28,12 +33,14 @@ export function validateComponentFactoryArguments(
   presets: TestFrameworkPresets = {},
 ): void {
   validatePlainObjectArgument(props, "props");
+
   validateComponentFactoryOptions(
     mountOptions as ComponentFactoryOptions,
     "mountOptions",
     presets,
     extraOptions as ComponentFactoryExtraOptions,
   );
+
   validatePlainObjectArgument(slots, "slots");
 
   validateComponentFactoryExtraOptions(extraOptions as ComponentFactoryExtraOptions, presets);

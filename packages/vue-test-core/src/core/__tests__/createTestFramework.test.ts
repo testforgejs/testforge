@@ -425,7 +425,7 @@ describe("createTestFramework → testComponentFactory", () => {
           expect(warnSpy).not.toHaveBeenCalled();
         });
 
-        it("should always use the default preset for defaultMountOptions validation", () => {
+        it("should use the default preset for positional factory validation", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
           const presets = {
@@ -466,6 +466,87 @@ describe("createTestFramework → testComponentFactory", () => {
           expect(warnSpy).toHaveBeenCalledTimes(1);
 
           expect(warnSpy.mock.calls[0][0]).toContain('"defaultMountOptions"');
+        });
+
+        describe("factory-level preset validation", () => {
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+            admin: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "pinia",
+                    getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          it("should use the factory preset for defaultMountOptions validation", () => {
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+            try {
+              const { testComponentFactory } = createTestFramework({ presets });
+
+              // Pinia is registered in "admin", but not in "default".
+              testComponentFactory.withOptions({
+                component,
+                presetKey: "admin",
+                defaultMountOptions: {
+                  pinia: {},
+                } as unknown as ComponentFactoryOptions,
+              });
+
+              expect(warnSpy).toHaveBeenCalledTimes(1);
+
+              expect(warnSpy.mock.calls[0][0]).toContain(
+                'Detected plugin option "pinia" at the root of "defaultMountOptions"',
+              );
+
+              expect(warnSpy.mock.calls[0][0]).toContain(
+                'Did you mean to use "defaultMountOptions.plugins.pinia"?',
+              );
+            } finally {
+              warnSpy.mockRestore();
+            }
+          });
+
+          it("should not warn about plugins registered only in other presets", () => {
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+            try {
+              const { testComponentFactory } = createTestFramework({ presets });
+
+              // I18n is registered only in "default", not in "admin".
+              testComponentFactory.withOptions({
+                component,
+                presetKey: "admin",
+                defaultMountOptions: {
+                  i18n: {},
+                } as unknown as ComponentFactoryOptions,
+              });
+
+              expect(warnSpy).not.toHaveBeenCalled();
+            } finally {
+              warnSpy.mockRestore();
+            }
+          });
         });
       });
     });
@@ -799,6 +880,141 @@ describe("createTestFramework → testComponentFactory", () => {
           expect(warnSpy).not.toHaveBeenCalled();
         });
       });
+    });
+  });
+
+  describe("withOptions validation", () => {
+    const component = { name: "TestComponent" };
+
+    it("should reject an unknown preset key during factory creation", () => {
+      const { testComponentFactory } = createTestFramework({
+        presets: {
+          default: { manifest: [], defaults: {} },
+          admin: { manifest: [], defaults: {} },
+        },
+      });
+
+      expect(() => {
+        testComponentFactory.withOptions({
+          component,
+          presetKey: "unknown",
+        });
+      }).toThrow('Preset "unknown" is not registered.');
+
+      expect(createPipelineContext).not.toHaveBeenCalled();
+      expect(mountWithPlugins).not.toHaveBeenCalled();
+    });
+
+    it("should validate defaultProps through the existing validator", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      expect(() => {
+        testComponentFactory.withOptions({
+          component,
+          defaultProps: 123,
+        } as never);
+      }).toThrow('"defaultProps" must be a plain object.');
+    });
+
+    it("should validate defaultMountOptions through the existing validator", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      expect(() => {
+        testComponentFactory.withOptions({
+          component,
+          defaultMountOptions: [],
+        } as never);
+      }).toThrow('"defaultMountOptions" must be a plain object.');
+    });
+
+    it("should validate defaultSlots through the existing validator", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      expect(() => {
+        testComponentFactory.withOptions({
+          component,
+          defaultSlots: 123,
+        } as never);
+      }).toThrow('"defaultSlots" must be a plain object.');
+    });
+  });
+
+  describe("withOptions", () => {
+    it("should preserve all factory creation options", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const component = { name: "TestComponent" };
+
+      const defaultProps = {
+        id: 123,
+        title: "Default title",
+      };
+
+      const defaultSlots = {
+        default: () => "Default slot",
+      };
+
+      const defaultMountOptions = {
+        shallow: true,
+        props: {
+          disabled: false,
+        },
+        slots: {
+          header: () => "Header slot",
+        },
+        global: {
+          stubs: {
+            AppButton: true,
+          },
+        },
+      };
+
+      const factory = testComponentFactory.withOptions({
+        component,
+        defaultProps,
+        defaultMountOptions,
+        defaultSlots,
+      });
+
+      factory();
+
+      // 1. Component is passed to the mounting function.
+      expect(mountWithPlugins).toHaveBeenCalledWith(
+        component,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+      );
+
+      // 2. Default props are preserved.
+      expect(mergeComponentData).toHaveBeenNthCalledWith(1, {
+        defaultMountData: defaultMountOptions.props,
+        defaultData: defaultProps,
+        mountData: undefined,
+        directData: {},
+        skipDefault: false,
+        skipOptions: false,
+      });
+
+      // 3. Default slots are preserved.
+      expect(mergeComponentData).toHaveBeenNthCalledWith(2, {
+        defaultMountData: defaultMountOptions.slots,
+        defaultData: defaultSlots,
+        mountData: undefined,
+        directData: {},
+        skipDefault: false,
+        skipOptions: false,
+      });
+
+      // 4. Default mount options are passed to the pipeline.
+      expect(createPipelineContext).toHaveBeenCalledWith({
+        defaultMountOptions,
+        mountOptions: {},
+        extraOptions: {},
+        presets: expect.any(Object),
+      });
+
+      expect(mountWithPlugins).toHaveBeenCalledTimes(1);
     });
   });
 });

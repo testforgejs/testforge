@@ -660,5 +660,115 @@ describe("Plugin Integration", () => {
         }).toThrow('Plugin "router" is configured but not supported by the active preset.');
       });
     });
+
+    describe("Factory-level Preset Selection", () => {
+      it("should use the preset selected via withOptions", () => {
+        const factory = testComponentFactory.withOptions({
+          component: MockComponent,
+          presetKey: "i18nPreset",
+        });
+
+        factory();
+
+        // Only i18n should be created by the selected preset.
+        expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        // Verify the plugins passed to Vue Test Utils.
+        const [, options] = mockMount.mock.calls[0];
+
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).not.toContain(mockPiniaInstance);
+        expect(options.global.plugins).toHaveLength(1);
+
+        expect(mockMount).toHaveBeenCalledTimes(1);
+      });
+
+      it("should override the factory preset via extraOptions.presetKey", () => {
+        const factory = testComponentFactory.withOptions({
+          component: MockComponent,
+          presetKey: "i18nPreset",
+        });
+
+        // Override the factory-level preset for this mount.
+        factory({}, {}, {}, { presetKey: "default" });
+
+        // The default preset enables both i18n and Pinia.
+        expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        const [, options] = mockMount.mock.calls[0];
+
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).toContain(mockPiniaInstance);
+        expect(options.global.plugins).toHaveLength(2);
+
+        expect(mockMount).toHaveBeenCalledTimes(1);
+      });
+
+      it("should restore the factory preset after a mount-level override", () => {
+        const factory = testComponentFactory.withOptions({
+          component: MockComponent,
+          presetKey: "i18nPreset",
+        });
+
+        // First mount: use the factory-level preset.
+        factory();
+
+        const [, firstMountOptions] = mockMount.mock.calls[0];
+
+        expect(firstMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(firstMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+        expect(firstMountOptions.global.plugins).toHaveLength(1);
+
+        // Second mount: override the factory preset.
+        factory({}, {}, {}, { presetKey: "default" });
+
+        const [, secondMountOptions] = mockMount.mock.calls[1];
+
+        expect(secondMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(secondMountOptions.global.plugins).toContain(mockPiniaInstance);
+        expect(secondMountOptions.global.plugins).toHaveLength(2);
+
+        // Third mount: the factory-level preset must be restored.
+        factory();
+
+        const [, thirdMountOptions] = mockMount.mock.calls[2];
+
+        expect(thirdMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(thirdMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+        expect(thirdMountOptions.global.plugins).toHaveLength(1);
+
+        // Verify cumulative plugin creation.
+        expect(mockI18nCreate).toHaveBeenCalledTimes(3);
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).toHaveBeenCalledTimes(3);
+
+        // Later mounts must not mutate earlier mount configurations.
+        expect(firstMountOptions.global.plugins).toHaveLength(1);
+        expect(firstMountOptions.global.plugins).toContain(mockI18nInstance);
+
+        expect(secondMountOptions.global.plugins).toHaveLength(2);
+        expect(secondMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(secondMountOptions.global.plugins).toContain(mockPiniaInstance);
+      });
+
+      it("should reject an unknown factory preset before mounting", () => {
+        expect(() => {
+          testComponentFactory.withOptions({
+            component: MockComponent,
+            presetKey: "unknownPreset",
+          });
+        }).toThrow('Preset "unknownPreset" is not registered.');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+    });
   });
 });

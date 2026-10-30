@@ -295,6 +295,31 @@ export type ComponentDataInput<T extends Component> = Partial<ComponentData<T>>;
 
 export type PresetKey = keyof TestFrameworkPresets;
 
+export interface ComponentFactoryConfig {
+  /** Select the default preset for this component factory. */
+  presetKey?: PresetKey;
+}
+
+export interface ComponentFactoryCreationOptions<
+  T extends Component,
+> extends ComponentFactoryConfig {
+  /** Vue component for which the factory is created. */
+  component: T;
+
+  /** Default props applied to each mount. */
+  defaultProps?: ComponentPropsInput<NoInfer<T>>;
+
+  /** Default mounting options applied to each mount. */
+  defaultMountOptions?: ComponentFactoryOptions<
+    ComponentPropsInput<NoInfer<T>>,
+    ComponentSlotsInput<NoInfer<T>>,
+    ComponentDataInput<NoInfer<T>>
+  >;
+
+  /** Default slots applied to each mount. */
+  defaultSlots?: ComponentSlotsInput<NoInfer<T>>;
+}
+
 export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
   MountingOptions<Props, Data>,
   "props" | "slots" | "data"
@@ -356,6 +381,10 @@ export interface ComponentFactoryCreator {
       ComponentDataInput<T>
     >,
     defaultSlots?: ComponentSlotsInput<T>,
+  ): ComponentFactory<T>;
+
+  withOptions<T extends Component>(
+    options: ComponentFactoryCreationOptions<T>,
   ): ComponentFactory<T>;
 }
 

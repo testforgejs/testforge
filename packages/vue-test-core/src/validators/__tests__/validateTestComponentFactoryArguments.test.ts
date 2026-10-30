@@ -64,10 +64,11 @@ describe("validateTestComponentFactoryArguments", () => {
 
       validateTestComponentFactoryArguments(component, {}, defaultMountOptions, {}, {});
 
-      expect(validateComponentFactoryOptions).toHaveBeenCalledWith(
+      expect(validateComponentFactoryOptions).toHaveBeenCalledExactlyOnceWith(
         defaultMountOptions,
         "defaultMountOptions",
         {},
+        undefined,
       );
     });
 
@@ -87,10 +88,77 @@ describe("validateTestComponentFactoryArguments", () => {
 
       validateTestComponentFactoryArguments(component, {}, defaultMountOptions, {}, presets);
 
-      expect(validateComponentFactoryOptions).toHaveBeenCalledWith(
+      expect(validateComponentFactoryOptions).toHaveBeenCalledExactlyOnceWith(
         defaultMountOptions,
         "defaultMountOptions",
         presets,
+        undefined,
+      );
+    });
+
+    it("should pass the factory presetKey to validateComponentFactoryOptions", () => {
+      const component = {};
+
+      const presets = {
+        default: {
+          manifest: [],
+          defaults: {},
+        },
+        admin: {
+          manifest: [],
+          defaults: {},
+        },
+      };
+
+      const defaultMountOptions = {
+        shallow: true,
+      };
+
+      validateTestComponentFactoryArguments(
+        component,
+        {},
+        defaultMountOptions,
+        {},
+        presets,
+        "admin",
+      );
+
+      expect(validateComponentFactoryOptions).toHaveBeenCalledExactlyOnceWith(
+        defaultMountOptions,
+        "defaultMountOptions",
+        presets,
+        { presetKey: "admin" },
+      );
+    });
+
+    it("should forward an explicitly selected default preset", () => {
+      const component = {};
+
+      const presets = {
+        default: {
+          manifest: [],
+          defaults: {},
+        },
+      };
+
+      const defaultMountOptions = {
+        shallow: true,
+      };
+
+      validateTestComponentFactoryArguments(
+        component,
+        {},
+        defaultMountOptions,
+        {},
+        presets,
+        "default",
+      );
+
+      expect(validateComponentFactoryOptions).toHaveBeenCalledExactlyOnceWith(
+        defaultMountOptions,
+        "defaultMountOptions",
+        presets,
+        { presetKey: "default" },
       );
     });
   });

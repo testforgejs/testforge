@@ -1,6 +1,7 @@
 import type {
   CreateTestFrameworkOptions,
   ComponentFactoryCreator,
+  ComponentFactoryCreationOptions,
   ComponentFactory,
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
@@ -9,7 +10,9 @@ import type {
   ComponentDataInput,
   TestFramework,
   MountRuntimeOptions,
+  PresetKey,
 } from "../types.js";
+
 import type { Component } from "vue";
 
 import { mergeComponentData } from "../utils/mergeComponentData.js";
@@ -20,6 +23,7 @@ import { mountWithPlugins } from "./mountWithPlugins.js";
 import { validateCreateTestFrameworkOptions } from "../validators/validateCreateTestFrameworkOptions.js";
 import { validateTestComponentFactoryArguments } from "../validators/validateTestComponentFactoryArguments.js";
 import { validateComponentFactoryArguments } from "../validators/validateComponentFactoryArguments.js";
+import { validateComponentFactoryCreationOptions } from "../validators/validateComponentFactoryCreationOptions.js";
 import { resolvePresets } from "./utils/resolvePresets.js";
 
 /*
@@ -33,19 +37,20 @@ import { resolvePresets } from "./utils/resolvePresets.js";
  */
 export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
   validateCreateTestFrameworkOptions(options);
+
   const { shallowByDefault = false } = options;
   const presets = resolvePresets(options);
 
   /*
-   * Creates a reusable component mounting factory.
+   * Internal component factory implementation.
    *
-   * The resulting factory supports:
-   * - default props and slots
-   * - plugin-aware mount configuration
-   * - preset-based plugin resolution
-   * - runtime mount pipeline processing
+   * Supports a factory-level preset selection while preserving
+   * the existing positional API.
+   *
+   * The factoryPresetKey parameter is internal and is not exposed
+   * through the public positional signature.
    */
-  const testComponentFactory: ComponentFactoryCreator = <T extends Component>(
+  const createComponentFactory = <T extends Component>(
     component: T,
     defaultProps: ComponentPropsInput<T> = {},
     defaultMountOptions: ComponentFactoryOptions<
@@ -54,6 +59,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       ComponentDataInput<T>
     > = {},
     defaultSlots: ComponentSlotsInput<T> = {},
+    factoryPresetKey?: PresetKey,
   ): ComponentFactory<T> => {
     validateTestComponentFactoryArguments(
       component,
@@ -61,6 +67,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       defaultMountOptions,
       defaultSlots,
       presets,
+      factoryPresetKey,
     );
 
     return (
@@ -73,13 +80,20 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       slots: ComponentSlotsInput<T> = {},
       extraOptions: ComponentFactoryExtraOptions = {},
     ) => {
+      // Validate the original mount arguments before applying factory defaults.
       validateComponentFactoryArguments(props, mountOptions, slots, extraOptions, presets);
+
+      // Mount-level preset selection overrides the factory-level default.
+      const resolvedExtraOptions: ComponentFactoryExtraOptions = {
+        ...extraOptions,
+        presetKey: extraOptions.presetKey ?? factoryPresetKey,
+      };
 
       const {
         skipDefaultProps = false,
         skipDefaultSlots = false,
         skipDefaultOptions = false,
-      } = extraOptions;
+      } = resolvedExtraOptions;
 
       // Resolve final props
       const finalProps = mergeComponentData({
@@ -105,7 +119,7 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       const ctx = createPipelineContext({
         defaultMountOptions,
         mountOptions,
-        extraOptions,
+        extraOptions: resolvedExtraOptions,
         presets,
       });
 
@@ -129,6 +143,39 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       );
     };
   };
+
+  /*
+   * Object-based component factory API.
+   *
+   * Adapts the creation options to the existing internal
+   * component factory implementation.
+   */
+  const withOptions = <T extends Component>(
+    options: ComponentFactoryCreationOptions<T>,
+  ): ComponentFactory<T> => {
+    validateComponentFactoryCreationOptions(options, presets);
+
+    const { component, presetKey, defaultProps, defaultMountOptions, defaultSlots } = options;
+
+    return createComponentFactory(
+      component,
+      defaultProps,
+      defaultMountOptions,
+      defaultSlots,
+      presetKey,
+    );
+  };
+
+  /*
+   * Public component factory creator.
+   *
+   * Supports both:
+   * - testComponentFactory(Component, ...)
+   * - testComponentFactory.withOptions({ component, ... })
+   */
+  const testComponentFactory: ComponentFactoryCreator = Object.assign(createComponentFactory, {
+    withOptions,
+  });
 
   return { testComponentFactory };
 }

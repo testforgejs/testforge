@@ -2,7 +2,7 @@ import { ERROR_PREFIX } from "../constants/constants.js";
 import { validatePlainObjectArgument } from "./validatePlainObjectArgument.js";
 import { validateComponentFactoryOptions } from "./validateComponentFactoryOptions.js";
 
-import type { ComponentFactoryOptions, TestFrameworkPresets } from "../types.js";
+import type { ComponentFactoryOptions, TestFrameworkPresets, PresetKey } from "../types.js";
 
 /*
  * Validates testComponentFactory() arguments.
@@ -12,6 +12,9 @@ import type { ComponentFactoryOptions, TestFrameworkPresets } from "../types.js"
  * - defaultProps must be a plain object
  * - defaultMountOptions must be a plain object
  * - defaultSlots must be a plain object
+ *
+ * Default mount options are validated against the factory-level
+ * preset when provided, or the default preset otherwise.
  */
 export function validateTestComponentFactoryArguments(
   component: unknown,
@@ -19,6 +22,7 @@ export function validateTestComponentFactoryArguments(
   defaultMountOptions: unknown,
   defaultSlots: unknown,
   presets: TestFrameworkPresets,
+  presetKey?: PresetKey,
 ): void {
   // Vue component
   const isComponent =
@@ -29,10 +33,12 @@ export function validateTestComponentFactoryArguments(
   }
 
   validatePlainObjectArgument(defaultProps, "defaultProps");
+
   validateComponentFactoryOptions(
     defaultMountOptions as ComponentFactoryOptions,
     "defaultMountOptions",
     presets,
+    presetKey === undefined ? undefined : { presetKey },
   );
 
   validatePlainObjectArgument(defaultSlots, "defaultSlots");
