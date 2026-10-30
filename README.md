@@ -295,7 +295,7 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.preset
+→ runtime selection through extraOptions.presetKey
 ```
 
 For most projects, starting with:
@@ -429,7 +429,7 @@ const wrapper = factory(
   {},
   {},
   {
-    preset: "designSystem",
+    presetKey: "designSystem",
   },
 );
 ```
@@ -444,7 +444,7 @@ Conceptually:
 createTestFramework({ presets })
 → registers multiple runtime profiles
 
-extraOptions.preset
+extraOptions.presetKey
 → selects one profile for an invocation
 ```
 
@@ -1071,7 +1071,7 @@ factory(
   {},
   {},
   {
-    preset: "routerPreset",
+    presetKey: "routerPreset",
   },
 );
 ```

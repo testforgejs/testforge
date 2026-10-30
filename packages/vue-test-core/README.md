@@ -95,7 +95,7 @@ createTestFramework({
 
 These options cannot be used together.
 
-A single `preset` is treated as the framework's `default` preset internally. A `presets` registry allows individual component factory invocations to select a named preset through `extraOptions.preset`.
+A single `preset` is treated as the framework's `default` preset internally. A `presets` registry allows individual component factory invocations to select a named preset through `extraOptions.presetKey`.
 
 For example:
 
@@ -114,7 +114,7 @@ factory(
   {},
   {},
   {
-    preset: "i18n",
+    presetKey: "i18n",
   },
 );
 ```

@@ -43,7 +43,7 @@ describe("validateComponentFactoryArguments", () => {
       };
 
       const extraOptions = {
-        preset: "default",
+        presetKey: "default",
       };
 
       const presets = {
@@ -99,7 +99,7 @@ describe("validateComponentFactoryArguments", () => {
       };
 
       const extraOptions = {
-        preset: "default",
+        presetKey: "default",
       };
 
       validateComponentFactoryArguments({}, {}, {}, extraOptions, presets);

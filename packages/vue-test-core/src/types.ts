@@ -293,6 +293,8 @@ export type ComponentData<T extends Component> = T extends { data?(...args: any)
 
 export type ComponentDataInput<T extends Component> = Partial<ComponentData<T>>;
 
+export type PresetKey = keyof TestFrameworkPresets;
+
 export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
   MountingOptions<Props, Data>,
   "props" | "slots" | "data"
@@ -315,7 +317,7 @@ export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> e
 
 export type ComponentFactoryExtraOptions = {
   /** Select the preset used for this factory call. */
-  preset?: keyof TestFrameworkPresets;
+  presetKey?: PresetKey;
 
   /** Skip factory-level default props. */
   skipDefaultProps?: boolean;

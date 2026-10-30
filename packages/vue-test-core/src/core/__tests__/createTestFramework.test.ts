@@ -110,12 +110,12 @@ describe("createTestFramework → testComponentFactory", () => {
 
       const factory = testComponentFactory(component);
 
-      factory({}, {}, {}, { preset: "abcd" });
+      factory({}, {}, {}, { presetKey: "abcd" });
 
       expect(createPipelineContext).toHaveBeenCalledWith({
         defaultMountOptions: {},
         mountOptions: {},
-        extraOptions: { preset: "abcd" },
+        extraOptions: { presetKey: "abcd" },
         presets,
       });
     });

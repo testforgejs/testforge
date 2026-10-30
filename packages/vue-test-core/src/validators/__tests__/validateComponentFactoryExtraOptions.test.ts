@@ -67,7 +67,7 @@ describe("validateComponentFactoryExtraOptions", () => {
       };
 
       const options = {
-        preset: "default",
+        presetKey: "default",
         plugins: {},
       };
 
@@ -90,7 +90,7 @@ describe("validateComponentFactoryExtraOptions", () => {
   describe("preset resolution", () => {
     it("should pass extraOptions as the preset lookup source", () => {
       const options = {
-        preset: "custom",
+        presetKey: "custom",
       };
 
       validateComponentFactoryExtraOptions(options);

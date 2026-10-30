@@ -121,7 +121,7 @@ i18nPreset
 routerPreset
 ```
 
-Named presets registered through `presets` can be selected for individual component factory invocations through `extraOptions.preset`.
+Named presets registered through `presets` can be selected for individual component factory invocations through `extraOptions.presetKey`.
 
 In general:
 
@@ -131,7 +131,7 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.preset
+→ runtime selection through extraOptions.presetKey
 ```
 
 ## Plugin Defaults
@@ -737,7 +737,7 @@ factory(
   {},
   {},
   {
-    preset: "i18nPreset",
+    presetKey: "i18nPreset",
   },
 );
 ```
@@ -755,11 +755,11 @@ createTestFramework({ preset })
 createTestFramework({ presets })
 → registers multiple named runtime environments
 
-extraOptions.preset
+extraOptions.presetKey
 → selects one registered runtime environment for a factory invocation
 ```
 
-Runtime selection through `extraOptions.preset` applies to named presets registered through `presets`.
+Runtime selection through `extraOptions.presetKey` applies to named presets registered through `presets`.
 
 ## Preset Isolation
 
@@ -779,7 +779,7 @@ factory(
   },
   {},
   {
-    preset: "i18nPreset",
+    presetKey: "i18nPreset",
   },
 );
 ```

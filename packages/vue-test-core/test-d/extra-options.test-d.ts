@@ -71,13 +71,37 @@ expectError<ComponentFactoryExtraOptions>({
 });
 
 const validFlags: ComponentFactoryExtraOptions = {
-  preset: "default",
+  presetKey: "default",
   skipDefaultProps: true,
   skipDefaultSlots: true,
   skipDefaultOptions: true,
 };
 
 expectType<ComponentFactoryExtraOptions>(validFlags);
+
+// Preset selection uses a registry key rather than a preset definition.
+
+const validPresetKey: ComponentFactoryExtraOptions = {
+  presetKey: "admin",
+};
+
+expectType<ComponentFactoryExtraOptions>(validPresetKey);
+
+// Legacy preset selector is no longer supported.
+
+expectError<ComponentFactoryExtraOptions>({
+  preset: "admin",
+});
+
+// Preset keys must be strings.
+
+expectError<ComponentFactoryExtraOptions>({
+  presetKey: 123,
+});
+
+expectError<ComponentFactoryExtraOptions>({
+  presetKey: null,
+});
 
 expectError<ComponentFactoryExtraOptions>({
   skipDefaultOptions: "yes",

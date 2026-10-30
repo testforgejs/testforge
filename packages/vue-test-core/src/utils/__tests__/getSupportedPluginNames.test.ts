@@ -49,7 +49,7 @@ describe("getSupportedPluginNames", () => {
     it("should return plugin names from the requested preset", () => {
       expect(
         getSupportedPluginNames(presets, {
-          preset: "custom",
+          presetKey: "custom",
         }),
       ).toEqual(["router"]);
     });

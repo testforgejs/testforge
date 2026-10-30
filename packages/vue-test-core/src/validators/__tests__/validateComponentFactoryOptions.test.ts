@@ -62,7 +62,7 @@ describe("validateComponentFactoryOptions", () => {
       };
 
       const extraOptions = {
-        preset: "default",
+        presetKey: "default",
       };
 
       const options = {

@@ -878,7 +878,7 @@ factory(
   {},
   {},
   {
-    preset: "e2eLike",
+    presetKey: "e2eLike",
   },
 );
 ```
@@ -886,7 +886,7 @@ factory(
 This allows a single factory to execute against a different registered runtime profile.
 
 > [!NOTE]
-> `extraOptions.preset` is relevant when the framework was created with `createTestFramework({ presets })`.
+> `extraOptions.presetKey` is relevant when the framework was created with `createTestFramework({ presets })`.
 >
 > When the framework is created with a single `preset`, that preset is the framework's default runtime environment and no runtime profile selection is required.
 

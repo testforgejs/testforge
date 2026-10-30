@@ -210,7 +210,7 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.preset
+→ runtime selection through extraOptions.presetKey
 ```
 
 A single `preset` is internally treated as the framework's default environment.
@@ -555,7 +555,7 @@ factory(
   {},
   {},
   {
-    preset: "router",
+    presetKey: "router",
   },
 );
 ```

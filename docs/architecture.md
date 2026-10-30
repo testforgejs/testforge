@@ -803,7 +803,7 @@ These two options define different framework configuration modes and cannot be u
 
 ### Selecting a Preset at Factory Invocation Time
 
-When a framework is created with a preset registry, `extraOptions.preset` selects one of the named profiles from that registry for the current factory invocation:
+When a framework is created with a preset registry, `extraOptions.presetKey` selects one of the named profiles from that registry for the current factory invocation:
 
 ```typescript
 factory(
@@ -811,7 +811,7 @@ factory(
   {},
   {},
   {
-    preset: "i18nPreset",
+    presetKey: "i18nPreset",
   },
 );
 ```
@@ -827,11 +827,11 @@ createTestFramework({ preset })
 createTestFramework({ presets })
 → provides a named collection of runtime environments
 
-extraOptions.preset
+extraOptions.presetKey
 → selects one registered runtime environment
 ```
 
-`extraOptions.preset` therefore applies only when the framework was created with `presets`.
+`extraOptions.presetKey` therefore applies only when the framework was created with `presets`.
 
 ### Runtime Capability Boundary
 
@@ -851,7 +851,7 @@ factory(
   },
   {},
   {
-    preset: "i18nPreset",
+    presetKey: "i18nPreset",
   },
 );
 ```
@@ -869,7 +869,7 @@ Preset composition and runtime configuration are separate stages:
 - `extendPreset()` constructs a new preset definition before the framework runtime is created;
 - `createTestFramework({ preset })` supplies a single complete runtime environment;
 - `createTestFramework({ presets })` supplies a named collection of complete runtime environments;
-- `extraOptions.preset` selects one named preset for a factory invocation;
+- `extraOptions.presetKey` selects one named preset for a factory invocation;
 - `mountOptions.plugins` and `extraOptions.plugins` modify managed plugin configuration within the selected runtime environment.
 
 These mechanisms should not be treated as equivalent forms of inheritance.
@@ -1036,7 +1036,7 @@ createTestFramework({
 
 The two forms differ in how the framework configuration exposes available runtime environments.
 
-Once the framework has been created with a registry, a factory invocation can select a named preset through `extraOptions.preset`:
+Once the framework has been created with a registry, a factory invocation can select a named preset through `extraOptions.presetKey`:
 
 ```typescript
 factory(
@@ -1044,7 +1044,7 @@ factory(
   {},
   {},
   {
-    preset: "router",
+    presetKey: "router",
   },
 );
 ```
@@ -1212,7 +1212,7 @@ The key principles are:
 - `createTestFramework({ preset })` configures a framework with one default runtime environment.
 - `createTestFramework({ presets })` configures a framework with a registry of named runtime environments.
 - `preset` and `presets` are mutually exclusive framework configuration forms.
-- `extraOptions.preset` selects a named runtime environment for an individual factory invocation.
+- `extraOptions.presetKey` selects a named runtime environment for an individual factory invocation.
 - `mountOptions.plugins` replaces managed plugin configuration at a more local scope.
 - `extraOptions.plugins` provides a targeted shallow overlay.
 - Mutable plugin runtime state must remain isolated between component factory invocations.

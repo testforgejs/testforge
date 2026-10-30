@@ -74,7 +74,7 @@ These options are mutually exclusive.
 
 Use `preset` when the framework needs one runtime environment. Use `presets` when the project needs multiple named runtime profiles and runtime selection between them.
 
-A single `preset` is internally treated as the framework's `default` preset.
+A single `preset` is internally treated as the framework's `default` preset. When using a `presets` registry, an individual mount can select a registered profile with `extraOptions.presetKey`; this selection key is not a preset definition.
 
 > [!NOTE]
 > This guide focuses on preset authoring rather than package installation.
@@ -314,7 +314,7 @@ The registry can contain multiple independent runtime profiles.
 
 Registry keys such as `i18n` or `router` are user-defined runtime profile names. They are separate from plugin identifiers used as keys inside a preset's `defaults` object.
 
-A component factory invocation can then select a specific profile by name through `extraOptions.preset`.
+A mount created by `testComponentFactory()` can select a registered runtime profile by its key through `extraOptions.presetKey`. This selects a profile for that mount; it does not supply a new preset definition.
 
 Use `presets` when:
 
@@ -345,7 +345,7 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.preset
+→ runtime selection through extraOptions.presetKey
 ```
 
 ---
@@ -406,7 +406,7 @@ factory(
   },
   {},
   {
-    preset: "i18n",
+    presetKey: "i18n",
   },
 );
 ```
@@ -725,7 +725,7 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The `default` preset is used when no other named preset is selected for a factory invocation.
+The `default` preset is used when no other registered preset is selected for a mount.
 
 For a project-specific registry, the `default` profile should represent the runtime environment required by the majority of that project's component tests.
 
@@ -1188,9 +1188,9 @@ project-owned preset
 
 ## 9. Selecting a Preset at Runtime
 
-The name `preset` appears at two different API levels in TestForge.
+TestForge distinguishes between **preset definitions** and **preset selection**. The `preset` option of `createTestFramework()` receives a complete `PresetDefinition`, while `extraOptions.presetKey` selects a registered preset by its registry key for an individual mount. These are different kinds of values.
 
-### Framework-level `preset`
+### Framework-level `preset` (definition)
 
 When passed to `createTestFramework()`, `preset` contains a complete `PresetDefinition`:
 
@@ -1216,9 +1216,9 @@ const factory = testComponentFactory(MyComponent);
 factory();
 ```
 
-### Factory-level `extraOptions.preset`
+### Mount-level `extraOptions.presetKey` (selection)
 
-When using a named preset registry, `extraOptions.preset` contains the **name** of a registered preset:
+When using a named preset registry, `extraOptions.presetKey` contains a **key** of that registry, not a `PresetDefinition`:
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
@@ -1235,7 +1235,7 @@ factory(
   {},
   {},
   {
-    preset: "i18n",
+    presetKey: "i18n",
   },
 );
 ```
@@ -1243,8 +1243,10 @@ factory(
 This means:
 
 ```text
-use the "i18n" runtime profile for this factory invocation
+use the "i18n" runtime profile for this mount
 ```
+
+`presetKey` belongs to the `extraOptions` argument of the returned `factory()` function. It is **not** currently an option of `testComponentFactory()` itself. The same component factory can therefore mount the component using different registered presets in separate calls.
 
 Therefore:
 
@@ -1255,8 +1257,8 @@ createTestFramework({ preset })
 createTestFramework({ presets })
 → registers named PresetDefinition objects
 
-extraOptions.preset
-→ selects one registered preset by name
+extraOptions.presetKey
+→ selects one registered preset by its registry key for a mount
 ```
 
 Runtime switching between multiple profiles requires a named registry supplied through `presets`.
@@ -1293,7 +1295,7 @@ Selecting:
 
 ```typescript
 {
-  preset: "i18n",
+  presetKey: "i18n",
 }
 ```
 
@@ -2001,14 +2003,12 @@ For TestForge-maintained reusable Vue testing infrastructure, the package struct
         │
         │ runner-independent composition
         │
-        ├───────────────┐
-        ▼               ▼
-@testforgejs/      @testforgejs/
-vue-test-preset-   vue-test-preset-
-recommended        recommended-jest
-        │               │
-        ▼               ▼
-      Vitest            Jest
+        ├─────────────────────────────────────────────────────────┐
+        ▼                                                         ▼
+@testforgejs/vue-test-preset-recommended          @testforgejs/vue-test-preset-recommended-jest
+        │                                                         │
+        ▼                                                         ▼
+      Vitest                                                     Jest
 ```
 
 These packages are different from project-owned presets.
@@ -2150,7 +2150,7 @@ The key principles are:
 - a single `preset` is internally treated as `default`;
 - a preset registry should normally provide a `default` profile;
 - preset registry keys are runtime profile names and are independent of plugin identifiers;
-- factory-level `extraOptions.preset` selects a named profile from the registry;
+- mount-level `extraOptions.presetKey` selects a registered profile by key for an individual factory call;
 - runtime preset selection requires a registry created through `presets`;
 - runtime presets are complete profiles rather than overlays;
 - `extendPreset()` composes reusable preset definitions;

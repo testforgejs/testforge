@@ -416,11 +416,69 @@ describe("Plugin Integration", () => {
   });
 
   describe("Using Presets", () => {
+    it("should select presets independently across factory calls", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      // First mount: i18n-only preset.
+      factory({}, {}, {}, { presetKey: "i18nPreset" });
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+      const [, firstMountOptions] = mockMount.mock.calls[0];
+
+      expect(firstMountOptions.global.plugins).toContain(mockI18nInstance);
+      expect(firstMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+      expect(firstMountOptions.global.plugins).toHaveLength(1);
+
+      // Second mount: preset with i18n disabled.
+      factory({}, {}, {}, { presetKey: "i18nDisabledPreset" });
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+      const [, secondMountOptions] = mockMount.mock.calls[1];
+
+      expect(secondMountOptions.global.plugins || []).toHaveLength(0);
+
+      // Third mount: no explicit preset, so the default must be restored.
+      factory();
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(2);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+
+      const [, thirdMountOptions] = mockMount.mock.calls[2];
+
+      expect(thirdMountOptions.global.plugins).toContain(mockI18nInstance);
+      expect(thirdMountOptions.global.plugins).toContain(mockPiniaInstance);
+      expect(thirdMountOptions.global.plugins).toHaveLength(2);
+
+      expect(mockMount).toHaveBeenCalledTimes(3);
+
+      // Earlier mount configurations must remain unchanged.
+      expect(firstMountOptions.global.plugins).toEqual([mockI18nInstance]);
+      expect(secondMountOptions.global.plugins || []).toHaveLength(0);
+    });
+
+    it("should reject an unknown preset key", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      expect(() => {
+        factory({}, {}, {}, { presetKey: "unknownPreset" });
+      }).toThrow();
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockRouterCreate).not.toHaveBeenCalled();
+
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+
     it("should add default i18n and pinia plugins when switching to `lightweightPreset` via extraOptions", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Switch the preset using the 4th argument
-      factory({}, {}, {}, { preset: "lightweightPreset" });
+      factory({}, {}, {}, { presetKey: "lightweightPreset" });
 
       // 1. Verify that the plugins from the lightweight preset have been created
       expect(mockI18nCreate).toHaveBeenCalledWith(
@@ -443,7 +501,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Enable the preset that contains only i18n
-      factory({}, {}, {}, { preset: "i18nPreset" });
+      factory({}, {}, {}, { presetKey: "i18nPreset" });
 
       // 1. Verifying contracts: i18n is created, pinia is not
       expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "en" }));
@@ -463,7 +521,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Use i18nPreset, but override the language to ‘fr’ via mountOptions
-      factory({}, { plugins: { i18n: { locale: "fr" } } }, {}, { preset: "i18nPreset" });
+      factory({}, { plugins: { i18n: { locale: "fr" } } }, {}, { presetKey: "i18nPreset" });
 
       // 1. Verify that pinia was not created (a feature of i18nPreset)
       expect(mockPiniaCreate).not.toHaveBeenCalled();
@@ -484,7 +542,7 @@ describe("Plugin Integration", () => {
     it("should skip plugin initialization when it is disabled in the preset manifest", () => {
       const factory = testComponentFactory(MockComponent);
 
-      factory({}, {}, {}, { preset: "i18nDisabledPreset" });
+      factory({}, {}, {}, { presetKey: "i18nDisabledPreset" });
 
       expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
@@ -496,7 +554,7 @@ describe("Plugin Integration", () => {
     it("should override preset manifest and skip plugin when options are set to false", () => {
       const factory = testComponentFactory(MockComponent);
 
-      factory({}, { plugins: { i18n: false } }, {}, { preset: "i18nPreset" });
+      factory({}, { plugins: { i18n: false } }, {}, { presetKey: "i18nPreset" });
 
       expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
@@ -509,7 +567,7 @@ describe("Plugin Integration", () => {
     it("should not throw when defaultMountOptions contains additional plugins", () => {
       const factory = testComponentFactory(MockComponent, {}, { plugins: { pinia: {} } });
       factory({});
-      expect(() => factory({}, {}, {}, { preset: "i18nPreset" })).not.toThrow();
+      expect(() => factory({}, {}, {}, { presetKey: "i18nPreset" })).not.toThrow();
     });
 
     describe("Plugin Options Validation Errors", () => {
@@ -523,7 +581,7 @@ describe("Plugin Integration", () => {
         it(`should throw an error when "${type}" is passed to plugin options`, () => {
           const factory = testComponentFactory(MockComponent);
           expect(() => {
-            factory({}, { plugins: { i18n: value } }, {}, { preset: "i18nPreset" });
+            factory({}, { plugins: { i18n: value } }, {}, { presetKey: "i18nPreset" });
           }).toThrow(
             new RegExp(
               `Expected Object or Boolean \\(false\\), but received ${type
@@ -537,7 +595,7 @@ describe("Plugin Integration", () => {
       it("should NOT throw an error when `false` is passed", () => {
         const factory = testComponentFactory(MockComponent);
         expect(() => {
-          factory({}, { plugins: { i18n: false } }, {}, { preset: "i18nPreset" });
+          factory({}, { plugins: { i18n: false } }, {}, { presetKey: "i18nPreset" });
         }).not.toThrow();
       });
     });
@@ -556,7 +614,7 @@ describe("Plugin Integration", () => {
             },
             {},
             {
-              preset: "i18nPreset",
+              presetKey: "i18nPreset",
             },
           );
         }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
@@ -577,7 +635,7 @@ describe("Plugin Integration", () => {
             },
             {},
             {
-              preset: "i18nPreset",
+              presetKey: "i18nPreset",
             },
           );
         }).not.toThrow();
@@ -596,7 +654,7 @@ describe("Plugin Integration", () => {
             },
             {},
             {
-              preset: "i18nPreset",
+              presetKey: "i18nPreset",
             },
           );
         }).toThrow('Plugin "router" is configured but not supported by the active preset.');

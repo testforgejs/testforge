@@ -1307,7 +1307,7 @@ describe("Mount Pipeline Integration", () => {
     });
 
     it("should switch to specific preset via extraOptions", () => {
-      const extraOptions = { preset: "custom" };
+      const extraOptions = { presetKey: "custom" };
       const result = run(defaultPresets, {}, {}, extraOptions);
 
       const i18nConfig = result.plugins.i18n as RuntimePluginConfig;
@@ -1315,7 +1315,7 @@ describe("Mount Pipeline Integration", () => {
     });
 
     it("should throw error when requested preset does not exist", () => {
-      const extraOptions = { preset: "non-existent" };
+      const extraOptions = { presetKey: "non-existent" };
 
       expect(() => {
         run(defaultPresets, {}, {}, extraOptions);
@@ -1360,7 +1360,7 @@ describe("Mount Pipeline Integration", () => {
     });
 
     it("should include only plugins from the specific manifest when custom preset is selected", () => {
-      const extraOptions = { preset: "custom" };
+      const extraOptions = { presetKey: "custom" };
       const result = run(defaultPresets, {}, {}, extraOptions);
 
       // In the ‘custom’ preset, only i18n

@@ -24,11 +24,11 @@ describe("runPipeline", () => {
   });
 
   it("should pass updated ctx to the next middleware", () => {
-    const updatedCtx = createMockCtx({ extraOptions: { preset: "x" } });
+    const updatedCtx = createMockCtx({ extraOptions: { presetKey: "x" } });
     const m1 = vi.fn(() => updatedCtx);
 
     const m2 = vi.fn((ctx) => {
-      expect(ctx.extraOptions).toEqual({ preset: "x" });
+      expect(ctx.extraOptions).toEqual({ presetKey: "x" });
       return ctx;
     });
 

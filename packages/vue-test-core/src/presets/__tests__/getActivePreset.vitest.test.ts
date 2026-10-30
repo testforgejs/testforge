@@ -17,7 +17,7 @@ describe("getActivePreset", () => {
 
   describe("when a valid preset is requested", () => {
     it("should return the requested preset by name from extraOptions", () => {
-      const extraOptions = { preset: "custom" };
+      const extraOptions = { presetKey: "custom" };
       const result = getActivePreset(mockPresets, extraOptions);
 
       expect(result).toEqual(mockPresets.custom);
@@ -36,15 +36,15 @@ describe("getActivePreset", () => {
       expect(result).toEqual(mockPresets.default);
     });
 
-    it("should return the default preset when extraOptions.preset is an empty string", () => {
-      const extraOptions = { preset: "" };
+    it("should return the default preset when extraOptions.presetKey is an empty string", () => {
+      const extraOptions = { presetKey: "" };
       const result = getActivePreset(mockPresets, extraOptions);
 
       expect(result).toEqual(mockPresets.default);
     });
 
-    it("should return the default preset when extraOptions.preset contains only spaces", () => {
-      const extraOptions = { preset: "   " };
+    it("should return the default preset when extraOptions.presetKey contains only spaces", () => {
+      const extraOptions = { presetKey: "   " };
       const result = getActivePreset(mockPresets, extraOptions);
 
       expect(result).toEqual(mockPresets.default);
@@ -60,7 +60,7 @@ describe("getActivePreset", () => {
 
   describe("preset validation contract", () => {
     it("should call validatePreset with requested preset", () => {
-      getActivePreset(mockPresets, { preset: "custom" });
+      getActivePreset(mockPresets, { presetKey: "custom" });
 
       expect(validateModule.validatePreset).toHaveBeenCalledWith("custom", mockPresets.custom);
     });
@@ -85,7 +85,7 @@ describe("getActivePreset", () => {
 
   describe("error handling and edge cases", () => {
     it("should throw an error when the requested preset does not exist", () => {
-      const extraOptions = { preset: "non-existent" };
+      const extraOptions = { presetKey: "non-existent" };
 
       expect(() => {
         getActivePreset(mockPresets, extraOptions);
@@ -93,7 +93,7 @@ describe("getActivePreset", () => {
     });
 
     it("should not crash and return default when preset property is explicitly undefined", () => {
-      const extraOptions = { preset: undefined };
+      const extraOptions = { presetKey: undefined };
 
       expect(() => getActivePreset(mockPresets, extraOptions)).not.toThrow();
       expect(getActivePreset(mockPresets, extraOptions)).toEqual(mockPresets.default);

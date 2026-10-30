@@ -11,7 +11,7 @@ import { DEFAULT_PRESET_NAME } from "../constants/constants.js";
  * Retrieves the active preset based on the call parameters and available presets.
  *
  * Selection logic:
- * 1. If `extraOptions.preset` is specified → try to find it, otherwise throw.
+ * 1. If `extraOptions.presetKey` is specified → try to find it, otherwise throw.
  * 2. If not specified → try to use preset named "default".
  * 3. If preset exists → it is validated via `validatePreset`.
  */
@@ -19,7 +19,7 @@ export function getActivePreset(
   presets: TestFrameworkPresets = {},
   extraOptions?: ComponentFactoryExtraOptions,
 ): PresetDefinition | undefined {
-  const requestedPresetName = extraOptions?.preset?.trim();
+  const requestedPresetName = extraOptions?.presetKey?.trim();
   const activeName = requestedPresetName || DEFAULT_PRESET_NAME;
   const preset = presets[activeName];
 

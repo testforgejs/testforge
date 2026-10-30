@@ -27,13 +27,13 @@ describe("createPipelineContext", () => {
     const ctx = createPipelineContext({
       defaultMountOptions: { attrs: { a: 1 } },
       mountOptions: { attrs: { b: 2 } },
-      extraOptions: { preset: "presetA" },
+      extraOptions: { presetKey: "presetA" },
       presets: { default: { manifest: [], defaults: {} } },
     });
 
     expect(ctx.defaultMountOptions).toEqual({ attrs: { a: 1 } });
     expect(ctx.mountOptions).toEqual({ attrs: { b: 2 } });
-    expect(ctx.extraOptions).toEqual({ preset: "presetA" });
+    expect(ctx.extraOptions).toEqual({ presetKey: "presetA" });
     expect(ctx.preset).toEqual({ manifest: [], defaults: {} });
   });
 
@@ -42,13 +42,13 @@ describe("createPipelineContext", () => {
     mockCreateSupportedPluginsState.mockReturnValue({});
 
     createPipelineContext({
-      extraOptions: { preset: "presetA" },
+      extraOptions: { presetKey: "presetA" },
       presets: { presetA: { manifest: [], defaults: {} } },
     });
 
     expect(mockGetActivePreset).toHaveBeenCalledWith(
       { presetA: { manifest: [], defaults: {} } },
-      { preset: "presetA" },
+      { presetKey: "presetA" },
     );
   });
 
