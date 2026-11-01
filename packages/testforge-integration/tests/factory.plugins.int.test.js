@@ -465,7 +465,7 @@ describe("Plugin Integration", () => {
 
       expect(() => {
         factory({}, {}, {}, { presetKey: "unknownPreset" });
-      }).toThrow();
+      }).toThrow(/unknownPreset/);
 
       expect(mockI18nCreate).not.toHaveBeenCalled();
       expect(mockPiniaCreate).not.toHaveBeenCalled();
@@ -564,10 +564,29 @@ describe("Plugin Integration", () => {
       expect(options.global.plugins || []).toHaveLength(0);
     });
 
-    it("should not throw when defaultMountOptions contains additional plugins", () => {
-      const factory = testComponentFactory(MockComponent, {}, { plugins: { pinia: {} } });
-      factory({});
-      expect(() => factory({}, {}, {}, { presetKey: "i18nPreset" })).not.toThrow();
+    it("should allow mounting without an active preset when default is not registered", () => {
+      const { testComponentFactory: createFactory } = createTestFramework({
+        presets: {
+          custom: {
+            manifest: [],
+            defaults: {},
+          },
+        },
+      });
+
+      const factory = createFactory(MockComponent);
+
+      expect(() => factory()).not.toThrow();
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockRouterCreate).not.toHaveBeenCalled();
+
+      expect(mockMount).toHaveBeenCalledTimes(1);
+
+      const [, options] = mockMount.mock.calls[0];
+
+      expect(options.global?.plugins ?? []).toHaveLength(0);
     });
 
     describe("Plugin Options Validation Errors", () => {
@@ -658,6 +677,29 @@ describe("Plugin Integration", () => {
             },
           );
         }).toThrow('Plugin "router" is configured but not supported by the active preset.');
+      });
+
+      it("should reject unknown plugins in mountOptions for the selected preset", () => {
+        const factory = testComponentFactory(MockComponent);
+
+        expect(() => {
+          factory(
+            {},
+            {
+              plugins: {
+                unknownPlugin: {},
+              },
+            },
+            {},
+            { presetKey: "i18nPreset" },
+          );
+        }).toThrow('Plugin "unknownPlugin" is configured but not supported by the active preset.');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).not.toHaveBeenCalled();
       });
     });
 
@@ -821,6 +863,287 @@ describe("Plugin Integration", () => {
         expect(secondMountOptions.global.plugins).toContain(mockI18nInstance);
         expect(secondMountOptions.global.plugins).toContain(mockPiniaInstance);
         expect(secondMountOptions.global.plugins).toHaveLength(2);
+      });
+
+      it("should ignore unsupported default plugins during a mount-level preset override", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              pinia: {
+                stubActions: true,
+              },
+            },
+          },
+          {},
+          { presetKey: "default" },
+        );
+
+        // First mount: use the factory-level preset.
+        factory();
+
+        const [, firstMountOptions] = mockMount.mock.calls[0];
+
+        expect(firstMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(firstMountOptions.global.plugins).toContain(mockPiniaInstance);
+        expect(firstMountOptions.global.plugins).toHaveLength(2);
+
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+        expect(mockPiniaCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            stubActions: true,
+          }),
+        );
+
+        // Second mount: switch to i18nPreset, which does not support Pinia.
+        expect(() => {
+          factory({}, {}, {}, { presetKey: "i18nPreset" });
+        }).not.toThrow();
+
+        const [, secondMountOptions] = mockMount.mock.calls[1];
+
+        expect(secondMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(secondMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+        expect(secondMountOptions.global.plugins).toHaveLength(1);
+
+        // The unsupported default Pinia configuration must not initialize Pinia.
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+
+        // Third mount: return to the factory-level preset.
+        factory();
+
+        const [, thirdMountOptions] = mockMount.mock.calls[2];
+
+        expect(thirdMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(thirdMountOptions.global.plugins).toContain(mockPiniaInstance);
+        expect(thirdMountOptions.global.plugins).toHaveLength(2);
+
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(2);
+        expect(mockI18nCreate).toHaveBeenCalledTimes(3);
+
+        expect(mockMount).toHaveBeenCalledTimes(3);
+
+        // Previous mount configurations must remain unchanged.
+        expect(firstMountOptions.global.plugins).toHaveLength(2);
+        expect(secondMountOptions.global.plugins).toHaveLength(1);
+      });
+
+      it("should reject unsupported default plugins when selecting a factory-level preset", () => {
+        expect(() => {
+          testComponentFactory(
+            MockComponent,
+            {},
+            {
+              plugins: {
+                pinia: {},
+              },
+            },
+            {},
+            { presetKey: "i18nPreset" },
+          );
+        }).toThrow('Plugin "pinia" is configured but not supported by preset "i18nPreset".');
+
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should accept supported default plugins in the factory preset", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {
+            plugins: {
+              i18n: {
+                locale: "fr",
+              },
+            },
+          },
+          {},
+          { presetKey: "i18nPreset" },
+        );
+
+        expect(() => factory()).not.toThrow();
+
+        expect(mockI18nCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            locale: "fr",
+          }),
+        );
+
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+      });
+
+      it("should reject unsupported mountOptions plugins inherited from the factory preset", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {},
+          {},
+          { presetKey: "i18nPreset" },
+        );
+
+        // Pinia is not supported by the factory-level preset.
+        expect(() => {
+          factory(
+            {},
+            {
+              plugins: {
+                pinia: {},
+              },
+            },
+          );
+        }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should reject unsupported extraOptions plugins inherited from the factory preset", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {},
+          {},
+          { presetKey: "i18nPreset" },
+        );
+
+        expect(() => {
+          factory(
+            {},
+            {},
+            {},
+            {
+              plugins: {
+                pinia: {},
+              },
+            },
+          );
+        }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should allow mountOptions plugins supported by the mount-level preset override", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {},
+          {},
+          { presetKey: "i18nPreset" },
+        );
+
+        // Temporarily switch to the default preset, which supports Pinia.
+        expect(() => {
+          factory(
+            {},
+            {
+              plugins: {
+                pinia: {
+                  stubActions: true,
+                },
+              },
+            },
+            {},
+            {
+              presetKey: "default",
+            },
+          );
+        }).not.toThrow();
+
+        expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockPiniaCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            stubActions: true,
+          }),
+        );
+
+        const [, options] = mockMount.mock.calls[0];
+
+        expect(options.global.plugins).toContain(mockI18nInstance);
+        expect(options.global.plugins).toContain(mockPiniaInstance);
+        expect(options.global.plugins).toHaveLength(2);
+
+        expect(mockMount).toHaveBeenCalledTimes(1);
+      });
+
+      it("should reject unsupported default plugins with the object-based factory API", () => {
+        expect(() => {
+          testComponentFactory.withOptions({
+            component: MockComponent,
+            presetKey: "i18nPreset",
+            defaultMountOptions: {
+              plugins: {
+                pinia: {},
+              },
+            },
+          });
+        }).toThrow('Plugin "pinia" is configured but not supported by preset "i18nPreset".');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should reject mountOptions plugins unsupported by the mount-level preset override", () => {
+        const factory = testComponentFactory(MockComponent, {}, {}, {}, { presetKey: "default" });
+
+        // Pinia is supported by the factory preset,
+        // but not by the mount-level preset.
+        expect(() => {
+          factory(
+            {},
+            {
+              plugins: {
+                pinia: {},
+              },
+            },
+            {},
+            { presetKey: "i18nPreset" },
+          );
+        }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should reject extraOptions plugins unsupported by the mount-level preset override", () => {
+        const factory = testComponentFactory(MockComponent, {}, {}, {}, { presetKey: "default" });
+
+        // Pinia is supported by the factory preset,
+        // but not by the mount-level preset.
+        expect(() => {
+          factory(
+            {},
+            {},
+            {},
+            {
+              presetKey: "i18nPreset",
+              plugins: {
+                pinia: {},
+              },
+            },
+          );
+        }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).not.toHaveBeenCalled();
       });
     });
   });

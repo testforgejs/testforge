@@ -2,7 +2,7 @@ import type { PipelineMiddleware, RuntimeContext } from "../../../types.js";
 
 import { resolveExtraOptions } from "../../plugins/logic/resolveExtraOptions";
 
-import { assertUnsupportedPlugins } from "./validators/assertUnsupportedPlugins";
+import { assertUnsupportedPlugins } from "../../../validators/assertUnsupportedPlugins.js";
 import { assertExtraOptionUnsupportedPlugins } from "./validators/assertExtraOptionUnsupportedPlugins";
 import { assertResolvedPluginValues } from "./validators/assertResolvedPluginValues";
 import { assertExtraOptionPluginValues } from "./validators/assertExtraOptionPluginValues";

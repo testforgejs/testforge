@@ -12,18 +12,12 @@ import type {
  * Validates component factory invocation arguments.
  *
  * Validation rules:
- * - props must be a plain object
- * - mountOptions must be a plain object
- * - slots must be a plain object
- * - extraOptions must be a plain object
- * - skipDefaultProps must be a boolean when provided
- * - skipDefaultSlots must be a boolean when provided
- * - skipDefaultOptions must be a boolean when provided
- *
- * Preset selection:
- * - extraOptions.presetKey contains the effective preset key
- * - factory-level defaults are resolved by the caller
+ * - props, mountOptions, slots, and extraOptions must be plain objects
+ * - extraOptions is validated before preset-dependent mount options
  * - mountOptions validation uses the effective preset
+ *
+ * The caller resolves factory-level preset defaults before invoking
+ * this validator.
  */
 export function validateComponentFactoryArguments(
   props: unknown,
@@ -34,14 +28,15 @@ export function validateComponentFactoryArguments(
 ): void {
   validatePlainObjectArgument(props, "props");
 
+  validatePlainObjectArgument(slots, "slots");
+
+  // Validate preset selection before using it to inspect mountOptions.
+  validateComponentFactoryExtraOptions(extraOptions as ComponentFactoryExtraOptions, presets);
+
   validateComponentFactoryOptions(
     mountOptions as ComponentFactoryOptions,
     "mountOptions",
     presets,
     extraOptions as ComponentFactoryExtraOptions,
   );
-
-  validatePlainObjectArgument(slots, "slots");
-
-  validateComponentFactoryExtraOptions(extraOptions as ComponentFactoryExtraOptions, presets);
 }

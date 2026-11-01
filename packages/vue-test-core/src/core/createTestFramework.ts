@@ -25,7 +25,9 @@ import { validateTestComponentFactoryArguments } from "../validators/validateTes
 import { validateComponentFactoryArguments } from "../validators/validateComponentFactoryArguments.js";
 import { validateComponentFactoryCreationOptions } from "../validators/validateComponentFactoryCreationOptions.js";
 import { resolvePresets } from "./utils/resolvePresets.js";
+import { validatePlainObjectArgument } from "../validators/validatePlainObjectArgument.js";
 import { validateComponentFactoryConfig } from "../validators/validateComponentFactoryConfig.js";
+import { validateFactoryPresetPlugins } from "../validators/validateFactoryPresetPlugins.js";
 
 /*
  * Creates the main TestFramework instance.
@@ -75,6 +77,8 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       factoryPresetKey,
     );
 
+    validateFactoryPresetPlugins(defaultMountOptions, factoryPresetKey, presets);
+
     return (
       props: ComponentPropsInput<T> = {},
       mountOptions: ComponentFactoryOptions<
@@ -85,14 +89,21 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       slots: ComponentSlotsInput<T> = {},
       extraOptions: ComponentFactoryExtraOptions = {},
     ) => {
-      // Validate the original mount arguments before applying factory defaults.
-      validateComponentFactoryArguments(props, mountOptions, slots, extraOptions, presets);
+      // Validate the raw argument before accessing its properties.
+      validatePlainObjectArgument(extraOptions, "extraOptions");
 
       // Mount-level preset selection overrides the factory-level default.
-      const resolvedExtraOptions: ComponentFactoryExtraOptions = {
-        ...extraOptions,
-        presetKey: extraOptions.presetKey ?? factoryPresetKey,
-      };
+      const resolvedExtraOptions: ComponentFactoryExtraOptions =
+        extraOptions.presetKey !== undefined || factoryPresetKey === undefined
+          ? extraOptions
+          : {
+              ...extraOptions,
+              presetKey: factoryPresetKey,
+            };
+
+      // Validate mount arguments against the effective preset,
+      // while preserving the original user-provided mount options.
+      validateComponentFactoryArguments(props, mountOptions, slots, resolvedExtraOptions, presets);
 
       const {
         skipDefaultProps = false,

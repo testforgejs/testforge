@@ -1,6 +1,6 @@
 import type { RuntimeExtraOptions } from "../../../../types.js";
 
-import { assertUnsupportedPlugins } from "./assertUnsupportedPlugins";
+import { assertUnsupportedPlugins } from "../../../../validators/assertUnsupportedPlugins.js";
 
 /*
  * Validates that extraOptions.plugins contains only plugins

@@ -804,6 +804,92 @@ describe("createTestFramework → testComponentFactory", () => {
 
           expect(warnSpy).not.toHaveBeenCalled();
         });
+
+        describe("factory-level preset validation", () => {
+          const presets = {
+            default: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+
+            admin: {
+              manifest: [
+                {
+                  module: {
+                    getName: () => "i18n",
+                    getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
+                  },
+                  enabled: true,
+                },
+                {
+                  module: {
+                    getName: () => "pinia",
+                    getDefinition: () => ({ create: () => {} }),
+                    getDefaultOptions: () => () => ({}),
+                  },
+                  enabled: true,
+                },
+              ],
+              defaults: {},
+            },
+          };
+
+          it("should warn about misplaced plugin options using the factory preset", () => {
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+            try {
+              const { testComponentFactory } = createTestFramework({ presets });
+
+              const factory = testComponentFactory(component, {}, {}, {}, { presetKey: "admin" });
+
+              factory({}, { pinia: { stubActions: true } } as unknown as ComponentFactoryOptions);
+
+              expect(warnSpy).toHaveBeenCalledTimes(1);
+
+              expect(warnSpy.mock.calls[0][0]).toContain(
+                'Detected plugin option "pinia" at the root of "mountOptions"',
+              );
+
+              expect(warnSpy.mock.calls[0][0]).toContain(
+                'Did you mean to use "mountOptions.plugins.pinia"?',
+              );
+            } finally {
+              warnSpy.mockRestore();
+            }
+          });
+
+          it("should use the mount-level preset for plugin option warnings", () => {
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+            try {
+              const { testComponentFactory } = createTestFramework({ presets });
+
+              const factory = testComponentFactory(component, {}, {}, {}, { presetKey: "admin" });
+
+              factory(
+                {},
+                { pinia: { stubActions: true } } as unknown as ComponentFactoryOptions,
+                {},
+                { presetKey: "default" },
+              );
+
+              // Pinia is not declared in the mount-level preset.
+              expect(warnSpy).not.toHaveBeenCalled();
+            } finally {
+              warnSpy.mockRestore();
+            }
+          });
+        });
       });
 
       describe("extraOptions plugin validation", () => {
