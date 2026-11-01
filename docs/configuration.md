@@ -4,7 +4,8 @@ This guide explains how TestForge resolves configuration and provides advanced c
 
 It covers:
 
-- the `testComponentFactory` API
+- the positional and object-based `testComponentFactory` APIs
+- factory-level preset selection and per-mount overrides
 - the four-tier configuration layering model
 - merge strategies for Vue Test Utils and managed plugin options
 - execution controls and runtime overlays
@@ -25,6 +26,9 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
 ## Table of Contents
 
 - [1. `testComponentFactory` Signature](#testcomponentfactory-signature)
+  - [1.1. Positional Factory API](#positional-factory-api)
+  - [1.2. Object-Based Factory API](#object-based-factory-api)
+  - [1.3. Choosing a Preset for a Component Factory](#factory-preset-selection)
 - [2. The 4-Tier Configuration Layering Model](#configuration-layers)
 - [3. Merge Strategies](#merge-strategies)
   - [3.1. Top-Level Vue Test Utils Options](#flat-vtu-options)
@@ -50,9 +54,11 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
 
 `testComponentFactory` creates a reusable factory for mounting a specific component.
 
-Define shared props, slots, Vue Test Utils options, and plugin configuration once, then override them for individual tests.
+Define shared props, slots, Vue Test Utils options, managed plugin configuration, and the component's default **runtime preset** once, then override them for individual tests. Both factory creation styles produce the same kind of reusable factory.
 
-### Factory Creation
+<a id="positional-factory-api"></a>
+
+### 1.1. Positional Factory API
 
 ```typescript
 const factory = testComponentFactory(
@@ -60,17 +66,108 @@ const factory = testComponentFactory(
   defaultProps, // optional
   defaultMountOptions, // optional
   defaultSlots, // optional
+  config, // optional: { presetKey?: string }
 );
 ```
-
-These arguments define factory-level defaults applied to every mount created by the factory.
 
 - `Component` — the Vue component to mount.
 - `defaultProps` — default component props.
 - `defaultMountOptions` — default Vue Test Utils mounting options and managed plugin configuration. Pre-created instances may be supplied with `withPluginInstance()`, but instance capturing is not allowed at this shared factory level.
 - `defaultSlots` — default component slots.
+- `config` — optional factory-level configuration (`ComponentFactoryConfig`). Use `config.presetKey` to select a registered preset for this component factory.
+
+The fifth argument is optional. Existing calls using the original four positional arguments continue to work unchanged.
+
+<a id="object-based-factory-api"></a>
+
+### 1.2. Object-Based Factory API
+
+Use `testComponentFactory.withOptions()` to provide the same configuration in a named object, without positional placeholders:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+  defaultProps: { title: "Users" },
+  defaultMountOptions: {
+    plugins: {
+      pinia: { stubActions: true },
+    },
+  },
+  defaultSlots: { default: "Content" },
+});
+```
+
+The object accepts `component` (required) and the optional `presetKey`, `defaultProps`, `defaultMountOptions`, and `defaultSlots` properties. The `presetKey` property is **top-level** in this creation object; in the positional API, it belongs inside the fifth `config` argument. Both forms use the same validation and mounting behavior.
+
+If you only need a component and a preset, the object-based form is particularly concise:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+});
+```
+
+<a id="factory-preset-selection"></a>
+
+### 1.3. Choosing a Preset for a Component Factory
+
+Presets describe runtime environments and the managed plugins available in each environment. In most component test suites, the required environment is **a property of the component**, not of each individual test. Select it when creating the component factory, then use the same environment for subsequent mounts.
+
+First, register the presets when creating the framework (assuming `defaultPreset` and `adminPreset` are defined in your project):
+
+```typescript
+const { testComponentFactory } = createTestFramework({
+  presets: {
+    default: defaultPreset,
+    admin: adminPreset,
+  },
+});
+```
+
+Choose the component's default environment using either API:
+
+```typescript
+// Positional API: fifth argument.
+const positionalFactory = testComponentFactory(MyComponent, {}, {}, {}, { presetKey: "admin" });
+
+// Object-based API: top-level presetKey.
+const objectFactory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+});
+```
+
+Both factories use `admin` when called without a mount-level preset override. For a special-case test, `extraOptions.presetKey` (the fourth argument of `factory()`) can temporarily select another registered preset:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+});
+
+factory(); // Uses admin (factory-level preset).
+factory({}, {}, {}, { presetKey: "default" }); // Uses default for this mount only.
+factory(); // Uses admin again.
+```
+
+**Preset selection priority (highest to lowest):**
+
+1. `extraOptions.presetKey` — explicit override for an individual mount.
+2. Factory-level `presetKey` — `config.presetKey` or `withOptions({ presetKey })`.
+3. The registered preset named `default` — used when neither level specifies a preset.
+
+Preset names must be registered in `createTestFramework({ presets })`. An explicitly requested unknown preset is rejected. If no preset is selected and no `default` preset is registered, TestForge retains its existing behavior without an active preset.
+
+> [!IMPORTANT]
+> Selecting a preset changes the active runtime environment and which managed plugins are supported. It does **not** add a fifth configuration layer or change the four-layer plugin merge strategy described below.
+>
+> When a factory explicitly selects a preset, every key in its `defaultMountOptions.plugins` must be declared in that preset's manifest. TestForge validates this **when the factory is created**. Mount-level preset overrides use the manifest of the selected mount-level preset for runtime configuration checks. See [Configuration Validation](#53-configuration-validation).
 
 ### Factory Execution
+
+Both creation styles return a factory with the same execution signature:
 
 ```typescript
 const wrapper = factory(
@@ -86,7 +183,7 @@ These arguments configure a single component mount.
 - `props` — test-specific component props.
 - `mountOptions` — test-specific Vue Test Utils options and managed plugin configuration.
 - `slots` — test-specific component slots.
-- `extraOptions` — advanced framework controls and runtime plugin overlays.
+- `extraOptions` — advanced framework controls, including an optional mount-level `presetKey` and runtime plugin overlays.
 
 The following sections explain how these options are resolved and merged.
 
@@ -96,7 +193,7 @@ The following sections explain how these options are resolved and merged.
 
 ## 2. 🥞 The 4-Tier Configuration Layering Model
 
-TestForge combines configuration from four sources, each with its own scope and purpose. For managed plugins, these sources do **not** form a simple sequence of four full replacements.
+TestForge combines configuration from four sources, each with its own scope and purpose. For managed plugins, these sources do **not** form a simple sequence of four full replacements. The preset selected for the current mount supplies Layer 1; the selection priority is described in [Section 1.3](#factory-preset-selection).
 
 Instead, TestForge resolves the runtime options from Layers 2–4, then performs a **final shallow merge** with the preset defaults from Layer 1. The resolved runtime options take precedence over matching preset properties.
 
@@ -105,12 +202,12 @@ configuration work together, see
 
 [Presets and the Runtime Configuration Pipeline](./architecture.md#presets-and-the-runtime-configuration-pipeline).
 
-| Layer                               | Defined At                    | Scope                 | Managed Plugin Behavior                                               |
-| :---------------------------------- | :---------------------------- | :-------------------- | :-------------------------------------------------------------------- |
-| **Layer 1: Preset Defaults**        | `createTestFramework()`       | Project-wide baseline | Provides the base configuration for managed plugins                   |
-| **Layer 2: `defaultMountOptions`**  | `testComponentFactory()`      | Component factory     | Provides factory-level plugin options that can override preset values |
-| **Layer 3: `mountOptions`**         | `factory()`                   | Individual mount      | Replaces Layer 2 options for the same plugin                          |
-| **Layer 4: `extraOptions.plugins`** | `factory()` (fourth argument) | Individual mount      | Applies a shallow overlay to the resolved runtime plugin options      |
+| Layer                               | Defined At                    | Scope              | Managed Plugin Behavior                                               |
+| :---------------------------------- | :---------------------------- | :----------------- | :-------------------------------------------------------------------- |
+| **Layer 1: Preset Defaults**        | `createTestFramework()`       | Selected per mount | Provides the base configuration for managed plugins                   |
+| **Layer 2: `defaultMountOptions`**  | `testComponentFactory()`      | Component factory  | Provides factory-level plugin options that can override preset values |
+| **Layer 3: `mountOptions`**         | `factory()`                   | Individual mount   | Replaces Layer 2 options for the same plugin                          |
+| **Layer 4: `extraOptions.plugins`** | `factory()` (fourth argument) | Individual mount   | Applies a shallow overlay to the resolved runtime plugin options      |
 
 > [!IMPORTANT]
 > Layer 3 replaces **Layer 2 configuration for the same plugin**, not that plugin's preset defaults.
@@ -866,29 +963,32 @@ These flags are split between:
 factory(props, mountOptions, slots, extraOptions);
 ```
 
-#### The `preset` Option
+#### The `presetKey` Option
 
-- **Type:** `keyof TestFrameworkPresets`
+- **Type:** `string` (a registered key in `TestFrameworkPresets`)
+- **Default:** the factory-level `presetKey`, if one was selected; otherwise `"default"` when registered.
 
-Selects a specific preset profile from the framework's preset registry for the current factory invocation.
+Selects the active preset for **this mount only**. It overrides the preset selected when the factory was created:
 
 ```typescript
-factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "e2eLike",
-  },
-);
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+});
+
+factory(); // admin
+factory({}, {}, {}, { presetKey: "default" }); // default, for this mount only
+factory(); // admin again
 ```
 
-This allows a single factory to execute against a different registered runtime profile.
+`extraOptions.presetKey` must identify a registered preset. It does not change the factory's default preset or the configuration stored by the factory.
 
 > [!NOTE]
-> `extraOptions.presetKey` is relevant when the framework was created with `createTestFramework({ presets })`.
+> Preset selection among named profiles is relevant when the framework was created with `createTestFramework({ presets })`.
 >
-> When the framework is created with a single `preset`, that preset is the framework's default runtime environment and no runtime profile selection is required.
+> When the framework is created with a single `preset`, it becomes the framework's `default` runtime profile; no explicit selection is needed.
+>
+> For factory-level selection, the two creation APIs, and the complete precedence order, see [Choosing a Preset for a Component Factory](#factory-preset-selection).
 
 ---
 
@@ -1374,14 +1474,18 @@ extendPreset(basePreset, {
 
 TestForge validates managed plugin configuration against the active preset.
 
-#### Manifest Binding
+#### Manifest Binding and Preset Selection
 
-Plugin keys at the following configuration points must refer to plugins declared in the active preset manifest:
+The active preset's manifest defines which managed plugins are supported. This also applies to entries declared with `enabled: false`: those plugins are available for explicit activation, even though they are not enabled by default.
 
-- preset `defaults`
-- `defaultMountOptions.plugins`
-- `mountOptions.plugins`
-- `extraOptions.plugins`.
+Validation depends on **where** a plugin is configured and **when** the preset is selected:
+
+- **Preset `defaults`:** may only configure plugins declared in that preset's manifest.
+- **`defaultMountOptions.plugins`:** when the factory explicitly selects a `presetKey`, all configured plugin keys must belong to that factory preset's manifest. Incompatible entries cause an error **at factory creation time**. This check is not added when the factory omits `presetKey`, preserving the existing positional API behavior.
+- **`mountOptions.plugins` and `extraOptions.plugins`:** validated during each mount against its **effective preset** (mount-level override, then factory-level selection, then `default`). A plugin explicitly configured at either of these levels must be supported by the effective preset.
+- **Preset switching:** `defaultMountOptions.plugins` can contain plugins not available in a _different_ preset selected temporarily for a mount. Such unsupported factory defaults are filtered out for that mount instead of causing an error; they remain available when a later mount uses the original factory preset again.
+
+An unsupported plugin key is rejected even when configured as `false`. Disabling a plugin does not add it to a preset's capabilities.
 
 For example, if the manifest contains:
 
@@ -1404,9 +1508,25 @@ the following configuration is valid:
 }
 ```
 
-Any unknown plugin key is rejected.
+An unknown key in explicitly selected factory defaults or in mount-level plugin configuration is rejected according to the rules above.
 
-The manifest defines which managed plugins can be configured.
+For example, suppose `admin` supports Pinia but `i18nOnly` does not:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+  defaultMountOptions: {
+    plugins: { pinia: { stubActions: true } },
+  },
+});
+
+factory(); // Pinia is available in admin.
+factory({}, {}, {}, { presetKey: "i18nOnly" }); // Pinia factory defaults are ignored.
+factory(); // Pinia is available again.
+```
+
+Here `admin` and `i18nOnly` are assumed to be registered framework presets. By contrast, explicitly passing `plugins: { pinia: {} }` in `mountOptions` or `extraOptions` while mounting with `i18nOnly` throws an error. Creating a factory with `presetKey: "i18nOnly"` **and** `defaultMountOptions.plugins.pinia` also throws immediately.
 
 #### Plugin Configuration Values
 

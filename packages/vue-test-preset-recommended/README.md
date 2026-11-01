@@ -61,7 +61,8 @@ npm install -D @testforgejs/vue-test-preset-recommended@beta
 yarn add -D @testforgejs/vue-test-preset-recommended@beta
 ```
 
-> `@testforgejs/vue-test-core` and `@testforgejs/vue-test-preset-base` are required dependencies.
+> [!NOTE]
+> The recommended preset requires `@testforgejs/vue-test-core` and `@testforgejs/vue-test-preset-base`. Make sure your project satisfies the peer dependency requirements of the installed package versions.
 
 ## Quick Usage
 
@@ -84,15 +85,14 @@ You can then use `testComponentFactory` in component tests:
 
 ```typescript
 import { describe, expect, it } from "vitest";
-
 import { testComponentFactory } from "./setup";
 import MyComponent from "./MyComponent.vue";
 
+const factory = testComponentFactory(MyComponent);
+
 describe("MyComponent", () => {
   it("renders", () => {
-    const factory = testComponentFactory(MyComponent);
     const wrapper = factory();
-
     expect(wrapper.exists()).toBe(true);
   });
 });
@@ -110,7 +110,7 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-A single preset is treated as the framework's default runtime environment.
+A single preset is internally registered as the framework's `default` preset.
 
 Use `presets` when the framework should expose multiple named runtime environments:
 
@@ -129,18 +129,14 @@ i18nPreset
 routerPreset
 ```
 
-Named presets registered through `presets` can be selected for individual component factory invocations through `extraOptions.presetKey`.
+Preset selection is supported at two levels:
 
-In general:
+- **Factory-level** — select the preset when creating a reusable component factory.
+- **Mount-level** — override the selected preset for an individual component factory invocation.
 
-```text
-preset
-→ one runtime environment
+For most components, prefer factory-level selection so that tests share a consistent runtime environment without repeating `presetKey` on every mount. Mount-level overrides remain available when an individual test needs another registered preset.
 
-presets
-→ multiple named runtime environments
-→ runtime selection through extraOptions.presetKey
-```
+See [Switching Presets at Runtime](#switching-presets-at-runtime) for examples.
 
 ## Available Presets
 
@@ -157,7 +153,6 @@ The current composition is equivalent to:
 
 ```typescript
 import { vi } from "vitest";
-
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
@@ -168,13 +163,11 @@ export const presets = {
       [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
-
   piniaPreset: extendPreset(basePresets.piniaPreset, {
     defaults: {
       [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   }),
-
   i18nPreset: basePresets.i18nPreset,
   routerPreset: basePresets.routerPreset,
 };
@@ -415,26 +408,43 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-A component factory invocation can then select another registered preset using the fourth `extraOptions` argument:
+Each registered preset defines a complete managed-plugin runtime environment.
+
+### Factory-Level Preset Selection
+
+For most components, choose the appropriate environment once when creating the component factory. The object-based API makes this explicit:
 
 ```typescript
-const factory = testComponentFactory(MyComponent);
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "i18nPreset",
+});
 
-factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "i18nPreset",
-  },
+factory(); // Uses i18nPreset.
+factory(); // Uses i18nPreset again.
+```
+
+The positional component factory API supports the same selection through its optional fifth argument:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  {}, // defaultProps
+  {}, // defaultMountOptions
+  {}, // defaultSlots
+  { presetKey: "i18nPreset" },
 );
 ```
 
-The selected preset defines the complete managed-plugin runtime for that invocation.
+Both forms create the same reusable component factory. Selecting its preset once is preferable when the component's tests use the same environment.
 
-For example:
+### Per-Mount Preset Overrides
+
+The fourth `extraOptions` argument of a factory invocation can override the factory's selected preset for one mount:
 
 ```typescript
+factory(); // Uses i18nPreset.
+
 factory(
   {},
   {},
@@ -442,27 +452,74 @@ factory(
   {
     presetKey: "piniaPreset",
   },
-);
+); // Uses piniaPreset for this mount only.
+
+factory(); // Uses i18nPreset again.
 ```
 
-selects the Pinia-only runtime environment.
+Here `piniaPreset` selects the Pinia-only environment. The override does not change the component factory's preset for subsequent invocations.
 
-This allows a single TestForge framework instance to expose several predefined runtime profiles.
+When the component factory does not specify `presetKey`, it uses the registered `default` preset unless a mount overrides it:
+
+```typescript
+const defaultFactory = testComponentFactory(MyComponent);
+
+defaultFactory(); // Uses default.
+defaultFactory({}, {}, {}, { presetKey: "routerPreset" }); // Uses routerPreset.
+```
+
+### Preset Selection Precedence
+
+The active preset is resolved using this order:
+
+```text
+Mount-level extraOptions.presetKey
+                ↓
+Factory-level presetKey
+                ↓
+Registered default preset
+```
+
+The first explicitly selected preset takes precedence.
+
+An explicitly selected preset must exist in the framework's preset registry.
+
+Factory-level preset selection is validated when the component factory is created, while a per-mount selection is validated for the individual invocation.
+
+### Managed Plugin Configuration
+
+Selecting a preset replaces the active managed-plugin runtime; it does **not** merge the selected preset with `default` or with the factory's previous preset.
+
+The active preset also determines which managed plugins may be configured:
+
+- When a factory explicitly selects a preset, plugins declared in its `defaultMountOptions.plugins` must be supported by that preset.
+- When a mount switches to another preset, unsupported **factory-default** plugin configuration is ignored for that mount.
+- Plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` must be supported by the preset selected for the mount.
+
+This makes runtime switching predictable while allowing a single TestForge framework instance to expose several predefined test environments.
+
+### Configuration Levels
 
 The similarly named options operate at different levels:
 
 ```text
 createTestFramework({ preset })
-→ configures one framework-wide runtime environment
+→ registers a single default runtime environment
 
 createTestFramework({ presets })
 → registers multiple named runtime environments
 
+testComponentFactory.withOptions({ component, presetKey })
+→ selects the preset for a reusable component factory
+
+testComponentFactory(component, ..., { presetKey })
+→ selects a preset with the positional factory API (fifth argument)
+
 extraOptions.presetKey
-→ selects one registered runtime environment for a factory invocation
+→ overrides the preset for an individual mount (fourth argument)
 ```
 
-Runtime selection through `extraOptions.presetKey` applies to named presets registered through `presets`.
+For the full API signatures and validation rules, see [Configuration & Advanced Usage](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#testcomponentfactory-signature).
 
 ## Customizing Presets
 
@@ -482,7 +539,6 @@ A project-owned preset can materialize both the required Vitest integration and 
 
 ```typescript
 import { vi } from "vitest";
-
 import { extendPreset } from "@testforgejs/vue-test-core";
 import { PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
@@ -546,7 +602,6 @@ const projectPreset = extendPreset(recommendedPresets.default, {
     [I18N_PLUGIN_NAME]: () => ({
       legacy: false,
       globalInjection: true,
-
       locale: "en",
       messages: {
         en: {
@@ -600,11 +655,9 @@ const projectPreset = extendPreset(recommendedPresets.default, {
       enabled: true,
     },
   ],
-
   defaults: {
     [ROUTER_PLUGIN_NAME]: () => ({
       history: createMemoryHistory(),
-
       routes: [
         {
           path: "/",
@@ -641,7 +694,6 @@ const projectPreset = extendPreset(recommendedPresets.default, {
       enabled: true,
     },
   ],
-
   defaults: {
     [ROUTER_PLUGIN_NAME]: () => ({
       history: createWebHistory(),
@@ -748,7 +800,6 @@ Each invocation produces a fresh options object for the current pipeline context
 ```typescript
 const first = presets.default.defaults.pinia();
 const second = presets.default.defaults.pinia();
-
 first !== second; // true
 ```
 
@@ -759,7 +810,6 @@ For Router, the options factory also creates a fresh in-memory history instance 
 ```typescript
 const first = presets.routerPreset.defaults.router();
 const second = presets.routerPreset.defaults.router();
-
 first.history !== second.history; // true
 ```
 

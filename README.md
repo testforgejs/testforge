@@ -36,10 +36,12 @@
 - [Why TestForge?](#why-testforge)
 - [Documentation](#documentation)
 - [Multiple Test Environments](#multiple-test-environments)
+  - [Factory-Level Preset Selection](#factory-level-preset-selection)
 - [The Idea: Context-Aware Overrides](#context-aware-overrides)
 - [Before / After Example](#before-after)
 - [Core Concepts](#core-concepts)
   - [Test Component Factory](#test-component-factory)
+    - [Object-Based Factory API](#object-based-factory-api)
   - [Plugin System](#plugin-system)
   - [Presets](#presets)
   - [Mount Pipeline](#mount-pipeline)
@@ -66,7 +68,7 @@ A few weeks later, real app infrastructure appears: i18n, Pinia, Router, stubs, 
 
 Suddenly, you hit the **Configuration Explosion** problem.
 
-To test different behaviors of the _same_ component, you need slightly different environments:
+To test different behaviors of the _*same*_ component, you need slightly different environments:
 
 - Test A needs a clean Pinia store.
 - Test B needs the same store, but with one specific action behavior.
@@ -83,7 +85,7 @@ Now multiply this by 200+ tests. Your test suite becomes difficult to maintain:
 - **Hidden Intent**: The actual test logic is buried under infrastructure wiring.
 - **Maintenance Tax**: A simple refactor requires updating hundreds of boilerplate lines.
 
-Your tests no longer describe what a component _does_.
+Your tests no longer describe what a component _*does*_.
 
 They describe **how to rebuild your entire Vue test environment** from scratch.
 
@@ -295,7 +297,7 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.presetKey
+→ select a preset per component factory or individual mount
 ```
 
 For most projects, starting with:
@@ -337,8 +339,9 @@ describe("MyComponent.vue", () => {
 
 # Why TestForge?
 
-- **Less boilerplate** — tests describe _what_ is being tested instead of repeatedly rebuilding application infrastructure.
+- **Less boilerplate** — tests describe _*what*_ is being tested instead of repeatedly rebuilding application infrastructure.
 - **Consistent environments** — presets provide a shared baseline for managed Vue ecosystem plugins.
+- **Component-scoped environments** — choose a preset when creating a component factory instead of repeating the selection in every test.
 - **Safe overrides** — configuration follows an explicit hierarchy from preset defaults to individual test configuration.
 - **Composable presets** — existing runtime environments can be extended instead of copied.
 - **Plugin-owned integration knowledge** — reusable library-specific integration knowledge stays inside the corresponding plugin packages.
@@ -413,7 +416,7 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The normal invocation uses the `default` profile:
+By default, a component factory uses the registered `default` profile:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
@@ -421,32 +424,56 @@ const factory = testComponentFactory(MyComponent);
 const wrapper = factory();
 ```
 
-Another registered environment can be selected for an individual invocation:
+<a id="factory-level-preset-selection"></a>
+
+### Factory-Level Preset Selection
+
+**Most components need a consistent testing environment across their tests.** Select the appropriate preset once when creating the component factory, rather than repeating `presetKey` for each mount:
 
 ```typescript
-const wrapper = factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "designSystem",
-  },
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "designSystem",
+});
+
+factory(); // Uses "designSystem".
+factory(); // Still uses "designSystem".
+```
+
+The positional API supports the same choice through its optional fifth argument:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  {}, // defaultProps
+  {}, // defaultMountOptions
+  {}, // defaultSlots
+  { presetKey: "designSystem" },
 );
 ```
 
-Each named preset represents a complete managed-plugin runtime profile.
+A test can temporarily override the factory preset using `extraOptions.presetKey` (the fourth argument to `factory()`):
 
-Selecting another preset is not an overlay on `default`.
-
-Conceptually:
-
-```text
-createTestFramework({ presets })
-→ registers multiple runtime profiles
-
-extraOptions.presetKey
-→ selects one profile for an invocation
+```typescript
+factory(); // Uses "designSystem".
+factory({}, {}, {}, { presetKey: "default" }); // Uses "default" for this mount.
+factory(); // Uses "designSystem" again.
 ```
+
+The original per-mount API remains available when no factory preset is specified:
+
+```typescript
+const defaultFactory = testComponentFactory(MyComponent);
+defaultFactory({}, {}, {}, { presetKey: "designSystem" });
+```
+
+**Preset priority:** mount-level `extraOptions.presetKey` → factory-level `config.presetKey` (or `withOptions().presetKey`) → registered `default` preset. An explicitly requested unknown preset is rejected: at factory creation for a factory-level selection, or when mounting for a mount-level selection.
+
+Each named preset represents a complete managed-plugin runtime profile; selecting another preset is **not** an overlay on `default`.
+
+The active preset also defines which managed plugins may be configured. When a factory preset is explicitly selected, `defaultMountOptions.plugins` is checked against it at factory creation. If a mount switches to a different preset, unsupported _factory defaults_ are ignored for that mount, but unsupported plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` are rejected.
+
+For the full API signatures and validation details, see [Configuration & Advanced Usage](docs/configuration.md#testcomponentfactory-signature) and [Configuration Validation](docs/configuration.md#53-configuration-validation).
 
 ## Multiple Framework Instances
 
@@ -746,6 +773,38 @@ The component factory:
 - runs the **Mount Pipeline**.
 
 The test describes what it needs rather than how to assemble the complete Vue runtime.
+
+<a id="object-based-factory-api"></a>
+
+### Object-Based Factory API
+
+For factories with several defaults, `testComponentFactory.withOptions()` provides a named-argument alternative to the positional API:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "designSystem",
+  defaultProps: { title: "Default title" },
+  defaultMountOptions: { shallow: true },
+  defaultSlots: { default: "Fallback content" },
+});
+
+const wrapper = factory({ title: "Custom title" });
+```
+
+The equivalent positional form is:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  { title: "Default title" },
+  { shallow: true },
+  { default: "Fallback content" },
+  { presetKey: "designSystem" },
+);
+```
+
+Both APIs return the **same kind of component factory** and support the same per-mount overrides. The object-based form makes optional settings easier to identify and avoids placeholder arguments when selecting a factory preset. `presetKey` must name a preset registered through `createTestFramework({ presets })` (or the implicit `default` created by `createTestFramework({ preset })`).
 
 ### Component Factory Invocations
 
@@ -1063,18 +1122,25 @@ createTestFramework({
 });
 ```
 
-Those profiles can then be selected per component factory invocation:
+Those profiles can be selected **once per component factory**:
 
 ```typescript
-factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "routerPreset",
-  },
-);
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "admin",
+});
+
+factory(); // Uses "admin" by default.
 ```
+
+Or **for an individual mount** when a test needs a different profile:
+
+```typescript
+factory({}, {}, {}, { presetKey: "default" });
+factory(); // Uses "admin" again.
+```
+
+The positional API also accepts `{ presetKey: "admin" }` as the fifth argument to `testComponentFactory()`. See [Factory-Level Preset Selection](#factory-level-preset-selection) for the priority and plugin validation rules.
 
 ### Preset Composition
 
@@ -1450,7 +1516,7 @@ The active preset determines:
 - default plugin enablement;
 - selected plugin configuration factories.
 
-Selecting another preset changes the complete managed-plugin runtime profile for that invocation.
+A preset may be selected for a component factory, then temporarily overridden for an individual mount. Selecting another preset changes the complete managed-plugin runtime profile for that mount, not just a subset of its options.
 
 ## Explicit Plugin Defaults
 

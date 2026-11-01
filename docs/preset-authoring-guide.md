@@ -74,7 +74,7 @@ These options are mutually exclusive.
 
 Use `preset` when the framework needs one runtime environment. Use `presets` when the project needs multiple named runtime profiles and runtime selection between them.
 
-A single `preset` is internally treated as the framework's `default` preset. When using a `presets` registry, an individual mount can select a registered profile with `extraOptions.presetKey`; this selection key is not a preset definition.
+A single `preset` is internally treated as the framework's `default` preset. With a `presets` registry, a named runtime profile can be selected once when creating a component factory (`presetKey`), or overridden for an individual mount (`extraOptions.presetKey`). In both cases, `presetKey` is a registry key, **not** a preset definition.
 
 > [!NOTE]
 > This guide focuses on preset authoring rather than package installation.
@@ -100,6 +100,9 @@ A single `preset` is internally treated as the framework's `default` preset. Whe
   - [Extending the Manifest](#72-extending-the-manifest)
 - [Runner-Specific Presets](#8-runner-specific-presets)
 - [Selecting a Preset at Runtime](#9-selecting-a-preset-at-runtime)
+  - [Factory-Level Preset Selection](#factory-level-preset-selection)
+  - [Mount-Level Preset Overrides](#mount-level-preset-overrides)
+  - [Preset Selection Precedence and Validation](#preset-selection-precedence-and-validation)
 - [Preset Configuration Layers](#10-preset-configuration-layers)
 - [Creating a Project-Specific Preset](#11-creating-a-project-specific-preset)
   - [Project-Specific Router Configuration](#111-project-specific-router-configuration)
@@ -314,7 +317,25 @@ The registry can contain multiple independent runtime profiles.
 
 Registry keys such as `i18n` or `router` are user-defined runtime profile names. They are separate from plugin identifiers used as keys inside a preset's `defaults` object.
 
-A mount created by `testComponentFactory()` can select a registered runtime profile by its key through `extraOptions.presetKey`. This selects a profile for that mount; it does not supply a new preset definition.
+A component factory can select a registered runtime profile by its key when it is created, or an individual mount can override that choice through `extraOptions.presetKey`. Both forms select an existing profile; neither supplies a new preset definition.
+
+For example, select the environment once for a reusable component factory:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "i18n",
+});
+
+factory(); // Uses the i18n preset.
+```
+
+A mount can still choose another registered profile when needed:
+
+```typescript
+factory({}, {}, {}, { presetKey: "router" }); // Uses the router preset only here.
+factory(); // Uses the i18n preset again.
+```
 
 Use `presets` when:
 
@@ -341,11 +362,12 @@ In general:
 
 ```text
 preset
-→ one runtime environment
+→ one runtime environment (registered internally as default)
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.presetKey
+→ factory-level selection through presetKey
+→ per-mount override through extraOptions.presetKey
 ```
 
 ---
@@ -411,7 +433,9 @@ factory(
 );
 ```
 
-TestForge rejects the Pinia configuration because Pinia is outside the active preset's capability boundary.
+TestForge rejects the explicit mount-level Pinia configuration because Pinia is outside the active preset's capability boundary.
+
+When a mount overrides the factory's preset, unsupported _factory default_ plugin configuration is ignored for that mount; explicitly supplied `mountOptions.plugins` and `extraOptions.plugins` must still be supported by the active preset. See [Preset Selection Precedence and Validation](#preset-selection-precedence-and-validation).
 
 This makes presets complete runtime profiles rather than partial configuration overlays.
 
@@ -725,7 +749,7 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-The `default` preset is used when no other registered preset is selected for a mount.
+The `default` preset is used when neither the component factory nor the individual mount selects another registered preset.
 
 For a project-specific registry, the `default` profile should represent the runtime environment required by the majority of that project's component tests.
 
@@ -1188,84 +1212,175 @@ project-owned preset
 
 ## 9. Selecting a Preset at Runtime
 
-TestForge distinguishes between **preset definitions** and **preset selection**. The `preset` option of `createTestFramework()` receives a complete `PresetDefinition`, while `extraOptions.presetKey` selects a registered preset by its registry key for an individual mount. These are different kinds of values.
+TestForge distinguishes between **preset definitions** and **preset selection**. The `preset` option of `createTestFramework()` receives a complete `PresetDefinition`. A `presetKey`, by contrast, identifies a runtime profile that was already registered with the framework.
 
-### Framework-level `preset` (definition)
+For most components, select the appropriate environment once **when creating the component factory**. Use a mount-level override only when an individual test needs a different registered environment.
+
+### Framework-Level `preset` (Definition)
 
 When passed to `createTestFramework()`, `preset` contains a complete `PresetDefinition`:
 
 ```typescript
-createTestFramework({
+const { testComponentFactory } = createTestFramework({
   preset: projectPreset,
 });
 ```
 
-This means:
-
-```text
-configure this framework with this runtime environment
-```
-
-When a framework is created this way, the preset is internally registered as `default`.
-
-Normal factory invocations use it automatically:
+The framework internally registers this preset as `default`. Component factories use that environment unless they select another registered preset:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
 
-factory();
+factory(); // Uses default.
 ```
 
-### Mount-level `extraOptions.presetKey` (selection)
-
-When using a named preset registry, `extraOptions.presetKey` contains a **key** of that registry, not a `PresetDefinition`:
+To offer several named environments, register a collection instead:
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
   presets: {
     default: defaultPreset,
     i18n: i18nPreset,
+    router: routerPreset,
   },
 });
+```
 
-const factory = testComponentFactory(MyComponent);
+`preset` and `presets` are mutually exclusive. The registry keys (`default`, `i18n`, `router`) are **runtime profile names**, not plugin identifiers or preset definitions.
+
+### Factory-Level Preset Selection
+
+A component factory can select a named registered preset at creation time. The object-based API makes the selection explicit:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "i18n",
+});
+
+factory(); // Uses i18n.
+factory(); // Uses i18n again.
+```
+
+The positional API supports the same choice through its optional fifth argument:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  {}, // defaultProps
+  {}, // defaultMountOptions
+  {}, // defaultSlots
+  { presetKey: "i18n" },
+);
+```
+
+Both APIs return the same kind of reusable component factory. Factory-level selection is preferable when a component's tests consistently need the same managed-plugin environment: the tests do not need to repeat `presetKey` on every mount.
+
+### Mount-Level Preset Overrides
+
+An invocation of the returned `factory()` can override the factory's selected preset through the fourth `extraOptions` argument:
+
+```typescript
+factory(); // Uses i18n.
 
 factory(
   {},
   {},
   {},
   {
-    presetKey: "i18n",
+    presetKey: "router",
   },
-);
+); // Uses router for this mount only.
+
+factory(); // Uses i18n again.
 ```
 
-This means:
+The mount-level override does not change the reusable component factory's preset for subsequent invocations.
+
+The same mechanism also works when no factory-level selection was made:
+
+```typescript
+const defaultFactory = testComponentFactory(MyComponent);
+
+defaultFactory(); // Uses default.
+defaultFactory({}, {}, {}, { presetKey: "i18n" }); // Uses i18n for this mount.
+```
+
+A `presetKey` contains the **key of an existing registered preset**, not a new `PresetDefinition`.
+
+### Preset Selection Precedence and Validation
+
+The active preset is selected using this precedence:
 
 ```text
-use the "i18n" runtime profile for this mount
+Mount-level extraOptions.presetKey
+                ↓
+Factory-level presetKey
+                ↓
+Registered default preset
 ```
 
-`presetKey` belongs to the `extraOptions` argument of the returned `factory()` function. It is **not** currently an option of `testComponentFactory()` itself. The same component factory can therefore mount the component using different registered presets in separate calls.
+An explicitly selected preset must exist in the framework's registry. A factory-level selection is checked when the component factory is created; a mount-level selection is checked for that invocation.
 
-Therefore:
+The selected preset determines which managed plugins may be configured:
+
+- When a factory-level preset is explicitly selected, its `defaultMountOptions.plugins` must refer only to plugins declared by that preset.
+- If a mount switches to another preset, factory-default plugin configurations unsupported by the newly selected preset are **ignored for that mount**.
+- Plugins explicitly configured by the individual mount through `mountOptions.plugins` or `extraOptions.plugins` must be declared by the active preset; unsupported plugins are rejected.
+
+For example, suppose a component factory selects an application preset with Pinia defaults:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "default",
+  defaultMountOptions: {
+    plugins: {
+      pinia: { initialState: { users: [] } },
+    },
+  },
+});
+```
+
+If a mount selects an `i18n` preset without Pinia, the unsupported **factory default** Pinia configuration is not carried into that mount:
+
+```typescript
+factory({}, {}, {}, { presetKey: "i18n" });
+```
+
+However, explicitly supplying Pinia at mount time while `i18n` is selected is invalid:
+
+```typescript
+// Invalid: Pinia is not declared by the active i18n preset.
+factory({}, { plugins: { pinia: {} } }, {}, { presetKey: "i18n" });
+```
+
+This distinction lets a reusable component factory switch runtime profiles without accidentally retaining incompatible factory defaults, while preserving validation of the test's explicit configuration.
+
+In summary:
 
 ```text
 createTestFramework({ preset })
-→ accepts a PresetDefinition
+→ registers one PresetDefinition as default
 
 createTestFramework({ presets })
 → registers named PresetDefinition objects
 
+testComponentFactory.withOptions({ presetKey })
+→ selects a registered preset for a reusable factory
+
+testComponentFactory(..., { presetKey })
+→ selects a registered preset through the positional factory API
+
 extraOptions.presetKey
-→ selects one registered preset by its registry key for a mount
+→ overrides the selection for one mount
 ```
 
-Runtime switching between multiple profiles requires a named registry supplied through `presets`.
+Selecting among several distinct runtime profiles requires a named registry supplied through `presets`. A framework created with one `preset` still has its implicit `default` key.
 
-### Runtime presets are not overlays
+### Runtime Presets Are Not Overlays
 
-Selecting another named preset does not partially modify the `default` preset.
+Selecting another named preset does not partially modify the `default` preset or merge plugin manifests from different profiles.
 
 For example:
 
@@ -1291,17 +1406,9 @@ const presets = {
 };
 ```
 
-Selecting:
+Selecting `presetKey: "i18n"` at factory or mount level does **not** inherit Pinia or Router from `default`.
 
-```typescript
-{
-  presetKey: "i18n",
-}
-```
-
-does not inherit Pinia or Router from `default`.
-
-The `i18n` preset defines the complete managed-plugin runtime environment for that invocation.
+The `i18n` preset defines the complete managed-plugin runtime environment for the selected factory or mount.
 
 Notice that the registry key `i18n` is a runtime profile name, while `[I18N_PLUGIN_NAME]` is a managed plugin configuration key. They serve different purposes.
 
@@ -1311,7 +1418,7 @@ Notice that the registry key `i18n` is a runtime profile name, while `[I18N_PLUG
 
 Preset configuration is only the first layer of the complete TestForge configuration model.
 
-A component factory invocation can combine preset configuration with more local configuration.
+A component factory invocation can combine preset configuration with more local configuration. **The active preset is selected first** (mount-level `presetKey`, then factory-level `presetKey`, then `default`); its managed-plugin configuration is then resolved through the layers below.
 
 Conceptually:
 
@@ -1325,7 +1432,7 @@ mountOptions
 extraOptions.plugins
 ```
 
-These layers do not all use the same merge strategy.
+These layers do not all use the same merge strategy. They also cannot introduce plugins outside the active preset's capability boundary. If a mount overrides the factory preset, unsupported `defaultMountOptions.plugins` entries are ignored for that mount; unsupported explicit mount-level plugin entries are rejected.
 
 ### Preset defaults
 
@@ -1345,7 +1452,7 @@ defaults: {
 
 `defaultMountOptions` provides reusable factory-level defaults.
 
-These options apply to mounts created by the component factory unless replaced or adjusted by a more local layer.
+These options apply to mounts created by the component factory unless replaced or adjusted by a more local layer. If a mount selects a different preset, factory-default managed-plugin configuration that is unsupported by the selected preset is ignored for that mount.
 
 ### `mountOptions`
 
@@ -1942,7 +2049,7 @@ const routerPreset: PresetDefinition = {
 
 Do not create specialized presets merely to make small per-test adjustments.
 
-Use local configuration layers for scenario-specific changes.
+Use local configuration layers for scenario-specific changes. When distinct runtime profiles are needed for different components, select the appropriate named preset once at component factory creation rather than repeating the selection in every mount.
 
 ### 12.10. Treat the manifest as a capability boundary
 
@@ -2150,8 +2257,13 @@ The key principles are:
 - a single `preset` is internally treated as `default`;
 - a preset registry should normally provide a `default` profile;
 - preset registry keys are runtime profile names and are independent of plugin identifiers;
-- mount-level `extraOptions.presetKey` selects a registered profile by key for an individual factory call;
-- runtime preset selection requires a registry created through `presets`;
+- factory-level `presetKey` selects a registered profile when creating a reusable component factory (`withOptions()` or the fifth positional argument);
+- mount-level `extraOptions.presetKey` can override that selection for an individual mount;
+- preset selection precedence is **mount-level → factory-level → `default`**;
+- explicitly selected presets must be registered; factory-level and mount-level selection are validated at their respective stages;
+- a factory's explicit preset selection validates its `defaultMountOptions.plugins` against the chosen preset;
+- a mount switching presets ignores unsupported factory-default plugin configuration but rejects unsupported plugins explicitly configured for that mount;
+- switching among multiple named runtime profiles requires a registry created through `presets`;
 - runtime presets are complete profiles rather than overlays;
 - `extendPreset()` composes reusable preset definitions;
 - plugin configuration supplied through `extendPreset()` uses replacement semantics;
@@ -2197,4 +2309,6 @@ For most projects, the recommended workflow is:
 
 7. Introduce `presets` only when multiple named runtime environments are genuinely useful.
 
-8. Add specialized presets when a distinct runtime capability boundary improves the project's test architecture.
+8. When using a registry, select the appropriate environment once per component factory using `presetKey`; use `extraOptions.presetKey` for exceptional per-mount overrides.
+
+9. Add specialized presets when a distinct runtime capability boundary improves the project's test architecture.

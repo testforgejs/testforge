@@ -6,9 +6,9 @@
 
 The core package provides:
 
-- type-safe `testComponentFactory` instances;
+- type-safe `testComponentFactory` instances with positional and object-based creation APIs;
 - plugin registration and lifecycle management;
-- preset-based runtime configuration;
+- preset-based runtime configuration with factory-level and per-mount selection;
 - reusable component test factories;
 - a hierarchical configuration resolution pipeline:
   **Preset → Factory → Test → Extra Options**.
@@ -95,9 +95,9 @@ createTestFramework({
 
 These options cannot be used together.
 
-A single `preset` is treated as the framework's `default` preset internally. A `presets` registry allows individual component factory invocations to select a named preset through `extraOptions.presetKey`.
+A single `preset` is treated as the framework's `default` preset internally. A `presets` registry lets you choose a named environment **when creating a component factory** or **for an individual mount**.
 
-For example:
+For most components, choose the environment once at factory creation. Tests then inherit that environment without repeating the preset key:
 
 ```typescript
 const { testComponentFactory } = createTestFramework({
@@ -107,19 +107,21 @@ const { testComponentFactory } = createTestFramework({
   },
 });
 
-const factory = testComponentFactory(MyComponent);
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "i18n",
+});
 
-factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "i18n",
-  },
-);
+factory(); // Uses the i18n preset.
+factory({}, {}, {}, { presetKey: "default" }); // Overrides it for one mount.
+factory(); // Uses the i18n preset again.
 ```
 
-This distinction allows a project to start with a single custom runtime environment and introduce named runtime profiles later without changing the preset definition itself.
+Preset selection follows this precedence: **mount-level `extraOptions.presetKey` → factory-level `presetKey` → registered `default` preset**. Selecting a different preset replaces the active managed-plugin environment; it does not merge two presets.
+
+An explicitly requested preset must be registered. A factory-level selection is checked when the factory is created, and a mount-level selection is checked for that mount. When the factory selects a preset explicitly, its `defaultMountOptions.plugins` must only configure plugins declared in that preset. When a mount-level override selects a preset that does not support a factory-default plugin, that default plugin configuration is ignored for that mount; plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` must be supported by the active preset.
+
+This distinction allows a project to start with a single custom runtime environment and introduce named runtime profiles later without changing the preset definition itself. See [Configuration & Advanced Usage](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#testcomponentfactory-signature) for the complete API and validation rules.
 
 ### Official preset packages
 
@@ -217,6 +219,43 @@ describe("MyComponent.vue", () => {
 For Jest projects, use `@testforgejs/vue-test-preset-recommended-jest` instead.
 
 👉 For a complete walkthrough, continue with the [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md).
+
+### Component Factory Creation APIs
+
+`testComponentFactory` supports both a **positional API** and an **object-based API**. They create the same reusable component factory. The object-based form is useful when you need to set several optional defaults or choose a preset for the component.
+
+**Object-based API:**
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "i18n",
+  defaultProps: { title: "Hello" },
+  defaultMountOptions: { shallow: true },
+  defaultSlots: { default: "Fallback content" },
+});
+```
+
+**Equivalent positional API:**
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  { title: "Hello" },
+  { shallow: true },
+  { default: "Fallback content" },
+  { presetKey: "i18n" },
+);
+```
+
+In both forms, the selected preset and defaults belong to the component factory. **Calling `factory()` is unchanged**; you can still override props, mount options, slots, or `extraOptions` for a single mount:
+
+```typescript
+factory(); // Uses factory defaults and the i18n preset.
+factory({}, {}, {}, { presetKey: "default" }); // Uses default for this mount only.
+```
+
+The positional API remains supported; `withOptions()` is an alternative, not a replacement. See the [Configuration Guide](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#testcomponentfactory-signature) for argument details and further examples.
 
 ### Default Props and Test-Specific Overrides
 
