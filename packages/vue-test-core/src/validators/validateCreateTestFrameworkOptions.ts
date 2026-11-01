@@ -1,7 +1,7 @@
 import { validatePreset } from "../presets/validators/validatePreset.js";
 import { validatePresets } from "../presets/validators/validatePresets.js";
 import { assertIsPlainObjectValue } from "../assertions/assertIsPlainObjectValue.js";
-import { ERROR_PREFIX } from "../constants/constants.js";
+import { ERROR_PREFIX, DEFAULT_PRESET_NAME } from "../constants/constants.js";
 
 import type { CreateTestFrameworkOptions } from "../types.js";
 
@@ -27,7 +27,7 @@ export function validateCreateTestFrameworkOptions(
   }
 
   if (preset !== undefined) {
-    validatePreset("default", preset);
+    validatePreset(DEFAULT_PRESET_NAME, preset);
   }
 
   if (presets !== undefined) {

@@ -7,6 +7,7 @@ import { createMountPipeline } from "../../pipeline/mount/createMountPipeline.js
 import { mountWithPlugins } from "../mountWithPlugins.js";
 
 import type {
+  ComponentFactoryConfig,
   ComponentFactoryExtraOptions,
   ComponentFactoryOptions,
   CreateTestFrameworkOptions,
@@ -548,6 +549,42 @@ describe("createTestFramework → testComponentFactory", () => {
             }
           });
         });
+      });
+
+      it("should reject an unknown preset key in factory config", () => {
+        const presets = {
+          default: {
+            manifest: [],
+            defaults: {},
+          },
+          admin: {
+            manifest: [],
+            defaults: {},
+          },
+        };
+
+        const { testComponentFactory } = createTestFramework({ presets });
+
+        expect(() => {
+          testComponentFactory(component, {}, {}, {}, { presetKey: "unknown" });
+        }).toThrow('Preset "unknown" is not registered.');
+
+        // Validation must happen before creating the mount pipeline.
+        expect(createPipelineContext).not.toHaveBeenCalled();
+        expect(mountWithPlugins).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        { description: "null", value: null },
+        { description: "a number", value: 123 },
+        { description: "a string", value: "admin" },
+        { description: "an array", value: [] },
+      ])("should reject $description as factory config", ({ value }) => {
+        const { testComponentFactory } = createTestFramework();
+
+        expect(() => {
+          testComponentFactory(component, {}, {}, {}, value as ComponentFactoryConfig);
+        }).toThrow('"config" must be a plain object.');
       });
     });
 

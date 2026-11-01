@@ -769,6 +769,59 @@ describe("Plugin Integration", () => {
         expect(mockPiniaCreate).not.toHaveBeenCalled();
         expect(mockMount).not.toHaveBeenCalled();
       });
+
+      it("should restore the positional factory preset after a mount-level override", () => {
+        const factory = testComponentFactory(
+          MockComponent,
+          {},
+          {},
+          {},
+          { presetKey: "i18nPreset" },
+        );
+
+        // First mount: use the factory-level preset.
+        factory();
+
+        const [, firstMountOptions] = mockMount.mock.calls[0];
+
+        expect(firstMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(firstMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+        expect(firstMountOptions.global.plugins).toHaveLength(1);
+
+        // Second mount: override the factory-level preset.
+        factory({}, {}, {}, { presetKey: "default" });
+
+        const [, secondMountOptions] = mockMount.mock.calls[1];
+
+        expect(secondMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(secondMountOptions.global.plugins).toContain(mockPiniaInstance);
+        expect(secondMountOptions.global.plugins).toHaveLength(2);
+
+        // Third mount: restore the factory-level preset.
+        factory();
+
+        const [, thirdMountOptions] = mockMount.mock.calls[2];
+
+        expect(thirdMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(thirdMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+        expect(thirdMountOptions.global.plugins).toHaveLength(1);
+
+        // Verify plugin creation across all three mounts.
+        expect(mockI18nCreate).toHaveBeenCalledTimes(3);
+        expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+        expect(mockRouterCreate).not.toHaveBeenCalled();
+
+        expect(mockMount).toHaveBeenCalledTimes(3);
+
+        // Earlier mount configurations must remain unchanged.
+        expect(firstMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(firstMountOptions.global.plugins).not.toContain(mockPiniaInstance);
+        expect(firstMountOptions.global.plugins).toHaveLength(1);
+
+        expect(secondMountOptions.global.plugins).toContain(mockI18nInstance);
+        expect(secondMountOptions.global.plugins).toContain(mockPiniaInstance);
+        expect(secondMountOptions.global.plugins).toHaveLength(2);
+      });
     });
   });
 });

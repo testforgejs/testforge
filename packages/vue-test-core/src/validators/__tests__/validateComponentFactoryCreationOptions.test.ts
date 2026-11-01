@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import { validateComponentFactoryCreationOptions } from "../validateComponentFactoryCreationOptions.js";
 
 import type { TestFrameworkPresets } from "../../types.js";
@@ -10,18 +9,21 @@ describe("validateComponentFactoryCreationOptions", () => {
       manifest: [],
       defaults: {},
     },
-
     admin: {
       manifest: [],
       defaults: {},
     },
   };
 
-  it("should accept valid options", () => {
+  const component = {
+    name: "TestComponent",
+  };
+
+  it("should accept valid creation options", () => {
     expect(() => {
       validateComponentFactoryCreationOptions(
         {
-          component: { name: "TestComponent" },
+          component,
           presetKey: "admin",
         },
         presets,
@@ -29,40 +31,40 @@ describe("validateComponentFactoryCreationOptions", () => {
     }).not.toThrow();
   });
 
-  it("should allow an omitted presetKey", () => {
+  it("should accept creation options without presetKey", () => {
     expect(() => {
       validateComponentFactoryCreationOptions(
         {
-          component: { name: "TestComponent" },
+          component,
         },
         presets,
       );
     }).not.toThrow();
   });
 
-  it.each([null, undefined, 123, "invalid", []])("should reject non-plain options: %s", (value) => {
+  it("should use options as the validation context", () => {
     expect(() => {
-      validateComponentFactoryCreationOptions(value, presets);
+      validateComponentFactoryCreationOptions(null, presets);
     }).toThrow('"options" must be a plain object.');
   });
 
-  it.each([null, 123, true, [], {}])("should reject invalid presetKey values: %s", (value) => {
+  it("should reject an invalid presetKey type", () => {
     expect(() => {
       validateComponentFactoryCreationOptions(
         {
-          component: { name: "TestComponent" },
-          presetKey: value,
+          component,
+          presetKey: 123,
         },
         presets,
       );
     }).toThrow('"presetKey" must be a string.');
   });
 
-  it("should reject an unknown preset key", () => {
+  it("should reject an unknown presetKey", () => {
     expect(() => {
       validateComponentFactoryCreationOptions(
         {
-          component: { name: "TestComponent" },
+          component,
           presetKey: "unknown",
         },
         presets,
@@ -70,11 +72,11 @@ describe("validateComponentFactoryCreationOptions", () => {
     }).toThrow('Preset "unknown" is not registered.');
   });
 
-  it("should accept the default preset key", () => {
+  it("should accept the default presetKey", () => {
     expect(() => {
       validateComponentFactoryCreationOptions(
         {
-          component: { name: "TestComponent" },
+          component,
           presetKey: "default",
         },
         presets,

@@ -381,6 +381,7 @@ export interface ComponentFactoryCreator {
       ComponentDataInput<T>
     >,
     defaultSlots?: ComponentSlotsInput<T>,
+    config?: ComponentFactoryConfig,
   ): ComponentFactory<T>;
 
   withOptions<T extends Component>(

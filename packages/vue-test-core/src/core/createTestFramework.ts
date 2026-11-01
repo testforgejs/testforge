@@ -10,7 +10,7 @@ import type {
   ComponentDataInput,
   TestFramework,
   MountRuntimeOptions,
-  PresetKey,
+  ComponentFactoryConfig,
 } from "../types.js";
 
 import type { Component } from "vue";
@@ -25,6 +25,7 @@ import { validateTestComponentFactoryArguments } from "../validators/validateTes
 import { validateComponentFactoryArguments } from "../validators/validateComponentFactoryArguments.js";
 import { validateComponentFactoryCreationOptions } from "../validators/validateComponentFactoryCreationOptions.js";
 import { resolvePresets } from "./utils/resolvePresets.js";
+import { validateComponentFactoryConfig } from "../validators/validateComponentFactoryConfig.js";
 
 /*
  * Creates the main TestFramework instance.
@@ -59,8 +60,12 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
       ComponentDataInput<T>
     > = {},
     defaultSlots: ComponentSlotsInput<T> = {},
-    factoryPresetKey?: PresetKey,
+    config: ComponentFactoryConfig = {},
   ): ComponentFactory<T> => {
+    validateComponentFactoryConfig(config, presets);
+
+    const factoryPresetKey = config.presetKey;
+
     validateTestComponentFactoryArguments(
       component,
       defaultProps,
@@ -157,13 +162,9 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
 
     const { component, presetKey, defaultProps, defaultMountOptions, defaultSlots } = options;
 
-    return createComponentFactory(
-      component,
-      defaultProps,
-      defaultMountOptions,
-      defaultSlots,
+    return createComponentFactory(component, defaultProps, defaultMountOptions, defaultSlots, {
       presetKey,
-    );
+    });
   };
 
   /*

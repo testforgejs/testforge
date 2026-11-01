@@ -6,6 +6,7 @@ import { mount } from "@vue/test-utils";
 import "./shared-plugin-types.js";
 
 import type { SlotsType } from "vue";
+import type { ComponentFactory } from "../dist/index.js";
 
 const MockComponent = defineComponent({
   name: "MockComponent",
@@ -118,6 +119,74 @@ createTestFramework({});
 const framework = createTestFramework();
 
 const factory = framework.testComponentFactory(MockComponent);
+
+/**
+ * Verify positional component factory configuration.
+ */
+
+// Valid factory configuration.
+const configuredFactory = framework.testComponentFactory(
+  MockComponent,
+  undefined,
+  undefined,
+  undefined,
+  { presetKey: "admin" },
+);
+
+expectType<ComponentFactory<typeof MockComponent>>(configuredFactory);
+
+// Empty configuration is allowed.
+framework.testComponentFactory(MockComponent, undefined, undefined, undefined, {});
+
+// Explicitly undefined configuration is allowed.
+framework.testComponentFactory(MockComponent, undefined, undefined, undefined, undefined);
+
+// Invalid preset key type.
+expectError(
+  framework.testComponentFactory(MockComponent, undefined, undefined, undefined, {
+    presetKey: 123,
+  }),
+);
+
+// Legacy property is not supported.
+expectError(
+  framework.testComponentFactory(MockComponent, undefined, undefined, undefined, {
+    preset: "admin",
+  }),
+);
+
+// Unknown configuration property.
+expectError(
+  framework.testComponentFactory(MockComponent, undefined, undefined, undefined, {
+    unknownOption: true,
+  }),
+);
+
+// Configuration must be an object.
+expectError(
+  framework.testComponentFactory(MockComponent, undefined, undefined, undefined, "admin"),
+);
+
+/**
+ * Verify component props inference with factory configuration.
+ */
+
+const configuredPropsFactory = framework.testComponentFactory(
+  MockComponent,
+  { title: "Default title" },
+  undefined,
+  undefined,
+  { presetKey: "admin" },
+);
+
+// Valid component props.
+configuredPropsFactory({ title: "Updated title" });
+
+// Invalid component props.
+expectError(configuredPropsFactory({ title: 123 }));
+
+// Unknown component prop.
+expectError(configuredPropsFactory({ unknownProp: true }));
 
 factory();
 factory({});
