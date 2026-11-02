@@ -24,7 +24,8 @@ npm install -D @testforgejs/vue-test-plugin-primevue@beta
 yarn add -D @testforgejs/vue-test-plugin-primevue@beta
 ```
 
-> `@testforgejs/vue-test-core` is required.
+> [!NOTE]
+> `@testforgejs/vue-test-core` is required. Make sure the installed version satisfies the package's declared dependency requirements.
 
 ## Usage
 
@@ -173,11 +174,18 @@ This allows presets to choose explicitly between:
 
 ## Package exports
 
-The package provides both descriptive and standardized plugin exports:
+The package provides descriptive PrimeVue APIs and the standardized TestForge plugin package contract:
 
 ```typescript
-import { primeVuePlugin, plugin, PLUGIN_NAME } from "@testforgejs/vue-test-plugin-primevue";
+import {
+  primeVuePlugin,
+  plugin,
+  PLUGIN_NAME,
+  type PluginOptions,
+} from "@testforgejs/vue-test-plugin-primevue";
 ```
+
+`plugin` and `PLUGIN_NAME` are runtime exports. `PluginOptions` is a **TypeScript-only** export and is not available as a runtime value.
 
 ### `primeVuePlugin`
 
@@ -199,7 +207,53 @@ For this package:
 PLUGIN_NAME === "primevue";
 ```
 
-The standardized `plugin` and `PLUGIN_NAME` exports are useful for tooling and other code that works with TestForge plugin packages generically.
+### `PluginOptions` (type-only)
+
+`PluginOptions` is the standardized public options type exported by TestForge plugin packages. For the PrimeVue integration, it is an alias for the existing `VueTestPrimeVueOptions` type. In `src/index.ts`, the package declares:
+
+```typescript
+export type { VueTestPrimeVueOptions as PluginOptions } from "./types/types.js";
+```
+
+Both names describe the same PrimeVue plugin configuration. The original `VueTestPrimeVueOptions` type remains available; `PluginOptions` adds a consistent import name for consumers and tooling that work with different TestForge plugin packages. This is a **type-only alias**: it does not change the configuration shape or the runtime behavior of the plugin.
+
+Use `import type` to type PrimeVue configuration explicitly:
+
+```typescript
+import type { PluginOptions } from "@testforgejs/vue-test-plugin-primevue";
+
+const options: PluginOptions = {
+  unstyled: true,
+};
+```
+
+You can also use the standardized exports together when defining a project-owned preset:
+
+```typescript
+import Aura from "@primeuix/themes/aura";
+import type { PresetDefinition } from "@testforgejs/vue-test-core";
+import { plugin, PLUGIN_NAME, type PluginOptions } from "@testforgejs/vue-test-plugin-primevue";
+
+const preset = {
+  manifest: [{ module: plugin, enabled: true }],
+  defaults: {
+    [PLUGIN_NAME]: (): PluginOptions => ({
+      unstyled: false,
+      theme: {
+        preset: Aura,
+      },
+    }),
+  },
+} satisfies PresetDefinition;
+```
+
+The standardized package contract is:
+
+- `plugin` — the managed plugin module (runtime value);
+- `PLUGIN_NAME` — the managed plugin identifier (runtime value);
+- `PluginOptions` — the plugin configuration type (TypeScript-only).
+
+The standardized exports are useful for tooling and other code that works with TestForge plugin packages generically, while the descriptive exports remain available for direct PrimeVue integrations.
 
 ## Supported versions
 

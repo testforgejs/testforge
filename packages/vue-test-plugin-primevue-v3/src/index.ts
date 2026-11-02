@@ -4,6 +4,14 @@
  * Provides an install-based PrimeVue 3 plugin module, typed configuration,
  * and the standardized TestForge plugin package contract.
  *
+ * Standardized package exports:
+ * - `plugin` — alias of {@link primeVuePlugin}.
+ * - `PLUGIN_NAME` — stable identifier for the managed PrimeVue 3 plugin.
+ * - `PluginOptions` — type-only alias of {@link VueTestPrimeVueOptions}.
+ *
+ * The descriptive `primeVuePlugin` and `VueTestPrimeVueOptions` exports
+ * remain available for direct use.
+ *
  * @packageDocumentation
  */
 

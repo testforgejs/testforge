@@ -7,6 +7,14 @@ PrimeVue integration for TestForge.
 Provides an install-based PrimeVue plugin module, typed configuration,
 and the standardized TestForge plugin package contract.
 
+Standardized package exports:
+- `plugin` — alias of [primeVuePlugin](variables/primeVuePlugin.md).
+- `PLUGIN_NAME` — stable identifier for the managed PrimeVue plugin.
+- `PluginOptions` — type-only alias of [VueTestPrimeVueOptions](type-aliases/VueTestPrimeVueOptions.md).
+
+The descriptive `primeVuePlugin` and `VueTestPrimeVueOptions` exports
+remain available for direct use.
+
 ## Type Aliases
 
 - [PrimeVueMountPlugin](type-aliases/PrimeVueMountPlugin.md)

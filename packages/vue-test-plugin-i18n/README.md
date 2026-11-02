@@ -24,7 +24,8 @@ npm install -D @testforgejs/vue-test-plugin-i18n@beta
 yarn add -D @testforgejs/vue-test-plugin-i18n@beta
 ```
 
-> `@testforgejs/vue-test-core` and `vue-i18n` are required.
+> [!NOTE]
+> `@testforgejs/vue-test-core` and `vue-i18n` are required. Make sure the installed versions satisfy the package's declared dependency requirements.
 
 ## Usage
 
@@ -205,11 +206,18 @@ This allows presets to choose explicitly between:
 
 ## Package exports
 
-The package provides both descriptive and standardized plugin exports:
+The package provides descriptive Vue I18n APIs and the standardized TestForge plugin package contract:
 
 ```typescript
-import { i18nPlugin, plugin, PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import {
+  i18nPlugin,
+  plugin,
+  PLUGIN_NAME,
+  type PluginOptions,
+} from "@testforgejs/vue-test-plugin-i18n";
 ```
+
+`plugin` and `PLUGIN_NAME` are runtime exports. `PluginOptions` is a **TypeScript-only** export and is not available as a runtime value.
 
 ### `i18nPlugin`
 
@@ -231,7 +239,63 @@ For this package:
 PLUGIN_NAME === "i18n";
 ```
 
-The standardized `plugin` and `PLUGIN_NAME` exports are useful for tooling and other code that works with TestForge plugin packages generically.
+### `PluginOptions` (type-only)
+
+`PluginOptions` is the standardized public options type exported by TestForge plugin packages. For the Vue I18n integration, it is an alias for the existing `VueTestI18nOptions` type. In `src/index.ts`, the package declares:
+
+```typescript
+export type { VueTestI18nOptions as PluginOptions } from "./types/types.js";
+```
+
+Both names describe the same Vue I18n plugin configuration. The original `VueTestI18nOptions` type remains available; `PluginOptions` adds a consistent import name for consumers and tooling that work with different TestForge plugin packages. This is a **type alias only**: it does not change the configuration shape or the runtime behavior of the plugin.
+
+Use `import type` to type Vue I18n configuration explicitly:
+
+```typescript
+import type { PluginOptions } from "@testforgejs/vue-test-plugin-i18n";
+
+const options: PluginOptions = {
+  legacy: false,
+  globalInjection: true,
+  locale: "en",
+  messages: {
+    en: {
+      hello: "Hello",
+    },
+  },
+};
+```
+
+You can also use the standardized exports together when defining a preset:
+
+```typescript
+import type { PresetDefinition } from "@testforgejs/vue-test-core";
+import { plugin, PLUGIN_NAME, type PluginOptions } from "@testforgejs/vue-test-plugin-i18n";
+
+const preset = {
+  manifest: [{ module: plugin, enabled: true }],
+  defaults: {
+    [PLUGIN_NAME]: (): PluginOptions => ({
+      legacy: false,
+      globalInjection: true,
+      locale: "en",
+      messages: {
+        en: {
+          hello: "Hello",
+        },
+      },
+    }),
+  },
+} satisfies PresetDefinition;
+```
+
+The standardized package contract is:
+
+- `plugin` — the managed plugin module (runtime value);
+- `PLUGIN_NAME` — the managed plugin identifier (runtime value);
+- `PluginOptions` — the plugin configuration type (TypeScript-only).
+
+The standardized exports are useful for tooling and other code that works with TestForge plugin packages generically, while the descriptive exports remain available for direct Vue I18n integrations.
 
 ## Supported versions
 

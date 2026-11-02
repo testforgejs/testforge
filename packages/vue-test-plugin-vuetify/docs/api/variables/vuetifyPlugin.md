@@ -4,7 +4,7 @@
 
 > `const` **vuetifyPlugin**: `PluginModuleWithDefaults`\<[`VuetifyInstance`](../type-aliases/VuetifyInstance.md), [`VueTestVuetifyOptions`](../type-aliases/VueTestVuetifyOptions.md)\>
 
-Defined in: [module/vuetifyPlugin.ts:15](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-vuetify/src/module/vuetifyPlugin.ts#L15)
+Defined in: [module/vuetifyPlugin.ts:15](https://github.com/testforgejs/testforge/blob/9b75ed967caaf78daacf038ab3c12d78ebb8d51c/packages/vue-test-plugin-vuetify/src/module/vuetifyPlugin.ts#L15)
 
 Managed Vuetify plugin module for TestForge.
 

@@ -4,7 +4,7 @@
 
 > **VueTestVuetifyOptions** = `VuetifyOptions`
 
-Defined in: [types/types.ts:40](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-vuetify/src/types/types.ts#L40)
+Defined in: [types/types.ts:40](https://github.com/testforgejs/testforge/blob/9b75ed967caaf78daacf038ab3c12d78ebb8d51c/packages/vue-test-plugin-vuetify/src/types/types.ts#L40)
 
 Configuration options for the Vuetify test plugin.
 

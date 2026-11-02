@@ -24,7 +24,8 @@ npm install -D @testforgejs/vue-test-plugin-pinia@beta
 yarn add -D @testforgejs/vue-test-plugin-pinia@beta
 ```
 
-> `@testforgejs/vue-test-core`, `pinia`, and `@pinia/testing` are required.
+> [!NOTE]
+> `@testforgejs/vue-test-core`, `pinia`, and `@pinia/testing` are required. Make sure the installed versions satisfy the package's declared dependency requirements.
 
 ## Usage
 
@@ -327,7 +328,7 @@ This allows presets to choose explicitly between:
 
 ## Package exports
 
-The package provides both descriptive and standardized plugin exports:
+The package provides descriptive Pinia APIs and the standardized TestForge plugin package contract:
 
 ```typescript
 import {
@@ -335,8 +336,11 @@ import {
   withMockStores,
   plugin,
   PLUGIN_NAME,
+  type PluginOptions,
 } from "@testforgejs/vue-test-plugin-pinia";
 ```
+
+`plugin` and `PLUGIN_NAME` are runtime exports. `PluginOptions` is a **TypeScript-only** export and is not available as a runtime value.
 
 ### `piniaPlugin`
 
@@ -362,7 +366,53 @@ For this package:
 PLUGIN_NAME === "pinia";
 ```
 
-The standardized `plugin` and `PLUGIN_NAME` exports are useful for tooling and other code that works with TestForge plugin packages generically.
+### `PluginOptions` (type-only)
+
+`PluginOptions` is the standardized public options type exported by TestForge plugin packages. For the Pinia integration, it is an alias for the existing `VueTestPiniaOptions` type. In `src/index.ts`, the package declares:
+
+```typescript
+export type { VueTestPiniaOptions as PluginOptions } from "./types/types.js";
+```
+
+Both names describe the same Pinia plugin configuration. The original `VueTestPiniaOptions` type remains available; `PluginOptions` adds a consistent import name for consumers and tooling that work with different TestForge plugin packages. This is a **type alias only**: it does not change the configuration shape or the runtime behavior of the plugin.
+
+Use `import type` to type Pinia configuration explicitly:
+
+```typescript
+import { vi } from "vitest";
+import type { PluginOptions } from "@testforgejs/vue-test-plugin-pinia";
+
+const options: PluginOptions = {
+  createSpy: vi.fn,
+  stubActions: false,
+};
+```
+
+You can also use the standardized exports together when defining a preset:
+
+```typescript
+import { vi } from "vitest";
+import type { PresetDefinition } from "@testforgejs/vue-test-core";
+import { plugin, PLUGIN_NAME, type PluginOptions } from "@testforgejs/vue-test-plugin-pinia";
+
+const preset = {
+  manifest: [{ module: plugin, enabled: true }],
+  defaults: {
+    [PLUGIN_NAME]: (): PluginOptions => ({
+      createSpy: vi.fn,
+      stubActions: false,
+    }),
+  },
+} satisfies PresetDefinition;
+```
+
+The standardized package contract is:
+
+- `plugin` — the managed plugin module (runtime value);
+- `PLUGIN_NAME` — the managed plugin identifier (runtime value);
+- `PluginOptions` — the plugin configuration type (TypeScript-only).
+
+The standardized exports are useful for tooling and other code that works with TestForge plugin packages generically, while the descriptive exports remain available for direct Pinia integrations.
 
 ## Supported versions
 

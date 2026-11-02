@@ -5,7 +5,15 @@
 Pinia testing integration for TestForge.
 
 Provides a managed Pinia plugin module, typed testing configuration,
-and the standardized TestForge plugin package contract.
+store setup helpers, and the standardized TestForge plugin package contract.
+
+Standardized package exports:
+- `plugin` — alias of [piniaPlugin](variables/piniaPlugin.md).
+- `PLUGIN_NAME` — stable identifier for the managed Pinia plugin.
+- `PluginOptions` — type-only alias of [VueTestPiniaOptions](type-aliases/VueTestPiniaOptions.md).
+
+The descriptive `piniaPlugin` and `VueTestPiniaOptions` exports
+remain available for direct use.
 
 ## Type Aliases
 

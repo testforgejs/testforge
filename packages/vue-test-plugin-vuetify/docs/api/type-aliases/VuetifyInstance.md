@@ -4,7 +4,7 @@
 
 > **VuetifyInstance** = `ReturnType`\<*typeof* `createVuetify`\>
 
-Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-vuetify/src/types/types.ts#L12)
+Defined in: [types/types.ts:12](https://github.com/testforgejs/testforge/blob/9b75ed967caaf78daacf038ab3c12d78ebb8d51c/packages/vue-test-plugin-vuetify/src/types/types.ts#L12)
 
 Vuetify runtime instance type returned by `createVuetify()`.
 

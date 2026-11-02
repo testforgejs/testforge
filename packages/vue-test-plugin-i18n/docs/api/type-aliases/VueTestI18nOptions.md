@@ -4,7 +4,7 @@
 
 > **VueTestI18nOptions** = `I18nOptions`
 
-Defined in: [types/types.ts:34](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-i18n/src/types/types.ts#L34)
+Defined in: [types/types.ts:34](https://github.com/testforgejs/testforge/blob/bda9a30aec004080c96ffbad778f525b0ba976d6/packages/vue-test-plugin-i18n/src/types/types.ts#L34)
 
 Configuration options for the Vue I18n test plugin.
 

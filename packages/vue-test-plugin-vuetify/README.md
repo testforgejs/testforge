@@ -24,7 +24,8 @@ npm install -D @testforgejs/vue-test-plugin-vuetify@beta
 yarn add -D @testforgejs/vue-test-plugin-vuetify@beta
 ```
 
-> `@testforgejs/vue-test-core` is required.
+> [!NOTE]
+> `@testforgejs/vue-test-core` is required. Make sure the installed version satisfies the package's declared dependency requirements.
 
 ## Usage
 
@@ -142,11 +143,18 @@ This allows presets to choose explicitly between:
 
 ## Package exports
 
-The package provides both descriptive and standardized plugin exports:
+The package provides descriptive Vuetify APIs and the standardized TestForge plugin package contract:
 
 ```typescript
-import { vuetifyPlugin, plugin, PLUGIN_NAME } from "@testforgejs/vue-test-plugin-vuetify";
+import {
+  vuetifyPlugin,
+  plugin,
+  PLUGIN_NAME,
+  type PluginOptions,
+} from "@testforgejs/vue-test-plugin-vuetify";
 ```
+
+`plugin` and `PLUGIN_NAME` are runtime exports. `PluginOptions` is a **TypeScript-only** export and is not available as a runtime value.
 
 ### `vuetifyPlugin`
 
@@ -168,7 +176,58 @@ For this package:
 PLUGIN_NAME === "vuetify";
 ```
 
-The standardized `plugin` and `PLUGIN_NAME` exports are useful for tooling and other code that works with TestForge plugin packages generically.
+### `PluginOptions` (type-only)
+
+`PluginOptions` is the standardized public options type exported by TestForge plugin packages. For the Vuetify integration, it is an alias for the existing `VueTestVuetifyOptions` type. In `src/index.ts`, the package declares:
+
+```typescript
+export type { VueTestVuetifyOptions as PluginOptions } from "./types/types.js";
+```
+
+Both names describe the same Vuetify plugin configuration. The original `VueTestVuetifyOptions` type remains available; `PluginOptions` adds a consistent import name for consumers and tooling that work with different TestForge plugin packages. This is a **type-only alias**: it does not change the configuration shape or the runtime behavior of the plugin.
+
+Use `import type` to type Vuetify configuration explicitly:
+
+```typescript
+import * as components from "vuetify/components";
+import * as directives from "vuetify/directives";
+import type { PluginOptions } from "@testforgejs/vue-test-plugin-vuetify";
+
+const options: PluginOptions = {
+  components,
+  directives,
+};
+```
+
+You can also use the standardized exports together when defining a preset:
+
+```typescript
+import * as components from "vuetify/components";
+import * as directives from "vuetify/directives";
+import type { PresetDefinition } from "@testforgejs/vue-test-core";
+import { plugin, PLUGIN_NAME, type PluginOptions } from "@testforgejs/vue-test-plugin-vuetify";
+
+const preset = {
+  manifest: [{ module: plugin, enabled: true }],
+  defaults: {
+    [PLUGIN_NAME]: (): PluginOptions => ({
+      components,
+      directives,
+      defaults: {
+        VBtn: { variant: "text" },
+      },
+    }),
+  },
+} satisfies PresetDefinition;
+```
+
+The standardized package contract is:
+
+- `plugin` — the managed plugin module (runtime value);
+- `PLUGIN_NAME` — the managed plugin identifier (runtime value);
+- `PluginOptions` — the plugin configuration type (TypeScript-only).
+
+The standardized exports are useful for tooling and other code that works with TestForge plugin packages generically, while the descriptive exports remain available for direct Vuetify integrations.
 
 ## Supported versions
 

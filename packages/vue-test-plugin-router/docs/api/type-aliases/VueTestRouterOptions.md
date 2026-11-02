@@ -4,7 +4,7 @@
 
 > **VueTestRouterOptions** = `RouterOptions`
 
-Defined in: [types/types.ts:29](https://github.com/testforgejs/testforge/blob/e7a79bfa09a370e19f625ad91df804394db829ef/packages/vue-test-plugin-router/src/types/types.ts#L29)
+Defined in: [types/types.ts:29](https://github.com/testforgejs/testforge/blob/bda9a30aec004080c96ffbad778f525b0ba976d6/packages/vue-test-plugin-router/src/types/types.ts#L29)
 
 Configuration options for the Vue Router test plugin.
 
