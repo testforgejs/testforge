@@ -18,12 +18,18 @@ export type PluginName = string;
 /** Value accepted by Vue Test Utils through `global.plugins`. */
 export type MountPlugin = Plugin | [Plugin, ...unknown[]];
 
+/** Creates an instance from plugin-specific options. */
 export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
   options: TOptions,
 ) => TInstance;
 
+/** Produces plugin options when defaults are requested. */
 export type PluginOptionsFactory<TOptions> = () => TOptions;
 
+/**
+ * Test-runner operations available to plugin default-option factories.
+ * Mock and spy return types are intentionally runner-agnostic.
+ */
 export interface UniversalRunner {
   fn: <T extends (...args: any[]) => any>(implementation?: T) => any;
 
@@ -37,23 +43,36 @@ export interface UniversalRunner {
   restoreAllMocks: () => any;
 }
 
+/**
+ * Creates an options factory, optionally using the active test runner.
+ * The returned factory produces options when invoked; this outer call
+ * supplies the runner dependency rather than creating plugin options directly.
+ */
 export type PluginDefaultOptionsFactory<TOptions> = (
   runner?: UniversalRunner,
 ) => PluginOptionsFactory<TOptions>;
 
+/** Plugin creation contract and optional lifecycle hooks. */
 export interface PluginDefinition<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
+  /** Transforms creation options before the plugin is created. */
   beforeCreate?: (ctx: PipelineContext, options: TOptions) => TOptions;
+  /** Creates the plugin value installed through Vue Test Utils. */
   create: (options: TOptions) => TPlugin;
+  /** Runs after creation with the created plugin and pipeline context. */
   afterCreate?: (plugin: TPlugin, ctx: PipelineContext) => void;
+  /** Declares support for deferred plugin instance references. */
   supportsInstanceReferences?: true;
 }
 
+/** Named plugin module consumed by preset manifests and the registry. */
 export interface PluginModule<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
   getName(): PluginName;
   getDefinition(): PluginDefinition<TPlugin, TOptions>;
+  /** Supplies an options factory, optionally bound to a test runner. */
   getDefaultOptions?: PluginDefaultOptionsFactory<TOptions>;
 }
 
+/** Plugin module that guarantees an available default-options factory. */
 export interface PluginModuleWithDefaults<
   TPlugin extends MountPlugin = MountPlugin,
   TOptions = unknown,
@@ -61,6 +80,7 @@ export interface PluginModuleWithDefaults<
   getDefaultOptions: PluginDefaultOptionsFactory<TOptions>;
 }
 
+/** Associates a plugin module with its initial enabled state in a preset. */
 export interface PluginManifestEntry<
   TPlugin extends MountPlugin = MountPlugin,
   TOptions = unknown,
@@ -69,6 +89,7 @@ export interface PluginManifestEntry<
   enabled: boolean;
 }
 
+/** Registry of plugin definitions addressed by plugin name. */
 export interface PluginRegistry {
   register(entry: PluginManifestEntry): void;
   get(name: PluginName): PluginDefinition<any, any> | undefined;
@@ -79,6 +100,7 @@ export interface PluginRegistry {
 
 export type SupportedPluginState = boolean;
 
+/** Plugin availability and enabled states for the active mount context. */
 export type SupportedPluginsMap = Record<PluginName, SupportedPluginState>;
 
 // =============================================================================
@@ -99,9 +121,10 @@ export interface PluginOptionsMap {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginInstanceMap {}
 
+/** String keys registered in the managed-instance type map. */
 export type PluginInstanceName = Extract<keyof PluginInstanceMap, PluginName>;
 
-/** Symbol-keyed callback used to capture a managed instance. */
+// Instance capture through a symbol-keyed callback.
 
 /**
  * Optional callback for exposing a managed plugin instance.
@@ -111,21 +134,23 @@ export interface ExposeOption<TInstance> {
 }
 
 /**
- * Handle returned by captureInstance().
+ * Handle returned by `captureInstance()`.
  */
 export interface InstanceCapture<TInstance> {
+  /** Captured instance, or undefined before an instance is exposed. */
   readonly instance: TInstance | undefined;
 
   [PLUGIN_EXPOSE](instance: TInstance): void;
 }
 
-/**
- * Metadata stored in an unresolved plugin configuration.
- */
+// Instance metadata and reuse.
+
+/** Metadata stored in an unresolved plugin configuration. */
 export interface PluginMeta<TInstance = unknown> {
   instance?: TInstance;
 }
 
+/** Optional symbol-keyed metadata accepted before pipeline resolution. */
 export interface PluginMetaOptions<TInstance = unknown> {
   [PLUGIN_META_KEY]?: PluginMeta<TInstance>;
 }
@@ -162,10 +187,15 @@ export type RuntimePluginOptions<TInstance, TOptions = object> = TOptions &
 // 3. Deferred plugin instance references
 // =============================================================================
 
+/** Discriminant used to identify deferred plugin instance references. */
 export const PLUGIN_INSTANCE_REFERENCE_TYPE = "plugin-instance-reference" as const;
 
 export type PluginInstanceReferenceType = typeof PLUGIN_INSTANCE_REFERENCE_TYPE;
 
+/**
+ * Deferred value derived from a named managed plugin instance.
+ * The resolver receives that instance and produces the referenced value.
+ */
 export interface PluginInstanceReference<TPluginName extends PluginInstanceName, TResult> {
   readonly __type: PluginInstanceReferenceType;
   readonly pluginName: TPluginName;
@@ -196,9 +226,6 @@ export type ResolvablePluginOptions<T> = T extends object
 // 4. Public plugin configuration
 // =============================================================================
 
-/** Identifies which configuration source is being validated. */
-export type OptionsContext = "defaultMountOptions" | "mountOptions" | "extraOptions";
-
 /** Forbid instance metadata and capture controls on install-based plugins. */
 type PluginOptionsWithoutInstance<TOptions> = ResolvablePluginOptions<TOptions> & {
   [PLUGIN_EXPOSE]?: never;
@@ -206,10 +233,11 @@ type PluginOptionsWithoutInstance<TOptions> = ResolvablePluginOptions<TOptions> 
 };
 
 /**
- * Configuration for managed plugins.
+ * Configuration for registered plugins.
  *
- * Only names in `PluginInstanceMap` can capture or reuse instances.
- * Native options may be omitted only when a pre-created instance is supplied.
+ * Instance capture and reuse require registration in `PluginInstanceMap`.
+ * Native options may be omitted when a pre-created instance is supplied.
+ * `false` disables the plugin.
  */
 export type PluginOptionsInput = {
   [K in keyof PluginOptionsMap]?:
@@ -256,16 +284,22 @@ export type PluginOverridesInput = {
 /** Default configuration factories for plugins included in a preset. */
 export type PluginConfigDefaults = Record<PluginName, PluginOptionsFactory<RuntimePluginConfig>>;
 
+/** Plugin manifest and default-option factories defining a preset. */
 export interface PresetDefinition {
   /** Plugins available in the preset and their enabled state. */
   manifest: PluginManifestEntry<any, any>[];
 
-  /** Optional per-plugin defaults; not every manifest entry needs defaults. */
+  /** Per-plugin default factories. May be empty or omit manifest plugins. */
   defaults: PluginConfigDefaults;
 }
 
+/** Named presets available to the framework. */
 export type TestFrameworkPresets = Record<string, PresetDefinition>;
 
+/** Preset lookup key; not restricted to keys of a specific preset collection. */
+export type PresetKey = keyof TestFrameworkPresets;
+
+/** Optional manifest and default-factory contributions for extending a preset. */
 export interface PresetExtension {
   manifest?: PluginManifestEntry<any, any>[];
   defaults?: PluginConfigDefaults;
@@ -280,6 +314,7 @@ export type ComponentPropsInput<T extends Component> = Partial<ComponentProps<T>
 
 type RelaxedSlot<T> = T extends (props: infer P) => unknown ? (props: P) => unknown : () => unknown;
 
+/** Optional component slots with inferred slot props and relaxed return types. */
 export type ComponentSlotsInput<T extends Component> = Partial<{
   [K in keyof ComponentSlots<T>]: RelaxedSlot<ComponentSlots<T>[K]>;
 }>;
@@ -291,15 +326,20 @@ export type ComponentData<T extends Component> = T extends { data?(...args: any)
     : Record<string, never>
   : Record<string, never>;
 
+/** Partial component data contributed by a configuration source. */
 export type ComponentDataInput<T extends Component> = Partial<ComponentData<T>>;
 
-export type PresetKey = keyof TestFrameworkPresets;
-
+/** Factory-level controls shared by both creation forms. */
 export interface ComponentFactoryConfig {
   /** Select the default preset for this component factory. */
   presetKey?: PresetKey;
 }
 
+/**
+ * Named arguments for `testComponentFactory.withOptions()`.
+ * The component determines the types of default props, slots, and data;
+ * `NoInfer` prevents those defaults from changing component inference.
+ */
 export interface ComponentFactoryCreationOptions<
   T extends Component,
 > extends ComponentFactoryConfig {
@@ -320,6 +360,7 @@ export interface ComponentFactoryCreationOptions<
   defaultSlots?: ComponentSlotsInput<NoInfer<T>>;
 }
 
+/** Vue Test Utils mounting options extended with TestForge plugin controls. */
 export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
   MountingOptions<Props, Data>,
   "props" | "slots" | "data"
@@ -340,6 +381,14 @@ export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> e
   skipManagedPlugins?: boolean;
 }
 
+/** Alias for mounting options that include TestForge plugin configuration. */
+export type MountWithPluginsOptions<Props = any, Slots = any, Data = any> = ComponentFactoryOptions<
+  Props,
+  Slots,
+  Data
+>;
+
+/** Per-call preset selection, default-skipping controls, and plugin overrides. */
 export type ComponentFactoryExtraOptions = {
   /** Select the preset used for this factory call. */
   presetKey?: PresetKey;
@@ -353,6 +402,7 @@ export type ComponentFactoryExtraOptions = {
   /** Skip base mount options. */
   skipDefaultOptions?: boolean;
 
+  /** Partial plugin overrides applied for this factory call. */
   plugins?: PluginOverridesInput;
 };
 
@@ -371,7 +421,9 @@ export type ComponentFactory<T extends Component> = (
   extraOptions?: ComponentFactoryExtraOptions,
 ) => ReturnType<typeof mount<T>>;
 
+/** Creates reusable component factories using positional or named arguments. */
 export interface ComponentFactoryCreator {
+  /** Creates a component factory from positional arguments. */
   <T extends Component>(
     component: T,
     defaultProps?: ComponentPropsInput<T>,
@@ -384,11 +436,13 @@ export interface ComponentFactoryCreator {
     config?: ComponentFactoryConfig,
   ): ComponentFactory<T>;
 
+  /** Creates a component factory from a named configuration object. */
   withOptions<T extends Component>(
     options: ComponentFactoryCreationOptions<T>,
   ): ComponentFactory<T>;
 }
 
+/** Public API returned by `createTestFramework()`. */
 export interface TestFramework {
   /** Creates a reusable component mounting factory. */
   testComponentFactory: ComponentFactoryCreator;
@@ -409,13 +463,20 @@ interface MultiplePresetsOptions extends CommonCreateTestFrameworkOptions {
   presets?: TestFrameworkPresets;
 }
 
+/**
+ * Framework configuration.
+ *
+ * Accepts either a single preset or a named preset collection.
+ * `preset` and `presets` cannot be supplied together.
+ * Both may be omitted to create a framework without presets.
+ */
 export type CreateTestFrameworkOptions = SinglePresetOptions | MultiplePresetsOptions;
 
 // =============================================================================
 // 7. Runtime configuration and mount pipeline
 // =============================================================================
 
-// Middleware accumulates runtime state without component-specific generics.
+/** Middleware runtime state without component-specific generics. */
 export type RuntimePluginConfig = Record<PropertyKey, any>;
 
 export type RuntimePluginOption = RuntimePluginConfig | false;
@@ -424,23 +485,26 @@ export type ResolvedPluginOptions = Record<PluginName, RuntimePluginOption>;
 
 export type ResolvedPluginDefaults = Record<PluginName, RuntimePluginConfig>;
 
+/** Runtime configuration shape that includes optional input instance metadata. */
 export type ResolvedPluginConfig = RuntimePluginConfig & PluginMetaOptions;
 
+/** Plugin configuration overlay, or false to disable the plugin. */
 export type PluginOverlay = ResolvedPluginConfig | false;
 
+/** Runtime plugin configuration with an optional shared managed instance. */
 export type RuntimePluginState = RuntimePluginConfig & {
   [SHARED_PLUGIN_INSTANCE_KEY]?: unknown;
 };
 
 /** Extra options after plugin overrides have been resolved. */
-export type RuntimeExtraOptions = {
-  preset?: keyof TestFrameworkPresets;
-  skipDefaultProps?: boolean;
-  skipDefaultSlots?: boolean;
-  skipDefaultOptions?: boolean;
+export type RuntimeExtraOptions = Omit<ComponentFactoryExtraOptions, "plugins"> & {
   plugins?: ResolvedPluginOptions;
 };
 
+/** Identifies which configuration source is being validated. */
+export type OptionsContext = "defaultMountOptions" | "mountOptions" | "extraOptions";
+
+/** Configuration sources used to initialize a mount pipeline context. */
 export interface CreatePipelineContextParams {
   defaultMountOptions?: ComponentFactoryOptions;
   mountOptions?: ComponentFactoryOptions;
@@ -448,6 +512,7 @@ export interface CreatePipelineContextParams {
   presets?: TestFrameworkPresets;
 }
 
+/** Input configuration, active preset, and accumulated mount pipeline state. */
 export interface PipelineContext {
   defaultMountOptions: ComponentFactoryOptions;
   mountOptions: ComponentFactoryOptions;
@@ -459,12 +524,20 @@ export interface PipelineContext {
 
 declare const RuntimeContextBrand: unique symbol;
 
+/**
+ * Pipeline context marked as a runtime context by the pipeline.
+ * The brand distinguishes this stage at the type level; it does not validate data.
+ */
 export interface RuntimeContext extends PipelineContext {
   readonly [RuntimeContextBrand]: true;
 }
 
 declare const MountReadyBrand: unique symbol;
 
+/**
+ * Runtime context marked as ready for mounting, with runtime plugin overrides.
+ * The brand records the pipeline stage rather than performing validation.
+ */
 export interface MountReadyContext extends RuntimeContext {
   extraOptions: RuntimeExtraOptions;
 
@@ -474,6 +547,7 @@ export interface MountReadyContext extends RuntimeContext {
 /** VTU mount state without a component-specific Props/Data type. */
 type MountOptionsState = Partial<MountingOptions<any, any>>;
 
+/** Mount options and plugin state accumulated by pipeline middleware. */
 export interface PipelineContextResult {
   mountOptions: MountOptionsState;
   global: NonNullable<MountingOptions<any, any>["global"]>;
@@ -481,6 +555,7 @@ export interface PipelineContextResult {
   plugins: ResolvedPluginOptions;
 }
 
+/** Partial updates to individual sections of the accumulated pipeline result. */
 export type PipelineResultPatch = {
   mountOptions?: Partial<PipelineContextResult["mountOptions"]>;
   plugins?: Partial<PipelineContextResult["plugins"]>;
@@ -488,15 +563,22 @@ export type PipelineResultPatch = {
   global?: Partial<PipelineContextResult["global"]>;
 };
 
+/** Synchronous context transformation between two pipeline stages. */
 export type PipelineMiddleware<
   In extends PipelineContext = PipelineContext,
   Out extends PipelineContext = In,
 > = (ctx: In) => Out;
 
+/** Executable pipeline with explicit input and output types. */
 export interface Pipeline<In = PipelineContext, Out = In> {
   run: (ctx: In) => Out;
 }
 
+/**
+ * Infers the last middleware return type from a non-empty tuple.
+ * Falls back to In when no last middleware can be inferred.
+ * Does not check compatibility between consecutive middleware functions.
+ */
 export type PipeResult<In, Ms extends readonly any[]> = Ms extends readonly [
   ...any[],
   infer Last extends (...args: any[]) => any,
@@ -504,18 +586,12 @@ export type PipeResult<In, Ms extends readonly any[]> = Ms extends readonly [
   ? ReturnType<Last>
   : In;
 
+/** Framework-level runtime defaults used when mounting a component. */
 export interface MountRuntimeOptions {
   shallowByDefault: boolean;
 }
 
-// =============================================================================
-// 8. Shared utility types
-// =============================================================================
-
-export type PlainObject = Record<string, unknown>;
-
-export type Mergeable = PlainObject | unknown[];
-
+/** Component data sources and controls supplied to the data-merging helper. */
 export interface MergeComponentDataParams<T extends object> {
   // Factory defaults.
   defaultMountData?: T | null;
@@ -530,8 +606,11 @@ export interface MergeComponentDataParams<T extends object> {
   skipOptions?: boolean;
 }
 
-export type MountWithPluginsOptions<Props = any, Slots = any, Data = any> = ComponentFactoryOptions<
-  Props,
-  Slots,
-  Data
->;
+// =============================================================================
+// 8. Shared utility types
+// =============================================================================
+
+/** String-keyed object shape; does not guarantee a plain object at runtime. */
+export type PlainObject = Record<string, unknown>;
+
+export type Mergeable = PlainObject | unknown[];
