@@ -436,7 +436,30 @@ export interface ComponentFactoryCreator {
     config?: ComponentFactoryConfig,
   ): ComponentFactory<T>;
 
-  /** Creates a component factory from a named configuration object. */
+  /**
+   * Creates a reusable component test factory using an options object.
+   *
+   * This is an alternative to the positional `testComponentFactory()` API.
+   * Both forms produce equivalent component factories.
+   *
+   * The optional `presetKey` selects a registered preset for all mounts
+   * created by this factory, unless overridden by mount-level
+   * `extraOptions.presetKey`.
+   *
+   * @param options - Component and default factory configuration.
+   * @returns A reusable component test factory.
+   *
+   * @example
+   * ```typescript
+   * const factory = testComponentFactory.withOptions({
+   *   component: MyComponent,
+   *   defaultProps: { title: "Hello" },
+   *   presetKey: "i18n",
+   * });
+   *
+   * factory(); // Uses the "i18n" preset.
+   * ```
+   */
   withOptions<T extends Component>(
     options: ComponentFactoryCreationOptions<T>,
   ): ComponentFactory<T>;

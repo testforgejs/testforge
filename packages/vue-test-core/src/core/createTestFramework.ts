@@ -161,10 +161,12 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
   };
 
   /*
-   * Object-based component factory API.
+   * Object-based component factory implementation.
    *
-   * Adapts the creation options to the existing internal
-   * component factory implementation.
+   * Adapts named creation options to the shared component factory
+   * implementation, preserving the behavior of the positional API.
+   *
+   * Public API documentation is defined in ComponentFactoryCreator.
    */
   const withOptions = <T extends Component>(
     options: ComponentFactoryCreationOptions<T>,
