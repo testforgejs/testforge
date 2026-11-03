@@ -2,6 +2,7 @@ import type {
   CreateTestFrameworkOptions,
   ComponentFactoryCreator,
   ComponentFactoryCreationOptions,
+  ComponentFactoryInvocationOptions,
   ComponentFactory,
   ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
@@ -24,6 +25,7 @@ import { validateCreateTestFrameworkOptions } from "../validators/validateCreate
 import { validateTestComponentFactoryArguments } from "../validators/validateTestComponentFactoryArguments.js";
 import { validateComponentFactoryArguments } from "../validators/validateComponentFactoryArguments.js";
 import { validateComponentFactoryCreationOptions } from "../validators/validateComponentFactoryCreationOptions.js";
+import { validateComponentFactoryInvocationOptions } from "../validators/validateComponentFactoryInvocationOptions.js";
 import { resolvePresets } from "./utils/resolvePresets.js";
 import { validatePlainObjectArgument } from "../validators/validatePlainObjectArgument.js";
 import { validateComponentFactoryConfig } from "../validators/validateComponentFactoryConfig.js";
@@ -47,11 +49,9 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
   /*
    * Internal component factory implementation.
    *
-   * Supports a factory-level preset selection while preserving
-   * the existing positional API.
-   *
-   * The factoryPresetKey parameter is internal and is not exposed
-   * through the public positional signature.
+   * Shared by positional and object-based factory creation.
+   * Resolves factory-level configuration and returns a callable
+   * mount factory supporting both invocation forms.
    */
   const createComponentFactory = <T extends Component>(
     component: T,
@@ -79,7 +79,8 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
 
     validateFactoryPresetPlugins(defaultMountOptions, factoryPresetKey, presets);
 
-    return (
+    // Shared mount implementation for positional and object-based calls.
+    const mountComponent = (
       props: ComponentPropsInput<T> = {},
       mountOptions: ComponentFactoryOptions<
         ComponentPropsInput<T>,
@@ -158,6 +159,20 @@ export function createTestFramework(options: CreateTestFrameworkOptions = {}): T
         mountRuntimeOptions,
       );
     };
+
+    /*
+     * Adapts named mount arguments to the shared positional implementation.
+     * Public API documentation is defined in ComponentFactory<T>.
+     */
+    const mountWithOptions = (options: ComponentFactoryInvocationOptions<T>) => {
+      validateComponentFactoryInvocationOptions(options);
+
+      const { props, mountOptions, slots, extraOptions } = options;
+
+      return mountComponent(props, mountOptions, slots, extraOptions);
+    };
+
+    return Object.assign(mountComponent, { withOptions: mountWithOptions });
   };
 
   /*

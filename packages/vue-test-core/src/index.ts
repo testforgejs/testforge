@@ -13,8 +13,10 @@ export { withPluginInstance } from "./plugins/helpers/withPluginInstance.js";
 export type {
   ComponentFactory,
   ComponentFactoryCreator,
-  ComponentFactoryOptions,
   ComponentFactoryExtraOptions,
+  ComponentFactoryCreationOptions,
+  ComponentFactoryInvocationOptions,
+  ComponentFactoryOptions,
   CreateTestFrameworkOptions,
   MountPlugin,
   PluginDefaultOptionsFactory,

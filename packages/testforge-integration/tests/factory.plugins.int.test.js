@@ -415,6 +415,275 @@ describe("Plugin Integration", () => {
     expect(options.global.plugins).toHaveLength(1);
   });
 
+  describe("Mount-level Object API", () => {
+    const expectDefaultPlugins = (plugins) => {
+      expect(plugins).toEqual(expect.arrayContaining([mockI18nInstance, mockPiniaInstance]));
+      expect(plugins).toHaveLength(2);
+    };
+
+    it("should initialize default plugins when called with empty options", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({});
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      expect(mockRouterCreate).not.toHaveBeenCalled();
+
+      const [, options] = mockMount.mock.calls[0];
+      expectDefaultPlugins(options.global.plugins);
+      expect(mockMount).toHaveBeenCalledTimes(1);
+    });
+
+    it("should produce equivalent mount options through positional and object-based calls", () => {
+      const factory = testComponentFactory(MockComponent);
+      const defaultSlot = () => "Slot content";
+      const props = { status: "ready" };
+      const mountOptions = {
+        plugins: { i18n: { locale: "fr" } },
+        global: { stubs: { AppButton: true } },
+      };
+      const slots = { default: defaultSlot };
+      const extraOptions = { plugins: { pinia: false } };
+
+      factory(props, mountOptions, slots, extraOptions);
+      factory.withOptions({ props, mountOptions, slots, extraOptions });
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(2);
+      expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "fr" }));
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      const [, positionalOptions] = mockMount.mock.calls[0];
+      const [, objectOptions] = mockMount.mock.calls[1];
+
+      expect(objectOptions).toEqual(positionalOptions);
+      expect(objectOptions.props).toMatchObject(props);
+      expect(objectOptions.slots.default).toBe(defaultSlot);
+      expect(objectOptions.global.stubs.AppButton).toBe(true);
+      expect(objectOptions.global.plugins).toEqual([mockI18nInstance]);
+    });
+
+    it("should apply mountOptions.plugins when selecting a mount-level preset", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({
+        mountOptions: { plugins: { i18n: { locale: "fr" } } },
+        extraOptions: { presetKey: "i18nPreset" },
+      });
+
+      expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "fr" }));
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.global.plugins).toEqual([mockI18nInstance]);
+    });
+
+    it("should apply extraOptions.plugins over mountOptions.plugins", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({
+        mountOptions: { plugins: { i18n: { locale: "fr" } } },
+        extraOptions: { plugins: { i18n: { locale: "uk" } } },
+      });
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+      expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "uk" }));
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      expect(mockMount).toHaveBeenCalledTimes(1);
+    });
+
+    it("should replace factory plugin options through mountOptions.plugins", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultMountOptions: { plugins: { pinia: { stubActions: true } } },
+      });
+
+      factory.withOptions({
+        mountOptions: { plugins: { pinia: { initialState: { user: { id: 123 } } } } },
+      });
+
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      const [piniaOptions] = mockPiniaCreate.mock.calls[0];
+      expect(piniaOptions.stubActions).not.toBe(true);
+      expect(piniaOptions.initialState).toEqual({ user: { id: 123 } });
+    });
+
+    it("should disable a managed plugin for one object-based mount only", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({ extraOptions: { plugins: { pinia: false } } });
+
+      const [, firstMountOptions] = mockMount.mock.calls[0];
+      expect(firstMountOptions.global.plugins).toEqual([mockI18nInstance]);
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+
+      factory.withOptions({});
+
+      const [, secondMountOptions] = mockMount.mock.calls[1];
+      expectDefaultPlugins(secondMountOptions.global.plugins);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      expect(firstMountOptions.global.plugins).toEqual([mockI18nInstance]);
+      expect(mockMount).toHaveBeenCalledTimes(2);
+    });
+
+    it("should skip managed plugins and preserve third-party plugins", () => {
+      const thirdPartyPlugin = { install: () => {} };
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({
+        mountOptions: {
+          skipManagedPlugins: true,
+          global: { plugins: [thirdPartyPlugin] },
+        },
+      });
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockRouterCreate).not.toHaveBeenCalled();
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.global.plugins).toEqual([thirdPartyPlugin]);
+      expect(mockMount).toHaveBeenCalledTimes(1);
+    });
+
+    it("should enable a disabled preset plugin through extraOptions.plugins", () => {
+      const factory = testComponentFactory(MockComponent);
+      const routes = [{ path: "/", component: { render: () => null } }];
+
+      factory.withOptions({
+        extraOptions: { plugins: { router: { routes } } },
+      });
+
+      expect(mockRouterCreate).toHaveBeenCalledTimes(1);
+      expect(mockRouterCreate).toHaveBeenCalledWith(expect.objectContaining({ routes }));
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.global.plugins).toContain(mockRouterInstance);
+      expect(options.global.plugins).toContain(mockI18nInstance);
+      expect(options.global.plugins).toContain(mockPiniaInstance);
+      expect(options.global.plugins).toHaveLength(3);
+    });
+
+    it("should temporarily override the factory preset and restore it across invocation forms", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        presetKey: "i18nPreset",
+      });
+
+      // Inherit the factory-level preset.
+      factory.withOptions({});
+      const [, firstMountOptions] = mockMount.mock.calls[0];
+      expect(firstMountOptions.global.plugins).toEqual([mockI18nInstance]);
+
+      // The nested mount-level preset overrides the factory-level preset.
+      factory.withOptions({ extraOptions: { presetKey: "default" } });
+      const [, secondMountOptions] = mockMount.mock.calls[1];
+      expectDefaultPlugins(secondMountOptions.global.plugins);
+
+      // A positional invocation of the same factory restores its original preset.
+      factory();
+      const [, thirdMountOptions] = mockMount.mock.calls[2];
+      expect(thirdMountOptions.global.plugins).toEqual([mockI18nInstance]);
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(3);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      expect(mockMount).toHaveBeenCalledTimes(3);
+      expect(firstMountOptions.global.plugins).toEqual([mockI18nInstance]);
+      expectDefaultPlugins(secondMountOptions.global.plugins);
+    });
+
+    it("should use the same object-based mount API from a positional factory", () => {
+      const factory = testComponentFactory(MockComponent, {}, {}, {}, { presetKey: "i18nPreset" });
+
+      factory.withOptions({ extraOptions: { presetKey: "default" } });
+      factory.withOptions({});
+
+      expectDefaultPlugins(mockMount.mock.calls[0][1].global.plugins);
+      expect(mockMount.mock.calls[1][1].global.plugins).toEqual([mockI18nInstance]);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      expect(mockI18nCreate).toHaveBeenCalledTimes(2);
+    });
+
+    it("should ignore unsupported factory defaults under a mount-level preset override", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        presetKey: "default",
+        defaultMountOptions: { plugins: { pinia: { stubActions: true } } },
+      });
+
+      factory.withOptions({ extraOptions: { presetKey: "i18nPreset" } });
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(1);
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount.mock.calls[0][1].global.plugins).toEqual([mockI18nInstance]);
+
+      // Default configuration remains available when the factory preset is active.
+      factory.withOptions({});
+      expect(mockPiniaCreate).toHaveBeenCalledWith(expect.objectContaining({ stubActions: true }));
+      expectDefaultPlugins(mockMount.mock.calls[1][1].global.plugins);
+    });
+
+    it("should reject mountOptions plugins unsupported by the effective preset", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        presetKey: "default",
+      });
+
+      expect(() => {
+        factory.withOptions({
+          mountOptions: { plugins: { pinia: {} } },
+          extraOptions: { presetKey: "i18nPreset" },
+        });
+      }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+
+    it("should reject extraOptions plugins unsupported by the effective preset", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      expect(() => {
+        factory.withOptions({
+          extraOptions: {
+            presetKey: "i18nPreset",
+            plugins: { pinia: {} },
+          },
+        });
+      }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+
+    it("should reject an unknown nested preset before initializing plugins", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      expect(() => {
+        factory.withOptions({ extraOptions: { presetKey: "unknownPreset" } });
+      }).toThrow(/unknownPreset/);
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+
+    it("should reject presetKey at the top level rather than silently ignoring it", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      expect(() => {
+        factory.withOptions({ presetKey: "i18nPreset" });
+      }).toThrow(/Unknown option "presetKey" in "options"/);
+
+      expect(mockI18nCreate).not.toHaveBeenCalled();
+      expect(mockPiniaCreate).not.toHaveBeenCalled();
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Using Presets", () => {
     it("should select presets independently across factory calls", () => {
       const factory = testComponentFactory(MockComponent);

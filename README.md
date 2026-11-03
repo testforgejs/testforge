@@ -42,6 +42,7 @@
 - [Core Concepts](#core-concepts)
   - [Test Component Factory](#test-component-factory)
     - [Object-Based Factory API](#object-based-factory-api)
+    - [Object-Based Mount API](#object-based-mount-api)
   - [Plugin System](#plugin-system)
   - [Presets](#presets)
   - [Mount Pipeline](#mount-pipeline)
@@ -68,7 +69,7 @@ A few weeks later, real app infrastructure appears: i18n, Pinia, Router, stubs, 
 
 Suddenly, you hit the **Configuration Explosion** problem.
 
-To test different behaviors of the _*same*_ component, you need slightly different environments:
+To test different behaviors of the _same_ component, you need slightly different environments:
 
 - Test A needs a clean Pinia store.
 - Test B needs the same store, but with one specific action behavior.
@@ -85,7 +86,7 @@ Now multiply this by 200+ tests. Your test suite becomes difficult to maintain:
 - **Hidden Intent**: The actual test logic is buried under infrastructure wiring.
 - **Maintenance Tax**: A simple refactor requires updating hundreds of boilerplate lines.
 
-Your tests no longer describe what a component _*does*_.
+Your tests no longer describe what a component _does_.
 
 They describe **how to rebuild your entire Vue test environment** from scratch.
 
@@ -190,7 +191,6 @@ TestForge does not include plugin integrations in `@testforgejs/vue-test-core`. 
 // tests/setup.ts
 
 import { vi } from "vitest";
-
 import { createTestFramework, type PresetDefinition } from "@testforgejs/vue-test-core";
 import { piniaPlugin, PLUGIN_NAME as PINIA_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-pinia";
 
@@ -201,7 +201,6 @@ const preset = {
       enabled: true,
     },
   ],
-
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
@@ -240,7 +239,6 @@ const preset = {
       enabled: true,
     },
   ],
-
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
@@ -318,7 +316,6 @@ You can now create a reusable component factory:
 
 ```typescript
 import { describe, expect, it } from "vitest";
-
 import { testComponentFactory } from "@/tests/setup";
 import MyComponent from "@/components/MyComponent.vue";
 
@@ -327,7 +324,6 @@ const factory = testComponentFactory(MyComponent);
 describe("MyComponent.vue", () => {
   it("renders correctly", () => {
     const wrapper = factory();
-
     expect(wrapper.exists()).toBe(true);
   });
 });
@@ -339,7 +335,7 @@ describe("MyComponent.vue", () => {
 
 # Why TestForge?
 
-- **Less boilerplate** — tests describe _*what*_ is being tested instead of repeatedly rebuilding application infrastructure.
+- **Less boilerplate** — tests describe _what_ is being tested instead of repeatedly rebuilding application infrastructure.
 - **Consistent environments** — presets provide a shared baseline for managed Vue ecosystem plugins.
 - **Component-scoped environments** — choose a preset when creating a component factory instead of repeating the selection in every test.
 - **Safe overrides** — configuration follows an explicit hierarchy from preset defaults to individual test configuration.
@@ -348,6 +344,7 @@ describe("MyComponent.vue", () => {
 - **Project-owned configuration** — applications can materialize their chosen testing configuration directly in editable project source.
 - **Vue Test Utils compatibility** — existing VTU configuration can be adopted incrementally.
 - **Type safety** — component and plugin configuration remains strongly typed.
+- **Flexible factory APIs** — use either positional arguments or named objects when creating factories and mounting components.
 - **Isolated configuration** — plugin options factories produce fresh options for independent pipeline contexts, while component factory invocations create independent runtime environments.
 
 ---
@@ -420,7 +417,6 @@ By default, a component factory uses the registered `default` profile:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
-
 const wrapper = factory();
 ```
 
@@ -452,11 +448,13 @@ const factory = testComponentFactory(
 );
 ```
 
-A test can temporarily override the factory preset using `extraOptions.presetKey` (the fourth argument to `factory()`):
+A test can temporarily override the factory preset using `extraOptions.presetKey` (inside `factory.withOptions()`, or as the fourth positional argument):
 
 ```typescript
 factory(); // Uses "designSystem".
-factory({}, {}, {}, { presetKey: "default" }); // Uses "default" for this mount.
+factory.withOptions({
+  extraOptions: { presetKey: "default" },
+}); // Uses "default" for this mount.
 factory(); // Uses "designSystem" again.
 ```
 
@@ -471,7 +469,7 @@ defaultFactory({}, {}, {}, { presetKey: "designSystem" });
 
 Each named preset represents a complete managed-plugin runtime profile; selecting another preset is **not** an overlay on `default`.
 
-The active preset also defines which managed plugins may be configured. When a factory preset is explicitly selected, `defaultMountOptions.plugins` is checked against it at factory creation. If a mount switches to a different preset, unsupported _factory defaults_ are ignored for that mount, but unsupported plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` are rejected.
+The active preset also defines which managed plugins may be configured. When a factory preset is explicitly selected, `defaultMountOptions.plugins` is checked against it at factory creation. If a mount switches to a different preset, unsupported _*factory defaults*_ are ignored for that mount, but unsupported plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` are rejected.
 
 For the full API signatures and validation details, see [Configuration & Advanced Usage](docs/configuration.md#testcomponentfactory-signature) and [Configuration Validation](docs/configuration.md#53-configuration-validation).
 
@@ -658,18 +656,13 @@ For a targeted adjustment that should preserve the already resolved I18n configu
 
 ```typescript
 it("renders French greeting", () => {
-  const wrapper = factory(
-    {},
-    {},
-    {},
-    {
+  const wrapper = factory.withOptions({
+    extraOptions: {
       plugins: {
-        i18n: {
-          locale: "fr",
-        },
+        i18n: { locale: "fr" },
       },
     },
-  );
+  });
 });
 ```
 
@@ -684,18 +677,13 @@ Another test can adjust Pinia independently:
 
 ```typescript
 it("executes store actions", () => {
-  const wrapper = factory(
-    {},
-    {},
-    {},
-    {
+  const wrapper = factory.withOptions({
+    extraOptions: {
       plugins: {
-        pinia: {
-          stubActions: false,
-        },
+        pinia: { stubActions: false },
       },
     },
-  );
+  });
 });
 ```
 
@@ -706,7 +694,7 @@ The distinction between the two local configuration mechanisms is important:
 
 Use replacement when the test intends to provide a complete plugin configuration.
 
-Use an overlay when the test needs to change only selected options.
+Use an overlay when the test needs to change only selected options. The positional `factory(props, mountOptions, slots, extraOptions)` API remains fully supported; `factory.withOptions({ extraOptions })` simply avoids empty positional placeholders.
 
 ---
 
@@ -786,7 +774,7 @@ const factory = testComponentFactory.withOptions({
   presetKey: "designSystem",
   defaultProps: { title: "Default title" },
   defaultMountOptions: { shallow: true },
-  defaultSlots: { default: "Fallback content" },
+  defaultSlots: { default: () => "Fallback content" },
 });
 
 const wrapper = factory({ title: "Custom title" });
@@ -799,12 +787,57 @@ const factory = testComponentFactory(
   MyComponent,
   { title: "Default title" },
   { shallow: true },
-  { default: "Fallback content" },
+  { default: () => "Fallback content" },
   { presetKey: "designSystem" },
 );
 ```
 
 Both APIs return the **same kind of component factory** and support the same per-mount overrides. The object-based form makes optional settings easier to identify and avoids placeholder arguments when selecting a factory preset. `presetKey` must name a preset registered through `createTestFramework({ presets })` (or the implicit `default` created by `createTestFramework({ preset })`).
+
+<a id="object-based-mount-api"></a>
+
+### Object-Based Mount API
+
+The factory itself supports two equivalent ways to mount a component: the
+positional `factory()` API and the named `factory.withOptions()` API. Both
+execute the same Mount Pipeline and follow the same configuration and plugin
+resolution rules.
+
+```typescript
+// Positional mount API.
+const positionalWrapper = factory(
+  { title: "Custom title" },
+  { shallow: false },
+  { default: () => "Test content" },
+  { skipDefaultProps: true },
+);
+
+// Equivalent object-based mount API.
+const objectWrapper = factory.withOptions({
+  props: { title: "Custom title" },
+  mountOptions: { shallow: false },
+  slots: { default: () => "Test content" },
+  extraOptions: { skipDefaultProps: true },
+});
+```
+
+All four fields are optional. To mount using only factory defaults, call
+`factory()` or `factory.withOptions({})`.
+
+**Do not confuse the two `withOptions()` methods:**
+
+- `testComponentFactory.withOptions({ component, ... })` creates a factory;
+  factory-level `presetKey` is a top-level property.
+- `factory.withOptions({ props, mountOptions, slots, extraOptions })` mounts
+  the component; per-mount `presetKey`, execution flags, and managed plugin
+  overlays belong inside `extraOptions`.
+
+Use `mountOptions.plugins` to replace a managed plugin's factory-level
+configuration, `extraOptions.plugins` to apply a shallow overlay, and
+`mountOptions.global.plugins` for standard Vue Test Utils plugins.
+
+For the complete API and validation rules, see
+[Configuration & Advanced Usage](docs/configuration.md#component-mounting-apis).
 
 ### Component Factory Invocations
 
@@ -872,15 +905,13 @@ Vue plugins without a TestForge integration can be registered directly through t
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
-
-const wrapper = factory(
-  {},
-  {
+const wrapper = factory.withOptions({
+  mountOptions: {
     global: {
       plugins: [customVuePlugin],
     },
   },
-);
+});
 ```
 
 These plugins are installed by Vue Test Utils and do not participate in TestForge's managed plugin pipeline.
@@ -984,17 +1015,14 @@ const preset = {
     { module: i18nPlugin, enabled: true },
     { module: routerPlugin, enabled: false },
   ],
-
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
     }),
-
     [I18N_PLUGIN_NAME]: () => ({
       legacy: false,
       globalInjection: true,
     }),
-
     [ROUTER_PLUGIN_NAME]: () => ({
       history: createMemoryHistory(),
       routes: [],
@@ -1029,7 +1057,6 @@ manifest: [
     enabled: false,
   },
 ],
-
 defaults: {
   [ROUTER_PLUGIN_NAME]: () => ({
     history: createMemoryHistory(),
@@ -1055,7 +1082,6 @@ const routerDefaults = () => ({
   history: createMemoryHistory(),
   routes: [],
 });
-
 const first = routerDefaults();
 const second = routerDefaults();
 
@@ -1136,11 +1162,13 @@ factory(); // Uses "admin" by default.
 Or **for an individual mount** when a test needs a different profile:
 
 ```typescript
-factory({}, {}, {}, { presetKey: "default" });
+factory.withOptions({
+  extraOptions: { presetKey: "default" },
+});
 factory(); // Uses "admin" again.
 ```
 
-The positional API also accepts `{ presetKey: "admin" }` as the fifth argument to `testComponentFactory()`. See [Factory-Level Preset Selection](#factory-level-preset-selection) for the priority and plugin validation rules.
+The positional factory creation API also accepts `{ presetKey: "admin" }` as its fifth argument. For individual mounts, use `factory({}, {}, {}, { presetKey: "default" })` as the equivalent positional form. See [Factory-Level Preset Selection](#factory-level-preset-selection) for the priority and plugin validation rules.
 
 ### Preset Composition
 
@@ -1410,11 +1438,10 @@ import { testComponentFactory } from "@/tests/setup";
 import MyComponent from "./MyComponent.vue";
 
 const factory = testComponentFactory(MyComponent);
-
-const wrapper = factory({}, VTUConfig);
+const wrapper = factory.withOptions({ mountOptions: VTUConfig });
 ```
 
-At this stage, the goal is simply to introduce the TestForge runtime without immediately redesigning every test.
+The positional equivalent is `factory({}, VTUConfig)`. At this stage, the goal is simply to introduce the TestForge runtime without immediately redesigning every test.
 
 ---
 

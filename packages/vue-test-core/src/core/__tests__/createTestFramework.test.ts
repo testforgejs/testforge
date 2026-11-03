@@ -1140,4 +1140,241 @@ describe("createTestFramework → testComponentFactory", () => {
       expect(mountWithPlugins).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("factory.withOptions()", () => {
+    it("should be available for both factory creation APIs", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const positionalFactory = testComponentFactory(component);
+      const objectFactory = testComponentFactory.withOptions({ component });
+
+      expect(positionalFactory.withOptions).toBeTypeOf("function");
+      expect(objectFactory.withOptions).toBeTypeOf("function");
+    });
+
+    it("should forward named arguments to the shared mount implementation", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      const props = { title: "Per-test title" };
+
+      const mountOptions = {
+        shallow: true,
+        props: { count: 2 },
+      };
+
+      const slots = {};
+
+      const extraOptions = {
+        skipDefaultProps: true,
+        skipDefaultSlots: true,
+        skipDefaultOptions: true,
+      };
+
+      factory.withOptions({
+        props,
+        mountOptions,
+        slots,
+        extraOptions,
+      });
+
+      expect(mergeComponentData).toHaveBeenNthCalledWith(1, {
+        defaultMountData: undefined,
+        defaultData: {},
+        mountData: mountOptions.props,
+        directData: props,
+        skipDefault: true,
+        skipOptions: true,
+      });
+
+      expect(mergeComponentData).toHaveBeenNthCalledWith(2, {
+        defaultMountData: undefined,
+        defaultData: {},
+        mountData: undefined,
+        directData: slots,
+        skipDefault: true,
+        skipOptions: true,
+      });
+
+      expect(createPipelineContext).toHaveBeenCalledWith({
+        defaultMountOptions: {},
+        mountOptions,
+        extraOptions,
+        presets: expect.any(Object),
+      });
+
+      expect(mountWithPlugins).toHaveBeenCalledTimes(1);
+    });
+
+    it("should use positional defaults for omitted options", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      factory.withOptions({});
+
+      expect(mergeComponentData).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          directData: {},
+          skipDefault: false,
+          skipOptions: false,
+        }),
+      );
+
+      expect(mergeComponentData).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          directData: {},
+          skipDefault: false,
+          skipOptions: false,
+        }),
+      );
+
+      expect(createPipelineContext).toHaveBeenCalledWith({
+        defaultMountOptions: {},
+        mountOptions: {},
+        extraOptions: {},
+        presets: expect.any(Object),
+      });
+
+      expect(mountWithPlugins).toHaveBeenCalledTimes(1);
+    });
+
+    it("should support providing only extraOptions", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      factory.withOptions({
+        extraOptions: {
+          skipDefaultProps: true,
+          skipDefaultSlots: true,
+        },
+      });
+
+      expect(mergeComponentData).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          skipDefault: true,
+        }),
+      );
+
+      expect(mergeComponentData).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          skipDefault: true,
+        }),
+      );
+
+      expect(createPipelineContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extraOptions: {
+            skipDefaultProps: true,
+            skipDefaultSlots: true,
+          },
+        }),
+      );
+    });
+
+    it("should inherit the factory-level preset", () => {
+      const presets = {
+        default: { manifest: [], defaults: {} },
+        admin: { manifest: [], defaults: {} },
+      };
+
+      const { testComponentFactory } = createTestFramework({ presets });
+
+      const factory = testComponentFactory.withOptions({
+        component,
+        presetKey: "admin",
+      });
+
+      factory.withOptions({});
+
+      expect(createPipelineContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extraOptions: {
+            presetKey: "admin",
+          },
+        }),
+      );
+    });
+
+    it("should allow mount-level preset selection to override the factory preset", () => {
+      const presets = {
+        default: { manifest: [], defaults: {} },
+        admin: { manifest: [], defaults: {} },
+      };
+
+      const { testComponentFactory } = createTestFramework({ presets });
+
+      const factory = testComponentFactory.withOptions({
+        component,
+        presetKey: "admin",
+      });
+
+      factory.withOptions({
+        extraOptions: {
+          presetKey: "default",
+        },
+      });
+
+      expect(createPipelineContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extraOptions: {
+            presetKey: "default",
+          },
+        }),
+      );
+    });
+
+    it("should return the mount result", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      const result = factory.withOptions({});
+
+      expect(result).toBe("wrapper");
+      expect(mountWithPlugins).toHaveBeenCalledTimes(1);
+    });
+
+    it("should reject unknown invocation options before running the pipeline", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      expect(() => {
+        factory.withOptions({
+          extraOption: {},
+        } as never);
+      }).toThrow('Unknown option "extraOption" in "options".');
+
+      expect(createPipelineContext).not.toHaveBeenCalled();
+      expect(mountWithPlugins).not.toHaveBeenCalled();
+    });
+
+    it("should reject non-object invocation options", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      expect(() => {
+        factory.withOptions(null as never);
+      }).toThrow('"options" must be a plain object.');
+
+      expect(createPipelineContext).not.toHaveBeenCalled();
+      expect(mountWithPlugins).not.toHaveBeenCalled();
+    });
+
+    it("should validate nested arguments through the shared positional validators", () => {
+      const { testComponentFactory } = createTestFramework();
+      const factory = testComponentFactory(component);
+
+      expect(() => {
+        factory.withOptions({
+          props: 123,
+        } as never);
+      }).toThrow('"props" must be a plain object');
+
+      expect(createPipelineContext).not.toHaveBeenCalled();
+      expect(mountWithPlugins).not.toHaveBeenCalled();
+    });
+  });
 });

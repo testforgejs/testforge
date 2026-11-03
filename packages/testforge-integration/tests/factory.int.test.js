@@ -55,6 +55,584 @@ describe("testComponentFactory Integration (Universal)", () => {
     testComponentFactory = await createFactory();
   });
 
+  describe("Factory Creation Object API", () => {
+    it("should create a mountable factory when only component is provided", () => {
+      const factory = testComponentFactory.withOptions({ component: MockComponent });
+
+      expect(factory).toEqual(expect.any(Function));
+      expect(factory.withOptions).toEqual(expect.any(Function));
+
+      const wrapper = factory();
+
+      expect(mockMount).toHaveBeenCalledWith(MockComponent, expect.any(Object));
+      expect(mockMount).toHaveBeenCalledTimes(1);
+      expect(mockShallowMount).not.toHaveBeenCalled();
+      expect(wrapper).toBe(mockMount.mock.results[0].value);
+    });
+
+    it("should preserve factory defaults with either mount invocation API", () => {
+      const defaultSlot = () => "default slot";
+
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { fromFactory: true },
+        defaultSlots: { default: defaultSlot },
+      });
+
+      factory({ fromMount: 1 });
+      factory.withOptions({ props: { fromMount: 1 } });
+
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      const [positionalComponent, positionalOptions] = mockMount.mock.calls[0];
+      const [objectComponent, objectOptions] = mockMount.mock.calls[1];
+
+      expect(positionalComponent).toBe(MockComponent);
+      expect(objectComponent).toBe(MockComponent);
+
+      expect(positionalOptions.props).toEqual({
+        fromFactory: true,
+        fromMount: 1,
+      });
+
+      expect(objectOptions.props).toEqual(positionalOptions.props);
+
+      expect(positionalOptions.slots).toEqual({
+        default: defaultSlot,
+      });
+
+      expect(objectOptions.slots).toEqual(positionalOptions.slots);
+
+      // Both invocations should install the same number of managed plugins.
+      expect(objectOptions.global.plugins).toHaveLength(positionalOptions.global.plugins.length);
+    });
+
+    it("should prioritize defaultProps over defaultMountOptions.props", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { shared: "direct default", directOnly: true },
+        defaultMountOptions: {
+          props: { shared: "mount default", mountOnly: true },
+        },
+      });
+
+      factory();
+
+      expect(mockMount.mock.calls[0][1].props).toEqual({
+        shared: "direct default",
+        directOnly: true,
+        mountOnly: true,
+      });
+    });
+
+    it("should prioritize defaultSlots over defaultMountOptions.slots", () => {
+      const defaultSlot = () => "from direct defaults";
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultMountOptions: {
+          slots: { default: () => "from mount defaults", header: "header" },
+        },
+        defaultSlots: { default: defaultSlot, footer: () => "footer" },
+      });
+
+      factory();
+
+      expect(mockMount.mock.calls[0][1].slots).toEqual({
+        default: defaultSlot,
+        header: "header",
+        footer: expect.any(Function),
+      });
+    });
+
+    it("should pass defaultMountOptions to VTU and allow mount-level shallow overrides", () => {
+      const data = () => ({ count: 1 });
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultMountOptions: {
+          shallow: true,
+          data,
+          attrs: { role: "status" },
+          global: { stubs: { DefaultBadge: true } },
+        },
+      });
+
+      factory();
+      expect(mockShallowMount).toHaveBeenCalledTimes(1);
+      expect(mockMount).not.toHaveBeenCalled();
+      expect(mockShallowMount.mock.calls[0][1]).toEqual(
+        expect.objectContaining({
+          data,
+          attrs: { role: "status" },
+          global: expect.objectContaining({ stubs: { DefaultBadge: true } }),
+        }),
+      );
+
+      factory({}, { shallow: false });
+      expect(mockMount).toHaveBeenCalledTimes(1);
+      expect(mockShallowMount).toHaveBeenCalledTimes(1);
+    });
+
+    it("should preserve factory defaults with either mount invocation API", () => {
+      const defaultSlot = () => "default slot";
+
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { fromFactory: true },
+        defaultSlots: { default: defaultSlot },
+      });
+
+      factory({ fromMount: 1 });
+      factory.withOptions({ props: { fromMount: 1 } });
+
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      const [positionalComponent, positionalOptions] = mockMount.mock.calls[0];
+      const [objectComponent, objectOptions] = mockMount.mock.calls[1];
+
+      // Both APIs mount the same component.
+      expect(positionalComponent).toBe(MockComponent);
+      expect(objectComponent).toBe(MockComponent);
+
+      // Both APIs preserve factory-level default props.
+      const expectedProps = {
+        fromFactory: true,
+        fromMount: 1,
+      };
+
+      expect(positionalOptions.props).toEqual(expectedProps);
+      expect(objectOptions.props).toEqual(expectedProps);
+
+      // Both APIs preserve factory-level default slots.
+      const expectedSlots = {
+        default: defaultSlot,
+      };
+
+      expect(positionalOptions.slots).toEqual(expectedSlots);
+      expect(objectOptions.slots).toEqual(expectedSlots);
+    });
+
+    it("should support mount-level skip flags on object-created factories", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { ignored: true },
+        defaultMountOptions: {
+          props: { ignoredMountProp: true },
+          slots: { ignoredMountSlot: "factory slot" },
+        },
+        defaultSlots: { ignoredSlot: () => "factory slot" },
+      });
+
+      factory(
+        { runtime: true },
+        { props: { runtimeMount: true }, slots: { header: "runtime header" } },
+        { footer: "runtime footer" },
+        { skipDefaultProps: true, skipDefaultSlots: true },
+      );
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.props).toEqual({ runtime: true, runtimeMount: true });
+      expect(options.slots).toEqual({ header: "runtime header", footer: "runtime footer" });
+    });
+
+    it("should retain independent defaults for separately created object factories", () => {
+      const firstFactory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { origin: "first" },
+        defaultSlots: { default: () => "first" },
+      });
+      const secondFactory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { origin: "second" },
+        defaultSlots: { default: () => "second" },
+      });
+
+      firstFactory();
+      secondFactory();
+      firstFactory();
+
+      expect(mockMount.mock.calls.map(([, options]) => options.props)).toEqual([
+        { origin: "first" },
+        { origin: "second" },
+        { origin: "first" },
+      ]);
+      expect(mockMount.mock.calls.map(([, options]) => options.slots.default())).toEqual([
+        "first",
+        "second",
+        "first",
+      ]);
+    });
+
+    it("should not persist runtime overrides into the creation options", () => {
+      const creationOptions = {
+        component: MockComponent,
+        defaultProps: { title: "factory" },
+        defaultMountOptions: {
+          attrs: { role: "alert" },
+          global: { stubs: { FactoryButton: true } },
+        },
+      };
+      const factory = testComponentFactory.withOptions(creationOptions);
+
+      factory(
+        { title: "runtime" },
+        { attrs: { id: "runtime" }, global: { stubs: { RuntimeButton: true } } },
+      );
+      factory();
+
+      const [, secondOptions] = mockMount.mock.calls[1];
+      expect(secondOptions.props).toEqual({ title: "factory" });
+      expect(secondOptions.attrs).toEqual({ role: "alert" });
+      expect(secondOptions.global.stubs).toEqual({ FactoryButton: true });
+      expect(creationOptions).toEqual({
+        component: MockComponent,
+        defaultProps: { title: "factory" },
+        defaultMountOptions: {
+          attrs: { role: "alert" },
+          global: { stubs: { FactoryButton: true } },
+        },
+      });
+    });
+
+    it("should reject invalid creation options before mounting", () => {
+      expect(() => testComponentFactory.withOptions({})).toThrow();
+      expect(() =>
+        testComponentFactory.withOptions({ component: MockComponent, defaultProps: 123 }),
+      ).toThrow(/defaultProps/);
+      expect(() =>
+        testComponentFactory.withOptions({ component: MockComponent, defaultSlots: [] }),
+      ).toThrow(/defaultSlots/);
+      expect(() =>
+        testComponentFactory.withOptions({ component: MockComponent, presetKey: "missing-preset" }),
+      ).toThrow(/Preset "missing-preset" is not registered/);
+
+      expect(mockMount).not.toHaveBeenCalled();
+      expect(mockShallowMount).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Mount-level Object API", () => {
+    it("should expose withOptions on factories created through both APIs", () => {
+      const positionalFactory = testComponentFactory(MockComponent);
+      const objectFactory = testComponentFactory.withOptions({ component: MockComponent });
+
+      expect(positionalFactory.withOptions).toEqual(expect.any(Function));
+      expect(objectFactory.withOptions).toEqual(expect.any(Function));
+
+      positionalFactory.withOptions({});
+      objectFactory.withOptions({});
+
+      expect(mockMount).toHaveBeenCalledTimes(2);
+      expect(mockShallowMount).not.toHaveBeenCalled();
+    });
+
+    it("should merge all four props and slots sources with the same priorities", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { defA: 1, defB: 10 },
+        defaultMountOptions: {
+          props: { defA: 2, defC: 30 },
+          slots: { slotA: "A1", slotC: "C1" },
+        },
+        defaultSlots: { slotA: "A2", slotB: "B2" },
+      });
+
+      factory.withOptions({
+        props: { defB: 11, userDirect: 100 },
+        mountOptions: {
+          props: { defC: 31, userMount: 200 },
+          slots: { slotC: "C3", userMount: "user mount" },
+        },
+        slots: { slotB: "B4", userDirect: "user direct" },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.props).toEqual({
+        defA: 1,
+        defB: 11,
+        defC: 31,
+        userDirect: 100,
+        userMount: 200,
+      });
+      expect(options.slots).toEqual({
+        slotA: "A2",
+        slotB: "B4",
+        slotC: "C3",
+        userDirect: "user direct",
+        userMount: "user mount",
+      });
+    });
+
+    it("should prioritize direct props and slots over mountOptions at mount level", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({
+        props: { id: 1 },
+        mountOptions: {
+          props: { id: 2, name: "from mountOptions" },
+          slots: { default: "from mountOptions", footer: "footer" },
+        },
+        slots: { default: "direct slot" },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.props).toEqual({ id: 1, name: "from mountOptions" });
+      expect(options.slots).toEqual({ default: "direct slot", footer: "footer" });
+    });
+
+    it("should apply skipDefaultProps without affecting default slots", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { fromDefaultProps: true },
+        defaultSlots: { default: "default slot" },
+        defaultMountOptions: {
+          props: { fromDefaultMount: true },
+          slots: { footer: "default footer" },
+        },
+      });
+
+      factory.withOptions({
+        props: { id: 1 },
+        mountOptions: { props: { title: "runtime" } },
+        extraOptions: { skipDefaultProps: true },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.props).toEqual({ id: 1, title: "runtime" });
+      expect(options.slots).toEqual({
+        default: "default slot",
+        footer: "default footer",
+      });
+    });
+
+    it("should apply skipDefaultSlots without affecting default props", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { fromDefaultProps: true },
+        defaultMountOptions: {
+          props: { fromDefaultMount: true },
+          slots: { ignoredFooter: "default footer" },
+        },
+        defaultSlots: { ignoredHeader: "default header" },
+      });
+
+      factory.withOptions({
+        mountOptions: { slots: { footer: "runtime footer" } },
+        slots: { header: "runtime header" },
+        extraOptions: { skipDefaultSlots: true },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.props).toEqual({
+        fromDefaultProps: true,
+        fromDefaultMount: true,
+      });
+      expect(options.slots).toEqual({
+        footer: "runtime footer",
+        header: "runtime header",
+      });
+    });
+
+    it("should skip factory-level mount defaults but preserve runtime VTU options", () => {
+      const defaultData = () => ({ count: 1 });
+      const runtimeData = () => ({ count: 2 });
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultMountOptions: {
+          data: defaultData,
+          attrs: { role: "button" },
+          attachTo: "#default-root",
+          global: { stubs: { DefaultButton: true } },
+        },
+      });
+
+      factory.withOptions({
+        mountOptions: {
+          data: runtimeData,
+          attrs: { id: "runtime" },
+          attachTo: "#runtime-root",
+          global: { stubs: { RuntimeButton: true } },
+        },
+        extraOptions: { skipDefaultOptions: true },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.data).toBe(runtimeData);
+      expect(options.attrs).toEqual({ id: "runtime" });
+      expect(options.attachTo).toBe("#runtime-root");
+      expect(options.global.stubs).toEqual({ RuntimeButton: true });
+    });
+
+    it("should deep-merge global configuration from factory and invocation options", () => {
+      const mockApi = { getUser: runner.fn() };
+      const factory = testComponentFactory(
+        MockComponent,
+        {},
+        {
+          global: {
+            stubs: { BaseButton: true },
+            mocks: { $api: mockApi },
+            provide: { theme: "light", locale: "en" },
+            config: { optionMergeStrategies: { foo: "default" } },
+          },
+        },
+      );
+
+      factory.withOptions({
+        mountOptions: {
+          global: {
+            stubs: { BaseModal: true },
+            mocks: { $store: {} },
+            provide: { theme: "dark" },
+            config: { optionMergeStrategies: { bar: "runtime" } },
+          },
+        },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.global.stubs).toEqual({ BaseButton: true, BaseModal: true });
+      expect(options.global.mocks).toEqual({ $api: mockApi, $store: {} });
+      expect(options.global.provide).toEqual({ theme: "dark", locale: "en" });
+      expect(options.global.config.optionMergeStrategies).toEqual({
+        foo: "default",
+        bar: "runtime",
+      });
+    });
+
+    it("should merge and deduplicate third-party global.plugins", () => {
+      const pluginA = { install() {} };
+      const pluginB = { install() {} };
+      const factory = testComponentFactory(
+        MockComponent,
+        {},
+        {
+          global: { plugins: [pluginA] },
+        },
+      );
+
+      factory.withOptions({
+        mountOptions: {
+          global: { plugins: [pluginA, pluginB] },
+          skipManagedPlugins: true,
+        },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options.global.plugins).toEqual([pluginA, pluginB]);
+    });
+
+    it("should pass data, attrs, attachTo, and other VTU options through mountOptions", () => {
+      const data = () => ({ count: 3 });
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({
+        mountOptions: {
+          data,
+          attrs: { "data-testid": "alert" },
+          attachTo: "#app",
+          inheritAttrs: false,
+        },
+      });
+
+      const [, options] = mockMount.mock.calls[0];
+      expect(options).toEqual(
+        expect.objectContaining({
+          data,
+          attrs: { "data-testid": "alert" },
+          attachTo: "#app",
+          inheritAttrs: false,
+        }),
+      );
+    });
+
+    it("should respect shallowByDefault and per-mount shallow overrides", async () => {
+      testComponentFactory = await createFactoryWithShallowDefault(true);
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({});
+      expect(mockShallowMount).toHaveBeenCalledTimes(1);
+      expect(mockMount).not.toHaveBeenCalled();
+
+      factory.withOptions({ mountOptions: { shallow: false } });
+      expect(mockMount).toHaveBeenCalledTimes(1);
+      expect(mockShallowMount).toHaveBeenCalledTimes(1);
+
+      factory.withOptions({ mountOptions: { shallow: true } });
+      expect(mockShallowMount).toHaveBeenCalledTimes(2);
+    });
+
+    it("should honor shallow: true when shallowByDefault is false", async () => {
+      testComponentFactory = await createFactoryWithShallowDefault(false);
+      const factory = testComponentFactory(MockComponent);
+
+      factory.withOptions({ mountOptions: { shallow: true } });
+      expect(mockShallowMount).toHaveBeenCalledTimes(1);
+      expect(mockMount).not.toHaveBeenCalled();
+    });
+
+    it("should produce the same VTU mount arguments as the positional API", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { status: "default" },
+        defaultMountOptions: {
+          attrs: { role: "alert" },
+          global: { stubs: { BaseButton: true } },
+        },
+        defaultSlots: { footer: "default footer" },
+      });
+      const props = { status: "runtime", id: 42 };
+      const mountOptions = {
+        attrs: { id: "alert" },
+        global: { stubs: { RuntimeButton: true } },
+        slots: { header: "mount header" },
+        skipManagedPlugins: true,
+      };
+      const slots = { default: "runtime content" };
+      const extraOptions = { skipDefaultProps: false, skipDefaultSlots: false };
+
+      factory(props, mountOptions, slots, extraOptions);
+      factory.withOptions({ props, mountOptions, slots, extraOptions });
+
+      expect(mockMount).toHaveBeenCalledTimes(2);
+      expect(mockShallowMount).not.toHaveBeenCalled();
+      expect(mockMount.mock.calls[1]).toEqual(mockMount.mock.calls[0]);
+    });
+
+    it("should not retain a previous mount's props, slots, or extraOptions", () => {
+      const factory = testComponentFactory.withOptions({
+        component: MockComponent,
+        defaultProps: { defaultValue: true },
+        defaultSlots: { footer: "factory footer" },
+      });
+
+      factory.withOptions({
+        props: { runtimeValue: true },
+        slots: { footer: "runtime footer" },
+        extraOptions: { skipDefaultProps: true, skipDefaultSlots: true },
+      });
+      factory.withOptions({});
+
+      const [, first] = mockMount.mock.calls[0];
+      const [, second] = mockMount.mock.calls[1];
+      expect(first.props).toEqual({ runtimeValue: true });
+      expect(first.slots).toEqual({ footer: "runtime footer" });
+      expect(second.props).toEqual({ defaultValue: true });
+      expect(second.slots).toEqual({ footer: "factory footer" });
+    });
+
+    it("should reject mount-only options at the top level without invoking VTU", () => {
+      const factory = testComponentFactory(MockComponent);
+
+      expect(() => factory.withOptions({ skipDefaultProps: true })).toThrow(
+        /Unknown option "skipDefaultProps"/,
+      );
+      expect(() => factory.withOptions({ presetKey: "default" })).toThrow(
+        /Unknown option "presetKey"/,
+      );
+      expect(mockMount).not.toHaveBeenCalled();
+      expect(mockShallowMount).not.toHaveBeenCalled();
+    });
+  });
+
   describe("VTU Mount Functions", () => {
     describe("when shallowByDefault = true", () => {
       beforeEach(async () => {

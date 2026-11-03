@@ -6,12 +6,12 @@
 
 The core package provides:
 
-- type-safe `testComponentFactory` instances with positional and object-based creation APIs;
+- reusable, type-safe component test factories with positional and object-based creation and mounting APIs;
 - plugin registration and lifecycle management;
 - preset-based runtime configuration with factory-level and per-mount selection;
-- reusable component test factories;
 - a hierarchical configuration resolution pipeline:
-  **Preset → Factory → Test → Extra Options**.
+
+**Preset → Factory → Test → Extra Options**.
 
 The core package itself does **not** include or configure Vue ecosystem plugins. Plugin integrations are provided by separate TestForge packages and become available to the framework through presets.
 
@@ -113,7 +113,9 @@ const factory = testComponentFactory.withOptions({
 });
 
 factory(); // Uses the i18n preset.
-factory({}, {}, {}, { presetKey: "default" }); // Overrides it for one mount.
+factory.withOptions({
+  extraOptions: { presetKey: "default" },
+}); // Overrides it for one mount.
 factory(); // Uses the i18n preset again.
 ```
 
@@ -201,7 +203,6 @@ The resulting `testComponentFactory` can then be imported and reused throughout 
 // MyComponent.spec.ts
 
 import { describe, expect, it } from "vitest";
-
 import { testComponentFactory } from "@/tests/setup";
 import MyComponent from "@/components/MyComponent.vue";
 
@@ -210,7 +211,6 @@ const factory = testComponentFactory(MyComponent);
 describe("MyComponent.vue", () => {
   it("renders correctly", () => {
     const wrapper = factory();
-
     expect(wrapper.exists()).toBe(true);
   });
 });
@@ -222,9 +222,9 @@ For Jest projects, use `@testforgejs/vue-test-preset-recommended-jest` instead.
 
 ### Component Factory Creation APIs
 
-`testComponentFactory` supports both a **positional API** and an **object-based API**. They create the same reusable component factory. The object-based form is useful when you need to set several optional defaults or choose a preset for the component.
+`testComponentFactory` supports both **positional** and **object-based** factory creation. Both forms return the same reusable, type-safe component factory. The object-based form is especially useful when configuring several defaults or selecting a preset.
 
-**Object-based API:**
+**Object-based creation:**
 
 ```typescript
 const factory = testComponentFactory.withOptions({
@@ -232,30 +232,97 @@ const factory = testComponentFactory.withOptions({
   presetKey: "i18n",
   defaultProps: { title: "Hello" },
   defaultMountOptions: { shallow: true },
-  defaultSlots: { default: "Fallback content" },
+  defaultSlots: { default: () => "Fallback content" },
 });
 ```
 
-**Equivalent positional API:**
+**Equivalent positional creation:**
 
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
   { title: "Hello" },
   { shallow: true },
-  { default: "Fallback content" },
+  { default: () => "Fallback content" },
   { presetKey: "i18n" },
 );
 ```
 
-In both forms, the selected preset and defaults belong to the component factory. **Calling `factory()` is unchanged**; you can still override props, mount options, slots, or `extraOptions` for a single mount:
+The selected preset and defaults belong to the returned factory, regardless of how it was created. Either factory can then be invoked through **both** mounting APIs described below.
+
+### Component Mounting APIs
+
+Every factory returned by `testComponentFactory()` or `testComponentFactory.withOptions()` supports both positional mounting through `factory(...)` and object-based mounting through `factory.withOptions({...})`. They apply the same configuration rules and return the same Vue Test Utils wrapper type.
+
+**Object-based mounting:**
 
 ```typescript
-factory(); // Uses factory defaults and the i18n preset.
-factory({}, {}, {}, { presetKey: "default" }); // Uses default for this mount only.
+const wrapper = factory.withOptions({
+  props: { title: "Updated" },
+  mountOptions: {
+    shallow: false,
+    global: { stubs: { AppButton: true } },
+  },
+  slots: { default: () => "Test-specific content" },
+  extraOptions: {
+    presetKey: "default",
+    skipDefaultProps: true,
+  },
+});
 ```
 
-The positional API remains supported; `withOptions()` is an alternative, not a replacement. See the [Configuration Guide](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#testcomponentfactory-signature) for argument details and further examples.
+**Equivalent positional mounting:**
+
+```typescript
+const wrapper = factory(
+  { title: "Updated" },
+  {
+    shallow: false,
+    global: { stubs: { AppButton: true } },
+  },
+  { default: () => "Test-specific content" },
+  {
+    presetKey: "default",
+    skipDefaultProps: true,
+  },
+);
+```
+
+The fields of `factory.withOptions()` map directly to the four positional arguments:
+
+| Object-based field | Positional argument | Purpose                                                                     |
+| ------------------ | ------------------- | --------------------------------------------------------------------------- |
+| `props`            | 1st                 | Props supplied for this mount                                               |
+| `mountOptions`     | 2nd                 | Vue Test Utils options and managed plugin configuration                     |
+| `slots`            | 3rd                 | Slots supplied for this mount                                               |
+| `extraOptions`     | 4th                 | Per-mount preset selection, default-skipping controls, and plugin overrides |
+
+All four fields are optional. `factory.withOptions({})` behaves like `factory()`: it uses the factory defaults and its selected preset. In contrast to `factory()`, the `withOptions()` method requires an options object, even when it is empty.
+
+To override the preset for just one mount, pass `presetKey` **inside `extraOptions`**, not at the top level of the object:
+
+```typescript
+factory.withOptions({
+  extraOptions: { presetKey: "default" },
+});
+```
+
+The same nesting applies to `skipDefaultProps`, `skipDefaultSlots`, `skipDefaultOptions`, and per-mount `extraOptions.plugins`. Use `mountOptions.plugins` for managed plugin configuration at the mount-options layer, `extraOptions.plugins` for later overrides, and `mountOptions.global.plugins` for standard Vue plugins installed through Vue Test Utils. Explicit plugin configuration must be supported by the active preset.
+
+Both creation and mounting APIs retain full component-aware TypeScript inference. When extracting object-based configurations into reusable variables, the public `ComponentFactoryCreationOptions<T>` and `ComponentFactoryInvocationOptions<T>` types can be used with `satisfies`:
+
+```typescript
+import type { ComponentFactoryInvocationOptions } from "@testforgejs/vue-test-core";
+
+const mountConfig = {
+  props: { title: "Updated" },
+  extraOptions: { skipDefaultProps: true },
+} satisfies ComponentFactoryInvocationOptions<typeof MyComponent>;
+
+factory.withOptions(mountConfig);
+```
+
+The positional APIs remain supported; the object-based forms are alternatives, not replacements. See the [Configuration Guide](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#testcomponentfactory-signature) for argument details, configuration precedence, and additional examples.
 
 ### Default Props and Test-Specific Overrides
 

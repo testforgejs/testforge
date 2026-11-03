@@ -407,19 +407,65 @@ export type ComponentFactoryExtraOptions = {
 };
 
 /**
- * Component factory returned by `testComponentFactory()`.
- * The wrapper return type mirrors Vue Test Utils `mount()`.
+ * Named arguments for `factory.withOptions()`.
+ *
+ * Each field corresponds to a positional argument of `factory()`.
+ * Omitting a field uses the same default as the positional API.
  */
-export type ComponentFactory<T extends Component> = (
-  props?: ComponentPropsInput<T>,
+export interface ComponentFactoryInvocationOptions<T extends Component> {
+  /** Component props supplied for this mount. */
+  props?: ComponentPropsInput<T>;
+
+  /** Mount options for this invocation, including managed plugin configuration. */
   mountOptions?: ComponentFactoryOptions<
     ComponentPropsInput<T>,
     ComponentSlotsInput<T>,
     ComponentDataInput<T>
-  >,
-  slots?: ComponentSlotsInput<T>,
-  extraOptions?: ComponentFactoryExtraOptions,
-) => ReturnType<typeof mount<T>>;
+  >;
+
+  /** Component slots supplied for this mount. */
+  slots?: ComponentSlotsInput<T>;
+
+  /** Per-mount preset selection, default-skipping controls, and plugin overrides. */
+  extraOptions?: ComponentFactoryExtraOptions;
+}
+
+/**
+ * Callable component factory returned by `testComponentFactory()`.
+ * Both invocation forms return the same Vue Test Utils wrapper type.
+ */
+export interface ComponentFactory<T extends Component> {
+  /** Mounts the component using positional arguments. */
+  (
+    props?: ComponentPropsInput<T>,
+    mountOptions?: ComponentFactoryOptions<
+      ComponentPropsInput<T>,
+      ComponentSlotsInput<T>,
+      ComponentDataInput<T>
+    >,
+    slots?: ComponentSlotsInput<T>,
+    extraOptions?: ComponentFactoryExtraOptions,
+  ): ReturnType<typeof mount<T>>;
+
+  /**
+   * Mounts the component using an options object.
+   *
+   * An alternative to calling `factory(props, mountOptions, slots, extraOptions)`.
+   * Both forms use equivalent configuration and mounting behavior.
+   *
+   * @param options - Named arguments for this mount.
+   * @returns A Vue Test Utils wrapper for the mounted component.
+   *
+   * @example
+   * ```typescript
+   * const wrapper = factory.withOptions({
+   *   props: { title: "Hello" },
+   *   extraOptions: { presetKey: "i18n" },
+   * });
+   * ```
+   */
+  withOptions(options: ComponentFactoryInvocationOptions<T>): ReturnType<typeof mount<T>>;
+}
 
 /** Creates reusable component factories using positional or named arguments. */
 export interface ComponentFactoryCreator {

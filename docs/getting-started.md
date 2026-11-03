@@ -1,8 +1,8 @@
 # 🚀 Getting Started with TestForge
 
-This guide walks you through the basic TestForge workflow: installing TestForge, configuring a preset, creating reusable component factories, and using managed Vue ecosystem plugins in your tests.
+This guide walks you through the basic TestForge workflow: installing TestForge, configuring a preset, creating reusable component factories, mounting components with positional or object-based APIs, and using managed Vue ecosystem plugins in your tests.
 
-By the end of this guide, you will have a shared `testComponentFactory` that can be reused across your component tests and configured with project-wide plugin defaults and test-specific options.
+By the end of this guide, you will have a shared `testComponentFactory`, know both ways to create and invoke component factories, and be able to configure project-wide plugin defaults and test-specific options.
 
 ## 1. 📦 Installation
 
@@ -91,7 +91,7 @@ You do not need to understand this composition to get started.
 For most projects, begin with:
 
 ```typescript
-preset: presets.default;
+preset: presets.default,
 ```
 
 If you later want your project to own its testing configuration directly, you can create a project-specific preset with explicit plugin factories.
@@ -160,7 +160,6 @@ const preset = {
       enabled: true,
     },
   ],
-
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
@@ -210,18 +209,17 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.presetKey
+→ selection at factory creation or for an individual mount
 ```
 
 A single `preset` is internally treated as the framework's default environment.
 
-A `presets` registry exposes several named runtime profiles that can be selected when invoking a component factory.
+A `presets` registry exposes several named runtime profiles. Select one when creating a component factory, or override it temporarily for an individual mount.
 
 You can then import the configured factory into your tests:
 
 ```typescript
 import { describe, expect, it } from "vitest";
-
 import { testComponentFactory } from "@/tests/setup";
 import MyComponent from "@/components/MyComponent.vue";
 
@@ -230,11 +228,19 @@ const factory = testComponentFactory(MyComponent);
 describe("MyComponent.vue", () => {
   it("renders correctly", () => {
     const wrapper = factory();
-
     expect(wrapper.exists()).toBe(true);
   });
 });
 ```
+
+This first test uses the **positional API**. TestForge also supports an equivalent **object-based API** at both stages:
+
+```typescript
+const factory = testComponentFactory.withOptions({ component: MyComponent });
+const wrapper = factory.withOptions({});
+```
+
+Choose whichever form reads best for a particular test. Both creation styles return the same kind of factory, and both mounting styles use the same configuration pipeline. The next section shows how to pass props and other options using either form.
 
 ### `createTestFramework` Parameters
 
@@ -253,11 +259,18 @@ describe("MyComponent.vue", () => {
 
 ## 4. 🏭 Creating a Reusable Component Factory
 
-`testComponentFactory` creates a reusable factory for mounting a specific component.
+`testComponentFactory` creates a reusable factory for mounting a specific component. You can provide shared default props, slots, Vue Test Utils options, and managed plugin configuration, then override them for individual tests.
 
-You can create a factory once and reuse it across multiple tests.
+Both stages have two equivalent APIs:
 
-The factory can define common component props, slots, Vue Test Utils options, and managed plugin configuration that should be shared by the tests using that factory.
+| Stage             | Positional API                                      | Object-based API                                                    |
+| :---------------- | :-------------------------------------------------- | :------------------------------------------------------------------ |
+| Create a factory  | `testComponentFactory(Component, ...)`              | `testComponentFactory.withOptions({ component: Component, ... })`   |
+| Mount a component | `factory(props, mountOptions, slots, extraOptions)` | `factory.withOptions({ props, mountOptions, slots, extraOptions })` |
+
+### Creating a Factory: Two Equivalent Forms
+
+For a small set of defaults, the positional API is concise:
 
 ```typescript
 const factory = testComponentFactory(MyComponent, {
@@ -265,19 +278,88 @@ const factory = testComponentFactory(MyComponent, {
 });
 ```
 
-Individual tests can then provide their own values:
+The **object-based creation API** expresses the same configuration with named properties:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  defaultProps: { title: "Default title" },
+});
+```
+
+Both snippets are alternatives: choose one to create `factory`. The object-based form also accepts `defaultMountOptions`, `defaultSlots`, and an optional factory-level `presetKey`.
+
+### Mounting a Component: Two Equivalent Forms
+
+The returned factory supports both invocation styles regardless of how it was created. To override a prop for one test, call it positionally:
 
 ```typescript
 it("renders the custom title", () => {
-  const wrapper = factory({
-    title: "Custom title",
-  });
-
+  const wrapper = factory({ title: "Custom title" });
   expect(wrapper.text()).toContain("Custom title");
 });
 ```
 
-This keeps repetitive mounting configuration in one place while allowing individual tests to customize the component when necessary.
+Or pass a named configuration to **`factory.withOptions()`**:
+
+```typescript
+it("renders the custom title", () => {
+  const wrapper = factory.withOptions({
+    props: { title: "Custom title" },
+  });
+  expect(wrapper.text()).toContain("Custom title");
+});
+```
+
+The two snippets describe the same test scenario. Default props are preserved unless overridden, and each mount is resolved independently.
+
+For more than one kind of mount configuration, named properties avoid empty positional placeholders:
+
+```typescript
+const wrapper = factory.withOptions({
+  props: { title: "Custom title" },
+  mountOptions: { shallow: true },
+  slots: { default: () => "Test content" },
+  extraOptions: { skipDefaultProps: true },
+});
+```
+
+These properties correspond **one-to-one** to the four arguments of `factory(props, mountOptions, slots, extraOptions)`:
+
+- `props` — component props for this mount.
+- `mountOptions` — Vue Test Utils options, including TestForge-managed `plugins`.
+- `slots` — component slot overrides.
+- `extraOptions` — TestForge execution controls and targeted plugin overlays.
+
+Every property is optional, but `factory.withOptions()` itself takes a configuration object. Use `factory.withOptions({})` for a mount with defaults, or simply `factory()` with the positional API.
+
+> [!IMPORTANT]
+> These two `withOptions()` methods operate at different levels: `testComponentFactory.withOptions()` **creates a factory**, while `factory.withOptions()` **mounts the component**. The latter is not a replacement for the former.
+
+### Selecting a Preset
+
+When the framework registers multiple named presets, you can select a default environment **once for the factory**:
+
+```typescript
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  presetKey: "integration", // Must be registered in createTestFramework({ presets }).
+});
+```
+
+Then override the environment for one mount without changing the factory default:
+
+```typescript
+factory(); // Uses "integration".
+factory.withOptions({
+  extraOptions: { presetKey: "default" },
+}); // Uses "default" for this mount only.
+factory(); // Uses "integration" again.
+```
+
+**Where `presetKey` belongs depends on the stage:** it is top-level in the factory creation object, but nested under `extraOptions` when mounting. Do not pass `presetKey` directly to `factory.withOptions({ ... })`.
+
+The positional APIs remain fully supported. For type contracts, configuration priorities, and plugin merge rules, see [Configuration & Advanced Usage](./configuration.md#testcomponentfactory-signature).
 
 ---
 
@@ -372,21 +454,16 @@ It must belong to the active preset.
 For example, Pinia can be configured when creating a component factory:
 
 ```typescript
-const factory = testComponentFactory(
-  MyComponent,
-  {},
-  {
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  defaultMountOptions: {
     plugins: {
       pinia: {
-        initialState: {
-          user: {
-            id: 1,
-          },
-        },
+        initialState: { user: { id: 1 } },
       },
     },
   },
-);
+});
 ```
 
 Here:
@@ -399,26 +476,23 @@ initialState
 → Pinia-specific configuration
 ```
 
-The configuration is specific to the factory and is applied when the factory mounts the component.
+The configuration belongs to the factory and is applied when it mounts the component. The equivalent positional creation call puts `plugins` in the third `defaultMountOptions` argument.
 
-You can also provide plugin configuration for an individual test:
+You can also provide plugin configuration for an individual test through `factory.withOptions({ mountOptions: ... })`:
 
 ```typescript
-factory(
-  {},
-  {
+factory.withOptions({
+  mountOptions: {
     plugins: {
       pinia: {
-        initialState: {
-          user: {
-            id: 2,
-          },
-        },
+        initialState: { user: { id: 2 } },
       },
     },
   },
-);
+});
 ```
+
+As with the positional API, the mount-level `mountOptions.plugins.pinia` configuration replaces the factory-level configuration for that plugin. For targeted shallow overrides instead, use `extraOptions.plugins` (see the [Configuration Guide](./configuration.md#managed-plugin-configuration)).
 
 The exact options available depend on the managed plugin.
 
@@ -487,15 +561,12 @@ If a plugin is registered in the active preset but disabled by default, you can 
 For example, if Router belongs to the active preset but is disabled by default:
 
 ```typescript
-const factory = testComponentFactory(
-  MyComponent,
-  {},
-  {
-    plugins: {
-      router: {},
-    },
+const factory = testComponentFactory.withOptions({
+  component: MyComponent,
+  defaultMountOptions: {
+    plugins: { router: {} },
   },
-);
+});
 ```
 
 The `router` key is valid because the Router plugin belongs to the active preset's manifest.
@@ -505,62 +576,35 @@ The `router` key is valid because the Router plugin belongs to the active preset
 You can also explicitly disable a managed plugin for a specific factory or test:
 
 ```typescript
-factory(
-  {},
-  {
-    plugins: {
-      router: false,
-    },
+factory.withOptions({
+  mountOptions: {
+    plugins: { router: false },
   },
-);
+});
 ```
 
 This is useful when a plugin is normally active in the selected runtime environment but is not required for a particular test.
 
 ### Invalid Plugin Configuration
 
-If a plugin is not declared in the active preset, configuring it is invalid.
+Managed plugins must be declared in the active preset's manifest. Configuring a plugin that is not declared in the manifest is invalid, even if its integration package is installed in the project.
 
-For example, suppose the active preset contains only Vue I18n.
-
-This configuration is invalid:
-
-```typescript
-factory(
-  {},
-  {
-    plugins: {
-      pinia: {},
-    },
-  },
-);
-```
-
-even if `@testforgejs/vue-test-plugin-pinia` is installed in the project.
-
-The Pinia managed plugin must first belong to the active preset's manifest.
-
-> [!NOTE]
-> Managed plugin configuration is validated against the active preset.
+> [!WARNING]
+> **Unsupported Managed Plugin**
 >
-> Keys used inside `plugins` must correspond to managed plugin identifiers declared by that preset.
+> If the active preset contains only Vue I18n, the following configuration is invalid because Pinia is not available:
+>
+> ```typescript
+> factory.withOptions({
+>   mountOptions: {
+>     plugins: { pinia: {} },
+>   },
+> });
+> ```
 
-When a framework uses multiple named presets, the capability boundary belongs to the preset selected for the current factory invocation.
+When multiple named presets are registered, plugin configuration is validated against the preset selected for the current mount.
 
-For example:
-
-```typescript
-factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "router",
-  },
-);
-```
-
-selects the named `router` runtime profile, and its manifest determines which managed plugin identifiers are valid for that invocation.
+When multiple named presets are registered, plugin configuration is validated against the preset selected for the current mount. See [Selecting a Preset](#selecting-a-preset) for details on factory-level selection and mount-level overrides.
 
 ---
 
