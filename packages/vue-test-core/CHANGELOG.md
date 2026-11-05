@@ -1,5 +1,82 @@
 # @testforgejs/vue-test-core
 
+## 1.0.0-beta.7
+
+### Major Changes
+
+- c409fb5: **BREAKING CHANGE:** Rename `extraOptions.preset` to `extraOptions.presetKey`.
+
+  The new name explicitly identifies a preset by its key in the
+  preset registry, distinguishing preset selection from the
+  `PresetDefinition` supplied to `createTestFramework()`.
+
+  Replace:
+
+  ```ts
+  factory(
+    {},
+    {},
+    {},
+    {
+      preset: "admin",
+    },
+  );
+  ```
+
+  with:
+
+  ```ts
+  factory(
+    {},
+    {},
+    {},
+    {
+      presetKey: "admin",
+    },
+  );
+  ```
+
+  The `preset` and `presets` options in `createTestFramework()` remain unchanged.
+
+### Minor Changes
+
+- 44141cc: Add an optional `ComponentFactoryConfig` parameter to the positional `testComponentFactory()` API.
+
+  The fifth argument allows selecting a factory-level preset using `config.presetKey` without migrating existing tests to `testComponentFactory.withOptions()`.
+
+  The selected preset applies to all mounts created by the factory unless overridden by `extraOptions.presetKey` for an individual mount.
+
+  Factory configuration is validated at creation time, including the configuration object shape and the selected preset key.
+
+  The existing positional arguments and their behavior remain unchanged.
+
+- b5e3a01: Add `testComponentFactory.withOptions()` for object-based component factory configuration.
+
+  The new API supports:
+
+  - Configuring `component`, `defaultProps`, `defaultMountOptions`, and `defaultSlots` through a single options object.
+  - Selecting a factory-level preset using `presetKey`.
+  - Overriding the factory preset per mount using `extraOptions.presetKey`, without affecting subsequent mounts.
+  - Validating factory creation options and preset keys at runtime.
+  - Validating `defaultMountOptions` against the selected factory preset.
+
+  The existing positional `testComponentFactory()` API remains unchanged.
+
+- 259fb32: Add an object-based component mounting API through `factory.withOptions()`.
+
+  The new API accepts named `props`, `mountOptions`, `slots`, and `extraOptions` fields as an alternative to positional arguments.
+
+  Both invocation styles share the same configuration resolution pipeline, preset selection, plugin lifecycle, and TypeScript inference. Existing positional calls remain fully supported.
+
+### Patch Changes
+
+- 6e723de: Improve plugin option validation for factory-level and mount-level preset selection.
+
+  - Validate `defaultMountOptions.plugins` against the explicitly selected factory-level preset during factory creation.
+  - Validate mount arguments using the effective preset, respecting mount-level overrides via `extraOptions.presetKey`.
+  - Preserve existing behavior when switching presets per mount, allowing unsupported default plugins to be filtered out without errors.
+  - Reuse the shared plugin compatibility validator for consistent validation rules and error messages.
+
 ## 1.0.0-beta.6
 
 ### Major Changes
