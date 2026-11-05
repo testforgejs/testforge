@@ -4,7 +4,7 @@
 
 > **VueTestPrimeVueOptions** = `PrimeVueConfiguration`
 
-Defined in: [types/types.ts:42](https://github.com/testforgejs/testforge/blob/9b75ed967caaf78daacf038ab3c12d78ebb8d51c/packages/vue-test-plugin-primevue/src/types/types.ts#L42)
+Defined in: [types/types.ts:42](https://github.com/testforgejs/testforge/blob/259fb32dae424d2d7036a4058dacaf98183a7f3d/packages/vue-test-plugin-primevue/src/types/types.ts#L42)
 
 Configuration options for the PrimeVue test plugin.
 

@@ -4,7 +4,7 @@
 
 > `const` **i18nPlugin**: `PluginModuleWithDefaults`\<`I18n`, [`VueTestI18nOptions`](../type-aliases/VueTestI18nOptions.md)\>
 
-Defined in: [module/i18nPlugin.ts:16](https://github.com/testforgejs/testforge/blob/bda9a30aec004080c96ffbad778f525b0ba976d6/packages/vue-test-plugin-i18n/src/module/i18nPlugin.ts#L16)
+Defined in: [module/i18nPlugin.ts:16](https://github.com/testforgejs/testforge/blob/259fb32dae424d2d7036a4058dacaf98183a7f3d/packages/vue-test-plugin-i18n/src/module/i18nPlugin.ts#L16)
 
 Managed Vue I18n plugin module for TestForge.
 

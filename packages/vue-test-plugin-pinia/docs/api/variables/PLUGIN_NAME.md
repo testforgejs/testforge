@@ -4,7 +4,7 @@
 
 > `const` **PLUGIN\_NAME**: `"pinia"`
 
-Defined in: [constants/constants.ts:7](https://github.com/testforgejs/testforge/blob/bda9a30aec004080c96ffbad778f525b0ba976d6/packages/vue-test-plugin-pinia/src/constants/constants.ts#L7)
+Defined in: [constants/constants.ts:7](https://github.com/testforgejs/testforge/blob/259fb32dae424d2d7036a4058dacaf98183a7f3d/packages/vue-test-plugin-pinia/src/constants/constants.ts#L7)
 
 Stable TestForge identifier for the managed Pinia plugin.
 

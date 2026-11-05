@@ -4,7 +4,7 @@
 
 > **withMockStores**(`mockStores`): `object`
 
-Defined in: [helpers/withMockStores.ts:34](https://github.com/testforgejs/testforge/blob/bda9a30aec004080c96ffbad778f525b0ba976d6/packages/vue-test-plugin-pinia/src/helpers/withMockStores.ts#L34)
+Defined in: [helpers/withMockStores.ts:34](https://github.com/testforgejs/testforge/blob/259fb32dae424d2d7036a4058dacaf98183a7f3d/packages/vue-test-plugin-pinia/src/helpers/withMockStores.ts#L34)
 
 Creates Pinia plugin options for initializing or modifying stores
 before the component is mounted.
