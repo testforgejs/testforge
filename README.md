@@ -344,8 +344,8 @@ describe("MyComponent.vue", () => {
 - **Project-owned configuration** — applications can materialize their chosen testing configuration directly in editable project source.
 - **Vue Test Utils compatibility** — existing VTU configuration can be adopted incrementally.
 - **Type safety** — component and plugin configuration remains strongly typed.
-- **Flexible factory APIs** — use either positional arguments or named objects when creating factories and mounting components.
-- **Isolated configuration** — plugin options factories produce fresh options for independent pipeline contexts, while component factory invocations create independent runtime environments.
+- **Flexible factory APIs** — create factories using positional defaults resolvers or one object-based resolver, then mount with positional arguments or named objects.
+- **Isolated configuration** — factory options resolvers can create fresh component defaults per mount; plugin options factories produce fresh options for independent pipeline contexts.
 
 ---
 
@@ -359,6 +359,7 @@ TestForge documentation is organized into several focused guides.
 
 - [Getting Started](docs/getting-started.md)
 - [Configuration & Advanced Usage](docs/configuration.md)
+- [Factory Options Resolvers](docs/factory-options-resolvers.md) — Create fresh component factory defaults for each mount and migrate from static options.
 
 ## Extending TestForge
 
@@ -427,10 +428,10 @@ const wrapper = factory();
 **Most components need a consistent testing environment across their tests.** Select the appropriate preset once when creating the component factory, rather than repeating `presetKey` for each mount:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "designSystem",
-});
+}));
 
 factory(); // Uses "designSystem".
 factory(); // Still uses "designSystem".
@@ -441,9 +442,9 @@ The positional API supports the same choice through its optional fifth argument:
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {}, // defaultProps
-  {}, // defaultMountOptions
-  {}, // defaultSlots
+  undefined, // defaultPropsResolver
+  undefined, // defaultMountOptionsResolver
+  undefined, // defaultSlotsResolver
   { presetKey: "designSystem" },
 );
 ```
@@ -465,11 +466,11 @@ const defaultFactory = testComponentFactory(MyComponent);
 defaultFactory({}, {}, {}, { presetKey: "designSystem" });
 ```
 
-**Preset priority:** mount-level `extraOptions.presetKey` → factory-level `config.presetKey` (or `withOptions().presetKey`) → registered `default` preset. An explicitly requested unknown preset is rejected: at factory creation for a factory-level selection, or when mounting for a mount-level selection.
+**Preset priority:** mount-level `extraOptions.presetKey` → factory-level `config.presetKey` (or the `presetKey` returned by the factory options resolver) → registered `default` preset. An explicitly requested unknown preset is rejected when validated: positional `config.presetKey` at factory creation, but a preset key returned by the object-based resolver or supplied for an individual mount at mount time.
 
 Each named preset represents a complete managed-plugin runtime profile; selecting another preset is **not** an overlay on `default`.
 
-The active preset also defines which managed plugins may be configured. When a factory preset is explicitly selected, `defaultMountOptions.plugins` is checked against it at factory creation. If a mount switches to a different preset, unsupported _*factory defaults*_ are ignored for that mount, but unsupported plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` are rejected.
+The active preset also defines which managed plugins may be configured. The positional factory's resolver arguments are checked for being functions at creation, but their returned defaults are validated when mounting. Likewise, `defaultMountOptions.plugins` returned by an object-based resolver is checked against the selected factory preset when mounting. If a mount switches to a different preset, unsupported *factory defaults* are ignored for that mount, but unsupported plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` are rejected.
 
 For the full API signatures and validation details, see [Configuration & Advanced Usage](docs/configuration.md#testcomponentfactory-signature) and [Configuration Validation](docs/configuration.md#53-configuration-validation).
 
@@ -721,14 +722,14 @@ Individually they are simple. Together they remove most test setup noise.
 
 The **Test Component Factory** is the entry point used by component tests.
 
-Instead of repeatedly calling `mount()` with a large configuration object, create a reusable component factory with shared default props:
+Instead of repeatedly calling `mount()` with a large configuration object, create a reusable component factory whose defaults are resolved for each mount:
 
 ```typescript
-const factory = testComponentFactory(MyComponent, {
+const factory = testComponentFactory(MyComponent, () => ({
   title: "Default title",
   disabled: false,
   size: "medium",
-});
+}));
 ```
 
 Each test can then override only the props relevant to its scenario:
@@ -749,11 +750,11 @@ const wrapper2 = factory({
 
 In the examples above, `wrapper1` receives the custom title with `disabled: false` and `size: "medium"`, while `wrapper2` receives `disabled: true` with the default title and size.
 
-This allows tests to focus on the behavior being verified without repeating the component's complete prop configuration.
+This allows tests to focus on the behavior being verified without repeating the component's complete prop configuration. The defaults resolver runs for each invocation, allowing mutable objects to be created afresh rather than reused across tests.
 
 The component factory:
 
-- accepts shared `defaultProps` and test-specific prop overrides;
+- resolves factory defaults through resolver functions and applies test-specific overrides;
 - resolves the selected preset;
 - resolves managed plugin configuration;
 - builds Vue Test Utils `global` configuration;
@@ -766,33 +767,35 @@ The test describes what it needs rather than how to assemble the complete Vue ru
 
 ### Object-Based Factory API
 
-For factories with several defaults, `testComponentFactory.withOptions()` provides a named-argument alternative to the positional API:
+For factories with several defaults, `testComponentFactory.withOptions()` accepts **one resolver function** returning named factory options:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "designSystem",
   defaultProps: { title: "Default title" },
   defaultMountOptions: { shallow: true },
   defaultSlots: { default: () => "Fallback content" },
-});
+}));
 
 const wrapper = factory({ title: "Custom title" });
 ```
 
-The equivalent positional form is:
+The equivalent positional form accepts **three optional defaults resolvers** and a static fifth `config` argument:
 
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  { title: "Default title" },
-  { shallow: true },
-  { default: () => "Fallback content" },
+  () => ({ title: "Default title" }),
+  () => ({ shallow: true }),
+  () => ({ default: () => "Fallback content" }),
   { presetKey: "designSystem" },
 );
 ```
 
-Both APIs return the **same kind of component factory** and support the same per-mount overrides. The object-based form makes optional settings easier to identify and avoids placeholder arguments when selecting a factory preset. `presetKey` must name a preset registered through `createTestFramework({ presets })` (or the implicit `default` created by `createTestFramework({ preset })`).
+Both APIs return the **same kind of component factory** and support the same per-mount overrides. Resolvers execute once per mount, not when creating the factory; place mutable defaults inside them to avoid reusing shared state. In the `defaultSlots` example, the outer function is the defaults resolver and the inner function supplies slot content. The object-based form keeps settings together without positional placeholders.
+
+Factory creation retains component-aware TypeScript inference and checks for unknown configuration keys. Keep the resolved `component` stable across mounts, since its type is inferred when the factory is created. `presetKey` must name a preset registered through `createTestFramework({ presets })` (or the implicit `default` created by `createTestFramework({ preset })`). See [Factory Options Resolvers](docs/factory-options-resolvers.md) for lifecycle, validation timing, data isolation, and migration examples.
 
 <a id="object-based-mount-api"></a>
 
@@ -826,11 +829,10 @@ All four fields are optional. To mount using only factory defaults, call
 
 **Do not confuse the two `withOptions()` methods:**
 
-- `testComponentFactory.withOptions({ component, ... })` creates a factory;
-  factory-level `presetKey` is a top-level property.
-- `factory.withOptions({ props, mountOptions, slots, extraOptions })` mounts
-  the component; per-mount `presetKey`, execution flags, and managed plugin
-  overlays belong inside `extraOptions`.
+- `testComponentFactory.withOptions(() => ({ component, ... }))` **creates** a factory from a resolver; factory-level `presetKey` is returned as a top-level property.
+- `factory.withOptions({ props, mountOptions, slots, extraOptions })` **mounts** the component using a plain options object; per-mount `presetKey`, execution flags, and managed plugin overlays belong inside `extraOptions`.
+
+Mount-time arguments are not resolvers: `factory(...)` and `factory.withOptions({...})` are unchanged.
 
 Use `mountOptions.plugins` to replace a managed plugin's factory-level
 configuration, `extraOptions.plugins` to apply a shallow overlay, and
@@ -1151,10 +1153,10 @@ createTestFramework({
 Those profiles can be selected **once per component factory**:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
-});
+}));
 
 factory(); // Uses "admin" by default.
 ```
@@ -1454,14 +1456,14 @@ Move shared component-specific configuration into the component factory:
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     global: {
       mocks: {
         $t: (msg) => msg,
       },
     },
-  },
+  }),
 );
 ```
 
@@ -1608,9 +1610,9 @@ It should not be confused with component factory invocation isolation.
 
 ## Component Factory Invocation Isolation
 
-A **component factory** is created by `testComponentFactory(Component)` and can be invoked repeatedly to mount the component.
+A **component factory** is created by `testComponentFactory(Component)` (or `testComponentFactory.withOptions(resolver)`) and can be invoked repeatedly to mount the component.
 
-Each invocation creates an independent runtime environment.
+Each invocation creates an independent runtime environment. Resolver functions allow fresh mutable factory defaults to be constructed for that invocation; returning shared mutable references does not isolate them automatically.
 
 This is **component factory invocation isolation**.
 
@@ -1683,14 +1685,14 @@ TypeScript may widen string literals when overriding `data()`:
 ```typescript
 testComponentFactory(
   Component,
-  {},
-  {
+  undefined,
+  () => ({
     data() {
       return {
         status: "loading",
       };
     },
-  },
+  }),
 );
 ```
 

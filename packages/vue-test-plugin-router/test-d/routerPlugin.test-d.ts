@@ -27,11 +27,11 @@ expectAssignable<VueTestRouterOptions>({
  * The legacy expose callback must not be accepted
  * as a VueTestRouterOptions property.
  */
-expectError(
-  expectAssignable<VueTestRouterOptions>({
-    expose(_instance: Router) {},
-  }),
-);
+expectError<VueTestRouterOptions>({
+  history: createMemoryHistory(),
+  routes: [],
+  expose(_instance: Router) {},
+});
 
 /*
  * captureInstance should preserve the provided instance type.
@@ -224,6 +224,25 @@ expectError(
   ),
 );
 
+// Unknown plugin names must be rejected alongside valid plugin names.
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        router: {
+          history: createMemoryHistory(),
+          routes: [],
+        },
+        rooter: {
+          history: createMemoryHistory(),
+          routes: [],
+        },
+      },
+    },
+  ),
+);
+
 // Verify extraOptions
 const extraCapture = captureInstance<Router>();
 
@@ -272,6 +291,25 @@ expectError(
   ),
 );
 
+// Unknown plugin names must be rejected alongside valid plugin names.
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        router: {
+          routes: [],
+        },
+        rooter: {
+          routes: [],
+        },
+      },
+    },
+  ),
+);
+
 // Verify defaultMountOptions
 
 /*
@@ -280,32 +318,24 @@ expectError(
  * Instance capture is intentionally omitted because it is
  * prohibited in factory-level defaults at runtime.
  */
-framework.testComponentFactory(
-  TypedComponent,
-  {},
-  {
+framework.testComponentFactory(TypedComponent, undefined, () => ({
+  plugins: {
+    router: {
+      history: createMemoryHistory(),
+      routes: [],
+    },
+  },
+}));
+
+expectError(
+  framework.testComponentFactory(TypedComponent, undefined, () => ({
     plugins: {
-      router: {
+      rooter: {
         history: createMemoryHistory(),
         routes: [],
       },
     },
-  },
-);
-
-expectError(
-  framework.testComponentFactory(
-    TypedComponent,
-    {},
-    {
-      plugins: {
-        rooter: {
-          history: createMemoryHistory(),
-          routes: [],
-        },
-      },
-    },
-  ),
+  })),
 );
 
 // Verify that invalid property access triggers a type error
@@ -397,6 +427,24 @@ const incompatibleSharedOptions = withPluginInstance(incompatibleInstance);
  */
 expectError(
   factory(
+    {},
+    {
+      plugins: {
+        router: {
+          ...incompatibleSharedOptions,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Reject incompatible pre-created instances in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
     {},
     {
       plugins: {

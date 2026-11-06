@@ -27,11 +27,11 @@ expectAssignable<VueTestI18nOptions>({
  * The legacy expose callback must not be accepted
  * as a VueTestI18nOptions property.
  */
-expectError(
-  expectAssignable<VueTestI18nOptions>({
-    expose(_instance: I18n) {},
-  }),
-);
+expectError<VueTestI18nOptions>({
+  locale: "en",
+  messages: {},
+  expose(_instance: I18n) {},
+});
 
 /*
  * captureInstance should preserve the provided instance type.
@@ -258,12 +258,23 @@ expectError(
  * Instance capturing is intentionally omitted because it is
  * prohibited in factory-level defaults at runtime.
  */
-framework.testComponentFactory(
-  TypedComponent,
-  {},
-  {
+framework.testComponentFactory(TypedComponent, undefined, () => ({
+  plugins: {
+    i18n: {
+      locale: "en",
+      messages: {
+        en: {
+          hello: "Hello World",
+        },
+      },
+    },
+  },
+}));
+
+expectError(
+  framework.testComponentFactory(TypedComponent, undefined, () => ({
     plugins: {
-      i18n: {
+      i19n: {
         locale: "en",
         messages: {
           en: {
@@ -272,26 +283,7 @@ framework.testComponentFactory(
         },
       },
     },
-  },
-);
-
-expectError(
-  framework.testComponentFactory(
-    TypedComponent,
-    {},
-    {
-      plugins: {
-        i19n: {
-          locale: "en",
-          messages: {
-            en: {
-              hello: "Hello World",
-            },
-          },
-        },
-      },
-    },
-  ),
+  })),
 );
 
 expectError(captureInstance<I18n>().instance?.unknownProperty);

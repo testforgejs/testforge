@@ -1,19 +1,39 @@
-import { validateComponentFactoryConfig } from "./validateComponentFactoryConfig.js";
+import type { Component } from "vue";
 
-import type { TestFrameworkPresets } from "../types.js";
+import { validateComponentFactoryConfig } from "./validateComponentFactoryConfig.js";
+import { validateTestComponentFactoryArguments } from "./validateTestComponentFactoryArguments.js";
+import { validateFactoryPresetPlugins } from "./validateFactoryPresetPlugins.js";
+
+import type { ComponentFactoryCreationOptions, TestFrameworkPresets } from "../types.js";
 
 /*
- * Validates options for the object-based component factory API.
+ * Validates component factory configuration returned by a resolver.
  *
- * Factory configuration validation is delegated to
- * validateComponentFactoryConfig().
- *
- * Validation of component, defaultProps, defaultMountOptions,
- * and defaultSlots is handled by the existing factory validator.
+ * Delegates factory configuration and resolved argument validation
+ * to their respective validators.
  */
 export function validateComponentFactoryCreationOptions(
   options: unknown,
   presets: TestFrameworkPresets,
 ): void {
   validateComponentFactoryConfig(options, presets, "options");
+
+  const {
+    component,
+    defaultProps = {},
+    defaultMountOptions = {},
+    defaultSlots = {},
+    presetKey,
+  } = options as ComponentFactoryCreationOptions<Component>; // TODO type guard
+
+  validateTestComponentFactoryArguments(
+    component,
+    defaultProps,
+    defaultMountOptions,
+    defaultSlots,
+    presets,
+    presetKey,
+  );
+
+  validateFactoryPresetPlugins(defaultMountOptions, presetKey, presets);
 }

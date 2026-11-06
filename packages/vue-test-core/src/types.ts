@@ -329,6 +329,19 @@ export type ComponentData<T extends Component> = T extends { data?(...args: any)
 /** Partial component data contributed by a configuration source. */
 export type ComponentDataInput<T extends Component> = Partial<ComponentData<T>>;
 
+/** Resolves component-specific default props for each mount. */
+export type DefaultPropsResolver<T extends Component> = () => ComponentPropsInput<T>;
+
+/** Resolves component-specific default mounting options for each mount. */
+export type DefaultMountOptionsResolver<T extends Component> = () => ComponentFactoryOptions<
+  ComponentPropsInput<T>,
+  ComponentSlotsInput<T>,
+  ComponentDataInput<T>
+>;
+
+/** Resolves component-specific default slots for each mount. */
+export type DefaultSlotsResolver<T extends Component> = () => ComponentSlotsInput<T>;
+
 /** Factory-level controls shared by both creation forms. */
 export interface ComponentFactoryConfig {
   /** Select the default preset for this component factory. */
@@ -336,7 +349,8 @@ export interface ComponentFactoryConfig {
 }
 
 /**
- * Named arguments for `testComponentFactory.withOptions()`.
+ * Named configuration returned by a component factory options resolver.
+ *
  * The component determines the types of default props, slots, and data;
  * `NoInfer` prevents those defaults from changing component inference.
  */
@@ -359,6 +373,66 @@ export interface ComponentFactoryCreationOptions<
   /** Default slots applied to each mount. */
   defaultSlots?: ComponentSlotsInput<NoInfer<T>>;
 }
+
+/**
+ * Reports unexpected keys using descriptive diagnostic property names.
+ * Empty expected shapes retain the existing permissive behavior for
+ * components without declared props or slots.
+ */
+type UnknownKeys<Actual, Expected, Context extends string> = [keyof Expected] extends [never]
+  ? unknown
+  : [Exclude<keyof Actual, keyof Expected>] extends [never]
+    ? unknown
+    : {
+        [
+          K in Exclude<keyof Actual, keyof Expected> as K extends string
+            ? `Unknown ${Context} key: ${K}`
+            : K
+        ]: true;
+      };
+
+/**
+ * Checks factory configuration keys without replacing invalid values with `never`.
+ * Only TestForge-owned configuration layers are checked for extra keys.
+ */
+type StrictFactoryCreationOptions<
+  T extends Component,
+  Resolved extends ComponentFactoryCreationOptions<T>,
+> = ComponentFactoryCreationOptions<T> &
+  UnknownKeys<Resolved, ComponentFactoryCreationOptions<T>, "factory option"> &
+  (Resolved extends { defaultProps: infer Props }
+    ? { defaultProps: UnknownKeys<Props, ComponentPropsInput<T>, "default prop"> }
+    : unknown) &
+  (Resolved extends { defaultSlots: infer Slots }
+    ? { defaultSlots: UnknownKeys<Slots, ComponentSlotsInput<T>, "default slot"> }
+    : unknown) &
+  (Resolved extends { defaultMountOptions: infer Options }
+    ? {
+        defaultMountOptions: UnknownKeys<
+          Options,
+          NonNullable<ComponentFactoryCreationOptions<T>["defaultMountOptions"]>,
+          "default mount option"
+        > &
+          (Options extends { props: infer Props }
+            ? { props: UnknownKeys<Props, ComponentPropsInput<T>, "default mount prop"> }
+            : unknown) &
+          (Options extends { slots: infer Slots }
+            ? { slots: UnknownKeys<Slots, ComponentSlotsInput<T>, "default mount slot"> }
+            : unknown);
+      }
+    : unknown);
+
+/**
+ * Resolves component factory configuration for each mount.
+ *
+ * The resolver is invoked once per mount and should return fresh
+ * mutable configuration data to prevent state leakage between tests.
+ * `Resolved` captures the actual return shape so unexpected keys can be checked.
+ */
+export type FactoryOptionsResolver<
+  T extends Component,
+  Resolved extends ComponentFactoryCreationOptions<T> = ComponentFactoryCreationOptions<T>,
+> = () => Resolved & { component: T } & StrictFactoryCreationOptions<T, Resolved>;
 
 /** Vue Test Utils mounting options extended with TestForge plugin controls. */
 export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
@@ -467,47 +541,47 @@ export interface ComponentFactory<T extends Component> {
   withOptions(options: ComponentFactoryInvocationOptions<T>): ReturnType<typeof mount<T>>;
 }
 
-/** Creates reusable component factories using positional or named arguments. */
+/** Creates reusable component factories using positional or named configuration resolvers. */
 export interface ComponentFactoryCreator {
-  /** Creates a component factory from positional arguments. */
+  /**
+   * Creates a component factory using positional arguments.
+   *
+   * Default configuration factories are invoked for each mount.
+   * Each factory should return fresh mutable data.
+   */
   <T extends Component>(
     component: T,
-    defaultProps?: ComponentPropsInput<T>,
-    defaultMountOptions?: ComponentFactoryOptions<
-      ComponentPropsInput<T>,
-      ComponentSlotsInput<T>,
-      ComponentDataInput<T>
-    >,
-    defaultSlots?: ComponentSlotsInput<T>,
+    defaultProps?: DefaultPropsResolver<NoInfer<T>>,
+    defaultMountOptions?: DefaultMountOptionsResolver<NoInfer<T>>,
+    defaultSlots?: DefaultSlotsResolver<NoInfer<T>>,
     config?: ComponentFactoryConfig,
   ): ComponentFactory<T>;
 
   /**
-   * Creates a reusable component test factory using an options object.
+   * Creates a reusable component factory from a configuration resolver.
    *
-   * This is an alternative to the positional `testComponentFactory()` API.
-   * Both forms produce equivalent component factories.
+   * The resolver is invoked once before each mount, allowing every
+   * invocation to receive independent default configuration data.
    *
-   * The optional `presetKey` selects a registered preset for all mounts
-   * created by this factory, unless overridden by mount-level
-   * `extraOptions.presetKey`.
+   * The component and preset may remain stable across invocations,
+   * while mutable configuration objects should be recreated.
    *
-   * @param options - Component and default factory configuration.
+   * @param resolveOptions - Factory configuration resolver.
    * @returns A reusable component test factory.
    *
    * @example
    * ```typescript
-   * const factory = testComponentFactory.withOptions({
+   * const factory = testComponentFactory.withOptions(() => ({
    *   component: MyComponent,
    *   defaultProps: { title: "Hello" },
    *   presetKey: "i18n",
-   * });
+   * }));
    *
-   * factory(); // Uses the "i18n" preset.
+   * factory();
    * ```
    */
-  withOptions<T extends Component>(
-    options: ComponentFactoryCreationOptions<T>,
+  withOptions<T extends Component, Resolved extends ComponentFactoryCreationOptions<T>>(
+    resolveOptions: FactoryOptionsResolver<T, Resolved>,
   ): ComponentFactory<T>;
 }
 

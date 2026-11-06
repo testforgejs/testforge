@@ -38,20 +38,21 @@ When using Vitest, you can pass `vi` as the runner:
 ```typescript
 import { vi } from "vitest";
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import {
+  piniaPlugin,
+  PLUGIN_NAME as PINIA_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-pinia";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: piniaPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        pinia: piniaPlugin.getDefaultOptions(vi),
+  preset: {
+    manifest: [
+      {
+        module: piniaPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [PINIA_PLUGIN_NAME]: piniaPlugin.getDefaultOptions(vi),
     },
   },
 });
@@ -96,32 +97,36 @@ You can define the Pinia testing configuration directly in the preset instead:
 ```typescript
 import { vi } from "vitest";
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { piniaPlugin } from "@testforgejs/vue-test-plugin-pinia";
+import {
+  piniaPlugin,
+  PLUGIN_NAME as PINIA_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-pinia";
+import type { PluginOptions as PiniaPluginOptions } from "@testforgejs/vue-test-plugin-pinia";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: piniaPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        pinia: () => ({
-          initialState: {
-            user: {
-              name: "Test User",
-            },
-          },
-          stubActions: false,
-          createSpy: vi.fn,
-        }),
+  preset: {
+    manifest: [
+      {
+        module: piniaPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [PINIA_PLUGIN_NAME]: () => ({
+        initialState: {
+          user: {
+            name: "Test User",
+          },
+        },
+        stubActions: false,
+        createSpy: vi.fn,
+      }) satisfies PiniaPluginOptions,
     },
   },
 });
 ```
+
+The standardized `PluginOptions` type provides type-safe configuration through `satisfies` while preserving TypeScript's inferred type for the returned options.
 
 Using `getDefaultOptions()` is optional. Define custom defaults when tests require application-specific initial state, real action execution, Pinia plugins, or other testing behavior.
 

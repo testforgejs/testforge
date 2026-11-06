@@ -30,30 +30,22 @@ const framework = createTestFramework({
   },
 });
 
-framework.testComponentFactory(
-  {},
-  {},
-  {
+framework.testComponentFactory({}, undefined, () => ({
+  plugins: {
+    primevue: {
+      ripple: true,
+    },
+  },
+}));
+
+expectError(
+  framework.testComponentFactory({}, undefined, () => ({
     plugins: {
-      primevue: {
+      primevuu: {
         ripple: true,
       },
     },
-  },
-);
-
-expectError(
-  framework.testComponentFactory(
-    {},
-    {},
-    {
-      plugins: {
-        primevuu: {
-          ripple: true,
-        },
-      },
-    },
-  ),
+  })),
 );
 
 /*
@@ -81,6 +73,38 @@ factory(
 );
 
 /*
+ * Unknown plugin names must be rejected in mountOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        primevuu: {
+          ripple: true,
+        },
+      },
+    },
+  ),
+);
+
+/*
+ * Native PrimeVue options must preserve their declared value types.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        primevue: {
+          ripple: "true",
+        },
+      },
+    },
+  ),
+);
+
+/*
  * extraOptions.plugins should accept native PrimeVue options.
  */
 factory(
@@ -94,6 +118,24 @@ factory(
       },
     },
   },
+);
+
+/*
+ * Unknown plugin names must be rejected in extraOptions.plugins.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        primevuu: {
+          ripple: true,
+        },
+      },
+    },
+  ),
 );
 
 expectError(

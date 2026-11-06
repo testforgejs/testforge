@@ -275,34 +275,26 @@ expectError(
  * Instance capturing is intentionally omitted because it is
  * prohibited in factory-level defaults at runtime.
  */
-framework.testComponentFactory(
-  TypedComponent,
-  {},
-  {
-    plugins: {
-      pinia: {
-        stubActions: false,
+framework.testComponentFactory(TypedComponent, undefined, () => ({
+  plugins: {
+    pinia: {
+      stubActions: false,
 
-        ...withMockStores((pinia) => {
-          expectType<TestingPinia>(pinia);
-        }),
-      },
+      ...withMockStores((pinia) => {
+        expectType<TestingPinia>(pinia);
+      }),
     },
   },
-);
+}));
 
 expectError(
-  framework.testComponentFactory(
-    TypedComponent,
-    {},
-    {
-      plugins: {
-        pinya: {
-          stubActions: true,
-        },
+  framework.testComponentFactory(TypedComponent, undefined, () => ({
+    plugins: {
+      pinya: {
+        stubActions: true,
       },
     },
-  ),
+  })),
 );
 
 // Verify that invalid property access triggers a type error

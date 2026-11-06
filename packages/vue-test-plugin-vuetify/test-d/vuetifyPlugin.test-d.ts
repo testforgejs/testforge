@@ -126,12 +126,16 @@ const wrapper = factory(
   },
 );
 
+// The legacy string-keyed expose callback is not supported.
 expectError(
   factory(
     {},
     {
       plugins: {
         vuetify: {
+          locale: {
+            locale: "en",
+          },
           expose(_instance: VuetifyInstance) {},
         },
       },
@@ -150,6 +154,39 @@ expectError(
     {
       plugins: {
         vuetiffy: {},
+      },
+    },
+  ),
+);
+
+// Unknown plugin names are rejected even alongside valid plugin names.
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        vuetify: {
+          locale: {
+            locale: "en",
+          },
+        },
+        vuetiffy: {},
+      },
+    },
+  ),
+);
+
+// Native Vuetify options must preserve their declared types.
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        vuetify: {
+          locale: {
+            locale: 123,
+          },
+        },
       },
     },
   ),
@@ -220,6 +257,25 @@ expectError(
   ),
 );
 
+// Unknown plugin names are rejected even alongside valid plugin names.
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        vuetify: {
+          locale: {
+            locale: "en",
+          },
+        },
+        vuetiffy: {},
+      },
+    },
+  ),
+);
+
 // Verify defaultMountOptions
 
 /*
@@ -228,30 +284,22 @@ expectError(
  * Instance capturing is intentionally omitted because it is
  * prohibited in factory-level defaults at runtime.
  */
-framework.testComponentFactory(
-  TypedComponent,
-  {},
-  {
-    plugins: {
-      vuetify: {
-        locale: {
-          locale: "en",
-        },
+framework.testComponentFactory(TypedComponent, undefined, () => ({
+  plugins: {
+    vuetify: {
+      locale: {
+        locale: "en",
       },
     },
   },
-);
+}));
 
 expectError(
-  framework.testComponentFactory(
-    TypedComponent,
-    {},
-    {
-      plugins: {
-        vuetiffy: {},
-      },
+  framework.testComponentFactory(TypedComponent, undefined, () => ({
+    plugins: {
+      vuetiffy: {},
     },
-  ),
+  })),
 );
 
 // Verify that invalid property access triggers a type error

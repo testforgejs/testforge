@@ -4,7 +4,7 @@ This guide explains how TestForge resolves configuration and provides advanced c
 
 It covers:
 
-- the positional and object-based APIs for both factory creation and component mounting
+- the resolver-based positional and object-based APIs for factory creation, and both component mounting APIs
 - factory-level preset selection and per-mount overrides
 - the four-tier configuration layering model
 - merge strategies for Vue Test Utils and managed plugin options
@@ -14,7 +14,7 @@ It covers:
 - third-party Vue Test Utils plugins
 - advanced plugin instance handling.
 
-If you are new to TestForge, start with the [Getting Started Guide](getting-started.md).
+If you are new to TestForge, start with the [Getting Started Guide](getting-started.md). For a focused explanation of the resolver-based factory creation API, see [Factory Options Resolvers](factory-options-resolvers.md).
 
 > [!NOTE]
 > This guide covers configuration and advanced usage, not package installation.
@@ -30,6 +30,7 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
   - [1.2. Object-Based Factory API](#object-based-factory-api)
   - [1.3. Choosing a Preset for a Component Factory](#factory-preset-selection)
   - [1.4. Component Mounting APIs](#component-mounting-apis)
+  - [1.5. Factory Options Resolvers: Timing and Isolation](#factory-options-resolver-timing)
 - [2. The 4-Tier Configuration Layering Model](#configuration-layers)
 - [3. Merge Strategies](#merge-strategies)
   - [3.1. Top-Level Vue Test Utils Options](#flat-vtu-options)
@@ -55,7 +56,7 @@ If you are new to TestForge, start with the [Getting Started Guide](getting-star
 
 `testComponentFactory` creates a reusable factory for mounting a specific component.
 
-Define shared props, slots, Vue Test Utils options, managed plugin configuration, and the component's default **runtime preset** once, then override them for individual tests. Both factory creation styles produce the same kind of reusable factory.
+Define reusable defaults for props, slots, Vue Test Utils options, managed plugin configuration, and the component's default **runtime preset**, then override them for individual tests. Factory defaults are supplied by **resolver functions** and evaluated for each mount; both creation styles produce the same kind of reusable factory.
 
 <a id="positional-factory-api"></a>
 
@@ -64,29 +65,29 @@ Define shared props, slots, Vue Test Utils options, managed plugin configuration
 ```typescript
 const factory = testComponentFactory(
   Component,
-  defaultProps, // optional
-  defaultMountOptions, // optional
-  defaultSlots, // optional
+  defaultPropsResolver, // optional: () => default props
+  defaultMountOptionsResolver, // optional: () => VTU options
+  defaultSlotsResolver, // optional: () => default slots
   config, // optional: { presetKey?: string }
 );
 ```
 
 - `Component` — the Vue component to mount.
-- `defaultProps` — default component props.
-- `defaultMountOptions` — default Vue Test Utils mounting options and managed plugin configuration. Pre-created instances may be supplied with `withPluginInstance()`, but instance capturing is not allowed at this shared factory level.
-- `defaultSlots` — default component slots.
-- `config` — optional factory-level configuration (`ComponentFactoryConfig`). Use `config.presetKey` to select a registered preset for this component factory.
+- `defaultPropsResolver` — optional function returning default component props.
+- `defaultMountOptionsResolver` — optional function returning Vue Test Utils mounting options and managed plugin configuration. Pre-created instances may be supplied with `withPluginInstance()`, but instance capturing is not allowed in factory defaults.
+- `defaultSlotsResolver` — optional function returning default component slots.
+- `config` — optional static factory-level configuration (`ComponentFactoryConfig`). Use `config.presetKey` to select a registered preset for this component factory.
 
-The fifth argument is optional. Existing calls using the original four positional arguments continue to work unchanged.
+Each supplied resolver is called **once per mount**, not when the factory is created. The component and fifth `config` argument are not resolvers. Calls that omit defaults, such as `testComponentFactory(MyComponent)`, remain unchanged. Calls that previously passed static defaults objects must instead pass functions returning those objects. See [Factory Options Resolvers](factory-options-resolvers.md).
 
 <a id="object-based-factory-api"></a>
 
 ### 1.2. Object-Based Factory API
 
-Use `testComponentFactory.withOptions()` to provide the same configuration in a named object, without positional placeholders:
+Use `testComponentFactory.withOptions()` with a **resolver function** returning named configuration, without positional placeholders:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
   defaultProps: { title: "Users" },
@@ -96,18 +97,18 @@ const factory = testComponentFactory.withOptions({
     },
   },
   defaultSlots: { default: () => "Content" },
-});
+}));
 ```
 
-The object accepts `component` (required) and the optional `presetKey`, `defaultProps`, `defaultMountOptions`, and `defaultSlots` properties. The `presetKey` property is **top-level** in this creation object; in the positional API, it belongs inside the fifth `config` argument. Both forms use the same validation and mounting behavior. The returned factory can then mount components through either `factory()` or `factory.withOptions()`.
+The **object returned by the resolver** contains `component` (required) and optionally `presetKey`, `defaultProps`, `defaultMountOptions`, and `defaultSlots`. The `presetKey` property is **top-level** in the returned creation options; in the positional API, it belongs inside the fifth `config` argument. The resolver runs once per mount, and its returned configuration is validated then. TypeScript infers the component types and rejects unknown creation-option keys (including checked nested defaults) in inline resolver results. Both creation forms use the same mounting pipeline. The returned factory can mount components through either `factory()` or `factory.withOptions()`.
 
 If you only need a component and a preset, the object-based form is particularly concise:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
-});
+}));
 ```
 
 <a id="factory-preset-selection"></a>
@@ -131,22 +132,28 @@ Choose the component's default environment using either API:
 
 ```typescript
 // Positional API: fifth argument.
-const positionalFactory = testComponentFactory(MyComponent, {}, {}, {}, { presetKey: "admin" });
+const positionalFactory = testComponentFactory(
+  MyComponent,
+  undefined,
+  undefined,
+  undefined,
+  { presetKey: "admin" },
+);
 
 // Object-based API: top-level presetKey.
-const objectFactory = testComponentFactory.withOptions({
+const objectFactory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
-});
+}));
 ```
 
 Both factories use `admin` when called without a mount-level preset override. For a special-case test, `extraOptions.presetKey` can temporarily select another registered preset. In the positional mounting API, `extraOptions` is the fourth argument; in the object-based mounting API, it is a nested field:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
-});
+}));
 
 factory(); // Uses admin (factory-level preset).
 factory.withOptions({
@@ -161,7 +168,7 @@ factory({}, {}, {}, { presetKey: "default" });
 **Preset selection priority (highest to lowest):**
 
 1. `extraOptions.presetKey` — explicit override for an individual mount.
-2. Factory-level `presetKey` — `config.presetKey` or `withOptions({ presetKey })`.
+2. Factory-level `presetKey` — positional `config.presetKey` or `presetKey` returned by the object-based creation resolver.
 3. The registered preset named `default` — used when neither level specifies a preset.
 
 Preset names must be registered in `createTestFramework({ presets })`. An explicitly requested unknown preset is rejected. If no preset is selected and no `default` preset is registered, TestForge retains its existing behavior without an active preset.
@@ -169,7 +176,7 @@ Preset names must be registered in `createTestFramework({ presets })`. An explic
 > [!IMPORTANT]
 > Selecting a preset changes the active runtime environment and which managed plugins are supported. It does **not** add a fifth configuration layer or change the four-layer plugin merge strategy described below.
 >
-> When a factory explicitly selects a preset, every key in its `defaultMountOptions.plugins` must be declared in that preset's manifest. TestForge validates this **when the factory is created**. Mount-level preset overrides use the manifest of the selected mount-level preset for runtime configuration checks. See [Configuration Validation](#53-configuration-validation).
+> Factory-default plugin configuration must be compatible with the **factory's preset**, whether that preset is selected explicitly or inherited from the registered `default`. For positional creation, the static `config.presetKey` is validated when the factory is created; the plugin configuration returned by a defaults resolver is validated **when mounting**. For object-based creation, the resolver supplies both `presetKey` and factory defaults, so they are validated **when mounting**. Mount-level preset overrides do not change the preset used to validate factory defaults; their own explicitly configured plugins are checked against the effective mount-level preset. See [Configuration Validation](#53-configuration-validation).
 
 <a id="component-mounting-apis"></a>
 
@@ -217,7 +224,7 @@ All four properties are optional. Use `factory.withOptions({})` to mount with fa
 
 **The two `withOptions()` methods have different contracts:**
 
-- `testComponentFactory.withOptions({ component, defaultProps, defaultMountOptions, defaultSlots, presetKey })` **creates** a component factory. Here `presetKey` is a top-level creation option.
+- `testComponentFactory.withOptions(() => ({ component, defaultProps, defaultMountOptions, defaultSlots, presetKey }))` **creates** a component factory. It accepts a resolver function; `presetKey` is a top-level property of the resolver's returned object.
 - `factory.withOptions({ props, mountOptions, slots, extraOptions })` **mounts** a component. Here `presetKey` belongs in `extraOptions.presetKey`, **not at the top level**. The same nesting applies to `skipDefaultProps`, `skipDefaultSlots`, `skipDefaultOptions`, and per-mount plugin overlays.
 
 For example, switch the preset for a single mount without changing the factory default:
@@ -270,6 +277,30 @@ A shared configuration object is appropriate only when its values are safe to re
 
 The positional API remains supported. The following sections explain how the same options are resolved and merged, regardless of invocation style.
 
+<a id="factory-options-resolver-timing"></a>
+
+### 1.5. Factory Options Resolvers: Timing and Isolation
+
+Factory creation uses deferred configuration: `testComponentFactory.withOptions(resolver)` calls its resolver **once for each mount**, and the positional API calls each supplied defaults resolver once for each mount. Creating the factory does **not** execute these functions. Factory configuration is resolved even when a mount uses `skipDefaultProps`, `skipDefaultSlots`, or `skipDefaultOptions`; those flags control which defaults are applied, not whether the resolvers run.
+
+```typescript
+const factory = testComponentFactory.withOptions(() => ({
+  component: MyComponent,
+  defaultMountOptions: {
+    global: { mocks: { $service: { calls: [] } } },
+  },
+}));
+
+factory(); // Fresh defaults from the first resolver call.
+factory(); // Fresh defaults from the second resolver call.
+```
+
+For independently mutable defaults, construct arrays, objects, and stateful dependencies **inside** the resolver. Returning a reference created outside it intentionally retains that reference. TestForge does not deep-clone or reset user-supplied objects. The outer `() => ({ ... })` used for `defaultSlots` resolves defaults, while a nested `default: () => "Content"` is an ordinary slot content callback.
+
+**Validation timing:** the positional `component`, static `config`, and resolver argument types can be checked when a factory is created; values returned by defaults resolvers and the full object returned by the object-based resolver are validated at mount time. Resolvers must return synchronously.
+
+This creation-time resolver API is distinct from `factory.withOptions({ ... })`, which accepts ordinary options for a single mount. See [Factory Options Resolvers](factory-options-resolvers.md) for migration guidance and isolation examples.
+
 ---
 
 <a id="configuration-layers"></a>
@@ -288,7 +319,7 @@ configuration work together, see
 | Layer                               | Defined At               | Scope              | Managed Plugin Behavior                                               |
 | :---------------------------------- | :----------------------- | :----------------- | :-------------------------------------------------------------------- |
 | **Layer 1: Preset Defaults**        | `createTestFramework()`  | Selected per mount | Provides the base configuration for managed plugins                   |
-| **Layer 2: `defaultMountOptions`**  | `testComponentFactory()` | Component factory  | Provides factory-level plugin options that can override preset values |
+| **Layer 2: `defaultMountOptions`**  | Factory creation resolver | Resolved per mount | Provides factory-level plugin options that can override preset values |
 | **Layer 3: `mountOptions`**         | Either mounting API      | Individual mount   | Replaces Layer 2 options for the same plugin                          |
 | **Layer 4: `extraOptions.plugins`** | Either mounting API      | Individual mount   | Applies a shallow overlay to the resolved runtime plugin options      |
 
@@ -366,8 +397,8 @@ Define factory-level defaults when creating a component factory:
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     plugins: {
       pinia: {
         initialState: {
@@ -375,14 +406,14 @@ const factory = testComponentFactory(
         },
       },
     },
-  },
+  }),
 );
 ```
 
-This configuration serves as the baseline for every mount created by the component factory. For managed plugins, its properties can override matching preset values while unrelated preset properties remain available during the final merge.
+The resolver provides the factory's baseline configuration **afresh for every mount**. For managed plugins, its properties can override matching preset values while unrelated preset properties remain available during the final merge.
 
 > [!NOTE]
-> Stateful objects supplied through `defaultMountOptions` may be shared across mounts. TestForge does not automatically clone or recreate them. See [Instance Isolation](#instance-isolation) for details.
+> Values created inside the resolver are new for each mount, but references captured from outside it may still be shared. TestForge does not automatically clone or recreate user-provided runtime objects. See [Instance Isolation](#instance-isolation) for details.
 >
 > **Pre-created instances are allowed in `defaultMountOptions.plugins`.** Use `withPluginInstance(instance)` when a factory intentionally shares the same prepared instance across mounts. Its mutable state is shared too. See [Using Pre-created Instances](#precreated-plugin-instances).
 >
@@ -534,11 +565,11 @@ For example:
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     shallow: false,
     attachTo: "#app",
-  },
+  }),
 );
 
 factory(
@@ -584,10 +615,10 @@ const { testComponentFactory } = createTestFramework({
 
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     shallow: false,
-  },
+  }),
 );
 
 // Uses mount() because the factory explicitly sets shallow: false.
@@ -628,8 +659,8 @@ const mockApi = {
 
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     global: {
       stubs: {
         BaseButton: true,
@@ -638,7 +669,7 @@ const factory = testComponentFactory(
         $api: mockApi,
       },
     },
-  },
+  }),
 );
 
 factory(
@@ -706,8 +737,8 @@ For example, a factory can define an initial Pinia state:
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     plugins: {
       pinia: {
         initialState: {
@@ -715,7 +746,7 @@ const factory = testComponentFactory(
         },
       },
     },
-  },
+  }),
 );
 ```
 
@@ -916,16 +947,16 @@ Factory-level defaults provide a reusable baseline, while values supplied to `fa
 
 #### Props Resolution
 
-The `defaultProps` argument of `testComponentFactory()` defines the baseline props shared by all invocations of that component factory.
+The `defaultPropsResolver` argument of `testComponentFactory()` defines the baseline props returned anew for each invocation of that component factory.
 
 For example:
 
 ```typescript
-const factory = testComponentFactory(MyComponent, {
+const factory = testComponentFactory(MyComponent, () => ({
   title: "Default title",
   disabled: false,
   size: "medium",
-});
+}));
 ```
 
 Each invocation can override only the props relevant to its test scenario. Positional and object-based mounting are interchangeable:
@@ -975,8 +1006,8 @@ The resulting props are:
 Props are merged by property name at the top level.
 If a prop contains an object, providing a new value for that prop replaces the entire previous value rather than deeply merging its nested properties.
 
-Each factory invocation resolves its props independently.
-Test-specific overrides do not modify the factory's `defaultProps` or affect subsequent invocations.
+Each factory invocation calls the default props resolver independently. When the resolver constructs mutable values inside its body, one invocation cannot mutate another invocation's defaults through those values. References returned from outside the resolver can still be shared.
+Test-specific overrides do not modify the factory's configuration for subsequent invocations.
 
 This allows a component's common configuration to be defined once, while individual tests specify only the props needed to exercise a particular behavior.
 
@@ -984,18 +1015,18 @@ This allows a component's common configuration to be defined once, while individ
 
 Slots follow the same precedence principle.
 
-The `defaultSlots` argument of `testComponentFactory()` provides default slot content, while slots passed directly to `factory()` take precedence over matching defaults.
+The `defaultSlotsResolver` argument of `testComponentFactory()` provides default slot content for each mount, while slots passed directly to `factory()` take precedence over matching defaults.
 
 For example:
 
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {},
-  {
+  undefined,
+  undefined,
+  () => ({
     default: () => "Default content",
-  },
+  }),
 );
 
 // Uses the default slot content.
@@ -1075,10 +1106,10 @@ Do not place these flags at the top level of the object passed to `factory.withO
 Selects the active preset for **this mount only**. It overrides the preset selected when the factory was created:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
-});
+}));
 
 factory(); // admin
 factory.withOptions({ extraOptions: { presetKey: "default" } }); // default, for this mount only
@@ -1101,7 +1132,7 @@ factory(); // admin again
 - **Type:** `boolean`
 - **Default:** `false`
 
-When set to `true`, the factory ignores `defaultProps` defined when the factory was created.
+When set to `true`, the factory ignores the `defaultProps` returned by its defaults resolver for this mount. The resolver still runs.
 
 ```typescript
 factory(
@@ -1123,7 +1154,7 @@ Use this when a test needs to start without the factory-level default props.
 - **Type:** `boolean`
 - **Default:** `false`
 
-When set to `true`, the factory ignores `defaultSlots` defined when the factory was created.
+When set to `true`, the factory ignores the `defaultSlots` returned by its defaults resolver for this mount. The resolver still runs.
 
 ```typescript
 factory(
@@ -1143,7 +1174,7 @@ factory(
 - **Type:** `boolean`
 - **Default:** `false`
 
-When set to `true`, the factory ignores `defaultMountOptions` defined when the factory was created.
+When set to `true`, the factory ignores the `defaultMountOptions` returned by its defaults resolver for this mount. The resolver still runs.
 
 This allows a test to mount a component without inheriting factory-level mount options.
 
@@ -1589,7 +1620,7 @@ extendPreset(basePreset, {
 
 ### 5.3. Configuration Validation
 
-TestForge validates managed plugin configuration against the active preset.
+TestForge validates managed plugin configuration against the relevant preset manifest. **Factory defaults** are checked against the factory's preset, while **per-mount plugin configuration** is checked against the effective preset for that mount.
 
 #### Manifest Binding and Preset Selection
 
@@ -1598,9 +1629,12 @@ The active preset's manifest defines which managed plugins are supported. This a
 Validation depends on **where** a plugin is configured and **when** the preset is selected:
 
 - **Preset `defaults`:** may only configure plugins declared in that preset's manifest.
-- **`defaultMountOptions.plugins`:** when the factory explicitly selects a `presetKey`, all configured plugin keys must belong to that factory preset's manifest. Incompatible entries cause an error **at factory creation time**. This check is not added when the factory omits `presetKey`, preserving the existing positional API behavior.
+- **`defaultMountOptions.plugins`:** every configured plugin key must belong to the **factory preset's manifest**, regardless of whether `presetKey` was specified explicitly or the registered `default` preset was selected implicitly. Omitting `presetKey` does **not** skip this validation. The positional API validates its static `config.presetKey` at factory creation, but checks plugin configuration returned by its defaults resolver **at mount time**. The object-based creation API resolves and validates both `presetKey` and `defaultMountOptions` **at mount time**. A mount-level `extraOptions.presetKey` override does not change which preset validates the factory's own defaults.
 - **`mountOptions.plugins` and `extraOptions.plugins`:** validated during each mount against its **effective preset** (mount-level override, then factory-level selection, then `default`). A plugin explicitly configured at either of these levels must be supported by the effective preset.
-- **Preset switching:** `defaultMountOptions.plugins` can contain plugins not available in a _different_ preset selected temporarily for a mount. Such unsupported factory defaults are filtered out for that mount instead of causing an error; they remain available when a later mount uses the original factory preset again.
+- **Preset switching:** after factory defaults pass validation against the factory's own preset, a mount may temporarily select a _different_ preset. Factory-default plugins unavailable in that mount-level preset are filtered out **for that mount only**; they remain available when a later mount uses the factory preset again. This filtering does not make invalid factory defaults valid.
+
+> [!NOTE]
+> If no `default` preset is registered and the factory does not select another preset, there is no factory-preset manifest to validate against. This is distinct from implicitly selecting a registered `default` preset, which is validated normally.
 
 An unsupported plugin key is rejected even when configured as `false`. Disabling a plugin does not add it to a preset's capabilities.
 
@@ -1625,18 +1659,18 @@ the following configuration is valid:
 }
 ```
 
-An unknown key in explicitly selected factory defaults or in mount-level plugin configuration is rejected according to the rules above.
+An unsupported plugin key in factory defaults is rejected for both **implicit** and **explicit** factory-preset selection. Unsupported keys explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` are rejected against the effective mount-level preset.
 
 For example, suppose `admin` supports Pinia but `i18nOnly` does not:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "admin",
   defaultMountOptions: {
     plugins: { pinia: { stubActions: true } },
   },
-});
+}));
 
 factory(); // Pinia is available in admin.
 factory.withOptions({
@@ -1645,7 +1679,7 @@ factory.withOptions({
 factory(); // Pinia is available again.
 ```
 
-Here `admin` and `i18nOnly` are assumed to be registered framework presets. By contrast, explicitly passing `plugins: { pinia: {} }` in `mountOptions` or `extraOptions` while mounting with `i18nOnly` throws an error. Creating a factory with `presetKey: "i18nOnly"` **and** `defaultMountOptions.plugins.pinia` also throws immediately.
+Here `admin` and `i18nOnly` are assumed to be registered framework presets. By contrast, explicitly passing `plugins: { pinia: {} }` in `mountOptions` or `extraOptions` while mounting with `i18nOnly` throws an error. Resolving a factory with `presetKey: "i18nOnly"` **and** `defaultMountOptions.plugins.pinia` also throws when mounting, because its resolver's returned defaults are incompatible with the factory preset. **The same error occurs if `i18nOnly` is registered as `default` and the factory omits `presetKey`:** selecting `default` implicitly or explicitly never changes the validation rules.
 
 #### Plugin Configuration Values
 
@@ -1675,7 +1709,7 @@ To make a managed plugin available but disabled by default, use `enabled: false`
 
 #### Instance Capture in Factory Defaults
 
-`captureInstance<T>()` must be configured **per mount**, through `mountOptions.plugins` or `extraOptions.plugins`. Do not spread a capture object into `defaultMountOptions.plugins`: factory defaults are reused across mounts, and subsequent captures would overwrite the reference held by earlier tests.
+`captureInstance<T>()` must be configured **per mount**, through `mountOptions.plugins` or `extraOptions.plugins`. Do not spread a capture object into `defaultMountOptions.plugins`: capture is prohibited at the factory-default layer, even though the defaults resolver is called for every mount. Otherwise captures could also be reused inadvertently across tests.
 
 TestForge rejects an instance-capture callback in `defaultMountOptions.plugins.<name>` at runtime, **even if** the plugin configuration is replaced by `mountOptions.plugins.<name>` or factory defaults are skipped using `skipDefaultOptions`.
 
@@ -1684,12 +1718,12 @@ const capture = captureInstance<TestingPinia>();
 
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     plugins: {
       pinia: { ...capture }, // Invalid: capture belongs to factory defaults.
     },
-  },
+  }),
 );
 
 factory(); // Throws: Instance capture is not allowed in defaultMountOptions.plugins.pinia.
@@ -1891,21 +1925,21 @@ factory.withOptions({
 
 #### Choosing a Configuration Layer
 
-**Factory-level shared instance — `defaultMountOptions.plugins`**
+**Intentionally shared instance via a defaults resolver — `defaultMountOptions.plugins`**
 
 ```typescript
 const sharedPinia = createTestingPinia();
 
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     plugins: {
       pinia: {
         ...withPluginInstance(sharedPinia),
       },
     },
-  },
+  }),
 );
 
 factory();
@@ -2064,7 +2098,7 @@ The former string-keyed `expose` callback is **not a TestForge instance-capture 
 
 **Use a new capture object for each component mount.** Pass it through `mountOptions.plugins` or `extraOptions.plugins` when calling `factory()`. These are per-mount configuration layers.
 
-**Do not pass `captureInstance()` through `defaultMountOptions.plugins`.** TestForge rejects it at runtime, including when `mountOptions.plugins.<name>` replaces that plugin's default configuration. Factory defaults are shared across mounts, whereas an instance capture must belong to a particular mount. See [Configuration Validation](#53-configuration-validation).
+**Do not pass `captureInstance()` through `defaultMountOptions.plugins`.** TestForge rejects it at runtime, including when `mountOptions.plugins.<name>` replaces that plugin's default configuration. Factory defaults are resolved per mount, but the factory-default layer still forbids instance capture; a capture must belong to a particular mount. See [Configuration Validation](#53-configuration-validation).
 
 A capture supplied through `mountOptions.plugins.<name>` can be combined with per-mount overrides from `extraOptions.plugins.<name>`. Remember that `mountOptions.plugins.<name>` **replaces** the `defaultMountOptions.plugins.<name>` configuration, while `extraOptions.plugins.<name>` applies a shallow overlay. See [Managed Plugin Configuration](#managed-plugin-configuration).
 
@@ -2118,8 +2152,8 @@ import { createVueI18nAdapter } from "vuetify/locale/adapters/vue-i18n";
 
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     plugins: {
       i18n: {
         legacy: false,
@@ -2132,7 +2166,7 @@ const factory = testComponentFactory(
         },
       },
     },
-  },
+  }),
 );
 
 factory();
@@ -2186,7 +2220,7 @@ A provider supplied through `withPluginInstance()` in `defaultMountOptions.plugi
 
 References are evaluated separately for every mount. Normally, each mount resolves to its own TestForge-created provider instance; when a pre-created provider is intentionally shared, each mount's resolver receives that shared instance instead.
 
-References stored in reusable factory defaults remain as references: resolving a nested value for one mount does **not** overwrite the source configuration or cause later mounts to reuse the previous mount's resolved instance.
+References returned by factory defaults resolvers are resolved for each mount: resolving a nested value does **not** overwrite its source or cause later mounts to reuse the previous mount's resolved instance.
 
 TestForge creates new configuration containers where needed to resolve references, but preserves the identity of unrelated user-provided runtime objects. See [Instance Isolation](#instance-isolation) for the distinction between framework-managed instances and explicitly shared objects.
 
@@ -2244,7 +2278,7 @@ expect(firstCapture.instance).not.toBe(secondCapture.instance);
 To share a plugin instance across mounts or helpers, provide a pre-created instance rather than relying on automatic creation.
 Pass the instance through `withPluginInstance()` in factory defaults or per-mount options as described in [Section 7.1](#precreated-plugin-instances).
 TestForge reuses it without changing its identity or resetting its state.
-An instance placed in `defaultMountOptions.plugins` is therefore shared by every mount that does not override or disable that plugin.
+An instance created outside a defaults resolver and supplied through `withPluginInstance()` is therefore shared by every mount that does not override or disable that plugin.
 
 TestForge's isolation guarantees apply to plugin instances created independently for each mount, not to explicitly reused instances.
 When multiple mounts use the same instance through `withPluginInstance()`, they may share mutable runtime state.
@@ -2258,7 +2292,7 @@ This also applies to reusable mount configurations. Passing the same configurati
 
 When independent mounts require such dependencies, create a fresh configuration and its stateful values for each invocation.
 
-Because `defaultMountOptions` is defined once when a component factory is created, object references supplied at this level may be reused across multiple mounts. The exception is instance capture: `captureInstance()` must not be included in `defaultMountOptions.plugins` and is rejected by runtime validation. Configure it for each mount instead.
+Although a `defaultMountOptions` resolver runs afresh for every mount, it can return objects referenced from the surrounding scope. Such external objects may be reused across mounts. `captureInstance()` is not an exception to this rule: it must never be included in `defaultMountOptions.plugins` and is rejected by runtime validation. Configure capture for each mount instead.
 
 This is especially important for stateful objects, such as:
 
@@ -2279,18 +2313,18 @@ import { createMemoryHistory } from "vue-router";
 const customHistory = createMemoryHistory();
 const factory = testComponentFactory(
   MyComponent,
-  {},
-  {
+  undefined,
+  () => ({
     plugins: {
       router: {
         history: customHistory,
       },
     },
-  },
+  }),
 );
 ```
 
-Every invocation of `factory()` receives the same `customHistory` reference unless the Router configuration is overridden.
+Every invocation of `factory()` receives the same `customHistory` reference unless the Router configuration is overridden. The resolver returns a new configuration object each time, but the history is created **outside** the resolver.
 
 ```typescript
 const first = factory();
@@ -2305,7 +2339,20 @@ This is intentional: TestForge does not clone or reset user-provided objects.
 
 #### Example: Creating a Fresh History for Each Mount
 
-When each test requires an independent history instance, provide it through test-level `mountOptions`:
+When each test requires an independent history instance, create it **inside the factory defaults resolver** or provide it through test-level `mountOptions`. For example, the factory-level approach is:
+
+```typescript
+const factory = testComponentFactory(
+  MyComponent,
+  undefined,
+  () => ({ plugins: { router: { history: createMemoryHistory() } } }),
+);
+
+factory(); // Gets a new Router history.
+factory(); // Gets a different Router history.
+```
+
+Alternatively, create the history at the mount level:
 
 ```typescript
 const factory = testComponentFactory(MyComponent);
@@ -2359,9 +2406,9 @@ If the Router integration's default history is sufficient, there is no need to p
 > [!IMPORTANT]
 > **Object identity and test isolation**
 >
-> Objects supplied through `defaultMountOptions` may be shared across mounts. TestForge preserves user-provided runtime object references and does not automatically clone, recreate, or reset them.
+> Factory defaults resolvers run for each mount, but references to objects created outside them may still be shared. TestForge preserves user-provided runtime object references and does not automatically clone, recreate, or reset them.
 >
-> To obtain mount-specific instances, create fresh objects in `mountOptions` or rely on plugin integrations that create them automatically.
+> To obtain mount-specific instances, construct them inside a defaults resolver, create fresh objects in `mountOptions`, or rely on plugin integrations that create them automatically.
 >
 > TestForge isolates its own runtime state, but the lifecycle of explicitly supplied objects remains under the user's control.
 

@@ -35,20 +35,21 @@ The plugin provides a project-independent default configuration through `getDefa
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: routerPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        router: routerPlugin.getDefaultOptions(),
+  preset: {
+    manifest: [
+      {
+        module: routerPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [ROUTER_PLUGIN_NAME]: routerPlugin.getDefaultOptions(),
     },
   },
 });
@@ -83,36 +84,40 @@ You can define the Vue Router configuration directly in the preset instead:
 import { createMemoryHistory } from "vue-router";
 
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { routerPlugin } from "@testforgejs/vue-test-plugin-router";
+import {
+  routerPlugin,
+  PLUGIN_NAME as ROUTER_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-router";
+import type { PluginOptions as RouterPluginOptions } from "@testforgejs/vue-test-plugin-router";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: routerPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        router: () => ({
-          history: createMemoryHistory(),
-          routes: [
-            {
-              path: "/",
-              component: { render: () => null },
-            },
-            {
-              path: "/users/:id",
-              component: UserDetails,
-            },
-          ],
-        }),
+  preset: {
+    manifest: [
+      {
+        module: routerPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [ROUTER_PLUGIN_NAME]: () => ({
+        history: createMemoryHistory(),
+        routes: [
+          {
+            path: "/",
+            component: { render: () => null },
+          },
+          {
+            path: "/users/:id",
+            component: UserDetails,
+          },
+        ],
+      }) satisfies RouterPluginOptions,
     },
   },
 });
 ```
+
+The standardized `PluginOptions` type provides type-safe configuration through `satisfies` while preserving TypeScript's inferred type for the returned options.
 
 Using `getDefaultOptions()` is optional. Define custom defaults when tests require application-specific routes, a different history implementation, navigation behavior, or other Vue Router configuration.
 

@@ -173,10 +173,17 @@ expectError(
 
 const configuredPropsFactory = framework.testComponentFactory(
   MockComponent,
-  { title: "Default title" },
+  () => ({ title: "Default title" }),
   undefined,
   undefined,
   { presetKey: "admin" },
+);
+
+// A plain object is not a valid default props resolver.
+expectError(
+  framework.testComponentFactory(MockComponent, { title: "Default title" }, undefined, undefined, {
+    presetKey: "admin",
+  }),
 );
 
 // Valid component props.
@@ -243,18 +250,30 @@ const existingPinia = {
 };
 
 // Verify defaultMountOptions.
-
-framework.testComponentFactory(
-  MockComponent,
-  {},
-  {
-    plugins: {
-      pinia: {
-        ...withPluginInstance(existingPinia),
+// A plain object is not a valid default mounting options resolver.
+expectError(
+  framework.testComponentFactory(
+    MockComponent,
+    undefined,
+    {
+      plugins: {
+        pinia: {
+          ...withPluginInstance(existingPinia),
+        },
       },
     },
-  },
+    undefined,
+    { presetKey: "admin" },
+  ),
 );
+
+framework.testComponentFactory(MockComponent, undefined, () => ({
+  plugins: {
+    pinia: {
+      ...withPluginInstance(existingPinia),
+    },
+  },
+}));
 
 // Verify mountOptions.
 
@@ -314,12 +333,12 @@ expectError(
  */
 
 // Verify `defaultProps`
-framework.testComponentFactory(MockComponent, { title: "Example" });
-expectError(framework.testComponentFactory(MockComponent, { title1: "Example" }));
+framework.testComponentFactory(MockComponent, () => ({ title: "Example" }));
+expectError(framework.testComponentFactory(MockComponent, () => ({ title1: "Example" })));
 expectError(
-  framework.testComponentFactory(MockComponent, {
+  framework.testComponentFactory(MockComponent, () => ({
     title: 123,
-  }),
+  })),
 );
 
 // Verify `props`
@@ -327,8 +346,14 @@ framework.testComponentFactory(MockComponent)({ title: "Example" });
 expectError(framework.testComponentFactory(MockComponent)({ title1: "Example" }));
 
 // Verify `defaultMountOptions.props`
-framework.testComponentFactory(MockComponent, {}, { props: { title: "Example" } });
-expectError(framework.testComponentFactory(MockComponent, {}, { props: { title1: "Example" } }));
+framework.testComponentFactory(MockComponent, undefined, () => ({ props: { title: "Example" } }));
+
+// The resolver must reject unknown component props.
+expectError(
+  framework.testComponentFactory(MockComponent, undefined, () => ({
+    props: { title1: "Example" },
+  })),
+);
 
 // Verify `mountOptions.props`
 framework.testComponentFactory(MockComponent)({}, { props: { title: "Example" } });
@@ -349,68 +374,58 @@ const SlotComponent = defineComponent({
 });
 
 // Verify `defaultSlots`
+// A plain slots object is not a valid DefaultSlotsResolver.
+// The fourth argument must be a function returning the slots object.
+expectError(
+  framework.testComponentFactory(SlotComponent, undefined, undefined, {
+    header: () => "<h1>Title</h1>",
+    default: () => "<div>User</div>",
+  }),
+);
 
-framework.testComponentFactory(
-  SlotComponent,
-  {},
-  {},
-  {
-    // Normal slot accepts a function without arguments
+framework.testComponentFactory(SlotComponent, undefined, undefined, () => ({
+  // Normal slot accepts a function without arguments
+  header: () => "<h1>Title</h1>",
+
+  // The scoped slot automatically infers the type of the `props` argument!
+  default: (props) => {
+    // Verify that the type of `props.user.name` within the test is strictly defined as a string
+    expectType<string>(props.user.name);
+    expectType<number>(props.user.id);
+
+    return `<div>User: ${props.user.name}</div>`;
+  },
+}));
+
+// A valid DefaultSlotsResolver must reject slots absent from SlotComponent.
+expectError(
+  framework.testComponentFactory(SlotComponent, undefined, undefined, () => ({
+    footer: () => "Footer Content",
+  })),
+);
+
+// Verify `defaultMountOptions.slots`
+
+framework.testComponentFactory(SlotComponent, undefined, () => ({
+  slots: {
     header: () => "<h1>Title</h1>",
 
-    // The scoped slot automatically infers the type of the `props` argument!
     default: (props) => {
-      // Verify that the type of `props.user.name` within the test is strictly defined as a string
       expectType<string>(props.user.name);
       expectType<number>(props.user.id);
 
       return `<div>User: ${props.user.name}</div>`;
     },
   },
-);
+}));
 
-// Verification of a non-existent slot within the `defaultSlots` object
+// The default mount options resolver must reject unknown component slots.
 expectError(
-  framework.testComponentFactory(
-    SlotComponent,
-    {},
-    {},
-    {
+  framework.testComponentFactory(SlotComponent, undefined, () => ({
+    slots: {
       footer: () => "Footer Content",
     },
-  ),
-);
-
-// Verify `defaultMountOptions.slots`
-
-framework.testComponentFactory(
-  SlotComponent,
-  {},
-  {
-    slots: {
-      header: () => "<h1>Title</h1>",
-
-      default: (props) => {
-        expectType<string>(props.user.name);
-        expectType<number>(props.user.id);
-
-        return `<div>User: ${props.user.name}</div>`;
-      },
-    },
-  },
-);
-
-// Verification of a non-existent slot within the `defaultMountOptions` object
-expectError(
-  framework.testComponentFactory(
-    SlotComponent,
-    {},
-    {
-      slots: {
-        footer: () => "Footer Content",
-      },
-    },
-  ),
+  })),
 );
 
 const slotFactory = framework.testComponentFactory(SlotComponent);
@@ -577,57 +592,41 @@ expectError(
 
 // Verify defaultMountOptions
 
-framework.testComponentFactory(
-  OptionsComponent,
-  {},
-  {
-    data() {
-      return {
-        counter: 42,
-        status: "loading" as const,
-      };
-    },
+framework.testComponentFactory(OptionsComponent, undefined, () => ({
+  data() {
+    return {
+      counter: 42,
+      status: "loading" as const,
+    };
   },
-);
+}));
 
-framework.testComponentFactory(
-  OptionsComponent,
-  {},
-  {
-    data() {
-      return {
-        counter: 42,
-        status: "loading" as "idle" | "loading" | "success",
-      };
-    },
+framework.testComponentFactory(OptionsComponent, undefined, () => ({
+  data() {
+    return {
+      counter: 42,
+      status: "loading" as "idle" | "loading" | "success",
+    };
   },
-);
+}));
 
-framework.testComponentFactory(
-  OptionsComponent,
-  {},
-  {
+framework.testComponentFactory(OptionsComponent, undefined, () => ({
+  data() {
+    return {
+      status: "loading" as const,
+      invalidStateKey: true,
+    };
+  },
+}));
+
+expectError(
+  framework.testComponentFactory(OptionsComponent, undefined, () => ({
     data() {
       return {
-        status: "loading" as const,
         invalidStateKey: true,
       };
     },
-  },
-);
-
-expectError(
-  framework.testComponentFactory(
-    OptionsComponent,
-    {},
-    {
-      data() {
-        return {
-          invalidStateKey: true,
-        };
-      },
-    },
-  ),
+  })),
 );
 
 // Verify mountOptions

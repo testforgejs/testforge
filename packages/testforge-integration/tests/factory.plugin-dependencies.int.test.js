@@ -231,17 +231,23 @@ describe("Plugin Instance Dependencies", () => {
 
       const reference = fromPluginInstance("provider", (instance) => instance);
 
-      const defaultMountOptions = {
-        plugins: {
-          consumer: {
-            nested: {
-              dependency: reference,
+      const resolvedDefaults = [];
+
+      const factory = testComponentFactory(MockComponent, undefined, () => {
+        const defaultMountOptions = {
+          plugins: {
+            consumer: {
+              nested: {
+                dependency: reference,
+              },
             },
           },
-        },
-      };
+        };
 
-      const factory = testComponentFactory(MockComponent, {}, defaultMountOptions);
+        resolvedDefaults.push(defaultMountOptions);
+
+        return defaultMountOptions;
+      });
 
       factory();
       factory();
@@ -264,8 +270,15 @@ describe("Plugin Instance Dependencies", () => {
         secondConsumerOptions.nested.dependency,
       );
 
-      // Resolving one mount must not modify the shared defaults.
-      expect(defaultMountOptions.plugins.consumer.nested.dependency).toBe(reference);
+      // Each resolver call must create independent configuration objects.
+      expect(resolvedDefaults).toHaveLength(2);
+      expect(resolvedDefaults[0]).not.toBe(resolvedDefaults[1]);
+
+      expect(resolvedDefaults[0].plugins.consumer).not.toBe(resolvedDefaults[1].plugins.consumer);
+
+      // Resolving references must not mutate the configuration returned by the resolver.
+      expect(resolvedDefaults[0].plugins.consumer.nested.dependency).toBe(reference);
+      expect(resolvedDefaults[1].plugins.consumer.nested.dependency).toBe(reference);
 
       const [, firstMountOptions] = mockMount.mock.calls[0];
       const [, secondMountOptions] = mockMount.mock.calls[1];
@@ -275,6 +288,155 @@ describe("Plugin Instance Dependencies", () => {
 
       expect(firstMountOptions.global.plugins).not.toContain(secondProvider);
       expect(secondMountOptions.global.plugins).not.toContain(firstProvider);
+    });
+
+    it("should not mutate shared defaults when resolving plugin instance references (positional API)", () => {
+      let instanceCounter = 0;
+
+      const providerCreate = runner.fn(() => ({
+        id: ++instanceCounter,
+        install() {},
+      }));
+
+      const consumerCreate = runner.fn(() => ({
+        install() {},
+      }));
+
+      const testComponentFactory = createDependencyFactory([
+        createPluginModule("consumer", {
+          create: consumerCreate,
+        }),
+        createPluginModule("provider", {
+          supportsInstanceReferences: true,
+          create: providerCreate,
+        }),
+      ]);
+
+      const reference = fromPluginInstance("provider", (instance) => instance);
+
+      // Intentionally reuse the same configuration object across mounts.
+      const defaultMountOptions = {
+        plugins: {
+          consumer: {
+            nested: {
+              dependency: reference,
+            },
+          },
+        },
+      };
+
+      const defaultsResolver = runner.fn(() => defaultMountOptions);
+
+      const factory = testComponentFactory(MockComponent, undefined, defaultsResolver);
+
+      // First mount.
+      factory();
+
+      const firstProvider = providerCreate.mock.results[0].value;
+      const firstConsumerOptions = consumerCreate.mock.calls[0][0];
+
+      expect(firstConsumerOptions.nested.dependency).toBe(firstProvider);
+
+      // Resolving the first mount must not replace the original reference.
+      expect(defaultMountOptions.plugins.consumer.nested.dependency).toBe(reference);
+
+      // Second mount reuses the same defaults.
+      factory();
+
+      const secondProvider = providerCreate.mock.results[1].value;
+      const secondConsumerOptions = consumerCreate.mock.calls[1][0];
+
+      expect(defaultsResolver).toHaveBeenCalledTimes(2);
+      expect(providerCreate).toHaveBeenCalledTimes(2);
+      expect(consumerCreate).toHaveBeenCalledTimes(2);
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      expect(firstProvider).not.toBe(secondProvider);
+
+      // The same reference must resolve to the provider of each mount.
+      expect(firstConsumerOptions.nested.dependency).toBe(firstProvider);
+      expect(secondConsumerOptions.nested.dependency).toBe(secondProvider);
+
+      // Neither mount may mutate the shared source configuration.
+      expect(defaultMountOptions.plugins.consumer.nested.dependency).toBe(reference);
+    });
+
+    it("should not mutate shared defaults when resolving plugin instance references (object API)", () => {
+      let instanceCounter = 0;
+
+      const providerCreate = runner.fn(() => ({
+        id: ++instanceCounter,
+        install() {},
+      }));
+
+      const consumerCreate = runner.fn(() => ({
+        install() {},
+      }));
+
+      const testComponentFactory = createDependencyFactory([
+        createPluginModule("consumer", {
+          create: consumerCreate,
+        }),
+        createPluginModule("provider", {
+          supportsInstanceReferences: true,
+          create: providerCreate,
+        }),
+      ]);
+
+      const reference = fromPluginInstance("provider", (instance) => instance);
+
+      // Intentionally reuse the same factory configuration across mounts.
+      const creationOptions = {
+        component: MockComponent,
+        defaultMountOptions: {
+          plugins: {
+            consumer: {
+              nested: {
+                dependency: reference,
+              },
+            },
+          },
+        },
+      };
+
+      const optionsResolver = runner.fn(() => creationOptions);
+
+      const factory = testComponentFactory.withOptions(optionsResolver);
+
+      // First mount.
+      factory();
+
+      const firstProvider = providerCreate.mock.results[0].value;
+      const firstConsumerOptions = consumerCreate.mock.calls[0][0];
+
+      expect(firstConsumerOptions.nested.dependency).toBe(firstProvider);
+
+      // Resolving the first mount must not mutate the original configuration.
+      expect(creationOptions.defaultMountOptions.plugins.consumer.nested.dependency).toBe(
+        reference,
+      );
+
+      // Second mount reuses the same factory configuration.
+      factory.withOptions({});
+
+      const secondProvider = providerCreate.mock.results[1].value;
+      const secondConsumerOptions = consumerCreate.mock.calls[1][0];
+
+      expect(optionsResolver).toHaveBeenCalledTimes(2);
+      expect(providerCreate).toHaveBeenCalledTimes(2);
+      expect(consumerCreate).toHaveBeenCalledTimes(2);
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      expect(firstProvider).not.toBe(secondProvider);
+
+      // Each mount must resolve the reference to its own provider instance.
+      expect(firstConsumerOptions.nested.dependency).toBe(firstProvider);
+      expect(secondConsumerOptions.nested.dependency).toBe(secondProvider);
+
+      // Neither mount may replace the reference in the shared source configuration.
+      expect(creationOptions.defaultMountOptions.plugins.consumer.nested.dependency).toBe(
+        reference,
+      );
     });
   });
 
@@ -649,18 +811,15 @@ describe("Plugin Instance Dependencies", () => {
       const reference = fromPluginInstance("provider", (instance) => instance);
 
       expect(() => {
-        factory(
-          {},
-          {},
-          {},
-          {
+        factory.withOptions({
+          extraOptions: {
             plugins: {
               provider: {
                 ...withPluginInstance(reference),
               },
             },
           },
-        );
+        });
       }).toThrow(/withPluginInstance\(\) requires a pre-created plugin instance/);
 
       expect(providerCreate).not.toHaveBeenCalled();
@@ -709,25 +868,21 @@ describe("Plugin Instance Dependencies", () => {
 
       // Factory-level options override preset values while preserving
       // unrelated preset defaults.
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            consumer: {
-              source: "factory",
-              factoryOnly: true,
-              dependency: fromPluginInstance("provider", factoryResolver),
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          consumer: {
+            source: "factory",
+            factoryOnly: true,
+            dependency: fromPluginInstance("provider", factoryResolver),
           },
         },
-      );
+      }));
 
       // Mount-level options replace the factory-level plugin configuration.
       // Extra options are then merged into the effective configuration.
-      factory(
-        {},
-        {
+
+      factory.withOptions({
+        mountOptions: {
           plugins: {
             consumer: {
               source: "mount",
@@ -736,8 +891,7 @@ describe("Plugin Instance Dependencies", () => {
             },
           },
         },
-        {},
-        {
+        extraOptions: {
           plugins: {
             consumer: {
               source: "extra",
@@ -745,7 +899,7 @@ describe("Plugin Instance Dependencies", () => {
             },
           },
         },
-      );
+      });
 
       expect(consumerCreate).toHaveBeenCalledTimes(1);
 
@@ -846,17 +1000,13 @@ describe("Plugin Instance Dependencies", () => {
         }),
       ]);
 
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            consumer: {
-              dependency: fromPluginInstance("provider", referenceResolver),
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          consumer: {
+            dependency: fromPluginInstance("provider", referenceResolver),
           },
         },
-      );
+      }));
 
       expect(() => {
         factory(
@@ -912,31 +1062,24 @@ describe("Plugin Instance Dependencies", () => {
         }),
       ]);
 
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            consumer: {
-              dependency: fromPluginInstance("provider", defaultResolver),
-              unchanged: "preserved",
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          consumer: {
+            dependency: fromPluginInstance("provider", defaultResolver),
+            unchanged: "preserved",
           },
         },
-      );
+      }));
 
-      factory(
-        {},
-        {},
-        {},
-        {
+      factory.withOptions({
+        extraOptions: {
           plugins: {
             consumer: {
               dependency: fromPluginInstance("provider", overrideResolver),
             },
           },
         },
-      );
+      });
 
       const [consumerOptions] = consumerCreate.mock.calls[0];
 
@@ -974,9 +1117,8 @@ describe("Plugin Instance Dependencies", () => {
 
       const factory = testComponentFactory(MockComponent);
 
-      factory(
-        {},
-        {
+      factory.withOptions({
+        mountOptions: {
           skipManagedPlugins: true,
           plugins: {
             consumer: {
@@ -984,7 +1126,7 @@ describe("Plugin Instance Dependencies", () => {
             },
           },
         },
-      );
+      });
 
       expect(providerCreate).not.toHaveBeenCalled();
       expect(consumerCreate).not.toHaveBeenCalled();

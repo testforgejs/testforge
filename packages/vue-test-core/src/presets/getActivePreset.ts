@@ -5,7 +5,7 @@ import type {
 } from "../types.js";
 
 import { validatePreset } from "./validators/validatePreset.js";
-import { DEFAULT_PRESET_NAME } from "../constants/constants.js";
+import { resolvePresetKey } from "./resolvePresetKey.js";
 
 /*
  * Retrieves the active preset based on the call parameters and available presets.
@@ -19,14 +19,15 @@ export function getActivePreset(
   presets: TestFrameworkPresets = {},
   extraOptions?: ComponentFactoryExtraOptions,
 ): PresetDefinition | undefined {
-  const requestedPresetName = extraOptions?.presetKey?.trim();
-  const activeName = requestedPresetName || DEFAULT_PRESET_NAME;
+  const { presetKey: activeName, explicitPresetKey } = resolvePresetKey({
+    mountPresetKey: extraOptions?.presetKey,
+  });
   const preset = presets[activeName];
 
   // If a user requests a preset that doesn't exist, an error will be thrown
-  if (requestedPresetName && !preset) {
+  if (explicitPresetKey && !preset) {
     throw new Error(
-      `[withPreset] Requested preset "${requestedPresetName}" not found in available presets.`,
+      `[withPreset] Requested preset "${explicitPresetKey}" not found in available presets.`,
     );
   }
 

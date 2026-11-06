@@ -37,7 +37,7 @@ describe("validateTestComponentFactoryArguments", () => {
     ])("should throw an error when component is a $type", ({ value }) => {
       expect(() => {
         validateTestComponentFactoryArguments(value, {}, {}, {}, {});
-      }).toThrow(`${ERROR_PREFIX} testComponentFactory() requires a valid Vue component.`);
+      }).toThrow(`${ERROR_PREFIX} "component" must be a Vue component (object or function).`);
     });
   });
 

@@ -415,10 +415,10 @@ Each registered preset defines a complete managed-plugin runtime environment.
 For most components, choose the appropriate environment once when creating the component factory. The object-based API makes this explicit:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "i18nPreset",
-});
+}));
 
 factory(); // Uses i18nPreset.
 factory(); // Uses i18nPreset again.
@@ -429,9 +429,9 @@ The positional component factory API supports the same selection through its opt
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {}, // defaultProps
-  {}, // defaultMountOptions
-  {}, // defaultSlots
+  undefined,
+  undefined,
+  undefined,
   { presetKey: "i18nPreset" },
 );
 ```
@@ -484,7 +484,7 @@ The first explicitly selected preset takes precedence.
 
 An explicitly selected preset must exist in the framework's preset registry.
 
-Factory-level preset selection is validated when the component factory is created, while a per-mount selection is validated for the individual invocation.
+A factory-level preset key supplied through the positional API is validated at factory creation. With the resolver-based object API, the returned preset key is validated on each mount. Mount-level preset overrides are also validated for each invocation.
 
 ### Managed Plugin Configuration
 
@@ -509,10 +509,10 @@ createTestFramework({ preset })
 createTestFramework({ presets })
 → registers multiple named runtime environments
 
-testComponentFactory.withOptions({ component, presetKey })
+testComponentFactory.withOptions(() => ({ component, presetKey }))
 → selects the preset for a reusable component factory
 
-testComponentFactory(component, ..., { presetKey })
+testComponentFactory(Component, ..., { presetKey })
 → selects a preset with the positional factory API (fifth argument)
 
 extraOptions.presetKey

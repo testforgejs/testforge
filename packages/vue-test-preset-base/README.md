@@ -121,7 +121,9 @@ i18nPreset
 routerPreset
 ```
 
-Named presets registered through `presets` can be selected for individual component factory invocations through `extraOptions.presetKey`.
+Named presets registered through `presets` can be selected at component factory creation using `presetKey`, or temporarily overridden for an individual mount through `extraOptions.presetKey`.
+
+Prefer factory-level selection when a component consistently requires a particular runtime environment.
 
 In general:
 
@@ -131,7 +133,8 @@ preset
 
 presets
 → multiple named runtime environments
-→ runtime selection through extraOptions.presetKey
+→ factory-level selection through presetKey
+→ per-mount overrides through extraOptions.presetKey
 ```
 
 ## Plugin Defaults
@@ -518,9 +521,11 @@ stubActions: false
 A project can instead preserve and spread a source preset factory:
 
 ```typescript
-const sourcePinia = recommendedPresets.default.defaults.pinia;
+import { presets as basePresets } from "@testforgejs/vue-test-preset-base";
 
-extendPreset(recommendedPresets.default, {
+const sourcePinia = basePresets.default.defaults.pinia;
+
+extendPreset(basePresets.default, {
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       ...sourcePinia(),
@@ -537,7 +542,7 @@ The resulting project preset intentionally continues to depend on the source pre
 For project-owned configuration that should remain stable and directly visible in source, prefer materializing the values the project intends to preserve:
 
 ```typescript
-extendPreset(recommendedPresets.default, {
+extendPreset(basePresets.default, {
   defaults: {
     [PINIA_PLUGIN_NAME]: () => ({
       createSpy: vi.fn,
@@ -727,39 +732,45 @@ const { testComponentFactory } = createTestFramework({
 });
 ```
 
-A component factory can then switch between registered presets for an individual invocation using the fourth `extraOptions` argument:
+A component factory can select its normal runtime environment once at creation:
 
 ```typescript
-const factory = testComponentFactory(MyComponent);
+const factory = testComponentFactory.withOptions(() => ({
+  component: MyComponent,
+  presetKey: "i18nPreset",
+}));
 
-factory(
-  {},
-  {},
-  {},
-  {
-    presetKey: "i18nPreset",
-  },
-);
+factory(); // Uses i18nPreset.
+
+// Temporarily switch to another registered preset.
+factory.withOptions({
+  extraOptions: { presetKey: "routerPreset" },
+}); // Uses routerPreset for this mount only.
+
+factory(); // Uses i18nPreset again.
 ```
 
-The selected preset defines the complete managed-plugin runtime for that invocation.
+The positional factory creation API supports the same selection through its fifth argument: `testComponentFactory(MyComponent, undefined, undefined, undefined, { presetKey: "i18nPreset" })`.
 
-For example, selecting `i18nPreset` enables Vue I18n without automatically creating the Pinia or Router integrations.
+The selected preset defines the complete managed-plugin runtime for that mount. For example, selecting `i18nPreset` enables Vue I18n without automatically creating the Pinia or Router integrations.
 
-The two similarly named options operate at different levels:
+The registration and selection options operate at different levels:
 
 ```text
 createTestFramework({ preset })
-→ configures one framework-wide runtime environment
+→ registers one runtime environment as default
 
 createTestFramework({ presets })
 → registers multiple named runtime environments
 
+testComponentFactory.withOptions(() => ({ component, presetKey }))
+→ selects a registered runtime profile for the reusable factory
+
 extraOptions.presetKey
-→ selects one registered runtime environment for a factory invocation
+→ overrides the factory-level selection for one mount only
 ```
 
-Runtime selection through `extraOptions.presetKey` applies to named presets registered through `presets`.
+Selection precedence is **mount-level `extraOptions.presetKey` → factory-level `presetKey` → registered `default`**. A single `preset` also has an implicit `default` key; switching among distinct named profiles requires a registry provided through `presets`.
 
 ## Preset Isolation
 

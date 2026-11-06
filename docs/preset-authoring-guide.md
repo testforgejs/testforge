@@ -324,12 +324,12 @@ Registration makes the named profiles available; it does not determine which one
 For example, select the environment once for a reusable component factory:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "i18nPreset",
-});
+}));
 
-factory(); // Uses the routerPreset preset.
+factory(); // Uses the i18nPreset preset.
 ```
 
 A mount can still choose another registered profile when needed:
@@ -339,7 +339,7 @@ factory.withOptions({
   extraOptions: { presetKey: "routerPreset" },
 }); // Uses the routerPreset for this mount only.
 
-factory(); // Uses the routerPreset preset again.
+factory(); // Uses the i18nPreset preset again.
 ```
 
 Use `presets` when:
@@ -1237,17 +1237,17 @@ The required managed plugins and their baseline configuration are typically dete
 
 Registering a single `preset` makes it available as the framework's `default` profile. Registering `presets` exposes multiple named profiles that component factories can select. These registration forms are mutually exclusive, as described in [Section 2](#2-preset-vs-presets). A registry key such as `i18n` names a runtime profile; it is not a managed plugin identifier.
 
-If neither the factory nor the mount selects a profile explicitly, TestForge uses the registered `default` profile when one exists.
+If neither the factory nor the mount selects a profile explicitly, TestForge uses the registered `default` profile when one exists. If no `default` is registered, the mount proceeds without an active preset.
 
 ### Factory-Level Preset Selection
 
-A component factory can select a named registered preset at creation time. This is the normal place to express the component's required managed-plugin environment. The object-based API makes the selection explicit:
+A component factory can define a named registered preset as its default runtime profile. This is the normal place to express the component's required managed-plugin environment. With the object-based API, the resolver supplies this selection for each mount:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "i18nPreset",
-});
+}));
 
 factory(); // Uses i18nPreset.
 factory(); // Uses i18nPreset again.
@@ -1258,9 +1258,9 @@ The positional API supports the same choice through its optional fifth argument:
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  {}, // defaultProps
-  {}, // defaultMountOptions
-  {}, // defaultSlots
+  undefined, // defaultProps resolver
+  undefined, // defaultMountOptions resolver
+  undefined, // defaultSlots resolver
   { presetKey: "i18nPreset" },
 );
 ```
@@ -1295,7 +1295,7 @@ defaultFactory.withOptions({
 ```
 
 > [!NOTE]
-> **`presetKey` belongs to different scopes:** it is top-level in `testComponentFactory.withOptions({ ... })` because it configures the reusable factory, but belongs inside `extraOptions` in `factory.withOptions({ ... })` because it overrides an individual mount. Do not pass `presetKey` directly to the mounting object.
+> **`presetKey` belongs to different scopes:** it is a top-level property in the object returned by `testComponentFactory.withOptions(() => ({ ... }))` because it configures the reusable factory, but belongs inside `extraOptions` in `factory.withOptions({ ... })` because it overrides an individual mount. Do not pass `presetKey` directly to the mounting object.
 
 ### Preset Selection Precedence and Validation
 
@@ -1309,18 +1309,18 @@ Factory-level presetKey
 Registered default preset
 ```
 
-An explicitly selected preset must exist in the framework's registry. A factory-level selection is checked when the component factory is created; a mount-level selection is checked for that invocation.
+An explicitly selected preset must exist in the framework's registry. The static factory-level `presetKey` supplied through the positional API is validated at factory creation. For `testComponentFactory.withOptions(resolver)`, the preset key returned by the resolver is validated on each mount. Mount-level overrides are also validated for each invocation. Factory defaults returned by either creation API's resolvers are validated at mount time.
 
 The selected preset determines which managed plugins may be configured:
 
-- When a factory-level preset is explicitly selected, its `defaultMountOptions.plugins` must refer only to plugins declared by that preset.
+- When mounting with the factory-level preset, resolved `defaultMountOptions.plugins` must refer only to plugins declared by that preset.
 - If a mount switches to another preset, factory-default plugin configurations unsupported by the newly selected preset are **ignored for that mount**.
 - Plugins explicitly configured by the individual mount through `mountOptions.plugins` or `extraOptions.plugins` must be declared by the active preset; unsupported plugins are rejected.
 
 For example, suppose a component factory selects an application preset with Pinia defaults:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "default",
   defaultMountOptions: {
@@ -1328,7 +1328,7 @@ const factory = testComponentFactory.withOptions({
       pinia: { initialState: { users: [] } },
     },
   },
-});
+}));
 ```
 
 If a mount selects an `i18nPreset` preset without Pinia, the unsupported **factory default** Pinia configuration is not carried into that mount:
@@ -1360,10 +1360,10 @@ createTestFramework({ preset })
 createTestFramework({ presets })
 → registers named PresetDefinition objects
 
-testComponentFactory.withOptions({ presetKey })
+testComponentFactory.withOptions(() => ({ component, presetKey }))
 → selects a registered preset for a reusable factory
 
-testComponentFactory(..., { presetKey })
+testComponentFactory(Component, undefined, undefined, undefined, { presetKey })
 → selects a registered preset through the positional factory API
 
 factory.withOptions({ extraOptions: { presetKey } })
@@ -2257,8 +2257,8 @@ The key principles are:
 - factory-level `presetKey` selects a registered profile when creating a reusable component factory (`withOptions()` or the fifth positional argument); this is the preferred choice for a component's normal testing environment;
 - mount-level `extraOptions.presetKey` can override that selection for an exceptional individual mount;
 - preset selection precedence is **mount-level → factory-level → `default`**;
-- explicitly selected presets must be registered; factory-level and mount-level selection are validated at their respective stages;
-- a factory's explicit preset selection validates its `defaultMountOptions.plugins` against the chosen preset;
+- explicitly selected presets must be registered; static positional factory keys are validated at creation, while object-based resolver keys and mount-level overrides are validated on each mount;
+- factory defaults returned by resolvers are validated at mount time against the effective preset, with unsupported factory defaults ignored when a mount overrides the factory preset;
 - a mount switching presets ignores unsupported factory-default plugin configuration but rejects unsupported plugins explicitly configured for that mount;
 - switching among multiple named runtime profiles requires a registry created through `presets`;
 - runtime presets are complete profiles rather than overlays;

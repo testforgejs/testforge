@@ -39,7 +39,7 @@ expectAssignable<PropsInvocationOptions>({
 /** Both factory creation forms expose the same typed invocation API. */
 
 const positionalFactory = testComponentFactory(PropsComponent);
-const objectFactory = testComponentFactory.withOptions({ component: PropsComponent });
+const objectFactory = testComponentFactory.withOptions(() => ({ component: PropsComponent }));
 
 expectType<ComponentFactory<typeof PropsComponent>>(positionalFactory);
 expectType<ComponentFactory<typeof PropsComponent>>(objectFactory);
@@ -94,9 +94,18 @@ expectError(positionalFactory.withOptions({ extraOption: {} }));
 /** Strict component props (both direct props and mountOptions.props). */
 
 expectError(positionalFactory.withOptions({ props: { title: 123 } }));
-expectError(positionalFactory.withOptions({ props: { unknownProp: true } }));
+// Unknown props are rejected even when valid props are present.
+expectError(
+  positionalFactory.withOptions({
+    props: { title: "Hello", unknownProp: true },
+  }),
+);
 expectError(positionalFactory.withOptions({ mountOptions: { props: { count: "two" } } }));
-expectError(positionalFactory.withOptions({ mountOptions: { props: { unknownProp: true } } }));
+expectError(
+  positionalFactory.withOptions({
+    mountOptions: { props: { count: 2, unknownProp: true } },
+  }),
+);
 
 /** Type-safe VTU and TestForge configuration. */
 
@@ -117,6 +126,13 @@ positionalFactory.withOptions({
 expectError(
   positionalFactory.withOptions({
     mountOptions: { plugins: { pinia: 123 } },
+  }),
+);
+
+// Invalid managed-plugin overrides are also rejected in extraOptions.
+expectError(
+  positionalFactory.withOptions({
+    extraOptions: { plugins: { pinia: 123 } },
   }),
 );
 
@@ -155,7 +171,12 @@ slotFactory.withOptions({
   },
 });
 
-expectError(slotFactory.withOptions({ slots: { sidebar: () => "Unknown" } }));
+// Unknown slots are rejected even when declared slots are present.
+expectError(
+  slotFactory.withOptions({
+    slots: { header: () => "Header", sidebar: () => "Unknown" },
+  }),
+);
 expectError(slotFactory.withOptions({ mountOptions: { slots: { sidebar: () => "Unknown" } } }));
 expectError(
   slotFactory.withOptions({
@@ -193,6 +214,8 @@ expectError(
     mountOptions: { data: () => ({ counter: "forty-two" }) },
   }),
 );
+
+// Data containing only unknown state properties is rejected.
 expectError(
   dataFactory.withOptions({
     mountOptions: { data: () => ({ unknownState: true }) },

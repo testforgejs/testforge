@@ -35,20 +35,21 @@ The plugin provides a project-independent default configuration through `getDefa
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { vuetifyPlugin } from "@testforgejs/vue-test-plugin-vuetify";
+import {
+  vuetifyPlugin,
+  PLUGIN_NAME as VUETIFY_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-vuetify";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: vuetifyPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        vuetify: vuetifyPlugin.getDefaultOptions(),
+  preset: {
+    manifest: [
+      {
+        module: vuetifyPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [VUETIFY_PLUGIN_NAME]: vuetifyPlugin.getDefaultOptions(),
     },
   },
 });
@@ -73,32 +74,36 @@ import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { vuetifyPlugin } from "@testforgejs/vue-test-plugin-vuetify";
+import {
+  vuetifyPlugin,
+  PLUGIN_NAME as VUETIFY_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-vuetify";
+import type { PluginOptions as VuetifyPluginOptions } from "@testforgejs/vue-test-plugin-vuetify";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: vuetifyPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        vuetify: () => ({
-          components,
-          directives,
-          defaults: {
-            VBtn: {
-              variant: "text",
-            },
-          },
-        }),
+  preset: {
+    manifest: [
+      {
+        module: vuetifyPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [VUETIFY_PLUGIN_NAME]: () => ({
+        components,
+        directives,
+        defaults: {
+          VBtn: {
+            variant: "text",
+          },
+        },
+      }) satisfies VuetifyPluginOptions,
     },
   },
 });
 ```
+
+The standardized `PluginOptions` type provides type-safe configuration through `satisfies` while preserving TypeScript's inferred type for the returned options.
 
 Using `getDefaultOptions()` is optional. Define custom defaults when tests require project-specific component defaults, themes, icons, locales, or other Vuetify configuration.
 

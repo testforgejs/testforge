@@ -35,20 +35,18 @@ The plugin provides a project-independent default configuration through `getDefa
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: i18nPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        i18n: i18nPlugin.getDefaultOptions(),
+  preset: {
+    manifest: [
+      {
+        module: i18nPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [I18N_PLUGIN_NAME]: i18nPlugin.getDefaultOptions(),
     },
   },
 });
@@ -77,34 +75,35 @@ You can define the Vue I18n configuration directly in the preset instead:
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { i18nPlugin } from "@testforgejs/vue-test-plugin-i18n";
+import { i18nPlugin, PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+import type { PluginOptions as I18nPluginOptions } from "@testforgejs/vue-test-plugin-i18n";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: i18nPlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        i18n: () => ({
-          legacy: false,
-          globalInjection: true,
-          locale: "en",
-          fallbackLocale: "en",
-          messages: {
-            en: {
-              hello: "Hello",
-            },
-          },
-        }),
+  preset: {
+    manifest: [
+      {
+        module: i18nPlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [I18N_PLUGIN_NAME]: () => ({
+        legacy: false,
+        globalInjection: true,
+        locale: "en",
+        fallbackLocale: "en",
+        messages: {
+          en: {
+            hello: "Hello",
+          },
+        },
+      }) satisfies I18nPluginOptions,
     },
   },
 });
 ```
+
+The standardized `PluginOptions` type provides type-safe configuration through `satisfies` while preserving TypeScript's inferred type for the returned options.
 
 Using `getDefaultOptions()` is optional. Define custom defaults when tests require application-specific locales, messages, fallback behavior, formatting, warning policy, or other Vue I18n configuration.
 

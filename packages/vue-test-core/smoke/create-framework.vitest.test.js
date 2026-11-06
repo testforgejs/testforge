@@ -47,9 +47,9 @@ describe("createTestFramework smoke", () => {
     });
 
     it("should use default props", () => {
-      const factory = testComponentFactory(Component, {
+      const factory = testComponentFactory(Component, () => ({
         msg: "Default prop",
-      });
+      }));
 
       const wrapper = factory();
 
@@ -57,9 +57,9 @@ describe("createTestFramework smoke", () => {
     });
 
     it("should prioritize direct props over default props", () => {
-      const factory = testComponentFactory(Component, {
+      const factory = testComponentFactory(Component, () => ({
         msg: "Default prop",
-      });
+      }));
 
       const wrapper = factory({
         msg: "Direct prop",
@@ -94,15 +94,10 @@ describe("createTestFramework smoke", () => {
     });
 
     it("should use default slots", () => {
-      const factory = testComponentFactory(
-        Component,
-        {},
-        {},
-        {
-          default: "Main content",
-          header: "<h1>Header</h1>",
-        },
-      );
+      const factory = testComponentFactory(Component, undefined, undefined, () => ({
+        default: "Main content",
+        header: "<h1>Header</h1>",
+      }));
 
       const wrapper = factory();
 
@@ -111,15 +106,10 @@ describe("createTestFramework smoke", () => {
     });
 
     it("should prioritize direct slots over default slots", () => {
-      const factory = testComponentFactory(
-        Component,
-        {},
-        {},
-        {
-          default: "Default content",
-          header: "<h1>Default Header</h1>",
-        },
-      );
+      const factory = testComponentFactory(Component, undefined, undefined, () => ({
+        default: "Default content",
+        header: "<h1>Default Header</h1>",
+      }));
 
       const wrapper = factory(
         {},

@@ -135,11 +135,10 @@ describe("Plugin Integration", () => {
   });
 
   it("should merge base and extra i18n options with extra taking precedence when both are provided", () => {
-    const baseOptions = { plugins: { i18n: { locale: "en" } } };
-    const extraOptions = { plugins: { i18n: { locale: "uk" } } };
-
-    const factory = testComponentFactory(MockComponent, {}, baseOptions);
-    factory({}, {}, {}, extraOptions);
+    const factory = testComponentFactory(MockComponent, undefined, () => ({
+      plugins: { i18n: { locale: "en" } },
+    }));
+    factory.withOptions({ extraOptions: { plugins: { i18n: { locale: "uk" } } } });
 
     expect(mockI18nCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -153,17 +152,13 @@ describe("Plugin Integration", () => {
     it("should reject instance capture in defaultMountOptions even when plugin configuration is overridden", () => {
       const capture = captureInstance();
 
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            pinia: {
-              ...capture,
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            ...capture,
           },
         },
-      );
+      }));
 
       expect(() =>
         factory(
@@ -188,30 +183,23 @@ describe("Plugin Integration", () => {
     });
 
     it("should completely replace plugin configuration before invoking plugin factory", () => {
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            pinia: {
-              stubActions: true,
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            stubActions: true,
           },
         },
-      );
+      }));
 
-      factory(
-        {},
-        {
+      factory.withOptions({
+        mountOptions: {
           plugins: {
             pinia: {
               initialState: { user: { id: 123 } },
             },
           },
         },
-        {},
-        {},
-      );
+      });
 
       expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
       const [calledOptions] = mockPiniaCreate.mock.calls[0];
@@ -221,19 +209,15 @@ describe("Plugin Integration", () => {
     });
 
     it("should disable a plugin through extraOptions", () => {
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            pinia: {
-              stubActions: true,
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            stubActions: true,
           },
         },
-      );
+      }));
 
-      factory({}, {}, {}, { plugins: { pinia: false } });
+      factory.withOptions({ extraOptions: { plugins: { pinia: false } } });
 
       expect(mockPiniaCreate).not.toHaveBeenCalled();
       expect(mockI18nCreate).toHaveBeenCalledTimes(1);
@@ -249,7 +233,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Disable Pinia for the first mount.
-      factory({}, {}, {}, { plugins: { pinia: false } });
+      factory.withOptions({ extraOptions: { plugins: { pinia: false } } });
 
       expect(mockPiniaCreate).not.toHaveBeenCalled();
 
@@ -268,13 +252,92 @@ describe("Plugin Integration", () => {
     });
   });
 
+  describe("Factory Plugin Options Isolation", () => {
+    it("should isolate nested defaultMountOptions.plugins between mounts (positional API)", () => {
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            initialState: {
+              user: {
+                roles: ["user"],
+              },
+            },
+          },
+        },
+      }));
+
+      factory();
+
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      const [firstOptions] = mockPiniaCreate.mock.calls[0];
+
+      // Simulate mutation of the configuration received by the first plugin creator.
+      firstOptions.initialState.user.roles.push("admin");
+
+      factory.withOptions({});
+
+      const [secondOptions] = mockPiniaCreate.mock.calls[1];
+
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(2);
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      expect(firstOptions.initialState.user.roles).toEqual(["user", "admin"]);
+      expect(secondOptions.initialState.user.roles).toEqual(["user"]);
+
+      expect(secondOptions).not.toBe(firstOptions);
+      expect(secondOptions.initialState).not.toBe(firstOptions.initialState);
+      expect(secondOptions.initialState.user).not.toBe(firstOptions.initialState.user);
+      expect(secondOptions.initialState.user.roles).not.toBe(firstOptions.initialState.user.roles);
+    });
+
+    it("should isolate nested defaultMountOptions.plugins between mounts (object API)", () => {
+      const factory = testComponentFactory.withOptions(() => ({
+        component: MockComponent,
+        defaultMountOptions: {
+          plugins: {
+            pinia: {
+              initialState: {
+                user: {
+                  roles: ["user"],
+                },
+              },
+            },
+          },
+        },
+      }));
+
+      factory();
+
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(1);
+      const [firstOptions] = mockPiniaCreate.mock.calls[0];
+
+      // Simulate mutation of the configuration received by the first plugin creator.
+      firstOptions.initialState.user.roles.push("admin");
+
+      factory.withOptions({});
+
+      const [secondOptions] = mockPiniaCreate.mock.calls[1];
+
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(2);
+      expect(mockMount).toHaveBeenCalledTimes(2);
+
+      expect(firstOptions.initialState.user.roles).toEqual(["user", "admin"]);
+      expect(secondOptions.initialState.user.roles).toEqual(["user"]);
+
+      expect(secondOptions).not.toBe(firstOptions);
+      expect(secondOptions.initialState).not.toBe(firstOptions.initialState);
+      expect(secondOptions.initialState.user).not.toBe(firstOptions.initialState.user);
+      expect(secondOptions.initialState.user.roles).not.toBe(firstOptions.initialState.user.roles);
+    });
+  });
+
   describe("Enable router when it is disabled by default", () => {
     it("should enable router via defaultMountOptions", () => {
       // Configure the factory settings so that the router is enabled by default
       const factory = testComponentFactory(
         MockComponent,
-        {}, // defaultProps
-        { plugins: { router: {} } }, // defaultMountOptions
+        undefined, // defaultProps
+        () => ({ plugins: { router: {} } }), // defaultMountOptions
       );
 
       factory();
@@ -298,7 +361,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Enable the router only in this specific call
-      factory({}, { plugins: { router: {} } });
+      factory.withOptions({ mountOptions: { plugins: { router: {} } } });
 
       // 1. Verify that the contract for the creation of the router has been fulfilled
       expect(mockRouterCreate).toHaveBeenCalledWith(
@@ -349,7 +412,7 @@ describe("Plugin Integration", () => {
       const customRoutes = [{ path: "/", component: { render: () => null } }];
 
       // Enable Router through Layer 4.
-      factory({}, {}, {}, { plugins: { router: { routes: customRoutes } } });
+      factory.withOptions({ extraOptions: { plugins: { router: { routes: customRoutes } } } });
 
       // Verify that Router receives both the runtime options
       // and the defaults from the disabled preset entry.
@@ -374,11 +437,9 @@ describe("Plugin Integration", () => {
   });
 
   it("should merge i18n settings with provided options taking precedence over defaults", () => {
-    const baseOptions = {
+    const factory = testComponentFactory(MockComponent, undefined, () => ({
       plugins: { i18n: { locale: "en", legacy: true } },
-    };
-
-    const factory = testComponentFactory(MockComponent, {}, baseOptions);
+    }));
     factory();
 
     expect(mockI18nCreate).toHaveBeenCalledWith(
@@ -397,7 +458,9 @@ describe("Plugin Integration", () => {
 
   it("should not create i18n plugin when its option is explicitly set to false", () => {
     // Configuring the factory with explicit i18n disabling
-    const factory = testComponentFactory(MockComponent, {}, { plugins: { i18n: false } });
+    const factory = testComponentFactory(MockComponent, undefined, () => ({
+      plugins: { i18n: false },
+    }));
 
     factory();
 
@@ -494,10 +557,10 @@ describe("Plugin Integration", () => {
     });
 
     it("should replace factory plugin options through mountOptions.plugins", () => {
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component: MockComponent,
         defaultMountOptions: { plugins: { pinia: { stubActions: true } } },
-      });
+      }));
 
       factory.withOptions({
         mountOptions: { plugins: { pinia: { initialState: { user: { id: 123 } } } } },
@@ -566,10 +629,10 @@ describe("Plugin Integration", () => {
     });
 
     it("should temporarily override the factory preset and restore it across invocation forms", () => {
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component: MockComponent,
         presetKey: "i18nPreset",
-      });
+      }));
 
       // Inherit the factory-level preset.
       factory.withOptions({});
@@ -594,7 +657,9 @@ describe("Plugin Integration", () => {
     });
 
     it("should use the same object-based mount API from a positional factory", () => {
-      const factory = testComponentFactory(MockComponent, {}, {}, {}, { presetKey: "i18nPreset" });
+      const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+        presetKey: "i18nPreset",
+      });
 
       factory.withOptions({ extraOptions: { presetKey: "default" } });
       factory.withOptions({});
@@ -606,11 +671,11 @@ describe("Plugin Integration", () => {
     });
 
     it("should ignore unsupported factory defaults under a mount-level preset override", () => {
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component: MockComponent,
         presetKey: "default",
         defaultMountOptions: { plugins: { pinia: { stubActions: true } } },
-      });
+      }));
 
       factory.withOptions({ extraOptions: { presetKey: "i18nPreset" } });
 
@@ -625,10 +690,10 @@ describe("Plugin Integration", () => {
     });
 
     it("should reject mountOptions plugins unsupported by the effective preset", () => {
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component: MockComponent,
         presetKey: "default",
-      });
+      }));
 
       expect(() => {
         factory.withOptions({
@@ -689,7 +754,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // First mount: i18n-only preset.
-      factory({}, {}, {}, { presetKey: "i18nPreset" });
+      factory.withOptions({ extraOptions: { presetKey: "i18nPreset" } });
 
       expect(mockI18nCreate).toHaveBeenCalledTimes(1);
       expect(mockPiniaCreate).not.toHaveBeenCalled();
@@ -733,7 +798,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       expect(() => {
-        factory({}, {}, {}, { presetKey: "unknownPreset" });
+        factory.withOptions({ extraOptions: { presetKey: "unknownPreset" } });
       }).toThrow(/unknownPreset/);
 
       expect(mockI18nCreate).not.toHaveBeenCalled();
@@ -747,7 +812,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Switch the preset using the 4th argument
-      factory({}, {}, {}, { presetKey: "lightweightPreset" });
+      factory.withOptions({ extraOptions: { presetKey: "lightweightPreset" } });
 
       // 1. Verify that the plugins from the lightweight preset have been created
       expect(mockI18nCreate).toHaveBeenCalledWith(
@@ -770,7 +835,7 @@ describe("Plugin Integration", () => {
       const factory = testComponentFactory(MockComponent);
 
       // Enable the preset that contains only i18n
-      factory({}, {}, {}, { presetKey: "i18nPreset" });
+      factory.withOptions({ extraOptions: { presetKey: "i18nPreset" } });
 
       // 1. Verifying contracts: i18n is created, pinia is not
       expect(mockI18nCreate).toHaveBeenCalledWith(expect.objectContaining({ locale: "en" }));
@@ -811,7 +876,7 @@ describe("Plugin Integration", () => {
     it("should skip plugin initialization when it is disabled in the preset manifest", () => {
       const factory = testComponentFactory(MockComponent);
 
-      factory({}, {}, {}, { presetKey: "i18nDisabledPreset" });
+      factory.withOptions({ extraOptions: { presetKey: "i18nDisabledPreset" } });
 
       expect(mockI18nCreate).toHaveBeenCalledTimes(0);
 
@@ -856,6 +921,48 @@ describe("Plugin Integration", () => {
       const [, options] = mockMount.mock.calls[0];
 
       expect(options.global?.plugins ?? []).toHaveLength(0);
+    });
+
+    it("should restore the factory preset after a mount-level override without a registered default", async () => {
+      const { presets } = await import("./utils/presets/mockPresets.js");
+
+      const { testComponentFactory: createFactory } = createTestFramework({
+        presets: {
+          admin: presets.default,
+          i18nOnly: presets.i18nPreset,
+        },
+      });
+
+      const factory = createFactory.withOptions(() => ({
+        component: MockComponent,
+        presetKey: "admin",
+      }));
+
+      // No "default" is registered. The factory's admin preset is active.
+      factory();
+      const [, firstOptions] = mockMount.mock.calls[0];
+      expect(firstOptions.global.plugins).toEqual(
+        expect.arrayContaining([mockI18nInstance, mockPiniaInstance]),
+      );
+      expect(firstOptions.global.plugins).toHaveLength(2);
+
+      // A mount-level selection temporarily replaces the factory preset.
+      factory.withOptions({ extraOptions: { presetKey: "i18nOnly" } });
+      const [, secondOptions] = mockMount.mock.calls[1];
+      expect(secondOptions.global.plugins).toEqual([mockI18nInstance]);
+
+      // The factory's selected preset is restored on the next mount.
+      factory();
+      const [, thirdOptions] = mockMount.mock.calls[2];
+      expect(thirdOptions.global.plugins).toEqual(
+        expect.arrayContaining([mockI18nInstance, mockPiniaInstance]),
+      );
+      expect(thirdOptions.global.plugins).toHaveLength(2);
+
+      expect(mockI18nCreate).toHaveBeenCalledTimes(3);
+      expect(mockPiniaCreate).toHaveBeenCalledTimes(2);
+      expect(mockRouterCreate).not.toHaveBeenCalled();
+      expect(mockMount).toHaveBeenCalledTimes(3);
     });
 
     describe("Plugin Options Validation Errors", () => {
@@ -974,10 +1081,10 @@ describe("Plugin Integration", () => {
 
     describe("Factory-level Preset Selection", () => {
       it("should use the preset selected via withOptions", () => {
-        const factory = testComponentFactory.withOptions({
+        const factory = testComponentFactory.withOptions(() => ({
           component: MockComponent,
           presetKey: "i18nPreset",
-        });
+        }));
 
         factory();
 
@@ -997,10 +1104,10 @@ describe("Plugin Integration", () => {
       });
 
       it("should override the factory preset via extraOptions.presetKey", () => {
-        const factory = testComponentFactory.withOptions({
+        const factory = testComponentFactory.withOptions(() => ({
           component: MockComponent,
           presetKey: "i18nPreset",
-        });
+        }));
 
         // Override the factory-level preset for this mount.
         factory({}, {}, {}, { presetKey: "default" });
@@ -1020,10 +1127,10 @@ describe("Plugin Integration", () => {
       });
 
       it("should restore the factory preset after a mount-level override", () => {
-        const factory = testComponentFactory.withOptions({
+        const factory = testComponentFactory.withOptions(() => ({
           component: MockComponent,
           presetKey: "i18nPreset",
-        });
+        }));
 
         // First mount: use the factory-level preset.
         factory();
@@ -1069,12 +1176,12 @@ describe("Plugin Integration", () => {
       });
 
       it("should reject an unknown factory preset before mounting", () => {
-        expect(() => {
-          testComponentFactory.withOptions({
-            component: MockComponent,
-            presetKey: "unknownPreset",
-          });
-        }).toThrow('Preset "unknownPreset" is not registered.');
+        const factory = testComponentFactory.withOptions(() => ({
+          component: MockComponent,
+          presetKey: "unknownPreset",
+        }));
+
+        expect(() => factory()).toThrow('Preset "unknownPreset" is not registered.');
 
         expect(mockI18nCreate).not.toHaveBeenCalled();
         expect(mockPiniaCreate).not.toHaveBeenCalled();
@@ -1082,13 +1189,9 @@ describe("Plugin Integration", () => {
       });
 
       it("should restore the positional factory preset after a mount-level override", () => {
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {},
-          {},
-          { presetKey: "i18nPreset" },
-        );
+        const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+          presetKey: "i18nPreset",
+        });
 
         // First mount: use the factory-level preset.
         factory();
@@ -1137,15 +1240,15 @@ describe("Plugin Integration", () => {
       it("should ignore unsupported default plugins during a mount-level preset override", () => {
         const factory = testComponentFactory(
           MockComponent,
-          {},
-          {
+          undefined,
+          () => ({
             plugins: {
               pinia: {
                 stubActions: true,
               },
             },
-          },
-          {},
+          }),
+          undefined,
           { presetKey: "default" },
         );
 
@@ -1199,35 +1302,60 @@ describe("Plugin Integration", () => {
       });
 
       it("should reject unsupported default plugins when selecting a factory-level preset", () => {
-        expect(() => {
-          testComponentFactory(
-            MockComponent,
-            {},
-            {
-              plugins: {
-                pinia: {},
-              },
+        const factory = testComponentFactory(
+          MockComponent,
+          undefined,
+          () => ({
+            plugins: {
+              pinia: {},
             },
-            {},
-            { presetKey: "i18nPreset" },
-          );
-        }).toThrow('Plugin "pinia" is configured but not supported by preset "i18nPreset".');
+          }),
+          undefined,
+          { presetKey: "i18nPreset" },
+        );
 
+        expect(() => factory()).toThrow(
+          'Plugin "pinia" is configured but not supported by preset "i18nPreset".',
+        );
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
+      it("should reject unsupported factory-default plugins without an explicit presetKey (positional API)", async () => {
+        const { presets } = await import("./utils/presets/mockPresets.js");
+
+        // The implicit default preset supports i18n but not Pinia.
+        const { testComponentFactory: createFactory } = createTestFramework({
+          presets: { default: presets.i18nPreset },
+        });
+
+        const factory = createFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {},
+          },
+        }));
+
+        expect(() => factory()).toThrow(/Plugin "pinia" is configured but not supported/);
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
         expect(mockMount).not.toHaveBeenCalled();
       });
 
       it("should accept supported default plugins in the factory preset", () => {
         const factory = testComponentFactory(
           MockComponent,
-          {},
-          {
+          undefined,
+          () => ({
             plugins: {
               i18n: {
                 locale: "fr",
               },
             },
-          },
-          {},
+          }),
+          undefined,
           { presetKey: "i18nPreset" },
         );
 
@@ -1243,13 +1371,9 @@ describe("Plugin Integration", () => {
       });
 
       it("should reject unsupported mountOptions plugins inherited from the factory preset", () => {
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {},
-          {},
-          { presetKey: "i18nPreset" },
-        );
+        const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+          presetKey: "i18nPreset",
+        });
 
         // Pinia is not supported by the factory-level preset.
         expect(() => {
@@ -1271,13 +1395,9 @@ describe("Plugin Integration", () => {
       });
 
       it("should reject unsupported extraOptions plugins inherited from the factory preset", () => {
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {},
-          {},
-          { presetKey: "i18nPreset" },
-        );
+        const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+          presetKey: "i18nPreset",
+        });
 
         expect(() => {
           factory(
@@ -1300,13 +1420,9 @@ describe("Plugin Integration", () => {
       });
 
       it("should allow mountOptions plugins supported by the mount-level preset override", () => {
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {},
-          {},
-          { presetKey: "i18nPreset" },
-        );
+        const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+          presetKey: "i18nPreset",
+        });
 
         // Temporarily switch to the default preset, which supports Pinia.
         expect(() => {
@@ -1346,17 +1462,19 @@ describe("Plugin Integration", () => {
       });
 
       it("should reject unsupported default plugins with the object-based factory API", () => {
-        expect(() => {
-          testComponentFactory.withOptions({
-            component: MockComponent,
-            presetKey: "i18nPreset",
-            defaultMountOptions: {
-              plugins: {
-                pinia: {},
-              },
+        const factory = testComponentFactory.withOptions(() => ({
+          component: MockComponent,
+          presetKey: "i18nPreset",
+          defaultMountOptions: {
+            plugins: {
+              pinia: {},
             },
-          });
-        }).toThrow('Plugin "pinia" is configured but not supported by preset "i18nPreset".');
+          },
+        }));
+
+        expect(() => factory()).toThrow(
+          'Plugin "pinia" is configured but not supported by preset "i18nPreset".',
+        );
 
         expect(mockI18nCreate).not.toHaveBeenCalled();
         expect(mockPiniaCreate).not.toHaveBeenCalled();
@@ -1364,8 +1482,34 @@ describe("Plugin Integration", () => {
         expect(mockMount).not.toHaveBeenCalled();
       });
 
+      it("should reject unsupported factory-default plugins without an explicit presetKey (object API)", async () => {
+        const { presets } = await import("./utils/presets/mockPresets.js");
+
+        // The implicit default preset supports i18n but not Pinia.
+        const { testComponentFactory: createFactory } = createTestFramework({
+          presets: { default: presets.i18nPreset },
+        });
+
+        const factory = createFactory.withOptions(() => ({
+          component: MockComponent,
+          defaultMountOptions: {
+            plugins: {
+              pinia: {},
+            },
+          },
+        }));
+
+        expect(() => factory()).toThrow(/Plugin "pinia" is configured but not supported/);
+
+        expect(mockI18nCreate).not.toHaveBeenCalled();
+        expect(mockPiniaCreate).not.toHaveBeenCalled();
+        expect(mockMount).not.toHaveBeenCalled();
+      });
+
       it("should reject mountOptions plugins unsupported by the mount-level preset override", () => {
-        const factory = testComponentFactory(MockComponent, {}, {}, {}, { presetKey: "default" });
+        const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+          presetKey: "default",
+        });
 
         // Pinia is supported by the factory preset,
         // but not by the mount-level preset.
@@ -1390,22 +1534,21 @@ describe("Plugin Integration", () => {
       });
 
       it("should reject extraOptions plugins unsupported by the mount-level preset override", () => {
-        const factory = testComponentFactory(MockComponent, {}, {}, {}, { presetKey: "default" });
+        const factory = testComponentFactory(MockComponent, undefined, undefined, undefined, {
+          presetKey: "default",
+        });
 
         // Pinia is supported by the factory preset,
         // but not by the mount-level preset.
         expect(() => {
-          factory(
-            {},
-            {},
-            {},
-            {
+          factory.withOptions({
+            extraOptions: {
               presetKey: "i18nPreset",
               plugins: {
                 pinia: {},
               },
             },
-          );
+          });
         }).toThrow('Plugin "pinia" is configured but not supported by the active preset.');
 
         expect(mockI18nCreate).not.toHaveBeenCalled();

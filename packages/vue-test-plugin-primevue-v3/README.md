@@ -35,20 +35,21 @@ The plugin provides a project-independent default configuration through `getDefa
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue-v3";
+import {
+  primeVuePlugin,
+  PLUGIN_NAME as PRIMEVUE_V3_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-primevue-v3";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: primeVuePlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        primevueV3: primeVuePlugin.getDefaultOptions(),
+  preset: {
+    manifest: [
+      {
+        module: primeVuePlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [PRIMEVUE_V3_PLUGIN_NAME]: primeVuePlugin.getDefaultOptions(),
     },
   },
 });
@@ -77,27 +78,31 @@ You can define the PrimeVue configuration directly in the preset instead:
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue-v3";
+import {
+  primeVuePlugin,
+  PLUGIN_NAME as PRIMEVUE_V3_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-primevue-v3";
+import type { PluginOptions as PrimeVueV3PluginOptions } from "@testforgejs/vue-test-plugin-primevue-v3";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: primeVuePlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        primevueV3: () => ({
-          ripple: true,
-          inputStyle: "filled",
-        }),
+  preset: {
+    manifest: [
+      {
+        module: primeVuePlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [PRIMEVUE_V3_PLUGIN_NAME]: () => ({
+        ripple: true,
+        inputStyle: "filled",
+      }) satisfies PrimeVueV3PluginOptions,
     },
   },
 });
 ```
+
+The standardized `PluginOptions` type provides type-safe configuration through `satisfies` while preserving TypeScript's inferred type for the returned options.
 
 Using `getDefaultOptions()` is optional. Define custom defaults when tests require application-specific PrimeVue configuration such as ripple effects, input styling, locale settings, pass-through configuration, unstyled mode, or other PrimeVue behavior.
 

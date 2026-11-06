@@ -36,7 +36,7 @@ A preset defines two critical fields:
 
 The `defaults` field contains **plugin options factories** rather than shared plugin configuration objects.
 
-TestForge invokes these factories while resolving a preset so that each pipeline context receives its own plugin configuration.
+TestForge invokes these factories while resolving the preset for each mount. When a factory constructs its mutable values inside the call, each pipeline context receives independently created plugin configuration. A factory that returns previously created objects does not provide that isolation automatically.
 
 > [!NOTE]
 > Examples in this document focus on TestForge architecture rather than installation.
@@ -172,9 +172,9 @@ defaults: {
 }
 ```
 
-TestForge invokes the factory when resolving the preset configuration for a pipeline context.
+TestForge invokes the factory when resolving the preset configuration for a mount's pipeline context.
 
-Each invocation therefore receives a fresh plugin options object.
+When the factory creates its objects inside the function, each invocation receives fresh plugin options. **The function boundary alone does not clone values captured from an outer scope.**
 
 This is important for plugins whose configuration may contain mutable or stateful nested values, such as:
 
@@ -232,7 +232,9 @@ const second = defaultRouter();
 first.history !== second.history; // true
 ```
 
-This prevents mutable plugin configuration and runtime state from being unintentionally shared between independent pipeline contexts.
+Creating mutable values inside their defaults factories helps prevent accidental sharing between independent pipeline contexts. The same principle applies to nested objects: returning a new outer object that still references shared mutable state does not make that state independent.
+
+Preset defaults factories provide configuration; managed plugins are initialized for the individual mount. Neither mechanism automatically resets user-supplied, pre-created services or instances.
 
 Plugin-specific option types can be applied directly to the returned configuration:
 
@@ -774,16 +776,16 @@ See [Framework Configuration: Single Preset vs Preset Registry](#framework-confi
 When multiple profiles are registered, choose the one that matches the component's normal dependencies when creating its factory. For example, assuming `admin` is a registered preset:
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: AdminPanel,
   presetKey: "admin",
-});
+}));
 
 factory(); // Uses the "admin" runtime profile.
-factory(); // Uses "admin" again.
+factory(); // Resolves "admin" again for this mount.
 ```
 
-This selection becomes the **factory's default runtime profile**. Tests do not need to repeat the preset key, and the factory consistently uses the same managed-plugin capabilities and preset defaults unless a mount explicitly selects another profile.
+The object-based factory API accepts a **resolver function**, not a configuration object. The resolver runs once per mount. When it returns the same `presetKey` each time, that key serves as the **factory's usual runtime profile**. Tests do not need to repeat the selection; the mount can still override it explicitly.
 
 If the framework uses a single `preset`, or the registered `default` profile already suits the component, an explicit factory-level `presetKey` is unnecessary.
 
@@ -801,9 +803,20 @@ factory(); // Uses the factory's "admin" profile again.
 
 Switching profiles affects **only the current mount**. It neither modifies the factory's preset selection nor merges the selected profile with the previous one. For changes within the same runtime profile, use `mountOptions.plugins` or `extraOptions.plugins` instead.
 
-**Preset selection priority (highest to lowest):** mount-level `extraOptions.presetKey` → factory-level `presetKey` → registered `default` profile. An explicitly selected unknown key is rejected at factory creation or at mount time, respectively. If no preset is selected and no `default` profile exists, there is no active preset.
+**Preset selection priority (highest to lowest):** mount-level `extraOptions.presetKey` → factory-level `presetKey` → implicit `default` profile. An explicitly selected unknown key is rejected. Static positional factory configuration can be validated during factory creation; a key returned by an object-based resolver is validated when mounting. If neither level selects a key and no `default` profile exists, there is no active preset.
 
 For both supported factory creation syntaxes and the exact placement of `presetKey`, see [Configuration & Advanced Usage](./configuration.md#factory-preset-selection).
+
+### Internal Preset Selection Resolvers
+
+Preset lookup is a separate concern from constructing fresh factory defaults. TestForge centralizes the selection rules in internal helpers:
+
+- `resolvePresets()` prepares the framework's preset registry from `preset` or `presets`.
+- `resolvePresetKey()` applies **mount → factory → default** precedence and distinguishes an explicit request from the implicit `default` fallback.
+- `resolveMountExtraOptions()` carries a selected factory key into the current mount's `extraOptions` without mutating the caller's options; it does not add `presetKey: "default"` when the fallback is only implicit.
+- `resolveActivePreset()` looks up and validates the selected preset for the mount. An explicit missing preset is an error; an absent implicit `default` may result in no active preset.
+
+These helpers preserve selection semantics across positional and object-based APIs. They do **not** clone user configuration or replace the per-mount factory options resolvers described below.
 
 ### Runtime Capability Boundary
 
@@ -822,8 +835,8 @@ factory.withOptions({
 
 There is an important distinction between configuration stored on the factory and configuration supplied for the current mount:
 
-- When a factory explicitly selects a preset, its `defaultMountOptions.plugins` keys are validated against that preset at **factory creation**.
-- When a mount switches to another preset, unsupported **factory-default** plugin configurations are ignored for that mount; the factory retains them for subsequent mounts using its original profile.
+- When a factory selects a preset, its resolved `defaultMountOptions.plugins` keys are validated against that preset **during mounting**, after the factory's defaults resolver has run. Positional factory arguments such as the static `config` are separately validated at factory creation.
+- When a mount switches to another preset, unsupported **factory-default** plugin configurations are ignored for that mount; a later mount can resolve the original factory defaults again.
 - Plugins explicitly configured through `mountOptions.plugins` or `extraOptions.plugins` must belong to the **effective mount preset**. Unsupported keys are rejected, even if their values are `false`.
 
 These boundaries let tests switch environments without silently inheriting capabilities that the selected profile does not declare.
@@ -843,10 +856,84 @@ None of these operations implicitly merges different runtime profiles. For the c
 
 ---
 
+<a id="per-mount-factory-resolvers"></a>
+
+## Per-Mount Factory Resolvers and Test Isolation
+
+A component factory describes how to build a mount, rather than storing a single mutable set of resolved defaults for all its tests. **Both factory creation APIs resolve defaults again for each mount**:
+
+- **Positional creation:** `testComponentFactory(Component, defaultProps?, defaultMountOptions?, defaultSlots?, config?)` accepts resolver functions for the three optional defaults. Each supplied resolver is called once per mount. The component and `config` are static creation arguments.
+- **Object-based creation:** `testComponentFactory.withOptions(resolver)` accepts a synchronous function returning a factory configuration object, including `component`, optional defaults, and optional `presetKey`. This resolver is called once per mount, not when the factory is created.
+
+For example, the following factories both construct a new mock service for every mount:
+
+```typescript
+// Positional factory creation: only the supplied defaults resolver is deferred.
+const positionalFactory = testComponentFactory(
+  MyComponent,
+  undefined,
+  () => ({
+    global: { mocks: { $service: { calls: [] } } },
+  }),
+  undefined,
+  { presetKey: "admin" },
+);
+
+// Object-based factory creation: the complete configuration is deferred.
+const objectFactory = testComponentFactory.withOptions(() => ({
+  component: MyComponent,
+  presetKey: "admin",
+  defaultMountOptions: {
+    global: { mocks: { $service: { calls: [] } } },
+  },
+}));
+
+positionalFactory(); // First fresh service.
+positionalFactory(); // A different service.
+objectFactory.withOptions({}); // First fresh service.
+objectFactory.withOptions({}); // A different service.
+```
+
+> [!IMPORTANT]
+> **Two meanings of `withOptions`**
+>
+> - `testComponentFactory.withOptions(() => ({ ... }))` **creates** a factory from a resolver function.
+> - `factory.withOptions({ props, mountOptions, slots, extraOptions })` **mounts** using an options object. It is equivalent to the factory's positional mount call.
+>
+> Supplying a plain object to the first form, or a resolver function to the second form, mixes up these distinct APIs.
+
+### Resolver Timing and Validation
+
+Factory creation does not execute the deferred resolver functions. Positional creation validates its static component, configuration and resolver argument types; the values produced by the resolver functions are validated at mount time. Likewise, the configuration returned by an object-based factory resolver is validated during mounting.
+
+The resolver executes even when a mount specifies `skipDefaultProps`, `skipDefaultSlots`, or `skipDefaultOptions`: these flags affect which resolved defaults are **applied**, not whether their functions run. Resolve state synchronously; the factory creation resolvers do not return promises.
+
+### Isolation Requires Fresh Mutable Values
+
+A fresh options object is helpful only if its mutable dependencies are fresh too. In particular, TestForge does **not** deep-clone or reset externally supplied instances, Router histories, services, state containers, or nested objects.
+
+```typescript
+const sharedService = { calls: [] };
+
+// The resolver is called for every mount, but $service is still shared.
+const sharedFactory = testComponentFactory.withOptions(() => ({
+  component: MyComponent,
+  defaultMountOptions: {
+    global: { mocks: { $service: sharedService } },
+  },
+}));
+```
+
+If test independence is required, construct `sharedService`'s equivalent inside the resolver, as shown in the previous examples. The same rule applies to stateful objects captured by preset defaults factories, including Router histories and mutable plugin configuration. Deliberate sharing is allowed, but should not be mistaken for isolation.
+
+The distinction is between **resolving new configuration per mount** and **cloning arbitrary objects**. TestForge provides the former; it does not promise the latter. For the full public API and detailed recommendations, see [Factory Options Resolvers](./factory-options-resolvers.md) and [Configuration & Advanced Usage](./configuration.md#factory-options-resolver-timing).
+
+---
+
 ## Presets and the Runtime Configuration Pipeline
 
 Presets define the managed plugins available in a runtime environment and provide their baseline configuration through defaults factories.
-Once a preset has been selected, TestForge resolves the runtime plugin configuration from the factory-level and mount-level options.
+For each mount, TestForge first obtains fresh factory configuration from the applicable resolver, selects the effective preset, and then resolves runtime plugin configuration from the factory-level and mount-level options. The pipeline context is specific to that mount; freshness of user-supplied nested objects still depends on how their factories construct them.
 
 Conceptually:
 
@@ -984,10 +1071,20 @@ Registering presets establishes which profiles are available. Selecting a profil
 > **Prefer selecting the appropriate profile at component-factory creation**, since the managed-plugin environment is typically determined by the component's requirements. Tests using that factory then inherit the selected profile without repeating the selection:
 >
 > ```typescript
-> // Example: Selecting a registered profile via factory options
-> const factory = testComponentFactory({
+> // Positional factory creation: the first argument is the component.
+> const factory = testComponentFactory(
+>   MyComponent,
+>   undefined,
+>   undefined,
+>   undefined,
+>   { presetKey: "router" },
+> );
+>
+> // Equivalent object-based factory creation: supply a resolver function.
+> const objectFactory = testComponentFactory.withOptions(() => ({
+>   component: MyComponent,
 >   presetKey: "router",
-> });
+> }));
 > ```
 
 A mount-level override is intended only for less common cases where an individual test needs a different registered profile for a single invocation. It affects only that specific mount.
@@ -1018,7 +1115,7 @@ This makes invalid configuration detectable during validation rather than silent
 
 Preset defaults should be represented by `PluginOptionsFactory` functions.
 
-Factories provide fresh plugin options for each pipeline context and prevent mutable configuration from being shared between independent runtime environments.
+Factories should create their mutable option values inside the call. This allows each pipeline context to receive fresh configuration rather than shared objects; merely returning a captured mutable reference is not sufficient.
 
 ### 4. Prefer Explicit Ownership for Project Presets
 
@@ -1086,15 +1183,15 @@ Application-specific routes, messages, state, themes, and other domain configura
 
 ### 9. Keep Runtime Environments Isolated
 
-A preset should not cause mutable plugin runtime instances to be shared between independent factory invocations.
-
-Plugin integrations should create independent runtime state for each mount.
+Each mount should resolve its factory configuration independently, and managed plugin integrations should initialize independent runtime state for that mount.
 
 This is particularly important for stateful integrations such as:
 
 - Pinia;
 - Vue Router history;
 - Vue I18n runtime state.
+
+Use factory options resolvers and preset defaults factories to create fresh mutable dependencies. TestForge does not automatically clone references returned by those factories or passed through mount options. If a resolver closes over a pre-created mutable instance, multiple mounts may intentionally or accidentally share it. Isolation is therefore a responsibility shared by the TestForge runtime, plugin implementations, and the project's configuration factories.
 
 ### 10. Keep Runner-Specific Behavior in Runner-Specific TestForge Presets
 
@@ -1140,7 +1237,7 @@ The key principles are:
 - `manifest` defines the managed plugin capability boundary and default activation state.
 - `defaults` contains `PluginOptionsFactory` functions rather than shared plugin option objects.
 - Preset `defaults` keys use standardized plugin identifiers exported through `PLUGIN_NAME`.
-- Each plugin options factory invocation produces fresh configuration.
+- Plugin options factories **should construct** fresh configuration and stateful dependencies for each invocation; they do not automatically clone captured references.
 - TestForge-maintained base presets may consume runner-independent plugin baselines through `getDefaultOptions()`.
 - TestForge-maintained runner-specific presets may consume runner-aware plugin baselines through `getDefaultOptions(vi)` or `getDefaultOptions(jest)`.
 - Project-owned presets normally materialize concrete plugin configuration directly in project source.
@@ -1155,11 +1252,13 @@ The key principles are:
 - `createTestFramework({ preset })` configures a framework with one default runtime environment.
 - `createTestFramework({ presets })` configures a framework with a registry of named runtime environments.
 - `preset` and `presets` are mutually exclusive framework configuration forms.
-- A component factory normally selects its default runtime profile through factory-level `presetKey`.
-- Mount-level `extraOptions.presetKey` temporarily overrides that selection for one invocation; it does not merge profiles or change the factory.
+- Positional and object-based factory creation both support **per-mount defaults resolution**; `testComponentFactory.withOptions()` takes a resolver function, while `factory.withOptions()` takes a mount options object.
+- Factory-level `presetKey` normally selects the component's usual runtime profile; an object-based factory resolver can determine that key afresh for each mount.
+- Internal preset selection helpers centralize mount → factory → implicit default precedence without mutating the caller's mount options.
+- Mount-level `extraOptions.presetKey` temporarily overrides the factory selection for one invocation; it does not merge profiles or change the factory.
 - `mountOptions.plugins` replaces managed plugin configuration at a more local scope.
 - `extraOptions.plugins` provides a targeted shallow overlay.
-- Mutable plugin runtime state must remain isolated between component factory invocations.
+- Each mount gets a separate configuration resolution and plugin initialization; user-owned mutable objects are only independent when the configuration factories create them independently.
 
 The resulting architecture separates reusable TestForge infrastructure from project-owned configuration:
 

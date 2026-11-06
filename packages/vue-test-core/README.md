@@ -9,9 +9,9 @@ The core package provides:
 - reusable, type-safe component test factories with positional and object-based creation and mounting APIs;
 - plugin registration and lifecycle management;
 - preset-based runtime configuration with factory-level and per-mount selection;
-- a hierarchical configuration resolution pipeline:
-
-**Preset → Factory → Test → Extra Options**.
+- hierarchical configuration resolution with explicit precedence
+  and merge rules across preset defaults, factory defaults,
+  and per-mount configuration.
 
 The core package itself does **not** include or configure Vue ecosystem plugins. Plugin integrations are provided by separate TestForge packages and become available to the framework through presets.
 
@@ -106,12 +106,10 @@ const { testComponentFactory } = createTestFramework({
     i18n: i18nPreset,
   },
 });
-
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "i18n",
-});
-
+}));
 factory(); // Uses the i18n preset.
 factory.withOptions({
   extraOptions: { presetKey: "default" },
@@ -121,7 +119,7 @@ factory(); // Uses the i18n preset again.
 
 Preset selection follows this precedence: **mount-level `extraOptions.presetKey` → factory-level `presetKey` → registered `default` preset**. Selecting a different preset replaces the active managed-plugin environment; it does not merge two presets.
 
-An explicitly requested preset must be registered. A factory-level selection is checked when the factory is created, and a mount-level selection is checked for that mount. When the factory selects a preset explicitly, its `defaultMountOptions.plugins` must only configure plugins declared in that preset. When a mount-level override selects a preset that does not support a factory-default plugin, that default plugin configuration is ignored for that mount; plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` must be supported by the active preset.
+An explicitly requested preset must be registered. For object-based factory creation, `presetKey` is returned by the resolver and is validated when those options are resolved for a mount; a positional factory's `config.presetKey` is available at creation time. Mount-level preset selection is validated for the corresponding mount. When the factory selects a preset explicitly, its `defaultMountOptions.plugins` must only configure plugins declared in that preset. When a mount-level override selects a preset that does not support a factory-default plugin, that default plugin configuration is ignored for that mount; plugins explicitly configured in `mountOptions.plugins` or `extraOptions.plugins` must be supported by the active preset.
 
 This distinction allows a project to start with a single custom runtime environment and introduce named runtime profiles later without changing the preset definition itself. See [Configuration & Advanced Usage](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#testcomponentfactory-signature) for the complete API and validation rules.
 
@@ -224,35 +222,45 @@ For Jest projects, use `@testforgejs/vue-test-preset-recommended-jest` instead.
 
 `testComponentFactory` supports both **positional** and **object-based** factory creation. Both forms return the same reusable, type-safe component factory. The object-based form is especially useful when configuring several defaults or selecting a preset.
 
-**Object-based creation:**
+**Factory defaults are provided through resolver functions**, which TestForge calls for each mount. In the object-based creation API, `testComponentFactory.withOptions()` accepts one resolver that returns the complete factory configuration. In the positional creation API, the optional defaults arguments are separate resolver functions; the component and final `config` argument remain ordinary values.
+
+**Object-based creation (one resolver):**
 
 ```typescript
-const factory = testComponentFactory.withOptions({
+const factory = testComponentFactory.withOptions(() => ({
   component: MyComponent,
   presetKey: "i18n",
   defaultProps: { title: "Hello" },
   defaultMountOptions: { shallow: true },
   defaultSlots: { default: () => "Fallback content" },
-});
+}));
 ```
 
-**Equivalent positional creation:**
+**Equivalent positional creation (three optional defaults resolvers):**
 
 ```typescript
 const factory = testComponentFactory(
   MyComponent,
-  { title: "Hello" },
-  { shallow: true },
-  { default: () => "Fallback content" },
+  () => ({ title: "Hello" }),
+  () => ({ shallow: true }),
+  () => ({ default: () => "Fallback content" }),
   { presetKey: "i18n" },
 );
 ```
 
-The selected preset and defaults belong to the returned factory, regardless of how it was created. Either factory can then be invoked through **both** mounting APIs described below.
+The resolver(s) execute **once per mount**, not when the factory is created. Construct mutable default values inside the resolver to avoid sharing them across tests; merely returning a shared object does not provide isolation. The component should remain the same across mounts.
+
+TypeScript infers component-aware props and slots from `component` and checks factory configuration keys, including nested default props, slots, and mount options. You do not need an explicit generic argument or `satisfies` for inline resolver configurations.
+
+The selected preset and factory-default configuration are used by the returned factory, regardless of how it was created. Either factory can then be invoked through **both** mounting APIs described below.
+
+For resolver timing, data isolation, and migration from static defaults, see the [Factory Options Resolvers Guide](https://github.com/testforgejs/testforge/blob/main/docs/factory-options-resolvers.md).
 
 ### Component Mounting APIs
 
 Every factory returned by `testComponentFactory()` or `testComponentFactory.withOptions()` supports both positional mounting through `factory(...)` and object-based mounting through `factory.withOptions({...})`. They apply the same configuration rules and return the same Vue Test Utils wrapper type.
+
+**Unlike factory creation, mount invocation does not use resolver functions:** `factory.withOptions({...})` still accepts a plain options object. The two methods named `withOptions()` serve different purposes.
 
 **Object-based mounting:**
 
@@ -309,7 +317,7 @@ factory.withOptions({
 
 The same nesting applies to `skipDefaultProps`, `skipDefaultSlots`, `skipDefaultOptions`, and per-mount `extraOptions.plugins`. Use `mountOptions.plugins` for managed plugin configuration at the mount-options layer, `extraOptions.plugins` for later overrides, and `mountOptions.global.plugins` for standard Vue plugins installed through Vue Test Utils. Explicit plugin configuration must be supported by the active preset.
 
-Both creation and mounting APIs retain full component-aware TypeScript inference. When extracting object-based configurations into reusable variables, the public `ComponentFactoryCreationOptions<T>` and `ComponentFactoryInvocationOptions<T>` types can be used with `satisfies`:
+Both creation and mounting APIs retain component-aware TypeScript inference. Factory creation uses a resolver with checked configuration keys; mount invocation uses an options object. When extracting mount-time configurations into reusable variables, the public `ComponentFactoryInvocationOptions<T>` type can be used with `satisfies`:
 
 ```typescript
 import type { ComponentFactoryInvocationOptions } from "@testforgejs/vue-test-core";
@@ -328,15 +336,17 @@ The positional APIs remain supported; the object-based forms are alternatives, n
 
 TestForge allows you to define a shared set of component props once and override only the values relevant to each test scenario.
 
-Pass `defaultProps` as the second argument to `testComponentFactory()`:
+Pass a **default props resolver** as the second argument to `testComponentFactory()`:
 
 ```typescript
-const factory = testComponentFactory(UserCard, {
+const factory = testComponentFactory(UserCard, () => ({
   name: "Alice",
   role: "user",
   isActive: true,
-});
+}));
 ```
+
+TestForge evaluates the resolver for each mount. For mutable defaults such as arrays or nested objects, create those values inside the resolver rather than returning a shared reference.
 
 Each factory invocation inherits these defaults unless a specific prop is overridden:
 
@@ -369,7 +379,7 @@ For example, `adminWrapper` receives:
 
 **Each test can focus on the prop that drives its scenario without repeating the component's complete configuration.**
 
-Overrides are resolved independently for each factory invocation, so changing a prop in one test does not change the defaults used by subsequent tests.
+Default props are resolved independently for each factory invocation. When the resolver creates fresh mutable values, changes in one test do not affect those values in subsequent tests. See the [Factory Options Resolvers Guide](https://github.com/testforgejs/testforge/blob/main/docs/factory-options-resolvers.md) for details about shared references and isolation.
 
 For more details about props resolution and configuration precedence, see [Props and Slots Priority](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md#props-slots-priority).
 
@@ -382,16 +392,11 @@ For more details about props resolution and configuration precedence, see [Props
 Any Vue plugin that can be registered through Vue Test Utils `global.plugins` can be used with TestForge in the same way:
 
 ```typescript
-const factory = testComponentFactory(
-  MyComponent,
-  {},
-  {
-    global: {
-      plugins: [customVuePlugin],
-    },
+const factory = testComponentFactory(MyComponent, undefined, () => ({
+  global: {
+    plugins: [customVuePlugin],
   },
-);
-
+}));
 const wrapper = factory();
 ```
 
@@ -442,6 +447,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 
 - [Getting Started Guide](https://github.com/testforgejs/testforge/blob/main/docs/getting-started.md) — Set up TestForge in a project and create reusable component test factories.
 - [Configuration & Advanced Usage](https://github.com/testforgejs/testforge/blob/main/docs/configuration.md) — Learn about configuration layers, merge strategies, execution controls, and plugin lifecycle behavior.
+- [Factory Options Resolvers Guide](https://github.com/testforgejs/testforge/blob/main/docs/factory-options-resolvers.md) — Learn how factory defaults are resolved per mount, how to isolate mutable values, and how to migrate static defaults.
 - [Preset Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/preset-authoring-guide.md) — Create and compose custom presets.
 - [Plugin Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/plugin-authoring-guide.md) — Create custom TestForge plugins.
 

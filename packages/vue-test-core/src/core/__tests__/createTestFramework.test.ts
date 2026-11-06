@@ -5,6 +5,8 @@ import { createPipelineContext } from "../../pipeline/core/createPipelineContext
 import { createPipeline } from "../../pipeline/core/createPipeline.js";
 import { createMountPipeline } from "../../pipeline/mount/createMountPipeline.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
+import { ERROR_PREFIX } from "../../constants/constants.js";
+import type { Component } from "vue";
 
 import type {
   ComponentFactoryConfig,
@@ -51,9 +53,9 @@ describe("createTestFramework → testComponentFactory", () => {
       const { testComponentFactory } = createTestFramework();
       const factory = testComponentFactory(
         {},
-        { a: 1 },
-        { props: { b: 2 }, slots: { s: 1 } },
-        { s: 2 },
+        () => ({ a: 1 }),
+        () => ({ props: { b: 2 }, slots: { s: 1 } }),
+        () => ({ s: 2 }),
       );
 
       factory({ c: 3 }, { props: { d: 4 }, slots: { s: 3 } }, { s: 4 });
@@ -84,16 +86,13 @@ describe("createTestFramework → testComponentFactory", () => {
 
       const factory = testComponentFactory(component);
 
-      factory(
-        {},
-        {},
-        {},
-        {
+      factory.withOptions({
+        extraOptions: {
           skipDefaultProps: true,
           skipDefaultSlots: true,
           skipDefaultOptions: true,
         },
-      );
+      });
 
       expect(mergeComponentData).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -110,8 +109,7 @@ describe("createTestFramework → testComponentFactory", () => {
       const { testComponentFactory } = createTestFramework({ presets });
 
       const factory = testComponentFactory(component);
-
-      factory({}, {}, {}, { presetKey: "abcd" });
+      factory.withOptions({ extraOptions: { presetKey: "abcd" } });
 
       expect(createPipelineContext).toHaveBeenCalledWith({
         defaultMountOptions: {},
@@ -147,9 +145,8 @@ describe("createTestFramework → testComponentFactory", () => {
         shallowByDefault: true,
       });
 
-      const factory = testComponentFactory({}, {}, {}, {});
-
-      factory({}, {}, {});
+      const factory = testComponentFactory({});
+      factory();
 
       expect(mountWithPlugins).toHaveBeenCalledWith(
         {},
@@ -231,63 +228,49 @@ describe("createTestFramework → testComponentFactory", () => {
     });
 
     describe("testComponentFactory validation", () => {
-      it("should throw when component is not an object", () => {
+      it.each([123, [], "foo"])("should reject invalid defaultProps: %p", (value) => {
         const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component, () => value);
 
-        expect(() => {
-          testComponentFactory(null as unknown as CreateTestFrameworkOptions);
-        }).toThrow("testComponentFactory() requires a valid Vue component");
+        expect(() => factory()).toThrow('"defaultProps" must be a plain object');
       });
 
-      it.each([
-        ["defaultProps", 123],
-        ["defaultProps", []],
-        ["defaultProps", "foo"],
-      ])("should throw when %s is invalid", (_name, value) => {
+      it.each([123, [], "foo"])("should reject invalid defaultMountOptions: %p", (value) => {
         const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(
+          component,
+          undefined,
+          () => value as unknown as ComponentFactoryOptions,
+        );
 
         expect(() => {
-          testComponentFactory(component, value);
-        }).toThrow('"defaultProps" must be a plain object');
-      });
-
-      it.each([
-        ["defaultMountOptions", 123],
-        ["defaultMountOptions", []],
-        ["defaultMountOptions", "foo"],
-      ])("should throw when %s is invalid", (_name, value) => {
-        const { testComponentFactory } = createTestFramework();
-
-        expect(() => {
-          testComponentFactory(component, {}, value as unknown as ComponentFactoryOptions);
+          factory();
         }).toThrow('"defaultMountOptions" must be a plain object');
       });
 
-      it.each([
-        ["defaultSlots", 123],
-        ["defaultSlots", []],
-        ["defaultSlots", "foo"],
-      ])("should throw when %s is invalid", (_name, value) => {
+      it.each([123, [], "foo"])("should reject invalid defaultSlots: %p", (value) => {
         const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(component, undefined, undefined, () => value);
 
         expect(() => {
-          testComponentFactory(component, {}, {}, value);
+          factory();
         }).toThrow('"defaultSlots" must be a plain object');
       });
 
       it("should not throw for valid arguments", () => {
         const { testComponentFactory } = createTestFramework();
+        const factory = testComponentFactory(
+          component,
+          undefined,
+          () => ({
+            props: {},
+            slots: {},
+          }),
+          undefined,
+        );
 
         expect(() => {
-          testComponentFactory(
-            component,
-            {},
-            {
-              props: {},
-              slots: {},
-            },
-            {},
-          );
+          factory();
         }).not.toThrow();
       });
 
@@ -295,178 +278,238 @@ describe("createTestFramework → testComponentFactory", () => {
         it("should warn when a plugin option is placed at the root of defaultMountOptions", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          expect(() => {
-            // Intentionally bypass type safety to verify runtime DX warning.
-            // Plugin options must be placed under defaultMountOptions.plugins.
-            // @ts-expect-error testing invalid configuration
-            testComponentFactory(component, {}, { i18n: {} });
-          }).not.toThrow();
+            const factory = testComponentFactory(
+              component,
+              undefined,
+              () =>
+                ({
+                  i18n: {},
+                }) as unknown as ComponentFactoryOptions,
+            );
 
-          expect(warnSpy).toHaveBeenCalledTimes(1);
+            expect(() => factory()).not.toThrow();
 
-          expect(warnSpy.mock.calls[0][0]).toContain(
-            'Detected plugin option "i18n" at the root of "defaultMountOptions"',
-          );
+            expect(warnSpy).toHaveBeenCalledTimes(1);
 
-          expect(warnSpy.mock.calls[0][0]).toContain(
-            'Did you mean to use "defaultMountOptions.plugins.i18n"?',
-          );
+            const warning = warnSpy.mock.calls[0][0];
+
+            expect(warning).toContain(
+              'Detected plugin option "i18n" at the root of "defaultMountOptions"',
+            );
+
+            expect(warning).toContain('Did you mean to use "defaultMountOptions.plugins.i18n"?');
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should not warn when plugin options are placed under defaultMountOptions.plugins", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          testComponentFactory(component, {}, {
-            plugins: {
-              i18n: {},
-            },
-          } as unknown as ComponentFactoryOptions);
+            const factory = testComponentFactory(
+              component,
+              undefined,
+              () =>
+                ({
+                  plugins: {
+                    i18n: {},
+                  },
+                }) as unknown as ComponentFactoryOptions,
+            );
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            factory();
+
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should ignore unknown root options", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-                {
-                  module: {
-                    getName: () => "pinia",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+                  {
+                    module: {
+                      getName: () => "pinia",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          testComponentFactory(component, {}, { foo: {} } as unknown as ComponentFactoryOptions);
+            const factory = testComponentFactory(
+              component,
+              undefined,
+              () =>
+                ({
+                  foo: {},
+                }) as unknown as ComponentFactoryOptions,
+            );
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            factory();
+
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
-        it("should not warn when the plugin is configured both at the root and under plugins", () => {
+        it("should not warn when a plugin is configured at both locations in defaultMountOptions", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          testComponentFactory(component, {}, {
-            i18n: {},
-            plugins: {
-              i18n: {},
-            },
-          } as unknown as ComponentFactoryOptions);
+            const factory = testComponentFactory(
+              component,
+              undefined,
+              () =>
+                ({
+                  i18n: {},
+                  plugins: {
+                    i18n: {},
+                  },
+                }) as unknown as ComponentFactoryOptions,
+            );
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            factory();
+
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should use the default preset for positional factory validation", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-            custom: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "pinia",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+                ],
+                defaults: {},
+              },
+              custom: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "pinia",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          expect(() => {
-            testComponentFactory(component, {}, { i18n: {} } as unknown as ComponentFactoryOptions);
-          }).not.toThrow();
+            const factory = testComponentFactory(
+              component,
+              undefined,
+              () =>
+                ({
+                  i18n: {},
+                }) as unknown as ComponentFactoryOptions,
+            );
 
-          expect(warnSpy).toHaveBeenCalledTimes(1);
+            expect(() => factory()).not.toThrow();
 
-          expect(warnSpy.mock.calls[0][0]).toContain('"defaultMountOptions"');
+            expect(warnSpy).toHaveBeenCalledTimes(1);
+
+            const warning = warnSpy.mock.calls[0][0];
+
+            expect(warning).toContain(
+              'Detected plugin option "i18n" at the root of "defaultMountOptions"',
+            );
+
+            expect(warning).toContain('Did you mean to use "defaultMountOptions.plugins.i18n"?');
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         describe("factory-level preset validation", () => {
@@ -506,13 +549,14 @@ describe("createTestFramework → testComponentFactory", () => {
               const { testComponentFactory } = createTestFramework({ presets });
 
               // Pinia is registered in "admin", but not in "default".
-              testComponentFactory.withOptions({
+              const factory = testComponentFactory.withOptions(() => ({
                 component,
                 presetKey: "admin",
                 defaultMountOptions: {
                   pinia: {},
                 } as unknown as ComponentFactoryOptions,
-              });
+              }));
+              factory();
 
               expect(warnSpy).toHaveBeenCalledTimes(1);
 
@@ -535,13 +579,14 @@ describe("createTestFramework → testComponentFactory", () => {
               const { testComponentFactory } = createTestFramework({ presets });
 
               // I18n is registered only in "default", not in "admin".
-              testComponentFactory.withOptions({
+              const factory = testComponentFactory.withOptions(() => ({
                 component,
                 presetKey: "admin",
                 defaultMountOptions: {
                   i18n: {},
                 } as unknown as ComponentFactoryOptions,
-              });
+              }));
+              factory();
 
               expect(warnSpy).not.toHaveBeenCalled();
             } finally {
@@ -566,7 +611,9 @@ describe("createTestFramework → testComponentFactory", () => {
         const { testComponentFactory } = createTestFramework({ presets });
 
         expect(() => {
-          testComponentFactory(component, {}, {}, {}, { presetKey: "unknown" });
+          testComponentFactory(component, undefined, undefined, undefined, {
+            presetKey: "unknown",
+          });
         }).toThrow('Preset "unknown" is not registered.');
 
         // Validation must happen before creating the mount pipeline.
@@ -583,7 +630,13 @@ describe("createTestFramework → testComponentFactory", () => {
         const { testComponentFactory } = createTestFramework();
 
         expect(() => {
-          testComponentFactory(component, {}, {}, {}, value as ComponentFactoryConfig);
+          testComponentFactory(
+            component,
+            undefined,
+            undefined,
+            undefined,
+            value as ComponentFactoryConfig,
+          );
         }).toThrow('"config" must be a plain object.');
       });
     });
@@ -662,147 +715,163 @@ describe("createTestFramework → testComponentFactory", () => {
         it("should warn when a plugin option is placed at the root of mountOptions", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          expect(() => {
-            // Intentionally bypass type safety to verify runtime DX warning.
-            // Plugin options must be placed under mountOptions.plugins.
-            // @ts-expect-error testing invalid configuration
-            factory({}, { i18n: {} });
-          }).not.toThrow();
+            expect(() => {
+              // Intentionally bypass type safety to verify runtime DX warning.
+              // Plugin options must be placed under mountOptions.plugins.
+              // @ts-expect-error testing invalid configuration
+              factory({}, { i18n: {} });
+            }).not.toThrow();
 
-          expect(warnSpy).toHaveBeenCalledTimes(1);
+            expect(warnSpy).toHaveBeenCalledTimes(1);
 
-          expect(warnSpy.mock.calls[0][0]).toContain(
-            'Detected plugin option "i18n" at the root of "mountOptions"',
-          );
+            const warning = warnSpy.mock.calls[0][0];
 
-          expect(warnSpy.mock.calls[0][0]).toContain(
-            'Did you mean to use "mountOptions.plugins.i18n"?',
-          );
+            expect(warning).toContain(
+              'Detected plugin option "i18n" at the root of "mountOptions"',
+            );
+
+            expect(warning).toContain('Did you mean to use "mountOptions.plugins.i18n"?');
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should not warn when plugin options are placed under mountOptions.plugins", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          factory({}, {
-            plugins: {
-              i18n: {},
-            },
-          } as unknown as ComponentFactoryOptions);
+            factory({}, {
+              plugins: {
+                i18n: {},
+              },
+            } as unknown as ComponentFactoryOptions);
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should ignore unknown root options", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-                {
-                  module: {
-                    getName: () => "pinia",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+                  {
+                    module: {
+                      getName: () => "pinia",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          factory({}, { foo: {} } as unknown as ComponentFactoryOptions);
+            factory({}, { foo: {} } as unknown as ComponentFactoryOptions);
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
-        it("should not warn when the plugin is configured both at the root and under plugins", () => {
+        it("should not warn when a plugin is configured at both locations in mountOptions", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          factory(
-            {},
-            {
-              i18n: {},
-              // @ts-expect-error testing invalid configuration
-              plugins: {
+            factory(
+              {},
+              {
                 i18n: {},
-              } as unknown as ComponentFactoryOptions,
-            },
-          );
+                // @ts-expect-error testing invalid configuration
+                plugins: {
+                  i18n: {},
+                } as unknown as ComponentFactoryOptions,
+              },
+            );
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         describe("factory-level preset validation", () => {
@@ -850,7 +919,9 @@ describe("createTestFramework → testComponentFactory", () => {
             try {
               const { testComponentFactory } = createTestFramework({ presets });
 
-              const factory = testComponentFactory(component, {}, {}, {}, { presetKey: "admin" });
+              const factory = testComponentFactory(component, undefined, undefined, undefined, {
+                presetKey: "admin",
+              });
 
               factory({}, { pinia: { stubActions: true } } as unknown as ComponentFactoryOptions);
 
@@ -874,7 +945,9 @@ describe("createTestFramework → testComponentFactory", () => {
             try {
               const { testComponentFactory } = createTestFramework({ presets });
 
-              const factory = testComponentFactory(component, {}, {}, {}, { presetKey: "admin" });
+              const factory = testComponentFactory(component, undefined, undefined, undefined, {
+                presetKey: "admin",
+              });
 
               factory(
                 {},
@@ -896,111 +969,123 @@ describe("createTestFramework → testComponentFactory", () => {
         it("should warn when a plugin override is placed at the root of extraOptions", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          expect(() => {
-            // Intentionally bypass type safety to verify runtime DX warning.
-            // Plugin overrides must be placed under extraOptions.plugins.
-            // @ts-expect-error testing invalid configuration
-            factory({}, {}, {}, { i18n: {} });
-          }).not.toThrow();
+            expect(() => {
+              // Intentionally bypass type safety to verify runtime DX warning.
+              // Plugin overrides must be placed under extraOptions.plugins.
+              // @ts-expect-error testing invalid configuration
+              factory({}, {}, {}, { i18n: {} });
+            }).not.toThrow();
 
-          expect(warnSpy).toHaveBeenCalledTimes(1);
+            expect(warnSpy).toHaveBeenCalledTimes(1);
 
-          expect(warnSpy.mock.calls[0][0]).toContain(
-            'Detected plugin option "i18n" at the root of "extraOptions"',
-          );
+            const warning = warnSpy.mock.calls[0][0];
 
-          expect(warnSpy.mock.calls[0][0]).toContain(
-            'Did you mean to use "extraOptions.plugins.i18n"?',
-          );
+            expect(warning).toContain(
+              'Detected plugin option "i18n" at the root of "extraOptions"',
+            );
+
+            expect(warning).toContain('Did you mean to use "extraOptions.plugins.i18n"?');
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should not warn when plugin override is placed under extraOptions.plugins", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          factory({}, {}, {}, {
-            plugins: {
-              i18n: {},
-            },
-          } as unknown as ComponentFactoryOptions);
+            factory({}, {}, {}, {
+              plugins: {
+                i18n: {},
+              },
+            } as unknown as ComponentFactoryOptions);
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
 
         it("should ignore unknown root options", () => {
           const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-          const presets = {
-            default: {
-              manifest: [
-                {
-                  module: {
-                    getName: () => "i18n",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+          try {
+            const presets = {
+              default: {
+                manifest: [
+                  {
+                    module: {
+                      getName: () => "i18n",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-                {
-                  module: {
-                    getName: () => "pinia",
-                    getDefinition: () => ({ create: () => {} }),
-                    getDefaultOptions: () => () => ({}),
+                  {
+                    module: {
+                      getName: () => "pinia",
+                      getDefinition: () => ({ create: () => {} }),
+                      getDefaultOptions: () => () => ({}),
+                    },
+                    enabled: true,
                   },
-                  enabled: true,
-                },
-              ],
-              defaults: {},
-            },
-          };
+                ],
+                defaults: {},
+              },
+            };
 
-          const { testComponentFactory } = createTestFramework({ presets });
+            const { testComponentFactory } = createTestFramework({ presets });
 
-          const factory = testComponentFactory(component);
+            const factory = testComponentFactory(component);
 
-          // @ts-expect-error testing arbitrary user input
-          factory({}, {}, {}, { foo: {} });
+            // @ts-expect-error testing arbitrary user input
+            factory({}, {}, {}, { foo: {} });
 
-          expect(warnSpy).not.toHaveBeenCalled();
+            expect(warnSpy).not.toHaveBeenCalled();
+          } finally {
+            warnSpy.mockRestore();
+          }
         });
       });
     });
@@ -1017,11 +1102,13 @@ describe("createTestFramework → testComponentFactory", () => {
         },
       });
 
+      const factory = testComponentFactory.withOptions(() => ({
+        component,
+        presetKey: "unknown",
+      }));
+
       expect(() => {
-        testComponentFactory.withOptions({
-          component,
-          presetKey: "unknown",
-        });
+        factory();
       }).toThrow('Preset "unknown" is not registered.');
 
       expect(createPipelineContext).not.toHaveBeenCalled();
@@ -1031,33 +1118,48 @@ describe("createTestFramework → testComponentFactory", () => {
     it("should validate defaultProps through the existing validator", () => {
       const { testComponentFactory } = createTestFramework();
 
+      const factory = testComponentFactory.withOptions(
+        () =>
+          ({
+            component,
+            defaultProps: 123,
+          }) as never,
+      );
+
       expect(() => {
-        testComponentFactory.withOptions({
-          component,
-          defaultProps: 123,
-        } as never);
+        factory();
       }).toThrow('"defaultProps" must be a plain object.');
     });
 
     it("should validate defaultMountOptions through the existing validator", () => {
       const { testComponentFactory } = createTestFramework();
 
+      const factory = testComponentFactory.withOptions(
+        () =>
+          ({
+            component,
+            defaultMountOptions: [],
+          }) as never,
+      );
+
       expect(() => {
-        testComponentFactory.withOptions({
-          component,
-          defaultMountOptions: [],
-        } as never);
+        factory();
       }).toThrow('"defaultMountOptions" must be a plain object.');
     });
 
     it("should validate defaultSlots through the existing validator", () => {
       const { testComponentFactory } = createTestFramework();
 
+      const factory = testComponentFactory.withOptions(
+        () =>
+          ({
+            component,
+            defaultSlots: 123,
+          }) as never,
+      );
+
       expect(() => {
-        testComponentFactory.withOptions({
-          component,
-          defaultSlots: 123,
-        } as never);
+        factory();
       }).toThrow('"defaultSlots" must be a plain object.');
     });
   });
@@ -1067,11 +1169,6 @@ describe("createTestFramework → testComponentFactory", () => {
       const { testComponentFactory } = createTestFramework();
 
       const component = { name: "TestComponent" };
-
-      const defaultProps = {
-        id: 123,
-        title: "Default title",
-      };
 
       const defaultSlots = {
         default: () => "Default slot",
@@ -1092,12 +1189,15 @@ describe("createTestFramework → testComponentFactory", () => {
         },
       };
 
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component,
-        defaultProps,
+        defaultProps: {
+          id: 123,
+          title: "Default title",
+        },
         defaultMountOptions,
         defaultSlots,
-      });
+      }));
 
       factory();
 
@@ -1112,7 +1212,10 @@ describe("createTestFramework → testComponentFactory", () => {
       // 2. Default props are preserved.
       expect(mergeComponentData).toHaveBeenNthCalledWith(1, {
         defaultMountData: defaultMountOptions.props,
-        defaultData: defaultProps,
+        defaultData: {
+          id: 123,
+          title: "Default title",
+        },
         mountData: undefined,
         directData: {},
         skipDefault: false,
@@ -1146,7 +1249,7 @@ describe("createTestFramework → testComponentFactory", () => {
       const { testComponentFactory } = createTestFramework();
 
       const positionalFactory = testComponentFactory(component);
-      const objectFactory = testComponentFactory.withOptions({ component });
+      const objectFactory = testComponentFactory.withOptions(() => ({ component }));
 
       expect(positionalFactory.withOptions).toBeTypeOf("function");
       expect(objectFactory.withOptions).toBeTypeOf("function");
@@ -1283,10 +1386,10 @@ describe("createTestFramework → testComponentFactory", () => {
 
       const { testComponentFactory } = createTestFramework({ presets });
 
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component,
         presetKey: "admin",
-      });
+      }));
 
       factory.withOptions({});
 
@@ -1307,10 +1410,10 @@ describe("createTestFramework → testComponentFactory", () => {
 
       const { testComponentFactory } = createTestFramework({ presets });
 
-      const factory = testComponentFactory.withOptions({
+      const factory = testComponentFactory.withOptions(() => ({
         component,
         presetKey: "admin",
-      });
+      }));
 
       factory.withOptions({
         extraOptions: {
@@ -1375,6 +1478,143 @@ describe("createTestFramework → testComponentFactory", () => {
 
       expect(createPipelineContext).not.toHaveBeenCalled();
       expect(mountWithPlugins).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Factory Options Resolver", () => {
+    it("should not invoke the resolver during factory creation", () => {
+      const { testComponentFactory } = createTestFramework();
+      const resolveOptions = vi.fn(() => ({
+        component,
+      }));
+
+      testComponentFactory.withOptions(resolveOptions);
+
+      expect(resolveOptions).not.toHaveBeenCalled();
+    });
+
+    it("should invoke the resolver once per mount", () => {
+      const { testComponentFactory } = createTestFramework();
+      const resolveOptions = vi.fn(() => ({
+        component,
+      }));
+      const factory = testComponentFactory.withOptions(resolveOptions);
+
+      factory();
+
+      expect(resolveOptions).toHaveBeenCalledTimes(1);
+
+      factory();
+
+      expect(resolveOptions).toHaveBeenCalledTimes(2);
+    });
+
+    it("should invoke the resolver for both mount invocation forms", () => {
+      const { testComponentFactory } = createTestFramework();
+      const resolveOptions = vi.fn(() => ({
+        component,
+      }));
+      const factory = testComponentFactory.withOptions(resolveOptions);
+
+      factory();
+
+      expect(resolveOptions).toHaveBeenCalledTimes(1);
+
+      factory.withOptions({});
+
+      expect(resolveOptions).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("Positional Default Resolvers", () => {
+    it("should not invoke default resolvers during factory creation", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const resolveProps = vi.fn(() => ({}));
+      const resolveMountOptions = vi.fn(() => ({}));
+      const resolveSlots = vi.fn(() => ({}));
+
+      testComponentFactory(component, resolveProps, resolveMountOptions, resolveSlots);
+
+      expect(resolveProps).not.toHaveBeenCalled();
+      expect(resolveMountOptions).not.toHaveBeenCalled();
+      expect(resolveSlots).not.toHaveBeenCalled();
+    });
+
+    it("should invoke each default resolver once per mount", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const resolveProps = vi.fn(() => ({}));
+      const resolveMountOptions = vi.fn(() => ({}));
+      const resolveSlots = vi.fn(() => ({}));
+
+      const factory = testComponentFactory(
+        component,
+        resolveProps,
+        resolveMountOptions,
+        resolveSlots,
+      );
+
+      factory();
+
+      expect(resolveProps).toHaveBeenCalledTimes(1);
+      expect(resolveMountOptions).toHaveBeenCalledTimes(1);
+      expect(resolveSlots).toHaveBeenCalledTimes(1);
+
+      factory();
+
+      expect(resolveProps).toHaveBeenCalledTimes(2);
+      expect(resolveMountOptions).toHaveBeenCalledTimes(2);
+      expect(resolveSlots).toHaveBeenCalledTimes(2);
+    });
+
+    it("should invoke default resolvers for both mount invocation forms", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const resolveProps = vi.fn(() => ({}));
+      const resolveMountOptions = vi.fn(() => ({}));
+      const resolveSlots = vi.fn(() => ({}));
+
+      const factory = testComponentFactory(
+        component,
+        resolveProps,
+        resolveMountOptions,
+        resolveSlots,
+      );
+
+      factory();
+
+      factory.withOptions({});
+
+      expect(resolveProps).toHaveBeenCalledTimes(2);
+      expect(resolveMountOptions).toHaveBeenCalledTimes(2);
+      expect(resolveSlots).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("Component Validation", () => {
+    it("should reject an invalid component during positional factory creation", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      expect(() => testComponentFactory(null as unknown as Component)).toThrow(
+        `${ERROR_PREFIX} "component" must be a Vue component`,
+      );
+    });
+
+    it("should defer component validation until mounting with the object API", () => {
+      const { testComponentFactory } = createTestFramework();
+
+      const resolveOptions = vi.fn(() => ({
+        component: null as unknown as Component,
+      }));
+
+      const factory = testComponentFactory.withOptions(resolveOptions);
+
+      expect(resolveOptions).not.toHaveBeenCalled();
+
+      expect(() => factory()).toThrow(`${ERROR_PREFIX} "component" must be a Vue component`);
+
+      expect(resolveOptions).toHaveBeenCalledTimes(1);
     });
   });
 });

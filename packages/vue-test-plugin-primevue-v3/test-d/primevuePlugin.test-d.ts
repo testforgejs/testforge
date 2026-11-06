@@ -30,30 +30,22 @@ const framework = createTestFramework({
   },
 });
 
-framework.testComponentFactory(
-  {},
-  {},
-  {
+framework.testComponentFactory({}, undefined, () => ({
+  plugins: {
+    primevueV3: {
+      ripple: true,
+    },
+  },
+}));
+
+expectError(
+  framework.testComponentFactory({}, undefined, () => ({
     plugins: {
-      primevueV3: {
+      primevuuV3: {
         ripple: true,
       },
     },
-  },
-);
-
-expectError(
-  framework.testComponentFactory(
-    {},
-    {},
-    {
-      plugins: {
-        primevuuV3: {
-          ripple: true,
-        },
-      },
-    },
-  ),
+  })),
 );
 
 /*
@@ -81,6 +73,36 @@ factory(
 );
 
 /*
+ * Unknown plugin names must be rejected in mountOptions.plugins,
+ * even when a valid plugin is configured.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        primevueV3: { ripple: true },
+        primevuuV3: { ripple: true },
+      },
+    },
+  ),
+);
+
+/*
+ * Native PrimeVue options must preserve their declared value types.
+ */
+expectError(
+  factory(
+    {},
+    {
+      plugins: {
+        primevueV3: { ripple: "true" },
+      },
+    },
+  ),
+);
+
+/*
  * extraOptions.plugins should accept native PrimeVue options.
  */
 factory(
@@ -96,12 +118,30 @@ factory(
   },
 );
 
+/*
+ * Unknown plugin names must be rejected in extraOptions.plugins,
+ * even when a valid plugin is configured.
+ */
+expectError(
+  factory(
+    {},
+    {},
+    {},
+    {
+      plugins: {
+        primevueV3: { ripple: false },
+        primevuuV3: { ripple: true },
+      },
+    },
+  ),
+);
+
 expectError(
   factory(
     {},
     {
       plugins: {
-        primevue: {
+        primevueV3: {
           ripple: true,
           ...primeVueCapture,
         },
@@ -121,7 +161,7 @@ expectError(
     {},
     {
       plugins: {
-        primevue: {
+        primevueV3: {
           ripple: true,
           ...primeVueCapture,
         },
@@ -143,7 +183,7 @@ expectError(
     {},
     {
       plugins: {
-        primevue: {
+        primevueV3: {
           ripple: true,
           ...sharedPrimeVueOptions,
         },
@@ -159,7 +199,7 @@ expectError(
     {},
     {
       plugins: {
-        primevue: {
+        primevueV3: {
           ripple: true,
           ...sharedPrimeVueOptions,
         },

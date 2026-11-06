@@ -49,7 +49,7 @@ describe("validateFactoryPresetPlugins", () => {
   };
 
   describe("Factory Preset Selection", () => {
-    it("should skip validation when presetKey is omitted", () => {
+    it("should reject unsupported plugins when presetKey is omitted", () => {
       expect(() => {
         validateFactoryPresetPlugins(
           {
@@ -60,7 +60,23 @@ describe("validateFactoryPresetPlugins", () => {
           undefined,
           presets,
         );
-      }).not.toThrow();
+      }).toThrow(
+        `${ERROR_PREFIX} Plugin "unsupportedPlugin" is configured but not supported by preset "default".`,
+      );
+    });
+
+    it("should validate implicit and explicit default presets identically", () => {
+      const defaultMountOptions = {
+        plugins: {
+          unsupportedPlugin: {},
+        },
+      } as unknown as ComponentFactoryOptions;
+
+      for (const presetKey of [undefined, "default"] as const) {
+        expect(() => validateFactoryPresetPlugins(defaultMountOptions, presetKey, presets)).toThrow(
+          `${ERROR_PREFIX} Plugin "unsupportedPlugin" is configured but not supported by preset "default".`,
+        );
+      }
     });
 
     it("should use the selected preset instead of the default preset", () => {

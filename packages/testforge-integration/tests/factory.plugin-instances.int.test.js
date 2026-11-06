@@ -14,17 +14,13 @@ describe("Plugin Instances Integration", () => {
       const { MockComponent, testComponentFactory, captureInstance, mockMount } = ctx;
       const capture = captureInstance();
 
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            pinia: {
-              ...capture,
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            ...capture,
           },
         },
-      );
+      }));
 
       expect(() => factory()).toThrow(
         "Instance capture is not allowed in defaultMountOptions.plugins.pinia.",
@@ -86,17 +82,13 @@ describe("Plugin Instances Integration", () => {
       const { MockComponent, testComponentFactory, captureInstance, mockMount } = ctx;
       const capture = captureInstance();
 
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            pinia: {
-              ...capture,
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            ...capture,
           },
         },
-      );
+      }));
 
       expect(() =>
         factory(
@@ -121,17 +113,13 @@ describe("Plugin Instances Integration", () => {
       const { MockComponent, testComponentFactory, captureInstance, mockMount } = ctx;
       const capture = captureInstance();
 
-      const factory = testComponentFactory(
-        MockComponent,
-        {},
-        {
-          plugins: {
-            pinia: {
-              ...capture,
-            },
+      const factory = testComponentFactory(MockComponent, undefined, () => ({
+        plugins: {
+          pinia: {
+            ...capture,
           },
         },
-      );
+      }));
 
       expect(() =>
         factory(
@@ -472,17 +460,13 @@ describe("Plugin Instances Integration", () => {
 
         const instance = createInstance("default-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(instance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(instance),
             },
           },
-        );
+        }));
 
         factory();
         factory();
@@ -499,17 +483,13 @@ describe("Plugin Instances Integration", () => {
         const defaultInstance = createInstance("default-instance");
         const mountInstance = createInstance("mount-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},
@@ -534,17 +514,13 @@ describe("Plugin Instances Integration", () => {
         const defaultInstance = createInstance("default-instance");
         const extraInstance = createInstance("extra-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},
@@ -572,17 +548,13 @@ describe("Plugin Instances Integration", () => {
         const mountInstance = createInstance("mount-instance");
         const extraInstance = createInstance("extra-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},
@@ -638,17 +610,13 @@ describe("Plugin Instances Integration", () => {
           },
         });
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              testPlugin: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            testPlugin: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},
@@ -679,17 +647,13 @@ describe("Plugin Instances Integration", () => {
 
         const defaultInstance = createInstance("default-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},
@@ -711,17 +675,13 @@ describe("Plugin Instances Integration", () => {
 
         const defaultInstance = createInstance("default-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},
@@ -746,17 +706,13 @@ describe("Plugin Instances Integration", () => {
         const defaultInstance = createInstance("default-instance");
         const overrideInstance = createInstance("override-instance");
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         // First mount uses the default instance.
         factory();
@@ -797,17 +753,13 @@ describe("Plugin Instances Integration", () => {
           install() {},
         };
 
-        const factory = testComponentFactory(
-          MockComponent,
-          {},
-          {
-            plugins: {
-              pinia: {
-                ...withPluginInstance(defaultInstance),
-              },
+        const factory = testComponentFactory(MockComponent, undefined, () => ({
+          plugins: {
+            pinia: {
+              ...withPluginInstance(defaultInstance),
             },
           },
-        );
+        }));
 
         factory(
           {},

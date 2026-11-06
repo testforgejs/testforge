@@ -35,20 +35,21 @@ The plugin provides a project-independent default configuration through `getDefa
 
 ```typescript
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue";
+import {
+  primeVuePlugin,
+  PLUGIN_NAME as PRIMEVUE_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-primevue";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: primeVuePlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        primevue: primeVuePlugin.getDefaultOptions(),
+  preset: {
+    manifest: [
+      {
+        module: primeVuePlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [PRIMEVUE_PLUGIN_NAME]: primeVuePlugin.getDefaultOptions(),
     },
   },
 });
@@ -82,28 +83,33 @@ For example, a project that uses PrimeVue styled mode can provide its theme conf
 import Aura from "@primeuix/themes/aura";
 
 import { createTestFramework } from "@testforgejs/vue-test-core";
-import { primeVuePlugin } from "@testforgejs/vue-test-plugin-primevue";
+import {
+  primeVuePlugin,
+  PLUGIN_NAME as PRIMEVUE_PLUGIN_NAME,
+} from "@testforgejs/vue-test-plugin-primevue";
+import type { PluginOptions as PrimeVuePluginOptions } from "@testforgejs/vue-test-plugin-primevue";
 
 const framework = createTestFramework({
-  presets: {
-    default: {
-      manifest: [
-        {
-          module: primeVuePlugin,
-          enabled: true,
-        },
-      ],
-      defaults: {
-        primevue: () => ({
-          theme: {
-            preset: Aura,
-          },
-        }),
+  preset: {
+    manifest: [
+      {
+        module: primeVuePlugin,
+        enabled: true,
       },
+    ],
+    defaults: {
+      [PRIMEVUE_PLUGIN_NAME]: () => ({
+        unstyled: false,
+        theme: {
+          preset: Aura,
+        },
+      }) satisfies PrimeVuePluginOptions,
     },
   },
 });
 ```
+
+The standardized `PluginOptions` type provides type-safe configuration through `satisfies` while preserving TypeScript's inferred type for the returned options.
 
 Using `getDefaultOptions()` is optional. Define custom defaults when tests need to reproduce application-specific PrimeVue configuration such as a theme preset, pass-through configuration, locale settings, ripple effects, or other PrimeVue behavior.
 
