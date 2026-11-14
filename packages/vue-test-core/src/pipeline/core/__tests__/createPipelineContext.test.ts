@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../presets/getActivePreset.js", () => ({
-  getActivePreset: vi.fn(),
+vi.mock("../../../presets/resolveActivePreset.js", () => ({
+  resolveActivePreset: vi.fn(),
 }));
 
 vi.mock("../../../utils/createSupportedPluginsState.js", () => ({
   createSupportedPluginsState: vi.fn(),
 }));
 
-import { getActivePreset } from "../../../presets/getActivePreset.js";
+import { resolveActivePreset } from "../../../presets/resolveActivePreset.js";
 import { createSupportedPluginsState } from "../../../utils/createSupportedPluginsState.js";
 import { createPipelineContext } from "../createPipelineContext.js";
 
-const mockGetActivePreset = vi.mocked(getActivePreset);
+const mockResolveActivePreset = vi.mocked(resolveActivePreset);
 const mockCreateSupportedPluginsState = vi.mocked(createSupportedPluginsState);
 
 describe("createPipelineContext", () => {
@@ -21,7 +21,7 @@ describe("createPipelineContext", () => {
   });
 
   it("should create base context structure", () => {
-    mockGetActivePreset.mockReturnValue({ manifest: [], defaults: {} });
+    mockResolveActivePreset.mockReturnValue({ manifest: [], defaults: {} });
     mockCreateSupportedPluginsState.mockReturnValue({ pinia: true });
 
     const ctx = createPipelineContext({
@@ -37,8 +37,8 @@ describe("createPipelineContext", () => {
     expect(ctx.preset).toEqual({ manifest: [], defaults: {} });
   });
 
-  it("should call getActivePreset with correct arguments", () => {
-    mockGetActivePreset.mockReturnValue({ manifest: [], defaults: {} });
+  it("should call resolveActivePreset with correct arguments", () => {
+    mockResolveActivePreset.mockReturnValue({ manifest: [], defaults: {} });
     mockCreateSupportedPluginsState.mockReturnValue({});
 
     createPipelineContext({
@@ -46,7 +46,7 @@ describe("createPipelineContext", () => {
       presets: { presetA: { manifest: [], defaults: {} } },
     });
 
-    expect(mockGetActivePreset).toHaveBeenCalledWith(
+    expect(mockResolveActivePreset).toHaveBeenCalledWith(
       { presetA: { manifest: [], defaults: {} } },
       { presetKey: "presetA" },
     );
@@ -60,7 +60,7 @@ describe("createPipelineContext", () => {
       },
     };
 
-    mockGetActivePreset.mockReturnValue(preset);
+    mockResolveActivePreset.mockReturnValue(preset);
     mockCreateSupportedPluginsState.mockReturnValue({ pinia: true });
 
     const ctx = createPipelineContext({
@@ -80,7 +80,7 @@ describe("createPipelineContext", () => {
       },
     };
 
-    mockGetActivePreset.mockReturnValue(preset);
+    mockResolveActivePreset.mockReturnValue(preset);
     mockCreateSupportedPluginsState.mockReturnValue({});
 
     createPipelineContext({
@@ -92,7 +92,7 @@ describe("createPipelineContext", () => {
   });
 
   it("should initialize result with correct structure", () => {
-    mockGetActivePreset.mockReturnValue(undefined);
+    mockResolveActivePreset.mockReturnValue(undefined);
     mockCreateSupportedPluginsState.mockReturnValue({});
 
     const ctx = createPipelineContext({
@@ -108,7 +108,7 @@ describe("createPipelineContext", () => {
   });
 
   it("should work with default parameters", () => {
-    mockGetActivePreset.mockReturnValue(undefined);
+    mockResolveActivePreset.mockReturnValue(undefined);
     mockCreateSupportedPluginsState.mockReturnValue({});
 
     const ctx = createPipelineContext({ presets: {} });

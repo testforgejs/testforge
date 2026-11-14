@@ -15,7 +15,7 @@ import { resolvePresetKey } from "./resolvePresetKey.js";
  * 2. If not specified → try to use preset named "default".
  * 3. If preset exists → it is validated via `validatePreset`.
  */
-export function getActivePreset(
+export function resolveActivePreset(
   presets: TestFrameworkPresets = {},
   extraOptions?: ComponentFactoryExtraOptions,
 ): PresetDefinition | undefined {

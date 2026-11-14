@@ -1,6 +1,6 @@
 import type { ComponentFactoryExtraOptions, PluginName, TestFrameworkPresets } from "../types.js";
 
-import { getActivePreset } from "../presets/getActivePreset.js";
+import { resolveActivePreset } from "../presets/resolveActivePreset.js";
 import { getPresetManifest } from "./getPresetManifest.js";
 
 /*
@@ -15,7 +15,7 @@ export function getSupportedPluginNames(
   presets: TestFrameworkPresets = {},
   extraOptions?: ComponentFactoryExtraOptions,
 ): PluginName[] {
-  const activePreset = getActivePreset(presets, extraOptions);
+  const activePreset = resolveActivePreset(presets, extraOptions);
 
   return getPresetManifest(activePreset).map((entry) => entry.module.getName());
 }

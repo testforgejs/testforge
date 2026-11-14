@@ -1,6 +1,6 @@
 import type { PipelineContext, CreatePipelineContextParams } from "../../types.js";
 
-import { getActivePreset } from "../../presets/getActivePreset.js";
+import { resolveActivePreset } from "../../presets/resolveActivePreset.js";
 import { createSupportedPluginsState } from "../../utils/createSupportedPluginsState.js";
 
 /*
@@ -15,7 +15,7 @@ import { createSupportedPluginsState } from "../../utils/createSupportedPluginsS
 export function createPipelineContext(params: CreatePipelineContextParams): PipelineContext {
   const { defaultMountOptions = {}, mountOptions = {}, extraOptions = {}, presets = {} } = params;
 
-  const activePreset = getActivePreset(presets, extraOptions);
+  const activePreset = resolveActivePreset(presets, extraOptions);
   const supportedPlugins = createSupportedPluginsState(activePreset);
 
   return {
