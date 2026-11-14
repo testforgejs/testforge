@@ -1,29 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent } from "vue";
 
-import type { FactoryOptionsResolver } from "../../types.js";
+import type { ComponentFactoryInvocationOptions, FactoryOptionsResolver } from "../../types.js";
 import type { FrameworkRuntimeContext } from "../types.js";
 
-import { mergeComponentData } from "../../utils/mergeComponentData.js";
-import { createPipelineContext } from "../../pipeline/core/createPipelineContext.js";
-import { createPipeline } from "../../pipeline/core/createPipeline.js";
-import { createMountPipeline } from "../../pipeline/mount/createMountPipeline.js";
+import { executeMountPipeline } from "../../pipeline/mount/executeMountPipeline.js";
 import { validateComponentFactoryArguments } from "../../validators/validateComponentFactoryArguments.js";
 import { validateComponentFactoryCreationOptions } from "../../validators/validateComponentFactoryCreationOptions.js";
 import { mountWithPlugins } from "../mountWithPlugins.js";
+import { resolveFinalMountData } from "../utils/resolveFinalMountData.js";
 import { executeMount } from "../mountExecutor.js";
 
-vi.mock("../../utils/mergeComponentData.js", () => ({
-  mergeComponentData: vi.fn(),
+vi.mock("../../pipeline/mount/executeMountPipeline.js", () => ({
+  executeMountPipeline: vi.fn(),
 }));
-vi.mock("../../pipeline/core/createPipelineContext.js", () => ({
-  createPipelineContext: vi.fn(),
-}));
-vi.mock("../../pipeline/core/createPipeline.js", () => ({
-  createPipeline: vi.fn(),
-}));
-vi.mock("../../pipeline/mount/createMountPipeline.js", () => ({
-  createMountPipeline: vi.fn(),
+vi.mock("../utils/resolveFinalMountData.js", () => ({
+  resolveFinalMountData: vi.fn(),
 }));
 vi.mock("../../validators/validateComponentFactoryArguments.js", () => ({
   validateComponentFactoryArguments: vi.fn(),
@@ -49,45 +41,37 @@ const context: FrameworkRuntimeContext = {
   shallowByDefault: false,
 };
 
-const initialCtx = { stage: "initial" } as unknown as ReturnType<typeof createPipelineContext>;
-const readyCtx = { stage: "ready" } as unknown as ReturnType<typeof createPipelineContext>;
-const middleware = [] as unknown as ReturnType<typeof createMountPipeline>;
+const readyCtx = { stage: "ready" } as unknown as ReturnType<typeof executeMountPipeline>;
+const finalMountData = { props: { title: "Resolved" }, slots: {} };
 const wrapper = { mounted: true };
 
-const mockMerge = vi.mocked(mergeComponentData);
-const mockCreatePipelineContext = vi.mocked(createPipelineContext);
-const mockCreatePipeline = vi.mocked(createPipeline);
-const mockCreateMountPipeline = vi.mocked(createMountPipeline);
+const mockResolveFinalMountData = vi.mocked(resolveFinalMountData);
+const mockExecuteMountPipeline = vi.mocked(executeMountPipeline);
 const mockValidateCreation = vi.mocked(validateComponentFactoryCreationOptions);
 const mockValidateArguments = vi.mocked(validateComponentFactoryArguments);
 const mockMountWithPlugins = vi.mocked(mountWithPlugins);
-const mockRun = vi.fn();
 
 const createResolver = () => vi.fn(() => ({ component: MockComponent }));
 
-const expectNoPipelineOrMount = () => {
-  expect(mockMerge).not.toHaveBeenCalled();
-  expect(mockCreatePipelineContext).not.toHaveBeenCalled();
-  expect(mockCreateMountPipeline).not.toHaveBeenCalled();
-  expect(mockCreatePipeline).not.toHaveBeenCalled();
+const expectNoPreparationOrMount = () => {
+  expect(mockResolveFinalMountData).not.toHaveBeenCalled();
+  expect(mockExecuteMountPipeline).not.toHaveBeenCalled();
   expect(mockMountWithPlugins).not.toHaveBeenCalled();
 };
 
 describe("executeMount", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockMerge.mockReturnValue({} as never);
-    mockCreatePipelineContext.mockReturnValue(initialCtx);
-    mockCreateMountPipeline.mockReturnValue(middleware);
-    mockRun.mockReturnValue(readyCtx);
-    mockCreatePipeline.mockReturnValue({ run: mockRun } as never);
+    mockResolveFinalMountData.mockReturnValue(finalMountData as never);
+    mockExecuteMountPipeline.mockReturnValue(readyCtx);
     mockMountWithPlugins.mockReturnValue(wrapper as never);
   });
 
-  it("resolves a minimal mount and executes the pipeline before mounting", () => {
+  it("resolves configuration and delegates data preparation and pipeline execution before mounting", () => {
     const resolveOptions = createResolver();
+    const invocation = {};
 
-    const result = executeMount(context, resolveOptions, {});
+    const result = executeMount(context, resolveOptions, invocation);
 
     expect(result).toBe(wrapper);
     expect(resolveOptions).toHaveBeenCalledTimes(1);
@@ -96,106 +80,79 @@ describe("executeMount", () => {
       context.presets,
     );
     expect(mockValidateArguments).toHaveBeenCalledWith({}, {}, {}, {}, context.presets);
-    expect(mockMerge).toHaveBeenCalledTimes(2);
-    expect(mockMerge).toHaveBeenNthCalledWith(1, {
-      defaultMountData: undefined,
-      defaultData: {},
-      mountData: undefined,
-      directData: {},
-      skipDefault: false,
-      skipOptions: false,
-    });
-    expect(mockMerge).toHaveBeenNthCalledWith(2, {
-      defaultMountData: undefined,
-      defaultData: {},
-      mountData: undefined,
-      directData: {},
-      skipDefault: false,
-      skipOptions: false,
-    });
-    expect(mockCreatePipelineContext).toHaveBeenCalledWith({
+    expect(mockResolveFinalMountData).toHaveBeenCalledWith(
+      { component: MockComponent },
+      invocation,
+      {},
+    );
+    expect(mockExecuteMountPipeline).toHaveBeenCalledWith({
       defaultMountOptions: {},
       mountOptions: {},
       extraOptions: {},
       presets: context.presets,
     });
-    expect(mockCreateMountPipeline).toHaveBeenCalledWith(initialCtx);
-    expect(mockCreatePipeline).toHaveBeenCalledWith(middleware);
-    expect(mockRun).toHaveBeenCalledWith(initialCtx);
-    expect(mockMountWithPlugins).toHaveBeenCalledWith(
-      MockComponent,
-      readyCtx,
-      { props: {}, slots: {} },
-      { shallowByDefault: false },
+    expect(mockMountWithPlugins).toHaveBeenCalledWith(MockComponent, readyCtx, finalMountData, {
+      shallowByDefault: false,
+    });
+    expect(mockResolveFinalMountData.mock.invocationCallOrder[0]).toBeLessThan(
+      mockExecuteMountPipeline.mock.invocationCallOrder[0],
+    );
+    expect(mockExecuteMountPipeline.mock.invocationCallOrder[0]).toBeLessThan(
+      mockMountWithPlugins.mock.invocationCallOrder[0],
     );
   });
 
-  it("passes all props and slots layers to the merge helper and mounts the merged results", () => {
+  it("passes the resolved factory configuration and invocation unchanged to data preparation", () => {
     const defaultProps = { title: "Factory default" };
-    const defaultMountProps = { count: 1 };
-    const mountProps = { count: 2 };
-    const props = { title: "Per-mount" };
+    const defaultMountOptions = { props: { count: 1 } };
     const defaultSlots = { default: () => "Factory slot" };
-    const defaultMountSlots = { footer: () => "Default mount slot" };
-    const mountSlots = { footer: () => "Mount slot" };
-    const slots = { default: () => "Per-mount slot" };
-    const defaultMountOptions = { props: defaultMountProps, slots: defaultMountSlots };
-    const mountOptions = { props: mountProps, slots: mountSlots };
-    const resolveOptions = vi.fn(() => ({
+    const factoryOptions = {
       component: MockComponent,
       defaultProps,
       defaultMountOptions,
       defaultSlots,
-    })) as unknown as FactoryOptionsResolver<typeof MockComponent>;
-    const finalProps = { title: "Merged", count: 2 };
-    const finalSlots = { default: slots.default, footer: mountSlots.footer };
-    mockMerge.mockReturnValueOnce(finalProps as never).mockReturnValueOnce(finalSlots as never);
+    };
+    const resolveOptions = vi.fn(() => factoryOptions) as unknown as FactoryOptionsResolver<
+      typeof MockComponent
+    >;
+    const invocation = {
+      props: { title: "Per mount" },
+      mountOptions: { props: { count: 2 } },
+      slots: { default: () => "Mount slot" },
+    } as unknown as ComponentFactoryInvocationOptions<typeof MockComponent>;
 
-    executeMount(context, resolveOptions, {
-      props,
-      mountOptions: mountOptions as never,
-      slots: slots as never,
-    });
+    executeMount(context, resolveOptions, invocation);
 
-    expect(mockMerge).toHaveBeenNthCalledWith(1, {
-      defaultMountData: defaultMountProps,
-      defaultData: defaultProps,
-      mountData: mountProps,
-      directData: props,
-      skipDefault: false,
-      skipOptions: false,
-    });
-    expect(mockMerge).toHaveBeenNthCalledWith(2, {
-      defaultMountData: defaultMountSlots,
-      defaultData: defaultSlots,
-      mountData: mountSlots,
-      directData: slots,
-      skipDefault: false,
-      skipOptions: false,
-    });
-    expect(mockCreatePipelineContext).toHaveBeenCalledWith({
+    expect(mockResolveFinalMountData).toHaveBeenCalledWith(factoryOptions, invocation, {});
+    expect(mockResolveFinalMountData.mock.calls[0][0]).toBe(factoryOptions);
+    expect(mockResolveFinalMountData.mock.calls[0][1]).toBe(invocation);
+    expect(mockExecuteMountPipeline).toHaveBeenCalledWith({
       defaultMountOptions,
-      mountOptions,
+      mountOptions: invocation.mountOptions,
       extraOptions: {},
       presets: context.presets,
     });
-    expect(mockMountWithPlugins).toHaveBeenCalledWith(
-      MockComponent,
-      readyCtx,
-      { props: finalProps, slots: finalSlots },
-      { shallowByDefault: false },
-    );
+    expect(mockMountWithPlugins).toHaveBeenCalledWith(MockComponent, readyCtx, finalMountData, {
+      shallowByDefault: false,
+    });
   });
 
-  it("inherits a factory preset key without mutating the caller's extra options", () => {
+  it("inherits the factory preset without mutating mount extra options", () => {
     const extraOptions = { skipDefaultProps: true };
-    const resolveOptions = vi.fn(() => ({ component: MockComponent, presetKey: "admin" }));
-
-    executeMount(context, resolveOptions, { extraOptions });
-
+    const invocation = { extraOptions };
+    const factoryOptions = { component: MockComponent, presetKey: "admin" };
+    const resolveOptions = vi.fn(() => factoryOptions);
     const effectiveExtra = { skipDefaultProps: true, presetKey: "admin" };
+
+    executeMount(context, resolveOptions, invocation);
+
     expect(mockValidateArguments).toHaveBeenCalledWith({}, {}, {}, effectiveExtra, context.presets);
-    expect(mockCreatePipelineContext).toHaveBeenCalledWith({
+    expect(mockResolveFinalMountData).toHaveBeenCalledWith(
+      factoryOptions,
+      invocation,
+      effectiveExtra,
+    );
+    expect(mockExecuteMountPipeline).toHaveBeenCalledWith({
       defaultMountOptions: {},
       mountOptions: {},
       extraOptions: effectiveExtra,
@@ -206,48 +163,45 @@ describe("executeMount", () => {
 
   it("gives mount-level preset selection priority over the factory preset", () => {
     const extraOptions = { presetKey: "default", skipDefaultSlots: true };
-    const resolveOptions = vi.fn(() => ({ component: MockComponent, presetKey: "admin" }));
+    const invocation = { extraOptions };
+    const factoryOptions = { component: MockComponent, presetKey: "admin" };
 
-    executeMount(context, resolveOptions, { extraOptions });
+    executeMount(context, () => factoryOptions, invocation);
 
     expect(mockValidateArguments).toHaveBeenCalledWith({}, {}, {}, extraOptions, context.presets);
-    expect(mockCreatePipelineContext).toHaveBeenCalledWith({
+    expect(mockResolveFinalMountData).toHaveBeenCalledWith(
+      factoryOptions,
+      invocation,
+      extraOptions,
+    );
+    expect(mockExecuteMountPipeline).toHaveBeenCalledWith({
       defaultMountOptions: {},
       mountOptions: {},
       extraOptions,
       presets: context.presets,
     });
-    expect(extraOptions).toEqual({ presetKey: "default", skipDefaultSlots: true });
   });
 
-  it("forwards default-skipping controls independently for props and slots", () => {
-    const resolveOptions = createResolver();
-
-    executeMount(context, resolveOptions, {
+  it("forwards all default-skipping controls to data resolution", () => {
+    const invocation = {
       extraOptions: {
         skipDefaultProps: true,
         skipDefaultSlots: false,
         skipDefaultOptions: true,
       },
-    });
+    };
+    const factoryOptions = { component: MockComponent };
 
-    expect(mockMerge).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        skipDefault: true,
-        skipOptions: true,
-      }),
-    );
-    expect(mockMerge).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        skipDefault: false,
-        skipOptions: true,
-      }),
+    executeMount(context, () => factoryOptions, invocation);
+
+    expect(mockResolveFinalMountData).toHaveBeenCalledWith(
+      factoryOptions,
+      invocation,
+      invocation.extraOptions,
     );
   });
 
-  it("uses the framework's shallow default when mounting", () => {
+  it("uses the framework shallow default when mounting", () => {
     const shallowContext: FrameworkRuntimeContext = {
       presets: context.presets,
       shallowByDefault: true,
@@ -255,12 +209,12 @@ describe("executeMount", () => {
 
     executeMount(shallowContext, createResolver(), {});
 
-    expect(mockMountWithPlugins).toHaveBeenCalledWith(MockComponent, readyCtx, expect.any(Object), {
+    expect(mockMountWithPlugins).toHaveBeenCalledWith(MockComponent, readyCtx, finalMountData, {
       shallowByDefault: true,
     });
   });
 
-  it("resolves fresh factory configuration exactly once for each mount", () => {
+  it("resolves fresh factory configuration exactly once for every mount", () => {
     const firstDefaults = { props: { count: 1 } };
     const secondDefaults = { props: { count: 2 } };
     const resolveOptions = vi
@@ -273,13 +227,15 @@ describe("executeMount", () => {
 
     expect(resolveOptions).toHaveBeenCalledTimes(2);
     expect(mockValidateCreation).toHaveBeenCalledTimes(2);
-    expect(mockCreatePipelineContext).toHaveBeenNthCalledWith(
+    expect(mockResolveFinalMountData).toHaveBeenCalledTimes(2);
+    expect(mockExecuteMountPipeline).toHaveBeenCalledTimes(2);
+    expect(mockExecuteMountPipeline).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         defaultMountOptions: firstDefaults,
       }),
     );
-    expect(mockCreatePipelineContext).toHaveBeenNthCalledWith(
+    expect(mockExecuteMountPipeline).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         defaultMountOptions: secondDefaults,
@@ -306,10 +262,10 @@ describe("executeMount", () => {
     expect(resolveOptions).not.toHaveBeenCalled();
     expect(mockValidateCreation).not.toHaveBeenCalled();
     expect(mockValidateArguments).not.toHaveBeenCalled();
-    expectNoPipelineOrMount();
+    expectNoPreparationOrMount();
   });
 
-  it("stops before mount argument validation if the resolved factory config is invalid", () => {
+  it("stops before validating mount arguments if resolved factory config is invalid", () => {
     const resolveOptions = createResolver();
     const error = new Error("Invalid factory options");
     mockValidateCreation.mockImplementationOnce(() => {
@@ -319,12 +275,11 @@ describe("executeMount", () => {
     expect(() => executeMount(context, resolveOptions, {})).toThrow(error);
 
     expect(resolveOptions).toHaveBeenCalledTimes(1);
-    expect(mockValidateCreation).toHaveBeenCalledTimes(1);
     expect(mockValidateArguments).not.toHaveBeenCalled();
-    expectNoPipelineOrMount();
+    expectNoPreparationOrMount();
   });
 
-  it("validates mount arguments after factory resolution and before merging", () => {
+  it("validates mount arguments before preparing data or executing the pipeline", () => {
     const resolveOptions = createResolver();
     const error = new Error("Invalid mount arguments");
     mockValidateArguments.mockImplementationOnce(() => {
@@ -333,13 +288,10 @@ describe("executeMount", () => {
 
     expect(() => executeMount(context, resolveOptions, {})).toThrow(error);
 
-    expect(resolveOptions).toHaveBeenCalledTimes(1);
-    expect(mockValidateCreation).toHaveBeenCalledTimes(1);
-    expect(mockValidateArguments).toHaveBeenCalledTimes(1);
     expect(mockValidateCreation.mock.invocationCallOrder[0]).toBeLessThan(
       mockValidateArguments.mock.invocationCallOrder[0],
     );
-    expectNoPipelineOrMount();
+    expectNoPreparationOrMount();
   });
 
   it("propagates resolver failures without validating or mounting", () => {
@@ -350,22 +302,32 @@ describe("executeMount", () => {
 
     expect(() => executeMount(context, resolveOptions, {})).toThrow(error);
 
-    expect(resolveOptions).toHaveBeenCalledTimes(1);
     expect(mockValidateCreation).not.toHaveBeenCalled();
     expect(mockValidateArguments).not.toHaveBeenCalled();
-    expectNoPipelineOrMount();
+    expectNoPreparationOrMount();
   });
 
-  it("does not mount if executing the pipeline fails", () => {
-    const error = new Error("Pipeline failed");
-    mockRun.mockImplementationOnce(() => {
+  it("does not execute the pipeline if final mount data resolution fails", () => {
+    const error = new Error("Data resolution failed");
+    mockResolveFinalMountData.mockImplementationOnce(() => {
       throw error;
     });
 
     expect(() => executeMount(context, createResolver(), {})).toThrow(error);
 
-    expect(mockCreatePipeline).toHaveBeenCalledTimes(1);
-    expect(mockRun).toHaveBeenCalledWith(initialCtx);
+    expect(mockExecuteMountPipeline).not.toHaveBeenCalled();
+    expect(mockMountWithPlugins).not.toHaveBeenCalled();
+  });
+
+  it("does not mount if executing the pipeline fails", () => {
+    const error = new Error("Pipeline failed");
+    mockExecuteMountPipeline.mockImplementationOnce(() => {
+      throw error;
+    });
+
+    expect(() => executeMount(context, createResolver(), {})).toThrow(error);
+
+    expect(mockExecuteMountPipeline).toHaveBeenCalledTimes(1);
     expect(mockMountWithPlugins).not.toHaveBeenCalled();
   });
 });

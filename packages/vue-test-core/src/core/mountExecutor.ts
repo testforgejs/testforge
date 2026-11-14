@@ -8,11 +8,9 @@ import type {
 } from "../types.js";
 import type { FrameworkRuntimeContext } from "./types.js";
 
-import { mergeComponentData } from "../utils/mergeComponentData.js";
-import { createPipelineContext } from "../pipeline/core/createPipelineContext.js";
-import { createPipeline } from "../pipeline/core/createPipeline.js";
-import { createMountPipeline } from "../pipeline/mount/createMountPipeline.js";
+import { executeMountPipeline } from "../pipeline/mount/executeMountPipeline.js";
 import { mountWithPlugins } from "./mountWithPlugins.js";
+import { resolveFinalMountData } from "./utils/resolveFinalMountData.js";
 import { resolveMountExtraOptions } from "./utils/resolveMountExtraOptions.js";
 import { validateComponentFactoryArguments } from "../validators/validateComponentFactoryArguments.js";
 import { validateComponentFactoryCreationOptions } from "../validators/validateComponentFactoryCreationOptions.js";
@@ -41,13 +39,7 @@ export function executeMount<T extends Component>(
   const factoryOptions = resolveOptions();
   validateComponentFactoryCreationOptions(factoryOptions, presets);
 
-  const {
-    component,
-    defaultProps = {},
-    defaultMountOptions = {},
-    defaultSlots = {},
-    presetKey: factoryPresetKey,
-  } = factoryOptions;
+  const { component, defaultMountOptions = {}, presetKey: factoryPresetKey } = factoryOptions;
 
   // Mount-level preset selection overrides the factory-level selection.
   const resolvedExtraOptions = resolveMountExtraOptions(extraOptions, factoryPresetKey);
@@ -55,51 +47,18 @@ export function executeMount<T extends Component>(
   // Validate against the effective preset without changing mount inputs.
   validateComponentFactoryArguments(props, mountOptions, slots, resolvedExtraOptions, presets);
 
-  const {
-    skipDefaultProps = false,
-    skipDefaultSlots = false,
-    skipDefaultOptions = false,
-  } = resolvedExtraOptions;
+  const finalMountData = resolveFinalMountData(factoryOptions, invocation, resolvedExtraOptions);
 
-  const finalProps = mergeComponentData({
-    defaultMountData: defaultMountOptions.props,
-    defaultData: defaultProps,
-    mountData: mountOptions.props,
-    directData: props,
-    skipDefault: skipDefaultProps,
-    skipOptions: skipDefaultOptions,
-  });
-
-  const finalSlots = mergeComponentData({
-    defaultMountData: defaultMountOptions.slots,
-    defaultData: defaultSlots,
-    mountData: mountOptions.slots,
-    directData: slots,
-    skipDefault: skipDefaultSlots,
-    skipOptions: skipDefaultOptions,
-  });
-
-  const ctx = createPipelineContext({
+  const readyCtx = executeMountPipeline({
     defaultMountOptions,
     mountOptions,
     extraOptions: resolvedExtraOptions,
     presets,
   });
 
-  const pipeline = createPipeline(createMountPipeline(ctx));
-  const readyCtx = pipeline.run(ctx);
-
   const mountRuntimeOptions: MountRuntimeOptions = {
     shallowByDefault,
   };
 
-  return mountWithPlugins(
-    component,
-    readyCtx,
-    {
-      props: finalProps,
-      slots: finalSlots,
-    },
-    mountRuntimeOptions,
-  );
+  return mountWithPlugins(component, readyCtx, finalMountData, mountRuntimeOptions);
 }
