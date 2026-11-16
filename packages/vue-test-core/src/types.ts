@@ -18,12 +18,15 @@ export type PluginName = string;
 /** Value accepted by Vue Test Utils through `global.plugins`. */
 export type MountPlugin = Plugin | [Plugin, ...unknown[]];
 
-/** Creates an instance from plugin-specific options. */
-export type PluginFactory<TInstance = unknown, TOptions = unknown> = (
-  options: TOptions,
-) => TInstance;
-
-/** Produces plugin options when defaults are requested. */
+/**
+ * Factory that produces plugin options when invoked.
+ *
+ * Used to provide preset-level default configuration for a plugin.
+ * Should return fresh mutable configuration data to avoid shared
+ * state between independent plugin initializations.
+ *
+ * @typeParam TOptions - The type of plugin options produced by the factory.
+ */
 export type PluginOptionsFactory<TOptions> = () => TOptions;
 
 /**
