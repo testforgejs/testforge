@@ -3,17 +3,24 @@ import { isPlainObject } from "../../guards/isPlainObject.js";
 
 import type { PresetDefinition, PluginName, PluginManifestEntry } from "../../types.js";
 
-/*
- * Validates preset integrity and plugin configuration consistency.
+/**
+ * Validates a preset definition and narrows its type on success.
  *
- * Validation rules:
- * - preset must be a plain object
- * - manifest must be an array
- * - manifest must contain unique plugin entries
- * - every plugin entry must define a valid module and enabled flag
- * - defaults must be a plain object when provided
- * - preset defaults may only target plugins declared in the manifest
- * - plugin defaults must be option factory functions
+ * Ensures that:
+ * - the preset is a plain object;
+ * - `manifest` is an array with unique plugin names;
+ * - each manifest entry has a plugin module exposing `getName()`
+ *   and `getDefinition()` methods, and a boolean `enabled` flag;
+ * - `defaults` is a plain object;
+ * - each defaults key corresponds to a plugin declared in the manifest;
+ * - each default configuration is provided as an options factory function.
+ *
+ * Default-options factories are not invoked or their returned values validated.
+ *
+ * @param name - The preset name used to identify validation errors.
+ * @param preset - The value to validate as a preset definition.
+ *
+ * @throws {Error} If the preset violates the validation rules.
  */
 export function validatePreset(name: string, preset: unknown): asserts preset is PresetDefinition {
   if (!preset) {
@@ -33,10 +40,20 @@ export function validatePreset(name: string, preset: unknown): asserts preset is
   const manifestPluginNames = new Set<PluginName>();
 
   // Validate manifest structure and uniqueness
-  manifest.forEach((entry: PluginManifestEntry, index: number) => {
-    const { module, enabled } = entry;
+  manifest.forEach((entry: unknown, index: number) => {
+    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(
+        `${ERROR_PREFIX} Invalid manifest entry at manifest[${index}] in preset "${name}".`,
+      );
+    }
 
-    if (!module || typeof module.getName !== "function") {
+    const { module, enabled } = entry as Partial<PluginManifestEntry>;
+
+    if (
+      !module ||
+      typeof module.getName !== "function" ||
+      typeof module.getDefinition !== "function"
+    ) {
       throw new Error(`${ERROR_PREFIX} Invalid module at manifest[${index}] in preset "${name}".`);
     }
 

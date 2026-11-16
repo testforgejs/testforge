@@ -44,6 +44,22 @@ describe("validatePreset", () => {
 
       expect(() => validatePreset("empty-defaults", preset)).not.toThrow();
     });
+
+    it("should allow a module without getDefaultOptions", () => {
+      const minimalModule = {
+        getName: () => "minimal",
+        getDefinition: () => ({
+          create: () => ({}),
+        }),
+      };
+
+      const preset = {
+        manifest: [{ module: minimalModule, enabled: true }],
+        defaults: {},
+      };
+
+      expect(() => validatePreset("minimal-module", preset)).not.toThrow();
+    });
   });
 
   describe("manifest validation", () => {
@@ -60,6 +76,20 @@ describe("validatePreset", () => {
       );
     });
 
+    it.each([
+      ["null", null],
+      ["undefined", undefined],
+    ])("should throw when a manifest entry is %s", (_description, entry) => {
+      const invalid = {
+        manifest: [entry],
+        defaults: {},
+      };
+
+      expect(() => validatePreset("bad-entry", invalid)).toThrow(
+        /Invalid manifest entry at manifest\[0\] in preset "bad-entry"/,
+      );
+    });
+
     it("should throw when a module in manifest is invalid", () => {
       const invalid = {
         manifest: [{ module: {}, enabled: true }], // An empty object instead of a module
@@ -67,6 +97,31 @@ describe("validatePreset", () => {
       };
       expect(() => validatePreset("bad-module", invalid as PresetDefinition)).toThrow(
         /Invalid module at manifest\[0\]/,
+      );
+    });
+
+    it.each([
+      {
+        caseName: "missing",
+        module: {
+          getName: mockPinia.getName,
+        },
+      },
+      {
+        caseName: "not a function",
+        module: {
+          getName: mockPinia.getName,
+          getDefinition: {},
+        },
+      },
+    ])("should throw when module.getDefinition is $caseName", ({ module }) => {
+      const invalid = {
+        manifest: [{ module, enabled: true }],
+        defaults: {},
+      };
+
+      expect(() => validatePreset("bad-definition", invalid)).toThrow(
+        /Invalid module at manifest\[0\] in preset "bad-definition"/,
       );
     });
 
