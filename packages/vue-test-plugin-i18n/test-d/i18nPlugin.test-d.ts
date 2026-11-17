@@ -145,6 +145,11 @@ const wrapper = factory(
 
 expectType<I18n | undefined>(capture.instance);
 
+/*
+ * The captured instance must be read-only.
+ */
+expectError((capture.instance = existingI18n));
+
 expectError(capture.expose);
 
 // Verify factory return type

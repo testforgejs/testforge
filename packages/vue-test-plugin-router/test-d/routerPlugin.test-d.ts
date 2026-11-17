@@ -374,6 +374,11 @@ const typedCapture = captureInstance<Router>();
 
 expectType<Router | undefined>(typedCapture.instance);
 
+/*
+ * The captured instance must be read-only.
+ */
+expectError((typedCapture.instance = existingRouter));
+
 // Reject instance capture with an incompatible plugin instance type.
 type IncompatibleInstance = {
   readonly incompatibleInstance: unique symbol;
