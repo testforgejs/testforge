@@ -7,22 +7,28 @@ import {
 import type { Plugin } from "vue";
 import type { RuntimePluginOptions } from "../../types.js";
 
-/*
- * Creates a Vue Test Utils compatible plugin tuple for install-based Vue plugins.
+/**
+ * Creates a Vue Test Utils-compatible tuple for an install-based Vue plugin.
  *
- * Intended for plugins implemented as:
- *
- * - install objects (`{ install(app) {} }`)
- * - install functions (`(app) => {}`)
+ * Supports Vue plugins implemented as install objects or install functions.
+ * Returns the plugin and its options without invoking the plugin's
+ * installation function.
  *
  * Unlike `createPluginInstance()`, this helper does not create or manage
- * runtime instances and therefore does not support:
+ * runtime instances. Shared-instance reuse and instance capture are
+ * not supported.
  *
- * - shared plugin instances
- * - instance capturing
+ * The original options object is returned unchanged.
  *
- * Stateful plugin factories such as Router, Pinia or vue-i18n should use
- * `createPluginInstance()` instead.
+ * @typeParam TPlugin - The installable Vue plugin type.
+ * @typeParam TOptions - The options passed to the plugin during installation.
+ *
+ * @param plugin - The Vue plugin to install.
+ * @param options - The plugin installation options.
+ *
+ * @returns A `[plugin, options]` tuple compatible with Vue Test Utils.
+ *
+ * @throws {Error} If shared-instance reuse or instance capture is requested.
  */
 export function createVuePlugin<TPlugin extends Plugin, TOptions extends object>(
   plugin: TPlugin,

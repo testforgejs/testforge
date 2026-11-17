@@ -678,3 +678,4 @@ Now that you have a basic TestForge setup, you can explore the more advanced par
 - **[Configuration & Advanced Usage](./configuration.md)** — Learn how TestForge resolves configuration across presets, factories, tests, and extra options.
 - **[Preset Authoring Guide](./preset-authoring-guide.md)** — Create project-specific, organization-wide, or reusable presets.
 - **[Plugin Authoring Guide](./plugin-authoring-guide.md)** — Build custom managed plugins for TestForge.
+- **[Core API Reference](../packages/vue-test-core/docs/api/README.md)** — Explore the generated reference for public Core functions, interfaces, and types.

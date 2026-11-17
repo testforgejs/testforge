@@ -1,21 +1,54 @@
 import { validatePresetExtension } from "./validators/validatePresetExtension.js";
 import type { PluginConfigDefaults, PresetDefinition, PresetExtension } from "../types.js";
 
-/*
- * Extends a base preset with project-specific configuration.
+/**
+ * Creates a new preset by extending an existing preset definition.
  *
- * Extension rules:
- * - existing plugins in the manifest keep their module and receive the
- *   extension's `enabled` value;
- * - new plugins are added to the manifest;
- * - every plugin introduced by the extension must have a corresponding
- *   defaults entry;
- * - plugin defaults replace the base configuration entirely;
- * - plugin defaults are never deep-merged;
- * - `false` is not allowed in preset defaults; use runtime configuration
- *   to disable a plugin.
+ * Combines the base preset with additional manifest entries and
+ * default-options factories without mutating the base preset.
  *
- * The base preset is not mutated.
+ * Existing manifest entries retain their plugin modules and may have
+ * their enabled state updated. New plugins are added to the manifest
+ * and must provide a corresponding default-options factory.
+ *
+ * Default-options factories supplied by the extension replace existing
+ * factories by plugin name. Their returned options are not automatically
+ * merged with the base configuration.
+ *
+ * Preset defaults must be factory functions; values such as `false`
+ * are not allowed. Use the manifest's `enabled` flag or runtime
+ * plugin configuration to control plugin activation.
+ *
+ * Preset extension is a composition operation, not a runtime
+ * configuration overlay.
+ *
+ * @param basePreset - The preset definition to extend.
+ * @param extension - Manifest changes and default-options factories
+ * to apply to the base preset.
+ *
+ * @returns A new preset definition with the combined manifest and
+ * default-options factories.
+ *
+ * @throws {Error} If the base preset or extension is missing, the extension
+ * contains duplicate plugin names, a new plugin lacks required settings,
+ * or plugin defaults are invalid or reference undeclared plugins.
+ *
+ * @example
+ * ```typescript
+ * import { extendPreset } from "@testforgejs/vue-test-core";
+ * import { presets as recommendedPresets } from "@testforgejs/vue-test-preset-recommended";
+ * import { PLUGIN_NAME as I18N_PLUGIN_NAME } from "@testforgejs/vue-test-plugin-i18n";
+ *
+ * const projectPreset = extendPreset(recommendedPresets.default, {
+ *   defaults: {
+ *     [I18N_PLUGIN_NAME]: () => ({
+ *       legacy: false,
+ *       globalInjection: true,
+ *       locale: "uk",
+ *     }),
+ *   },
+ * });
+ * ```
  */
 export function extendPreset(
   basePreset: PresetDefinition,

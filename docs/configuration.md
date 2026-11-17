@@ -16,6 +16,8 @@ It covers:
 
 If you are new to TestForge, start with the [Getting Started Guide](getting-started.md). For a focused explanation of the resolver-based factory creation API, see [Factory Options Resolvers](factory-options-resolvers.md).
 
+For exact signatures and type definitions of the public Core API, see the [Core API Reference](../packages/vue-test-core/docs/api/README.md).
+
 > [!NOTE]
 > This guide covers configuration and advanced usage, not package installation.
 >

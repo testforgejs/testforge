@@ -366,6 +366,10 @@ TestForge documentation is organized into several focused guides.
 - [Plugin Authoring Guide](docs/plugin-authoring-guide.md) — Create custom TestForge plugins
 - [Preset Authoring Guide](docs/preset-authoring-guide.md) — Create project, organization, or shared runtime presets
 
+## API Reference
+
+- [Core API Reference](packages/vue-test-core/docs/api/README.md) — Generated reference for the public functions, interfaces, and types of `@testforgejs/vue-test-core`.
+
 ## Package Documentation
 
 - [@testforgejs/vue-test-core](packages/vue-test-core/README.md)

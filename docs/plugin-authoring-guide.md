@@ -11,6 +11,8 @@ A plugin is responsible for:
 
 A plugin should understand the library it integrates, but it should not make application-specific configuration decisions on behalf of the consuming project.
 
+For public plugin contracts, lifecycle interfaces, and helper function signatures, see the [Core API Reference](../packages/vue-test-core/docs/api/README.md).
+
 ## Architecture & File Structure
 
 New plugins should follow this structure:

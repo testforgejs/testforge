@@ -1,11 +1,14 @@
 import type { CreateTestFrameworkOptions, TestFrameworkPresets } from "../../types.js";
 
-/*
- * Resolves framework preset options into a normalized preset collection.
+/**
+ * Normalizes framework preset options into a named preset collection.
  *
- * A single preset is exposed as the `default` preset.
- * When a preset collection is provided, it is returned unchanged.
- * When no presets are configured, an empty collection is returned.
+ * Wraps a single preset under the `"default"` key, returns an existing
+ * preset collection as-is, or creates an empty collection when no
+ * presets are configured.
+ *
+ * @param options - Framework configuration containing preset options.
+ * @returns The normalized preset collection.
  */
 export function resolvePresets(options: CreateTestFrameworkOptions): TestFrameworkPresets {
   if (options.preset !== undefined) {

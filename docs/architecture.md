@@ -17,6 +17,8 @@ Instead, the testing environment is assembled from **plugins**, **presets**, and
 >
 > This separation allows reusable TestForge integration knowledge to evolve independently while keeping project-owned test configuration visible and editable in the consuming project.
 
+For public Core API signatures and type definitions referenced in this overview, see the [Core API Reference](../packages/vue-test-core/docs/api/README.md).
+
 ---
 
 ## Presets as Runtime Environment Profiles

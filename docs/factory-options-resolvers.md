@@ -505,3 +505,5 @@ Move mutable object creation inside the resolver (or the relevant preset default
 - Do not rely on a resolver to clone or reset external singletons, shared services, or pre-created plugin instances.
 
 For more about how factory defaults interact with per-mount options and managed plugins, see [Configuration & Advanced Usage](configuration.md). For initial setup, see [Getting Started](getting-started.md).
+
+For exact factory signatures and public types, see the [Core API Reference](../packages/vue-test-core/docs/api/README.md).

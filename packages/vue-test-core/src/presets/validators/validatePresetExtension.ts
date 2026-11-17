@@ -3,19 +3,23 @@ import { validatePluginDefaults } from "./validatePluginDefaults.js";
 import type { PresetDefinition, PresetExtension } from "../../types.js";
 
 /**
- * Validates the preset extension before applying it to the base preset.
+ * Validates a preset extension before applying it to a base preset.
  *
- * Checks for compliance with the following architectural rules:
- * - The base preset and the extension must be specified (not null/undefined).
- * - If a new plugin (not present in the base preset) is passed to the extension,
- *   the `enabled` parameter must be specified for it in the manifest.
- * - The new plugin must have corresponding default settings in the `defaults` section of the manifest; otherwise, an error is thrown.
- * - The value `false` in the `defaults` section is strictly prohibited (use `enabled: false` in the manifest to disable the plugin).
- * - The `defaults` section may only contain configuration for plugins declared either in the base preset or in the extension manifest being added.
+ * Ensures that:
+ * - the base preset and extension are provided;
+ * - plugin names in the extension manifest are unique;
+ * - newly introduced plugins specify an initial enabled state;
+ * - newly introduced plugins have corresponding default-options factories;
+ * - preset defaults are factory functions rather than configuration objects
+ *   or disabling values such as `false`;
+ * - defaults reference only plugins declared in the base or extension manifest.
  *
- * @param {PresetDefinition} basePreset - The base preset to be extended.
- * @param {PresetExtension} extension - An object containing modifications and additions to the preset.
- * @throws {Error} Throws an error if any of the validation rules are violated.
+ * Default-options factories are not invoked during validation.
+ *
+ * @param basePreset - The preset being extended.
+ * @param extension - The manifest and default-configuration changes to validate.
+ *
+ * @throws {Error} If the extension violates the validation rules.
  */
 export function validatePresetExtension(
   basePreset: PresetDefinition,

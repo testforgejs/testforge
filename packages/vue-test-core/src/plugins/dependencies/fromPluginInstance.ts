@@ -6,14 +6,21 @@ import type {
 } from "../../types.js";
 
 /**
- * Creates a deferred reference to another managed plugin's runtime instance.
+ * Creates a deferred reference to a managed plugin's runtime instance.
  *
- * The reference is stored in plugin configuration during pipeline processing
- * and resolved later, after plugin dependencies have been ordered and the
- * referenced plugin instance has been created.
+ * The reference can be used in another managed plugin's configuration.
+ * The pipeline resolves it after ordering plugin dependencies and
+ * creating the referenced plugin instance.
  *
- * @param pluginName - Name of the managed plugin whose runtime instance is required.
- * @param resolve - Maps the referenced plugin instance to the configuration value.
+ * The resolver receives the referenced instance and produces the
+ * configuration value that replaces the deferred reference.
+ *
+ * @typeParam TPluginName - The name of the registered managed plugin
+ * whose instance is referenced.
+ * @typeParam TResult - The type of the value produced by the resolver.
+ *
+ * @param pluginName - The name of the managed plugin whose instance is required.
+ * @param resolve - Maps the referenced instance to a configuration value.
  *
  * @returns A deferred plugin instance reference.
  *

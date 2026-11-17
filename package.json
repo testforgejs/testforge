@@ -26,6 +26,7 @@
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
     "plugin:generate": "node scripts/scaffold-plugin.js",
+    "docs:api:core": "pnpm --filter @testforgejs/vue-test-core exec typedoc --options typedoc.json",
     "docs:plugin": "node scripts/docs-plugins.js",
     "docs:all": "typedoc --options typedoc.workspace.json",
     "preinstall": "npx only-allow pnpm",

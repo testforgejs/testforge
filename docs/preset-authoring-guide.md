@@ -76,6 +76,8 @@ Use `preset` when the framework needs one runtime environment. Use `presets` whe
 
 A single `preset` is internally treated as the framework's `default` preset. A `presets` registry makes named profiles available for selection. Since a component normally requires a consistent managed-plugin environment, choose its profile when creating the component factory; reserve mount-level overrides for exceptional test scenarios. In both cases, `presetKey` identifies a registered profile, **not** a preset definition.
 
+For public preset types and helper function signatures, see the [Core API Reference](../packages/vue-test-core/docs/api/README.md).
+
 > [!NOTE]
 > This guide focuses on preset authoring rather than package installation.
 >

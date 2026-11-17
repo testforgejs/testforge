@@ -450,6 +450,7 @@ const projectPreset = extendPreset(recommendedPresets.default, {
 - [Factory Options Resolvers Guide](https://github.com/testforgejs/testforge/blob/main/docs/factory-options-resolvers.md) — Learn how factory defaults are resolved per mount, how to isolate mutable values, and how to migrate static defaults.
 - [Preset Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/preset-authoring-guide.md) — Create and compose custom presets.
 - [Plugin Authoring Guide](https://github.com/testforgejs/testforge/blob/main/docs/plugin-authoring-guide.md) — Create custom TestForge plugins.
+- [API Reference](https://github.com/testforgejs/testforge/blob/main/packages/vue-test-core/docs/api/README.md) — Explore the generated API documentation for public functions, interfaces, and types.
 
 ## Project
 

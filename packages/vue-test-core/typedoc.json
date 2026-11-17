@@ -1,0 +1,30 @@
+{
+  "extends": ["../../typedoc.base.json"],
+  "entryPoints": ["src/index.ts"],
+  "tsconfig": "tsconfig.docs.json",
+  "out": "docs/api",
+  "intentionallyNotExported": [
+    "ComponentData",
+    "ComponentDataInput",
+    "ComponentFactoryConfig",
+    "ComponentPropsInput",
+    "ComponentSlotsInput",
+    "ExposeOption",
+    "InstanceCapture",
+    "MultiplePresetsOptions",
+    "PipelineContext",
+    "PluginConfigDefaults",
+    "PluginInstanceControls",
+    "PluginInstanceInput",
+    "PluginInstanceName",
+    "PluginInstanceOptions",
+    "PluginOptionsWithoutInstance",
+    "PluginOverride",
+    "PluginOverrideWithoutInstance",
+    "PresetKey",
+    "RelaxedSlot",
+    "ResolvablePluginOptions",
+    "SinglePresetOptions",
+    "StrictFactoryCreationOptions"
+  ]
+}

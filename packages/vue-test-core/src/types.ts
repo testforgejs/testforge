@@ -12,10 +12,19 @@ import {
 // 1. Plugin model and registry
 // =============================================================================
 
-/** Plugin identifier, such as "pinia", "router", or "i18n". */
+/**
+ * Identifies a TestForge-managed plugin in manifests and configuration.
+ *
+ * Plugin names must be unique within a preset manifest.
+ */
 export type PluginName = string;
 
-/** Value accepted by Vue Test Utils through `global.plugins`. */
+/**
+ * Plugin value accepted by Vue Test Utils through `global.plugins`.
+ *
+ * Represents either an installable Vue plugin or a tuple containing
+ * the plugin and optional arguments passed to its installation function.
+ */
 export type MountPlugin = Plugin | [Plugin, ...unknown[]];
 
 /**
@@ -30,65 +39,190 @@ export type MountPlugin = Plugin | [Plugin, ...unknown[]];
 export type PluginOptionsFactory<TOptions> = () => TOptions;
 
 /**
- * Test-runner operations available to plugin default-option factories.
- * Mock and spy return types are intentionally runner-agnostic.
- */
-export interface UniversalRunner {
-  fn: <T extends (...args: any[]) => any>(implementation?: T) => any;
-
-  spyOn: <T extends object, M extends keyof T>(
-    object: T,
-    method: M,
-  ) => T[M] extends (...args: any[]) => any ? any : never;
-
-  clearAllMocks: () => any;
-  resetAllMocks: () => any;
-  restoreAllMocks: () => any;
-}
-
-/**
- * Creates an options factory, optionally using the active test runner.
- * The returned factory produces options when invoked; this outer call
- * supplies the runner dependency rather than creating plugin options directly.
+ * Creates a plugin options factory, optionally using test-runner operations.
+ *
+ * The runner dependency is supplied when this function is called.
+ * The returned `PluginOptionsFactory` produces the actual plugin options
+ * when invoked, allowing configuration to be created independently.
+ *
+ * @typeParam TOptions - The type of plugin options produced by
+ * the returned factory.
  */
 export type PluginDefaultOptionsFactory<TOptions> = (
   runner?: UniversalRunner,
 ) => PluginOptionsFactory<TOptions>;
 
-/** Plugin creation contract and optional lifecycle hooks. */
+/**
+ * Test-runner operations available to plugin default-options factories.
+ *
+ * Provides a common interface for mock and spy operations without
+ * depending on Vitest- or Jest-specific types.
+ *
+ * Mock and spy return types are intentionally runner-agnostic.
+ */
+export interface UniversalRunner {
+  /**
+   * Creates a mock function, optionally using the provided implementation.
+   */
+  fn: <T extends (...args: any[]) => any>(implementation?: T) => any;
+
+  /**
+   * Creates a spy on a method of the given object.
+   */
+  spyOn: <T extends object, M extends keyof T>(
+    object: T,
+    method: M,
+  ) => T[M] extends (...args: any[]) => any ? any : never;
+
+  /**
+   * Clears recorded mock calls without resetting mock implementations.
+   */
+  clearAllMocks: () => any;
+
+  /**
+   * Resets mock call history and implementations.
+   */
+  resetAllMocks: () => any;
+
+  /**
+   * Restores original implementations of spied-on methods.
+   */
+  restoreAllMocks: () => any;
+}
+
+/**
+ * Defines the creation lifecycle and runtime capabilities of a managed plugin.
+ *
+ * The framework executes the plugin lifecycle in the following order:
+ * `beforeCreate()` → `create()` → `afterCreate()`.
+ *
+ * Only `create()` is required. The lifecycle hooks allow plugins to
+ * transform resolved options and perform initialization after creation.
+ *
+ * @typeParam TPlugin - The Vue Test Utils-compatible plugin value
+ * returned by the creation function.
+ * @typeParam TOptions - The options accepted by the plugin's creation
+ * function and optional `beforeCreate()` hook.
+ */
 export interface PluginDefinition<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
-  /** Transforms creation options before the plugin is created. */
+  /**
+   * Transforms resolved plugin options before creation.
+   *
+   * Receives the current pipeline context and must return the options
+   * passed to `create()`.
+   */
   beforeCreate?: (ctx: PipelineContext, options: TOptions) => TOptions;
-  /** Creates the plugin value installed through Vue Test Utils. */
+
+  /**
+   * Creates the plugin value to be installed through Vue Test Utils.
+   *
+   * Returns a plugin instance or an installable plugin tuple,
+   * depending on the plugin integration.
+   */
   create: (options: TOptions) => TPlugin;
-  /** Runs after creation with the created plugin and pipeline context. */
+
+  /**
+   * Runs after the plugin value has been created.
+   *
+   * Receives the created plugin value and the current pipeline context.
+   * Can be used to activate or synchronize plugin-specific runtime state.
+   */
   afterCreate?: (plugin: TPlugin, ctx: PipelineContext) => void;
-  /** Declares support for deferred plugin instance references. */
+
+  /**
+   * Declares runtime support for deferred managed plugin instance references.
+   *
+   * Set to `true` only for plugins supporting `fromPluginInstance()`.
+   * Requires corresponding type registration in `PluginInstanceMap`.
+   */
   supportsInstanceReferences?: true;
 }
 
-/** Named plugin module consumed by preset manifests and the registry. */
+/**
+ * Defines a named TestForge-managed plugin module.
+ *
+ * Provides a stable plugin identifier and a definition used by the
+ * framework to create and initialize the plugin.
+ *
+ * Optionally exposes a factory for preset-level default configuration.
+ *
+ * @typeParam TPlugin - The Vue Test Utils-compatible plugin value
+ * produced by the module's creation function.
+ * @typeParam TOptions - The options accepted by the plugin definition.
+ */
 export interface PluginModule<TPlugin extends MountPlugin = MountPlugin, TOptions = unknown> {
+  /**
+   * Returns the stable identifier used to register and configure the plugin.
+   *
+   * The identifier must be unique within a preset manifest.
+   */
   getName(): PluginName;
+
+  /**
+   * Returns the plugin creation contract and optional lifecycle hooks.
+   */
   getDefinition(): PluginDefinition<TPlugin, TOptions>;
-  /** Supplies an options factory, optionally bound to a test runner. */
+
+  /**
+   * Creates a factory for preset-level default plugin options.
+   *
+   * Optionally accepts test-runner operations and returns an options
+   * factory rather than the configuration object itself.
+   */
   getDefaultOptions?: PluginDefaultOptionsFactory<TOptions>;
 }
 
-/** Plugin module that guarantees an available default-options factory. */
+/**
+ * Plugin module that guarantees an available default-options factory.
+ *
+ * Extends `PluginModule` by requiring `getDefaultOptions()`, allowing
+ * consumers to obtain a plugin options factory without checking
+ * whether the method is defined.
+ *
+ * @typeParam TPlugin - The Vue Test Utils-compatible plugin value
+ * produced by the module's creation function.
+ * @typeParam TOptions - The options accepted by the plugin definition
+ * and produced by its default-options factory.
+ */
 export interface PluginModuleWithDefaults<
   TPlugin extends MountPlugin = MountPlugin,
   TOptions = unknown,
 > extends PluginModule<TPlugin, TOptions> {
+  /**
+   * Provides a factory for preset-level default plugin options.
+   *
+   * May receive test-runner operations and returns an options factory
+   * rather than the options object itself.
+   */
   getDefaultOptions: PluginDefaultOptionsFactory<TOptions>;
 }
 
-/** Associates a plugin module with its initial enabled state in a preset. */
+/**
+ * Declares a TestForge-managed plugin in a preset manifest.
+ *
+ * Associates a plugin module with its initial enabled state.
+ * Disabled plugins remain available for explicit activation
+ * through managed plugin configuration.
+ *
+ * @typeParam TPlugin - The plugin value created by the module.
+ * @typeParam TOptions - The options accepted by the module's plugin definition.
+ */
 export interface PluginManifestEntry<
   TPlugin extends MountPlugin = MountPlugin,
   TOptions = unknown,
 > {
+  /**
+   * Plugin module providing its name, creation contract,
+   * and optional default-options factory.
+   */
   module: PluginModule<TPlugin, TOptions>;
+
+  /**
+   * Whether the plugin is enabled by default in this preset.
+   *
+   * A value of `false` does not prevent explicit activation
+   * through managed plugin configuration.
+   */
   enabled: boolean;
 }
 
@@ -110,55 +244,121 @@ export type SupportedPluginsMap = Record<PluginName, SupportedPluginState>;
 // 2. Plugin type registration and managed instances
 // =============================================================================
 
-/** Extend through module augmentation to register public plugin options. */
+/**
+ * Registry of public configuration types for TestForge plugins.
+ *
+ * Extend through module augmentation to associate plugin names with
+ * their configuration types.
+ *
+ * Registered names and options are used by `PluginOptionsInput`
+ * and `PluginOverridesInput` for type-safe plugin configuration.
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginOptionsMap {}
 
 /**
- * Registry of managed instance types (extend through module augmentation).
+ * Registry of managed plugin instance types.
  *
- * Registering a plugin enables typed `captureInstance()`,
- * `withPluginInstance()`, and `fromPluginInstance()` support.
- * Install-based plugins without managed instances are not registered here.
+ * Extend through module augmentation to associate plugin names with
+ * their runtime instance types.
+ *
+ * Registration enables type-safe instance capture and reuse in plugin
+ * configuration, and provides valid plugin names and instance types
+ * for `fromPluginInstance()`.
+ *
+ * Only plugins supporting managed instances should be registered.
+ * Install-based plugins without managed instances must be excluded.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PluginInstanceMap {}
 
-/** String keys registered in the managed-instance type map. */
+/**
+ * Names of plugins registered in `PluginInstanceMap`.
+ *
+ * Restricts managed instance references to registered plugin names,
+ * preserving type-safe instance lookup in `fromPluginInstance()`.
+ */
 export type PluginInstanceName = Extract<keyof PluginInstanceMap, PluginName>;
 
 // Instance capture through a symbol-keyed callback.
 
 /**
- * Optional callback for exposing a managed plugin instance.
+ * Optional symbol-keyed callback for capturing a managed plugin instance.
+ *
+ * Used in managed plugin configuration to receive the instance
+ * created or reused during mounting.
+ *
+ * `captureInstance()` provides this callback without requiring
+ * consumers to access the internal symbol.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
  */
 export interface ExposeOption<TInstance> {
+  /** Receives the newly created or reused plugin instance. */
   [PLUGIN_EXPOSE]?: (instance: TInstance) => void;
 }
 
 /**
- * Handle returned by `captureInstance()`.
+ * Handle returned by `captureInstance()` for accessing a managed plugin instance.
+ *
+ * Can be spread into plugin configuration to register an internal
+ * instance capture callback.
+ *
+ * The `instance` property provides access to the captured instance
+ * and is excluded from object spreads.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance to capture.
  */
 export interface InstanceCapture<TInstance> {
-  /** Captured instance, or undefined before an instance is exposed. */
+  /**
+   * The most recently captured plugin instance.
+   *
+   * Returns `undefined` until an instance has been captured.
+   */
   readonly instance: TInstance | undefined;
 
+  /** @hidden */
   [PLUGIN_EXPOSE](instance: TInstance): void;
 }
 
 // Instance metadata and reuse.
 
-/** Metadata stored in an unresolved plugin configuration. */
+/**
+ * Metadata associated with a managed plugin before pipeline resolution.
+ *
+ * May contain an existing plugin instance to reuse instead of
+ * creating a new one.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
+ */
 export interface PluginMeta<TInstance = unknown> {
+  /** Existing plugin instance to reuse, if provided. */
   instance?: TInstance;
 }
 
-/** Optional symbol-keyed metadata accepted before pipeline resolution. */
+/**
+ * Optional symbol-keyed metadata in unresolved managed plugin configuration.
+ *
+ * The metadata may contain an existing instance to reuse.
+ * Unlike `PluginInstanceInput`, neither the metadata property nor
+ * the instance itself is required.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
+ */
 export interface PluginMetaOptions<TInstance = unknown> {
+  /** Instance metadata processed during plugin configuration resolution. */
   [PLUGIN_META_KEY]?: PluginMeta<TInstance>;
 }
 
-/** Required instance metadata returned by `withPluginInstance()`. */
+/**
+ * Required instance metadata returned by `withPluginInstance()`.
+ *
+ * Stores an existing managed plugin instance under an internal symbol key.
+ * When included in plugin configuration, this metadata allows the
+ * instance to be reused without requiring native creation options.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
+ */
 export interface PluginInstanceInput<TInstance = unknown> {
   [PLUGIN_META_KEY]: {
     instance: TInstance;
@@ -166,23 +366,47 @@ export interface PluginInstanceInput<TInstance = unknown> {
 }
 
 /**
- * Public controls for reusing a pre-created managed plugin instance.
+ * Configuration controls for reusing an existing managed plugin instance.
  *
- * Requires instance metadata, allowing native plugin creation options
- * to be omitted when used in PluginOptionsInput.
+ * Requires shared-instance metadata, allowing native creation options
+ * to be omitted in `PluginOptionsInput`.
  *
- * For partial configuration overrides, wrap this type in Partial
- * so that providing an instance remains optional.
+ * An optional capture callback can also expose the reused instance.
+ *
+ * Used with `Partial` in `PluginOverride` so that instance reuse
+ * remains optional in per-mount overrides.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
  */
 export type PluginInstanceOptions<TInstance> = ExposeOption<TInstance> &
   PluginInstanceInput<TInstance>;
 
-/** Controls passed to managed plugin factories after pipeline resolution. */
+/**
+ * Internal instance controls passed to managed plugin factories
+ * after plugin configuration resolution.
+ *
+ * Supports capturing the resulting instance and reusing an existing
+ * instance instead of creating a new one.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
+ */
 interface PluginInstanceControls<TInstance> extends ExposeOption<TInstance> {
+  /** Existing plugin instance to reuse, if provided. */
   [SHARED_PLUGIN_INSTANCE_KEY]?: TInstance;
 }
 
-/** Runtime creation options; input metadata has already been resolved. */
+/**
+ * Options passed to a managed plugin's creation function.
+ *
+ * Combines native plugin options with internal TestForge controls
+ * for instance capture and reuse.
+ *
+ * Shared-instance metadata has already been resolved into runtime
+ * controls by the plugin pipeline.
+ *
+ * @typeParam TInstance - The type of the managed plugin instance.
+ * @typeParam TOptions - The native options accepted by the plugin factory.
+ */
 export type RuntimePluginOptions<TInstance, TOptions = object> = TOptions &
   PluginInstanceControls<TInstance>;
 
@@ -190,27 +414,56 @@ export type RuntimePluginOptions<TInstance, TOptions = object> = TOptions &
 // 3. Deferred plugin instance references
 // =============================================================================
 
-/** Discriminant used to identify deferred plugin instance references. */
+/** Internal discriminator identifying deferred plugin instance references. */
 export const PLUGIN_INSTANCE_REFERENCE_TYPE = "plugin-instance-reference" as const;
 
+/** String literal type of the deferred instance reference discriminator. */
 export type PluginInstanceReferenceType = typeof PLUGIN_INSTANCE_REFERENCE_TYPE;
 
 /**
- * Deferred value derived from a named managed plugin instance.
- * The resolver receives that instance and produces the referenced value.
+ * Deferred configuration value resolved from a managed plugin instance.
+ *
+ * Identifies the source plugin and provides a resolver that derives
+ * the configuration value after the source instance becomes available.
+ *
+ * Created by `fromPluginInstance()`.
+ *
+ * @typeParam TPluginName - The name of the registered managed plugin
+ * whose instance is referenced.
+ * @typeParam TResult - The type of the resolved configuration value.
  */
 export interface PluginInstanceReference<TPluginName extends PluginInstanceName, TResult> {
+  /** Internal discriminator identifying a deferred instance reference. */
   readonly __type: PluginInstanceReferenceType;
+
+  /** Name of the managed plugin providing the referenced instance. */
   readonly pluginName: TPluginName;
+
+  /** Derives a configuration value from the referenced plugin instance. */
   readonly resolve: (instance: PluginInstanceMap[TPluginName]) => TResult;
 }
 
-/** Union of references to any registered managed plugin instance. */
+/**
+ * Union of deferred references to any registered managed plugin instance.
+ *
+ * Preserves the relationship between each plugin name and its
+ * corresponding instance type in `PluginInstanceMap`.
+ *
+ * @typeParam TResult - The type of the value produced by the resolver.
+ */
 type AnyPluginInstanceReference<TResult> = {
   [K in PluginInstanceName]: PluginInstanceReference<K, TResult>;
 }[PluginInstanceName];
 
-/** Allows direct or deferred values, including nested object properties. */
+/**
+ * Configuration value that may be provided directly or through
+ * a deferred managed plugin instance reference.
+ *
+ * Supports deferred references in nested object properties.
+ * Function values are preserved without recursive transformation.
+ *
+ * @typeParam T - The expected value type after reference resolution.
+ */
 export type ResolvablePluginValue<T> =
   | T
   | AnyPluginInstanceReference<T>
@@ -220,7 +473,18 @@ export type ResolvablePluginValue<T> =
         ? { [K in keyof T]: ResolvablePluginValue<T[K]> }
         : never);
 
-/** Allows deferred references in fields, preserving the outer options shape. */
+/**
+ * Plugin options that support deferred managed plugin instance references.
+ *
+ * Allows individual option values, including nested properties, to be
+ * resolved from managed plugin instances while preserving the outer
+ * configuration shape.
+ *
+ * Unlike `ResolvablePluginValue`, does not allow replacing the entire
+ * options object with a deferred reference.
+ *
+ * @typeParam T - The native plugin options type.
+ */
 export type ResolvablePluginOptions<T> = T extends object
   ? { [K in keyof T]: ResolvablePluginValue<T[K]> }
   : T;
@@ -229,18 +493,47 @@ export type ResolvablePluginOptions<T> = T extends object
 // 4. Public plugin configuration
 // =============================================================================
 
-/** Forbid instance metadata and capture controls on install-based plugins. */
+/**
+ * Configuration for a plugin without managed instance support.
+ *
+ * Preserves native plugin option requirements while allowing deferred
+ * instance references in option values, including nested properties.
+ *
+ * Disallows instance capture and reuse through TestForge instance controls.
+ *
+ * @typeParam TOptions - The native plugin options type.
+ */
 type PluginOptionsWithoutInstance<TOptions> = ResolvablePluginOptions<TOptions> & {
   [PLUGIN_EXPOSE]?: never;
   [PLUGIN_META_KEY]?: never;
 };
 
 /**
- * Configuration for registered plugins.
+ * Configuration for plugins registered in `PluginOptionsMap`.
  *
- * Instance capture and reuse require registration in `PluginInstanceMap`.
- * Native options may be omitted when a pre-created instance is supplied.
- * `false` disables the plugin.
+ * Supports native plugin options and deferred instance references
+ * in configuration values.
+ *
+ * Plugins registered in `PluginInstanceMap` also support instance
+ * capture and reuse. Native creation options are required when creating
+ * a new instance but may be omitted when an existing instance is supplied.
+ *
+ * Install-based plugins do not support instance capture or reuse.
+ * Setting a plugin to `false` disables it.
+ *
+ * @example
+ * ```typescript
+ * import type { PluginOptionsInput } from "@testforgejs/vue-test-core";
+ * import type {} from "@testforgejs/vue-test-plugin-router";
+ * import { createMemoryHistory } from "vue-router";
+ *
+ * const plugins: PluginOptionsInput = {
+ *   router: {
+ *     history: createMemoryHistory(),
+ *     routes: [],
+ *   },
+ * };
+ * ```
  */
 export type PluginOptionsInput = {
   [K in keyof PluginOptionsMap]?:
@@ -253,8 +546,16 @@ export type PluginOptionsInput = {
 };
 
 /**
- * Partial per-mount override for a plugin with managed instance support.
- * `false` disables that plugin for the mount.
+ * Per-mount configuration override for a plugin with managed instance support.
+ *
+ * Supports partial native options for record-like configurations, including
+ * deferred instance references in option values.
+ *
+ * Optionally allows capturing the resulting instance or reusing an existing
+ * instance. Setting the override to `false` disables the plugin for the mount.
+ *
+ * @typeParam TOptions - The native plugin options type.
+ * @typeParam TInstance - The type of the managed plugin instance.
  */
 export type PluginOverride<TOptions = unknown, TInstance = unknown> =
   | ((TOptions extends Record<string, any>
@@ -263,7 +564,16 @@ export type PluginOverride<TOptions = unknown, TInstance = unknown> =
       Partial<PluginInstanceOptions<TInstance>>)
   | false;
 
-/** Partial override without instance capture or reuse. */
+/**
+ * Per-mount configuration override for a plugin without managed instance support.
+ *
+ * Supports partial native options for record-like configurations, including
+ * deferred instance references in option values.
+ *
+ * Disallows instance capture and reuse through TestForge instance controls.
+ *
+ * @typeParam TOptions - The native plugin options type.
+ */
 type PluginOverrideWithoutInstance<TOptions> = (TOptions extends Record<string, any>
   ? ResolvablePluginOptions<Partial<TOptions>>
   : ResolvablePluginOptions<TOptions>) & {
@@ -271,7 +581,30 @@ type PluginOverrideWithoutInstance<TOptions> = (TOptions extends Record<string, 
   [PLUGIN_META_KEY]?: never;
 };
 
-/** Per-mount overrides; instance controls require `PluginInstanceMap` registration. */
+/**
+ * Per-mount plugin configuration overrides for registered plugins.
+ *
+ * Used in `extraOptions.plugins` to override individual plugin options
+ * without requiring complete native creation configuration.
+ *
+ * Supports deferred instance references in override values.
+ * Instance capture and reuse are available only for plugins registered
+ * in `PluginInstanceMap`.
+ *
+ * Setting a plugin to `false` disables it for the current mount.
+ *
+ * @example
+ * ```typescript
+ * import type { PluginOverridesInput } from "@testforgejs/vue-test-core";
+ * import type {} from "@testforgejs/vue-test-plugin-router";
+ *
+ * const overrides: PluginOverridesInput = {
+ *   router: {
+ *     routes: [],
+ *   },
+ * };
+ * ```
+ */
 export type PluginOverridesInput = {
   [K in keyof PluginOptionsMap]?:
     | (K extends keyof PluginInstanceMap
@@ -284,27 +617,98 @@ export type PluginOverridesInput = {
 // 5. Presets
 // =============================================================================
 
-/** Default configuration factories for plugins included in a preset. */
+/**
+ * Maps plugin names to factories providing preset-level default options.
+ *
+ * Each key must match the name of a plugin declared in the containing
+ * preset's manifest.
+ *
+ * Factories are invoked when plugin defaults are resolved and should
+ * return fresh mutable configuration data to avoid shared state.
+ *
+ * The map may be empty or omit defaults for individual manifest plugins.
+ */
 export type PluginConfigDefaults = Record<PluginName, PluginOptionsFactory<RuntimePluginConfig>>;
 
-/** Plugin manifest and default-option factories defining a preset. */
+/**
+ * Defines a preset of TestForge-managed plugins and their default configuration.
+ *
+ * The manifest declares which plugins are available and whether they are
+ * enabled by default. The `defaults` map provides optional per-plugin
+ * configuration factories.
+ *
+ * Default configuration keys must correspond to plugin names declared
+ * in the manifest.
+ */
 export interface PresetDefinition {
-  /** Plugins available in the preset and their enabled state. */
+  /**
+   * Plugins available in this preset and their initial enabled state.
+   *
+   * Each entry associates a plugin module with its enabled flag.
+   * Plugin names within the manifest must be unique.
+   */
   manifest: PluginManifestEntry<any, any>[];
 
-  /** Per-plugin default factories. May be empty or omit manifest plugins. */
+  /**
+   * Default configuration factories keyed by plugin name.
+   *
+   * Each key must match the name of a plugin declared in `manifest`.
+   * Individual manifest plugins may omit default configuration.
+   *
+   * This property is required but may be an empty object.
+   */
   defaults: PluginConfigDefaults;
 }
 
-/** Named presets available to the framework. */
+/**
+ * Collection of named presets registered with a TestForge framework.
+ *
+ * Each key identifies a preset that can be selected through `presetKey`.
+ * When present, the `"default"` preset is used if neither the factory
+ * nor the current mount explicitly selects another preset.
+ *
+ * Each entry defines a complete preset rather than an extension
+ * of another registered preset.
+ */
 export type TestFrameworkPresets = Record<string, PresetDefinition>;
 
-/** Preset lookup key; not restricted to keys of a specific preset collection. */
+/**
+ * Key used to select a preset registered with a TestForge framework.
+ *
+ * Represents a string identifier rather than keys inferred from a
+ * specific preset collection.
+ *
+ * The selected preset must exist in the framework's registered presets.
+ * This requirement is validated at runtime.
+ */
 export type PresetKey = keyof TestFrameworkPresets;
 
-/** Optional manifest and default-factory contributions for extending a preset. */
+/**
+ * Defines changes applied when extending an existing preset.
+ *
+ * Used by `extendPreset()` to create a new preset from a base definition.
+ * An extension can add or update manifest entries and replace
+ * default-options factories for individual plugins.
+ *
+ * Both properties are optional. Omitted properties preserve
+ * the corresponding configuration from the base preset.
+ */
 export interface PresetExtension {
+  /**
+   * Plugin manifest entries to add or update by plugin name.
+   *
+   * Existing entries retain their modules and may have their enabled
+   * state changed. Entries for new plugins are added to the manifest.
+   */
   manifest?: PluginManifestEntry<any, any>[];
+
+  /**
+   * Default-options factories to add or replace by plugin name.
+   *
+   * Each key must correspond to a plugin in the resulting manifest.
+   * An existing factory is replaced entirely; its returned options
+   * are not automatically merged with the replacement.
+   */
   defaults?: PluginConfigDefaults;
 }
 
@@ -312,68 +716,151 @@ export interface PresetExtension {
 // 6. Component factory API
 // =============================================================================
 
-/** Each source contributes only part of the final component props. */
+/**
+ * Partial component props inferred from the Vue component type.
+ *
+ * Preserves the component's prop names and value types while allowing
+ * individual configuration sources to provide only a subset of props.
+ *
+ * @typeParam T - The Vue component type from which props are inferred.
+ */
 export type ComponentPropsInput<T extends Component> = Partial<ComponentProps<T>>;
 
 type RelaxedSlot<T> = T extends (props: infer P) => unknown ? (props: P) => unknown : () => unknown;
 
-/** Optional component slots with inferred slot props and relaxed return types. */
+/**
+ * Partial component slots inferred from the Vue component type.
+ *
+ * Preserves declared slot names and inferred slot prop types while
+ * relaxing the return types of slot functions.
+ *
+ * @typeParam T - The Vue component type from which slots are inferred.
+ */
 export type ComponentSlotsInput<T extends Component> = Partial<{
   [K in keyof ComponentSlots<T>]: RelaxedSlot<ComponentSlots<T>[K]>;
 }>;
 
-/** Matches the data inference used by Vue Test Utils. */
+/**
+ * Component data type inferred from its `data()` method.
+ *
+ * Follows the data inference used by Vue Test Utils.
+ * Falls back to `Record<string, never>` when a compatible
+ * data object type cannot be inferred.
+ *
+ * @typeParam T - The Vue component type from which data is inferred.
+ */
 export type ComponentData<T extends Component> = T extends { data?(...args: any): infer D }
   ? D extends Record<string, any>
     ? D
     : Record<string, never>
   : Record<string, never>;
 
-/** Partial component data contributed by a configuration source. */
+/**
+ * Partial component data inferred from the Vue component type.
+ *
+ * Allows mounting configuration to provide a subset of the component's
+ * inferred data properties.
+ *
+ * @typeParam T - The Vue component type from which data is inferred.
+ */
 export type ComponentDataInput<T extends Component> = Partial<ComponentData<T>>;
 
-/** Resolves component-specific default props for each mount. */
+/**
+ * Resolves default component props for each mount.
+ *
+ * The resolver is invoked once per mount and should return fresh
+ * mutable data to prevent shared state between component mounts.
+ *
+ * @typeParam T - The Vue component type used to infer default props.
+ */
 export type DefaultPropsResolver<T extends Component> = () => ComponentPropsInput<T>;
 
-/** Resolves component-specific default mounting options for each mount. */
+/**
+ * Resolves default mounting options for each mount.
+ *
+ * The resolver is invoked once per mount and should return fresh
+ * mutable configuration data to prevent shared state between mounts.
+ *
+ * Supports Vue Test Utils mounting options and TestForge-managed
+ * plugin configuration.
+ *
+ * @typeParam T - The Vue component type used to infer props, slots,
+ * and component data within the mounting options.
+ */
 export type DefaultMountOptionsResolver<T extends Component> = () => ComponentFactoryOptions<
   ComponentPropsInput<T>,
   ComponentSlotsInput<T>,
   ComponentDataInput<T>
 >;
 
-/** Resolves component-specific default slots for each mount. */
+/**
+ * Resolves default component slots for each mount.
+ *
+ * The resolver is invoked once per mount and should return fresh
+ * mutable data to prevent shared state between component mounts.
+ *
+ * @typeParam T - The Vue component type used to infer default slots.
+ */
 export type DefaultSlotsResolver<T extends Component> = () => ComponentSlotsInput<T>;
 
-/** Factory-level controls shared by both creation forms. */
+/**
+ * Factory-level configuration shared by both component factory creation APIs.
+ *
+ * Defines the default preset selection for component mounts.
+ * Individual mounts can override this selection through
+ * `ComponentFactoryExtraOptions.presetKey`.
+ */
 export interface ComponentFactoryConfig {
-  /** Select the default preset for this component factory. */
+  /**
+   * Preset key used by default when mounting components through this factory.
+   *
+   * A mount-level `presetKey` takes precedence over this value.
+   * When omitted, the framework's normal preset resolution applies.
+   */
   presetKey?: PresetKey;
 }
 
 /**
  * Named configuration returned by a component factory options resolver.
  *
- * The component determines the types of default props, slots, and data;
- * `NoInfer` prevents those defaults from changing component inference.
+ * Defines the component, its default props, mounting options, slots,
+ * and optional factory-level preset selection.
+ *
+ * The configuration is resolved for each mount. Mutable default values
+ * should be recreated by the resolver to prevent state leakage between
+ * component mounts.
+ *
+ * The component determines the types of default props, slots, and data.
+ * `NoInfer` prevents default configuration values from influencing
+ * component type inference.
+ *
+ * @typeParam T - The Vue component type used to validate default
+ * props, slots, and mounting options.
  */
 export interface ComponentFactoryCreationOptions<
   T extends Component,
 > extends ComponentFactoryConfig {
-  /** Vue component for which the factory is created. */
+  /**
+   * Vue component to mount.
+   *
+   * Determines the component-specific types of the default configuration.
+   */
   component: T;
 
   /** Default props applied to each mount. */
   defaultProps?: ComponentPropsInput<NoInfer<T>>;
 
-  /** Default mounting options applied to each mount. */
+  /**
+   * Default Vue Test Utils mounting options, including TestForge
+   * managed plugin configuration.
+   */
   defaultMountOptions?: ComponentFactoryOptions<
     ComponentPropsInput<NoInfer<T>>,
     ComponentSlotsInput<NoInfer<T>>,
     ComponentDataInput<NoInfer<T>>
   >;
 
-  /** Default slots applied to each mount. */
+  /** Default component slots applied to each mount. */
   defaultSlots?: ComponentSlotsInput<NoInfer<T>>;
 }
 
@@ -428,33 +915,77 @@ type StrictFactoryCreationOptions<
 /**
  * Resolves component factory configuration for each mount.
  *
- * The resolver is invoked once per mount and should return fresh
- * mutable configuration data to prevent state leakage between tests.
- * `Resolved` captures the actual return shape so unexpected keys can be checked.
+ * The resolver is invoked once per mount and returns the component,
+ * its default configuration, and optional factory-level settings.
+ *
+ * Mutable default values should be recreated for each invocation
+ * to prevent shared state between component mounts.
+ *
+ * The inferred configuration shape is preserved to enable additional
+ * type checking of TestForge-owned configuration keys.
+ *
+ * @typeParam T - The Vue component type used to validate component-specific
+ * props, slots, and mounting options.
+ * @typeParam Resolved - The inferred configuration shape returned by the
+ * resolver, used to detect unexpected keys in TestForge-owned options.
  */
 export type FactoryOptionsResolver<
   T extends Component,
   Resolved extends ComponentFactoryCreationOptions<T> = ComponentFactoryCreationOptions<T>,
 > = () => Resolved & { component: T } & StrictFactoryCreationOptions<T, Resolved>;
 
-/** Vue Test Utils mounting options extended with TestForge plugin controls. */
+/**
+ * Vue Test Utils mounting options extended with TestForge-specific controls.
+ *
+ * Preserves standard Vue Test Utils options while providing component-aware
+ * types for props, slots, and data, along with managed plugin configuration.
+ *
+ * Used for both factory-level `defaultMountOptions` and per-mount
+ * `mountOptions`.
+ *
+ * @typeParam Props - The component props type used to validate `props`.
+ * @typeParam Slots - The component slots type used to validate `slots`.
+ * @typeParam Data - The component data type used to validate `data`.
+ */
 export interface ComponentFactoryOptions<Props = any, Slots = any, Data = any> extends Omit<
   MountingOptions<Props, Data>,
   "props" | "slots" | "data"
 > {
-  /** Strictly typed component data. */
+  /**
+   * Vue Test Utils data override factory, typed by `Data`.
+   */
   data?: () => Data;
 
-  /** Strictly typed component props. */
+  /**
+   * Component props supplied through mounting options, typed by `Props`.
+   */
   props?: Props;
 
-  /** Strictly typed component slots. */
+  /**
+   * Component slots supplied through mounting options, typed by `Slots`.
+   */
   slots?: Slots;
 
-  /** Managed plugin configuration. */
+  /**
+   * Configuration for TestForge-managed plugins declared in the active preset.
+   *
+   * When supplied through per-mount `mountOptions`, a plugin's configuration
+   * replaces its factory-level `defaultMountOptions.plugins` configuration.
+   * Use `extraOptions.plugins` for partial per-mount overrides instead.
+   *
+   * Set a plugin entry to `false` to disable that plugin.
+   * Ordinary Vue plugins belong in Vue Test Utils `global.plugins`.
+   */
   plugins?: PluginOptionsInput;
 
-  /** Disable plugins supplied by the active preset. */
+  /**
+   * Whether to skip TestForge-managed plugin setup for this mount.
+   *
+   * Does not disable ordinary Vue plugins registered through
+   * Vue Test Utils `global.plugins`.
+   *
+   * Defaults to `false`.
+   */
   skipManagedPlugins?: boolean;
 }
 
@@ -465,35 +996,93 @@ export type MountWithPluginsOptions<Props = any, Slots = any, Data = any> = Comp
   Data
 >;
 
-/** Per-call preset selection, default-skipping controls, and plugin overrides. */
+/**
+ * Per-mount controls for preset selection, factory defaults, and managed plugins.
+ *
+ * Passed as the fourth argument to `factory()` or as `extraOptions`
+ * in `factory.withOptions()`.
+ *
+ * These options apply only to the current mount and do not modify
+ * the component factory's default configuration.
+ */
 export type ComponentFactoryExtraOptions = {
-  /** Select the preset used for this factory call. */
+  /**
+   * Preset key to use for this mount.
+   *
+   * Overrides the factory-level `presetKey`. When omitted, the factory's
+   * preset selection or the framework's default resolution applies.
+   */
   presetKey?: PresetKey;
 
-  /** Skip factory-level default props. */
+  /**
+   * Whether to skip the factory's `defaultProps`.
+   *
+   * Does not exclude props supplied through `defaultMountOptions.props`
+   * or the current mount's arguments.
+   *
+   * Defaults to `false`.
+   */
   skipDefaultProps?: boolean;
 
-  /** Skip factory-level default slots. */
+  /**
+   * Whether to skip the factory's `defaultSlots`.
+   *
+   * Does not exclude slots supplied through `defaultMountOptions.slots`
+   * or the current mount's arguments.
+   *
+   * Defaults to `false`.
+   */
   skipDefaultSlots?: boolean;
 
-  /** Skip base mount options. */
+  /**
+   * Whether to skip the factory's `defaultMountOptions`.
+   *
+   * Does not exclude `defaultProps`, `defaultSlots`, or the active
+   * preset's default plugin configuration.
+   *
+   * Defaults to `false`.
+   */
   skipDefaultOptions?: boolean;
 
-  /** Partial plugin overrides applied for this factory call. */
+  /**
+   * Per-mount overrides for managed plugin configuration.
+   *
+   * Applies a shallow overlay to the resolved runtime options of each
+   * specified plugin. Set a plugin entry to `false` to disable it.
+   *
+   * Unlike `mountOptions.plugins`, which replaces the factory-level
+   * configuration for a plugin, these overrides preserve unspecified
+   * top-level options.
+   */
   plugins?: PluginOverridesInput;
 };
 
 /**
- * Named arguments for `factory.withOptions()`.
+ * Named arguments for mounting a component through `factory.withOptions()`.
  *
- * Each field corresponds to a positional argument of `factory()`.
- * Omitting a field uses the same default as the positional API.
+ * Each property corresponds to a positional argument of `factory()`.
+ * Both invocation forms use equivalent configuration resolution
+ * and mounting behavior.
+ *
+ * All properties are optional. Omitted properties behave as omitted
+ * positional arguments, preserving applicable factory-level defaults.
+ *
+ * @typeParam T - The Vue component type used to infer props, slots,
+ * and component data.
+ *
+ * @example
+ * ```typescript
+ * const wrapper = factory.withOptions({
+ *   props: { title: "Hello" },
+ *   mountOptions: { shallow: false },
+ * });
+ * ```
  */
 export interface ComponentFactoryInvocationOptions<T extends Component> {
   /** Component props supplied for this mount. */
   props?: ComponentPropsInput<T>;
 
-  /** Mount options for this invocation, including managed plugin configuration. */
+  /** Vue Test Utils mounting options, including TestForge managed plugin configuration. */
   mountOptions?: ComponentFactoryOptions<
     ComponentPropsInput<T>,
     ComponentSlotsInput<T>,
@@ -508,11 +1097,41 @@ export interface ComponentFactoryInvocationOptions<T extends Component> {
 }
 
 /**
- * Callable component factory returned by `testComponentFactory()`.
- * Both invocation forms return the same Vue Test Utils wrapper type.
+ * Reusable factory for mounting a Vue component through TestForge.
+ *
+ * Resolves factory-level defaults for each mount and supports both
+ * positional and object-based mounting APIs.
+ *
+ * Both invocation forms use equivalent configuration and mounting
+ * behavior and return the same Vue Test Utils wrapper type.
+ *
+ * @typeParam T - The Vue component type used to infer props, slots,
+ * and mounting options.
  */
 export interface ComponentFactory<T extends Component> {
-  /** Mounts the component using positional arguments. */
+  /**
+   * Mounts the component using positional arguments.
+   *
+   * Combines the supplied configuration with factory-level defaults
+   * and applies per-mount controls through `extraOptions`.
+   *
+   * @param props - Component props supplied for this mount.
+   * @param mountOptions - Vue Test Utils mounting options, including
+   * TestForge managed plugin configuration.
+   * @param slots - Component slots supplied for this mount.
+   * @param extraOptions - Per-mount preset selection, default-skipping
+   * controls, and plugin overrides.
+   *
+   * @returns A Vue Test Utils wrapper for the mounted component.
+   *
+   * @example
+   * ```typescript
+   * const wrapper = factory(
+   *   { title: "Hello" },
+   *   { shallow: false },
+   * );
+   * ```
+   */
   (
     props?: ComponentPropsInput<T>,
     mountOptions?: ComponentFactoryOptions<
@@ -525,32 +1144,65 @@ export interface ComponentFactory<T extends Component> {
   ): ReturnType<typeof mount<T>>;
 
   /**
-   * Mounts the component using an options object.
+   * Mounts the component using named arguments.
    *
    * An alternative to calling `factory(props, mountOptions, slots, extraOptions)`.
-   * Both forms use equivalent configuration and mounting behavior.
+   * Both forms use the same configuration resolution and mounting behavior.
    *
    * @param options - Named arguments for this mount.
+   *
    * @returns A Vue Test Utils wrapper for the mounted component.
    *
    * @example
    * ```typescript
    * const wrapper = factory.withOptions({
    *   props: { title: "Hello" },
-   *   extraOptions: { presetKey: "i18n" },
+   *   mountOptions: { shallow: false },
    * });
    * ```
    */
   withOptions(options: ComponentFactoryInvocationOptions<T>): ReturnType<typeof mount<T>>;
 }
 
-/** Creates reusable component factories using positional or named configuration resolvers. */
+/**
+ * Creates reusable component test factories.
+ *
+ * Supports positional factory creation with individual default resolvers
+ * and object-based creation through a single configuration resolver.
+ *
+ * Both APIs produce a `ComponentFactory` and resolve fresh default
+ * configuration for each mount.
+ */
 export interface ComponentFactoryCreator {
   /**
    * Creates a component factory using positional arguments.
    *
-   * Default configuration factories are invoked for each mount.
-   * Each factory should return fresh mutable data.
+   * The component and factory-level configuration remain fixed, while
+   * the supplied default resolvers are invoked once per mount.
+   *
+   * Default resolvers should return fresh mutable data to prevent
+   * state leakage between component mounts.
+   *
+   * @typeParam T - The Vue component type, inferred from `component`.
+   *
+   * @param component - The Vue component to mount.
+   * @param defaultProps - Optional resolver for default component props.
+   * @param defaultMountOptions - Optional resolver for default mounting options.
+   * @param defaultSlots - Optional resolver for default component slots.
+   * @param config - Optional factory-level configuration, including `presetKey`.
+   *
+   * @returns A reusable component test factory.
+   *
+   * @example
+   * ```typescript
+   * const factory = testComponentFactory(
+   *   MyComponent,
+   *   () => ({ title: "Hello" }),
+   *   () => ({ shallow: false }),
+   * );
+   *
+   * const wrapper = factory();
+   * ```
    */
   <T extends Component>(
     component: T,
@@ -561,15 +1213,20 @@ export interface ComponentFactoryCreator {
   ): ComponentFactory<T>;
 
   /**
-   * Creates a reusable component factory from a configuration resolver.
+   * Creates a component factory using a named configuration resolver.
    *
-   * The resolver is invoked once before each mount, allowing every
-   * invocation to receive independent default configuration data.
+   * The resolver is invoked once per mount and returns the component,
+   * optional default configuration, and factory-level settings.
    *
-   * The component and preset may remain stable across invocations,
-   * while mutable configuration objects should be recreated.
+   * The resolver should return fresh mutable configuration data to
+   * prevent state leakage between component mounts.
    *
-   * @param resolveOptions - Factory configuration resolver.
+   * @typeParam T - The Vue component type, inferred from the resolver.
+   * @typeParam Resolved - The inferred configuration shape, used to
+   * validate TestForge-owned configuration keys.
+   *
+   * @param resolveOptions - Resolver returning the component factory configuration.
+   *
    * @returns A reusable component test factory.
    *
    * @example
@@ -577,10 +1234,10 @@ export interface ComponentFactoryCreator {
    * const factory = testComponentFactory.withOptions(() => ({
    *   component: MyComponent,
    *   defaultProps: { title: "Hello" },
-   *   presetKey: "i18n",
+   *   defaultMountOptions: { shallow: false },
    * }));
    *
-   * factory();
+   * const wrapper = factory();
    * ```
    */
   withOptions<T extends Component, Resolved extends ComponentFactoryCreationOptions<T>>(
@@ -588,33 +1245,75 @@ export interface ComponentFactoryCreator {
   ): ComponentFactory<T>;
 }
 
-/** Public API returned by `createTestFramework()`. */
+/**
+ * A TestForge framework instance created by `createTestFramework()`.
+ *
+ * Provides a component factory creator configured with the framework's
+ * presets and default mounting behavior.
+ */
 export interface TestFramework {
-  /** Creates a reusable component mounting factory. */
+  /**
+   * Creates reusable component factories using positional arguments
+   * or a configuration resolver through `.withOptions()`.
+   */
   testComponentFactory: ComponentFactoryCreator;
 }
 
 interface CommonCreateTestFrameworkOptions {
-  /** Default value of Vue Test Utils `shallow` (default: false). */
+  /**
+   * Whether to shallow-mount components by default.
+   *
+   * Defaults to `false`. Individual mounts can override this setting
+   * through the Vue Test Utils `shallow` option.
+   */
   shallowByDefault?: boolean;
 }
 
 interface SinglePresetOptions extends CommonCreateTestFrameworkOptions {
+  /** Preset used as the framework's default preset. */
   preset: PresetDefinition;
+
   presets?: never;
 }
 
 interface MultiplePresetsOptions extends CommonCreateTestFrameworkOptions {
   preset?: never;
+
+  /** Named presets available for selection during component mounting. */
   presets?: TestFrameworkPresets;
 }
 
 /**
- * Framework configuration.
+ * Configuration options for `createTestFramework()`.
  *
- * Accepts either a single preset or a named preset collection.
- * `preset` and `presets` cannot be supplied together.
- * Both may be omitted to create a framework without presets.
+ * Supports a single preset through `preset` or a collection of named
+ * presets through `presets`. These options are mutually exclusive.
+ *
+ * Both options may be omitted to create a framework without presets.
+ *
+ * `shallowByDefault` is available in both configurations and defaults
+ * to `false`.
+ *
+ * @example
+ * ```typescript
+ * import type { CreateTestFrameworkOptions } from "@testforgejs/vue-test-core";
+ *
+ * // A single preset.
+ * const single: CreateTestFrameworkOptions = {
+ *   preset: basePreset,
+ * };
+ *
+ * // A collection of named presets.
+ * const multiple: CreateTestFrameworkOptions = {
+ *   presets: {
+ *     default: basePreset,
+ *     admin: adminPreset,
+ *   },
+ * };
+ *
+ * // No presets.
+ * const empty: CreateTestFrameworkOptions = {};
+ * ```
  */
 export type CreateTestFrameworkOptions = SinglePresetOptions | MultiplePresetsOptions;
 

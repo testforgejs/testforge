@@ -18,9 +18,31 @@ import { createPositionalComponentFactory } from "./positionalFactoryAdapter.js"
 import { resolvePresets } from "./utils/resolvePresets.js";
 import { validateCreateTestFrameworkOptions } from "../validators/validateCreateTestFrameworkOptions.js";
 
-/*
- * Creates a TestForge framework and binds its runtime dependencies
- * to the positional and object-based component factory creation APIs.
+/**
+ * Creates a TestForge framework for reusable Vue component testing.
+ *
+ * Configures the available presets and default mounting behavior, and
+ * provides a component factory creator supporting both positional and
+ * resolver-based creation APIs.
+ *
+ * A framework can be configured with a single preset, a collection of
+ * named presets, or no presets. The `preset` and `presets` options are
+ * mutually exclusive.
+ *
+ * @param options - Framework configuration. If omitted, creates a framework
+ * without presets and with `shallowByDefault` set to `false`.
+ * @returns A framework exposing the `testComponentFactory` API.
+ *
+ * @example
+ * ```typescript
+ * import { createTestFramework } from "@testforgejs/vue-test-core";
+ * import MyComponent from "./MyComponent.vue";
+ *
+ * const { testComponentFactory } = createTestFramework();
+ *
+ * const factory = testComponentFactory(MyComponent);
+ * const wrapper = factory();
+ * ```
  */
 export function createTestFramework(options: CreateTestFrameworkOptions = {}): TestFramework {
   validateCreateTestFrameworkOptions(options);

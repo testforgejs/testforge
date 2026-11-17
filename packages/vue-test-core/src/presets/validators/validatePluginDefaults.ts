@@ -1,12 +1,14 @@
 import { ERROR_PREFIX } from "../../constants/constants.js";
 
 /**
- * Validates the default options factory for a plugin.
+ * Validates that a plugin's preset defaults are provided as a factory function.
  *
- * Plugin preset defaults must be provided as factory functions.
+ * Checks the factory itself without invoking it or validating
+ * the options it returns.
  *
  * @param pluginName - The name of the plugin being validated.
- * @param value - The plugin's default options factory.
+ * @param value - The value expected to be a default-options factory.
+ *
  * @throws {Error} If the value is not a function.
  */
 export function validatePluginDefaults(pluginName: string, value: unknown): void {
