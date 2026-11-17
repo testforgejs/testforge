@@ -42,6 +42,3 @@ export type {
   TestFrameworkPresets,
   UniversalRunner,
 } from "./types.js";
-
-// For backward compatibility
-export const Types = {} as const;
