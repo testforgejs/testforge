@@ -14,6 +14,22 @@ vi.mock("../../utils/warnRootPluginOption.js", () => ({
 
 const mockGetSupportedPluginNames = vi.mocked(getSupportedPluginNames);
 
+type WarnRootPluginOptionsInput = Parameters<typeof warnRootPluginOptions>[0];
+type WarnRootPluginOptionsContext = Parameters<typeof warnRootPluginOptions>[1];
+
+/*
+ * Passes intentionally invalid configuration to the runtime validator.
+ *
+ * These tests verify runtime warnings for misplaced plugin options,
+ * so static configuration validation is deliberately bypassed.
+ */
+function warnWithInvalidOptions(
+  options: Record<string, unknown>,
+  context: WarnRootPluginOptionsContext,
+): void {
+  warnRootPluginOptions(options as unknown as WarnRootPluginOptionsInput, context);
+}
+
 describe("warnRootPluginOptions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,9 +55,8 @@ describe("warnRootPluginOptions", () => {
     it("should not emit a warning", () => {
       mockGetSupportedPluginNames.mockReturnValue(["i18n"]);
 
-      warnRootPluginOptions(
+      warnWithInvalidOptions(
         {
-          // @ts-expect-error testing invalid configuration
           i18n: {},
           plugins: {
             i18n: {},
@@ -101,9 +116,8 @@ describe("warnRootPluginOptions", () => {
     it("should warn only for root plugin options", () => {
       mockGetSupportedPluginNames.mockReturnValue(["i18n", "pinia"]);
 
-      warnRootPluginOptions(
+      warnWithInvalidOptions(
         {
-          // @ts-expect-error testing invalid configuration
           i18n: {},
           pinia: {},
           plugins: {
