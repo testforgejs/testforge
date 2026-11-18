@@ -1,5 +1,19 @@
 # @testforgejs/vue-test-preset-recommended
 
+## 1.0.0-beta.9
+
+### Patch Changes
+
+- Updated dependencies [def1a9c]
+- Updated dependencies [4695a7a]
+- Updated dependencies [a1fabd7]
+- Updated dependencies [d7753f3]
+  - @testforgejs/vue-test-core@1.0.0-beta.8
+  - @testforgejs/vue-test-plugin-i18n@1.0.0-beta.8
+  - @testforgejs/vue-test-plugin-pinia@1.0.0-beta.9
+  - @testforgejs/vue-test-plugin-router@1.0.0-beta.9
+  - @testforgejs/vue-test-preset-base@1.0.0-beta.9
+
 ## 1.0.0-beta.8
 
 ### Patch Changes

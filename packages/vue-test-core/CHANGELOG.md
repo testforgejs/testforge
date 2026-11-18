@@ -1,5 +1,62 @@
 # @testforgejs/vue-test-core
 
+## 1.0.0-beta.8
+
+### Major Changes
+
+- d7753f3: **BREAKING CHANGE:** Introduce resolver-based component factory configuration to improve test isolation and prevent shared mutable defaults across mounts.
+
+  Factory creation APIs now accept resolver functions instead of static configuration objects:
+
+  - **Positional API:** `testComponentFactory(component, defaultPropsResolver?, defaultMountOptionsResolver?, defaultSlotsResolver?, config?)` now requires functions for default props, mount options, and slots when provided.
+  - **Object API:** `testComponentFactory.withOptions(optionsResolver)` now requires a function that returns the factory configuration.
+
+  Resolvers are evaluated independently for each mount, allowing fresh configuration objects to be created and preventing unintended state leakage between tests.
+
+  **Migration:**
+
+  ```typescript
+  // Before
+  testComponentFactory(MyComponent, { title: "Default" });
+
+  testComponentFactory.withOptions({
+    component: MyComponent,
+    defaultProps: { title: "Default" },
+  });
+
+  // After
+  testComponentFactory(MyComponent, () => ({ title: "Default" }));
+
+  testComponentFactory.withOptions(() => ({
+    component: MyComponent,
+    defaultProps: { title: "Default" },
+  }));
+  ```
+
+  The existing component mounting APIs remain unchanged:
+
+  - `factory(props, mountOptions, slots, extraOptions)`
+  - `factory.withOptions({ props, mountOptions, slots, extraOptions })`
+
+  Factory creation configuration returned by resolvers is validated when mounting, while static factory creation arguments are validated when the factory is created.
+
+### Minor Changes
+
+- def1a9c: Remove the deprecated `Types` runtime export, which was an empty compatibility placeholder with no functional API.
+- 4695a7a: Expose `PluginDefinition` and `PluginName` through the public package entry point.
+
+  Plugin authors can now import the plugin creation contract and plugin identifier type directly from `@testforgejs/vue-test-core`.
+
+### Patch Changes
+
+- a1fabd7: Fix preset validation to reject malformed manifest entries before destructuring them.
+
+  Invalid entries, including `null` and `undefined`, now produce consistent TestForge validation errors instead of unexpected `TypeError` exceptions.
+
+  Improve preset manifest validation by rejecting malformed entries and plugin modules that do not implement the required `getDefinition()` method.
+
+  Invalid manifest entries and incomplete plugin modules now produce consistent TestForge validation errors.
+
 ## 1.0.0-beta.7
 
 ### Major Changes
